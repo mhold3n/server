@@ -4,6 +4,30 @@ version: "3.9"
 # Integrates WrkHrs microservices with Birtha platform
 
 services:
+  # Structure Gateway - Deterministic Scientific Reasoning Engine
+  structure-gateway:
+    build:
+      context: ./services/structure
+    ports:
+      - "${STRUCTURE_GATEWAY_PORT:-8000}:8000"
+    environment:
+      - WRKHRS_GATEWAY_URL=http://wrkhrs-gateway:8000
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      wrkhrs-gateway:
+        condition: service_healthy
+    volumes:
+      - logs:/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
   # WrkHrs Gateway - OpenAI-compatible API with domain weighting
   wrkhrs-gateway:
     build:

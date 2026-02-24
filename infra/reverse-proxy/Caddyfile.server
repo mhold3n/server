@@ -222,11 +222,11 @@ mcp-vector.local:443 {
     tls internal
 }
 
-# WrkHrs AI Stack Services
+# WrkHrs AI Stack Services (Routed through Structure Gateway)
 ai.local:443 {
     import lan
     handle @internal {
-        reverse_proxy wrkhrs-gateway:8000
+        reverse_proxy structure-gateway:8000
     }
     handle {
         respond "Forbidden" 403

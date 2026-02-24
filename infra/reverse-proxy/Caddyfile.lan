@@ -128,10 +128,10 @@ mcp-registry.lan:443 {
     tls internal
 }
 
-# WrkHrs AI Stack Services
+# WrkHrs AI Stack Services (Routed through Structure Gateway)
 ai.lan:443 {
     import lan
-    handle @internal { reverse_proxy wrkhrs-gateway:8000 }
+    handle @internal { reverse_proxy structure-gateway:8000 }
     handle { respond "Forbidden" 403 }
     tls internal
 }
