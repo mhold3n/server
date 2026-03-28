@@ -212,7 +212,7 @@ curl -X POST http://localhost:7000/v1/tools \
     "tool": "create_issue",
     "args": {
       "owner": "mhold3n",
-      "repo": "Birtha_bigger_n_badder",
+      "repo": "server",
       "title": "Test Issue",
       "body": "Test issue body"
     }

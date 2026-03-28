@@ -17,7 +17,7 @@ Configuration (env):
 - Meilisearch: `MEILI_URL`, `MEILI_API_KEY`, `MEILI_INDEX=files`
 - SearXNG: `SEARX_URL`
 - Router/AI stack: `ROUTER_URL=http://router:8000`, `AI_STACK_URL=http://ai-stack:8090`
-- AI Repos for workflows: `AI_REPOS` (comma-separated), defaults include Birtha_bigger_n_badder, WrkHrs, marker
+- AI Repos for workflows: `AI_REPOS` (comma-separated), defaults include this monorepo (`server`) and marker
 - Marker paths (optional): `MARKER_DOCS_DIR`, `MARKER_PROCESSED_DIR`
 
 Notes

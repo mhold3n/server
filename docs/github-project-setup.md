@@ -5,7 +5,9 @@ This document provides step-by-step instructions for setting up the GitHub Proje
 ## Project Overview
 
 **Project URL**: https://github.com/users/mhold3n/projects/3
-**Repository**: https://github.com/mhold3n/Birtha_bigger_n_badder
+**Repository**: https://github.com/mhold3n/server
+
+Issue links below reference the **legacy** `Birtha_bigger_n_badder` repository (archived); they remain valid for historical traceability.
 
 ## Step 1: Configure Project Views
 

@@ -133,7 +133,7 @@ def generate_project_urls():
     print("=" * 50)
     print()
     
-    base_url = "https://github.com/mhold3n/Birtha_bigger_n_badder/issues"
+    base_url = "https://github.com/mhold3n/server/issues"
     
     for issue in ISSUES:
         url = f"{base_url}/{issue['number']}"

@@ -5,9 +5,9 @@ When you archive [mhold3n/MBMH-Training](https://github.com/mhold3n/MBMH-Trainin
 ```markdown
 # Moved
 
-MBMH training and local runtime now live in **[Birtha_bigger_n_badder](https://github.com/mhold3n/Birtha_bigger_n_badder)** under the [`mbmh/`](https://github.com/mhold3n/Birtha_bigger_n_badder/tree/main/mbmh) directory.
+MBMH training and local runtime now live in **[server](https://github.com/mhold3n/server)** under the [`mbmh/`](https://github.com/mhold3n/server/tree/main/mbmh) directory.
 
-See [docs/mbmh.md](https://github.com/mhold3n/Birtha_bigger_n_badder/blob/main/docs/mbmh.md) in that repository for orientation.
+See [docs/mbmh.md](https://github.com/mhold3n/server/blob/main/docs/mbmh.md) in that repository for orientation.
 ```
 
 Then archive the repo in GitHub: **Settings → General → Archive this repository**.

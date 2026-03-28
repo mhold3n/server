@@ -335,8 +335,10 @@ make ci              # Run full CI pipeline
 
 ## Project Structure
 
+Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/server)** (clone directory name may still be `Birtha_bigger_n_badder` locally).
+
 ```
-Birtha_bigger_n_badder/
+server/   # repository root (suggested clone folder name)
 ├── services/                    # Core services
 │   ├── api/                    # FastAPI control plane with WrkHrs integration
 │   │   ├── src/wrkhrs/         # WrkHrs integration layer
@@ -346,11 +348,12 @@ Birtha_bigger_n_badder/
 │   ├── router/                 # Agent router with MCP integration
 │   │   ├── src/workflows/      # LangChain/LangGraph workflows
 │   │   └── src/observability/  # OpenTelemetry instrumentation
-│   ├── wrkhrs/                 # WrkHrs AI services (cloned from GitHub)
-│   │   ├── services/           # WrkHrs core services
-│   │   └── .wrkhrs-version     # Version tracking
+│   ├── wrkhrs/                 # WrkHrs AI stack (vendored in this monorepo)
+│   │   ├── services/           # gateway, orchestrator, RAG, ASR, etc.
+│   │   └── compose/            # WrkHrs Docker Compose stacks
 │   ├── mcp-registry/           # MCP registry service
 │   └── queue/                  # Redis configuration
+├── mbmh/                       # MBMH: training + local OpenAI-compat runtime
 ├── mcp/                        # MCP servers
 │   ├── servers/                # Global and per-repo MCP servers
 │   │   ├── github-mcp/         # GitHub MCP with Projects integration

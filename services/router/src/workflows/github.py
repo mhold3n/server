@@ -187,7 +187,7 @@ class CodeDetector:
                 "apply_issue_template",
                 {
                     "owner": context.get("owner", "mhold3n"),
-                    "repo": context.get("repo", "Birtha_bigger_n_badder"),
+                    "repo": context.get("repo", "server"),
                     "template_name": "bug_report",
                     "title": bug_info["title"],
                     "template_data": {
@@ -252,7 +252,7 @@ class CodeDetector:
                 "apply_issue_template",
                 {
                     "owner": context.get("owner", "mhold3n"),
-                    "repo": context.get("repo", "Birtha_bigger_n_badder"),
+                    "repo": context.get("repo", "server"),
                     "template_name": "feature_request",
                     "title": feature_info["title"],
                     "template_data": {
@@ -316,7 +316,7 @@ class CodeDetector:
                 "create_pull_request",
                 {
                     "owner": context.get("owner", "mhold3n"),
-                    "repo": context.get("repo", "Birtha_bigger_n_badder"),
+                    "repo": context.get("repo", "server"),
                     "title": review_info["title"],
                     "head": review_info["head_branch"],
                     "base": review_info["base_branch"],
@@ -331,7 +331,7 @@ class CodeDetector:
                     "link_pr_to_issue",
                     {
                         "owner": context.get("owner", "mhold3n"),
-                        "repo": context.get("repo", "Birtha_bigger_n_badder"),
+                        "repo": context.get("repo", "server"),
                         "pull_number": pr_result["number"],
                         "issue_number": review_info["issue_number"],
                     }
@@ -376,7 +376,7 @@ class CodeDetector:
                 "apply_issue_template",
                 {
                     "owner": context.get("owner", "mhold3n"),
-                    "repo": context.get("repo", "Birtha_bigger_n_badder"),
+                    "repo": context.get("repo", "server"),
                     "template_name": "implementation",
                     "title": impl_info["title"],
                     "template_data": {
@@ -441,7 +441,7 @@ class CodeDetector:
                 "create_issue",
                 {
                     "owner": context.get("owner", "mhold3n"),
-                    "repo": context.get("repo", "Birtha_bigger_n_badder"),
+                    "repo": context.get("repo", "server"),
                     "title": f"Code request: {prompt[:50]}...",
                     "body": prompt,
                     "labels": ["code", "needs-triage"],

@@ -2,8 +2,23 @@
 
 from typing import Optional
 
-from pydantic import Field
+from enum import Enum
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class WorkerProfile(str, Enum):
+    """LLM worker profile."""
+
+    GPU = "gpu"
+    APPLE = "apple"
+
+
+class WorkerSettings(BaseModel):
+    """Resolved worker connection + model settings for a profile."""
+
+    base_url: str
+    default_model: str
 
 
 class Settings(BaseSettings):
@@ -24,6 +39,11 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(
         default="local-dev-token",
         description="API key for worker authentication",
+    )
+
+    orch_profile: WorkerProfile = Field(
+        default=WorkerProfile.GPU,
+        description="LLM worker profile (gpu or apple)",
     )
 
     # Redis configuration
@@ -91,11 +111,20 @@ class Settings(BaseSettings):
     router_url: str = Field(default="http://router:8000", description="Agent router base URL")
     ai_stack_url: str = Field(default="http://ai-stack:8090", description="AI stack base URL")
 
+    # Wrkhrs RAG/ASR health (optional; for status endpoint; set to empty to skip)
+    rag_health_url: Optional[str] = Field(
+        default=None,
+        description="Base URL for RAG worker health (e.g. http://wrkhrs-rag:8000)",
+    )
+    asr_health_url: Optional[str] = Field(
+        default=None,
+        description="Base URL for ASR worker health (e.g. http://wrkhrs-asr:8000)",
+    )
+
     # AI workflow configuration
     ai_repos: str = Field(
         default=(
-            "https://github.com/mhold3n/Birtha_bigger_n_badder,"
-            "https://github.com/mhold3n/WrkHrs,"
+            "https://github.com/mhold3n/server,"
             "https://github.com/datalab-to/marker"
         ),
         description="Comma-separated list of repositories for code-RAG workflows",
@@ -115,6 +144,30 @@ class Settings(BaseSettings):
             self.jwt_secret = "dev-secret-key"
         if self.debug and not self.encryption_key:
             self.encryption_key = "dev-encryption-key-32-chars"
+
+
+def get_worker_settings(cfg: "Settings") -> WorkerSettings:
+    """
+    Resolve worker connection + default model based on the active profile.
+
+    - gpu: assumes a remote vLLM/TGI-style worker serving Qwen3.5-9B.
+    - apple: assumes a local Apple Silicon worker exposed on host.docker.internal.
+    """
+    profile = cfg.orch_profile or WorkerProfile.GPU
+    if isinstance(profile, str):
+        try:
+            profile = WorkerProfile(profile.lower())
+        except ValueError:
+            profile = WorkerProfile.GPU
+
+    if profile is WorkerProfile.APPLE:
+        base_url = cfg.openai_base_url or "http://host.docker.internal:8000/v1"
+        default_model = "local-llm-apple"
+    else:
+        base_url = cfg.openai_base_url
+        default_model = "Qwen/Qwen3.5-9B"
+
+    return WorkerSettings(base_url=base_url, default_model=default_model)
 
 
 # Global settings instance
