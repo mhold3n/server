@@ -127,7 +127,13 @@ lint:
 	ruff check services mcp/servers --force-exclude && black --check services mcp/servers --extend-exclude '/services/wrkhrs/'
 
 type:
-	mypy --strict services/api/src services/router/src services/worker_client/src
+	set -e; \
+	(cd services/api && mypy --strict src); \
+	(cd services/router && mypy --strict src); \
+	(cd services/worker_client && mypy --strict src); \
+	(cd mcp/servers/filesystem-mcp && mypy --strict src); \
+	(cd mcp/servers/secrets-mcp && mypy --strict src); \
+	(cd mcp/servers/vector-db-mcp && mypy --strict src)
 
 fix:
 	ruff check --fix services mcp/servers --force-exclude && black services mcp/servers --extend-exclude '/services/wrkhrs/'

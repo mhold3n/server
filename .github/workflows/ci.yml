@@ -66,8 +66,14 @@ jobs:
       
       - name: Run type checking
         run: |
-          mypy --strict services/api/src services/router/src services/worker_client/src
-          mypy --strict mcp/servers/filesystem-mcp/src mcp/servers/secrets-mcp/src mcp/servers/vector-db-mcp/src
+          # One invocation per package: each Hatch layout uses a top-level `src/` package;
+          # passing multiple `*/src` paths in one command triggers "Duplicate module named src".
+          (cd services/api && mypy --strict src)
+          (cd services/router && mypy --strict src)
+          (cd services/worker_client && mypy --strict src)
+          (cd mcp/servers/filesystem-mcp && mypy --strict src)
+          (cd mcp/servers/secrets-mcp && mypy --strict src)
+          (cd mcp/servers/vector-db-mcp && mypy --strict src)
       
       # Run tests
       - name: Run tests
