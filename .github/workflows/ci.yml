@@ -82,7 +82,8 @@ jobs:
 
       # Node.js for GitHub MCP server
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ matrix.node }} }
+        with:
+          node-version: ${{ matrix.node }}
       - name: Install GitHub MCP dependencies
         run: |
           cd mcp/servers/github-mcp
