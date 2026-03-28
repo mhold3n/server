@@ -2,12 +2,10 @@
 
 from .mlflow_logger import MLflowLogger
 from .trace import TraceContext
-from .metrics import MetricsCollector
 
 __all__ = [
     "MLflowLogger",
-    "TraceContext", 
-    "MetricsCollector",
+    "TraceContext",
 ]
 
 

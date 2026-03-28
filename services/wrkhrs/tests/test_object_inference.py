@@ -5,10 +5,9 @@ Tests the AI's ability to guess the "object" (true intent) from ambiguous prompt
 """
 
 import pytest
-import asyncio
 import numpy as np
 import json
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List
 import sys
 import os
 
@@ -20,8 +19,6 @@ from prompt_middleware.voice.voice_analyzer import AdvancedVoiceAnalyzer, VoiceF
 from prompt_middleware.transformations.advanced_transforms import TransformationConfig
 from prompt_middleware.classifier import classify_intent
 
-import pytest
-
 
 class TestObjectInference:
     """Test AI's ability to infer the true 'object' from ambiguous prompts"""
@@ -30,7 +27,6 @@ class TestObjectInference:
     def ambiguous_coding_scenarios(self):
         """Ambiguous coding scenarios with their true 'objects' (intents)"""
         # Load scenarios from the JSONL dataset to mirror training prompts
-        import os, json
         scenarios = []
         path = os.path.join('data', 'prompts', 'ambiguous_coding.jsonl')
         if os.path.exists(path):
@@ -238,12 +234,9 @@ class TestObjectInference:
                 dominance=0.5
             )
             
-            # Infer subtext from voice
+            # Infer subtext from voice, then map to object intent
             subtext = analyzer.infer_subtext(voice_features)
-            
-            # Infer object from voice analysis
-            # Apply classifier on prompt directly for now
-            inferred_object = classify_intent(scenario["prompt"])
+            inferred_object = self._infer_object_from_voice(subtext, scenario)
             
             if inferred_object == scenario["true_object"]:
                 correct_inferences += 1
@@ -362,14 +355,12 @@ class TestObjectInference:
         correct_inferences = 0
         
         for scenario in ambiguous_coding_scenarios:
-            # Get inference from multiple methods
-            voice_inference = self._get_voice_inference(scenario)
-            text_inference = self._get_text_inference(scenario)
-            context_inference = self._get_context_inference(scenario)
-            
-            # Ensemble decision
-            # Use classifier stub as ensemble output for now
-            ensemble_inference = classify_intent(scenario["prompt"]) or text_inference
+            ensemble_inference = self._ensemble_decision(
+                self._get_voice_inference(scenario),
+                self._get_text_inference(scenario),
+                self._get_context_inference(scenario),
+                scenario,
+            )
             
             if ensemble_inference == scenario["true_object"]:
                 correct_inferences += 1
@@ -410,8 +401,7 @@ class TestObjectInference:
     def _get_text_inference(self, scenario: Dict) -> str:
         """Get object inference from text analysis"""
         prompt = scenario["prompt"].lower()
-        expected_actions = [action.lower() for action in scenario["context_clues"]["expected_actions"]]
-        
+
         # Simple keyword matching
         if any(word in prompt for word in ["broken", "not working", "wrong"]):
             return "bug_in_code"

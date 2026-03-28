@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  vllm:
+  qwen-vllm:
     image: vllm/vllm-openai:latest
     restart: unless-stopped
     deploy:
@@ -15,9 +15,9 @@ services:
       - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
     command:
       [
-        "--model", "${MODEL_NAME:-mistralai/Mistral-7B-Instruct-v0.3}",
-        "--dtype", "${DTYPE:-float16}",
-        "--max-model-len", "${MAX_MODEL_LEN:-8192}",
+        "--model", "${MODEL_NAME:-Qwen/Qwen3.5-9B}",
+        "--dtype", "${DTYPE:-bfloat16}",
+        "--max-model-len", "${MAX_MODEL_LEN:-32768}",
         "--gpu-memory-utilization", "${GPU_MEMORY_UTILIZATION:-0.92}",
         "--enable-prefix-caching",
         "--host", "0.0.0.0",

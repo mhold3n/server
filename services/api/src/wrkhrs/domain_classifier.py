@@ -1,7 +1,6 @@
 """Domain classification for chemistry, mechanical, and materials engineering."""
 
 import re
-from typing import Dict, List, Optional, Tuple
 
 import structlog
 
@@ -103,73 +102,73 @@ class DomainClassifier:
     def classify(
         self,
         text: str,
-        domains: Optional[List[str]] = None,
+        domains: list[str] | None = None,
         threshold: float = 0.1,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Classify text into engineering domains.
-        
+
         Args:
             text: Text to classify
             domains: Optional list of domains to consider (default: all)
             threshold: Minimum score threshold for inclusion
-            
+
         Returns:
             Dictionary mapping domain names to confidence scores
         """
         if domains is None:
             domains = list(self.domain_patterns.keys())
-        
+
         text_lower = text.lower()
         scores = {}
-        
+
         for domain in domains:
             if domain not in self.domain_patterns:
                 continue
-                
+
             domain_score = self._calculate_domain_score(
-                text_lower, 
+                text_lower,
                 self.domain_patterns[domain]
             )
-            
+
             if domain_score >= threshold:
                 scores[domain] = domain_score
-        
+
         # Normalize scores to sum to 1.0
         total_score = sum(scores.values())
         if total_score > 0:
             scores = {k: v / total_score for k, v in scores.items()}
-        
+
         logger.debug(
             "Domain classification completed",
             text_length=len(text),
             scores=scores,
         )
-        
+
         return scores
 
     def _calculate_domain_score(
         self,
         text: str,
-        patterns: Dict[str, List[str]],
+        patterns: dict[str, list[str]],
     ) -> float:
         """Calculate domain score based on keyword and pattern matches.
-        
+
         Args:
             text: Lowercase text to analyze
             patterns: Domain-specific patterns (keywords, formulas, units)
-            
+
         Returns:
             Domain confidence score (0.0 to 1.0)
         """
         score = 0.0
         total_matches = 0
-        
+
         # Keyword matching (weight: 1.0)
         keywords = patterns.get("keywords", [])
         keyword_matches = sum(1 for keyword in keywords if keyword in text)
         score += keyword_matches * 1.0
         total_matches += keyword_matches
-        
+
         # Formula pattern matching (weight: 2.0)
         formulas = patterns.get("formulas", [])
         formula_matches = 0
@@ -178,81 +177,81 @@ class DomainClassifier:
                 formula_matches += 1
         score += formula_matches * 2.0
         total_matches += formula_matches
-        
+
         # Unit matching (weight: 1.5)
         units = patterns.get("units", [])
         unit_matches = sum(1 for unit in units if unit in text)
         score += unit_matches * 1.5
         total_matches += unit_matches
-        
+
         # Normalize by text length and total possible matches
         if total_matches == 0:
             return 0.0
-        
+
         # Normalize by text length (longer texts can have more matches)
         text_length_factor = min(len(text) / 100, 1.0)  # Cap at 1.0 for texts > 100 chars
-        
+
         # Normalize by total possible matches
         max_possible_matches = len(keywords) + len(formulas) + len(units)
         match_ratio = total_matches / max_possible_matches if max_possible_matches > 0 else 0
-        
+
         # Combine factors
         normalized_score = (score / total_matches) * match_ratio * text_length_factor
-        
+
         return min(normalized_score, 1.0)  # Cap at 1.0
 
     def get_primary_domain(
         self,
         text: str,
-        domains: Optional[List[str]] = None,
+        domains: list[str] | None = None,
         threshold: float = 0.3,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Get the primary domain for the text.
-        
+
         Args:
             text: Text to classify
             domains: Optional list of domains to consider
             threshold: Minimum score threshold
-            
+
         Returns:
             Primary domain name or None if below threshold
         """
         scores = self.classify(text, domains, threshold)
-        
+
         if not scores:
             return None
-        
+
         return max(scores.items(), key=lambda x: x[1])[0]
 
     def get_domain_weights(
         self,
         text: str,
-        domains: Optional[List[str]] = None,
-    ) -> Dict[str, float]:
+        domains: list[str] | None = None,
+    ) -> dict[str, float]:
         """Get domain weights for content weighting.
-        
+
         Args:
             text: Text to classify
             domains: Optional list of domains to consider
-            
+
         Returns:
             Dictionary mapping domain names to weights (0.0 to 1.0)
         """
         scores = self.classify(text, domains, threshold=0.0)
-        
+
         # Ensure all domains have a weight (minimum 0.1)
         if domains is None:
             domains = list(self.domain_patterns.keys())
-        
+
         weights = {}
         for domain in domains:
             weights[domain] = max(scores.get(domain, 0.0), 0.1)
-        
+
         # Normalize to sum to 1.0
         total_weight = sum(weights.values())
         if total_weight > 0:
             weights = {k: v / total_weight for k, v in weights.items()}
-        
+
         return weights
 
 

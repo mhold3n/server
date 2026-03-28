@@ -1,24 +1,24 @@
 """Golden test sets for evaluation."""
 
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 import structlog
 
 logger = structlog.get_logger()
 
 
-def load_golden_sets() -> Dict[str, List[Dict[str, Any]]]:
+def load_golden_sets() -> dict[str, list[dict[str, Any]]]:
     """Load golden test sets.
-    
+
     Returns:
         Dictionary of golden test sets
     """
     golden_sets = {}
-    
+
     # Load from files
     golden_sets_dir = os.path.dirname(__file__)
-    
+
     # Chemistry tests
     golden_sets["chemistry"] = [
         {
@@ -49,7 +49,7 @@ def load_golden_sets() -> Dict[str, List[Dict[str, Any]]]:
             "reference_uris": ["https://example.com/benzene-bonding"],
         },
     ]
-    
+
     # Mechanical engineering tests
     golden_sets["mechanical"] = [
         {
@@ -80,7 +80,7 @@ def load_golden_sets() -> Dict[str, List[Dict[str, Any]]]:
             "reference_uris": ["https://example.com/gear-design"],
         },
     ]
-    
+
     # Materials science tests
     golden_sets["materials"] = [
         {
@@ -111,7 +111,7 @@ def load_golden_sets() -> Dict[str, List[Dict[str, Any]]]:
             "reference_uris": ["https://example.com/titanium-crystal-structure"],
         },
     ]
-    
+
     # General engineering tests
     golden_sets["general"] = [
         {
@@ -142,7 +142,7 @@ def load_golden_sets() -> Dict[str, List[Dict[str, Any]]]:
             "reference_uris": ["https://example.com/heat-exchanger"],
         },
     ]
-    
+
     # Code-related tests
     golden_sets["code"] = [
         {
@@ -173,7 +173,7 @@ def load_golden_sets() -> Dict[str, List[Dict[str, Any]]]:
             "reference_uris": ["https://example.com/rest-api-auth"],
         },
     ]
-    
+
     # Policy enforcement tests
     golden_sets["policy"] = [
         {
@@ -204,75 +204,75 @@ def load_golden_sets() -> Dict[str, List[Dict[str, Any]]]:
             "reference_uris": ["https://example.com/moment-of-inertia"],
         },
     ]
-    
+
     # Load from files if they exist
     for set_name in golden_sets.keys():
         file_path = os.path.join(golden_sets_dir, f"{set_name}.json")
         if os.path.exists(file_path):
             try:
                 import json
-                with open(file_path, 'r') as f:
+                with open(file_path) as f:
                     file_tests = json.load(f)
                     golden_sets[set_name].extend(file_tests)
                 logger.info(f"Loaded additional tests from {file_path}")
             except Exception as e:
                 logger.warning(f"Failed to load tests from {file_path}: {e}")
-    
+
     return golden_sets
 
 
-def get_test_by_id(test_id: str) -> Dict[str, Any]:
+def get_test_by_id(test_id: str) -> dict[str, Any]:
     """Get a specific test by ID.
-    
+
     Args:
         test_id: Test ID
-        
+
     Returns:
         Test configuration
-        
+
     Raises:
         ValueError: If test not found
     """
     golden_sets = load_golden_sets()
-    
-    for set_name, tests in golden_sets.items():
+
+    for _set_name, tests in golden_sets.items():
         for test in tests:
             if test["id"] == test_id:
                 return test
-    
+
     raise ValueError(f"Test with ID '{test_id}' not found")
 
 
-def get_tests_by_category(category: str) -> List[Dict[str, Any]]:
+def get_tests_by_category(category: str) -> list[dict[str, Any]]:
     """Get tests by category.
-    
+
     Args:
         category: Test category
-        
+
     Returns:
         List of test configurations
     """
     golden_sets = load_golden_sets()
-    
+
     if category in golden_sets:
         return golden_sets[category]
-    
+
     return []
 
 
-def get_all_test_ids() -> List[str]:
+def get_all_test_ids() -> list[str]:
     """Get all test IDs.
-    
+
     Returns:
         List of test IDs
     """
     golden_sets = load_golden_sets()
-    
+
     test_ids = []
     for tests in golden_sets.values():
         for test in tests:
             test_ids.append(test["id"])
-    
+
     return test_ids
 
 

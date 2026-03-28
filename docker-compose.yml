@@ -12,6 +12,8 @@ services:
       - REDIS_URL=redis://queue:6379
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - DEBUG=${DEBUG:-false}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./services/api:/app
     ports:

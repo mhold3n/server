@@ -7,12 +7,10 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY pyproject.toml ./
-RUN pip install --no-cache-dir -e .
-
-# Copy source code
+# Copy requirements and source
+COPY pyproject.toml README.md ./
 COPY src/ ./src/
+RUN pip install --no-cache-dir -e .
 
 # Create non-root user
 RUN useradd -m -u 1000 mcp && chown -R mcp:mcp /app

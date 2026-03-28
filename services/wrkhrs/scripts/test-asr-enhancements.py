@@ -6,14 +6,11 @@ Tests URL and base64 audio transcription functionality
 
 import asyncio
 import sys
-import os
 import requests
 import json
 import base64
-import tempfile
 import time
-from typing import Dict, Any, Optional
-from pathlib import Path
+from typing import Dict, Any
 
 
 class Colors:
@@ -331,9 +328,9 @@ class ASRTester:
                     score = result.get("technical_score", 0)
                     
                     if is_technical == expected_technical:
-                        self.print_status(f"✅ Technical analysis correct", "success")
+                        self.print_status("✅ Technical analysis correct", "success")
                     else:
-                        self.print_status(f"⚠️  Technical analysis mismatch", "warning")
+                        self.print_status("⚠️  Technical analysis mismatch", "warning")
                     
                     print(f"   Text: '{text[:50]}...'")
                     print(f"   Score: {score:.3f}")

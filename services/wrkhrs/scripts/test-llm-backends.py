@@ -8,9 +8,8 @@ import asyncio
 import sys
 import os
 import requests
-import json
 import time
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from datetime import datetime
 
 # Add parent directory to path to import llm_backends
@@ -246,7 +245,7 @@ class LLMTester:
             
             # Test current backend health
             health_info = await manager.health_check()
-            self.print_status(f"🔍 Testing manager health check...", "test")
+            self.print_status("🔍 Testing manager health check...", "test")
             
             if health_info.get("healthy", False):
                 self.print_status("✅ LLM Manager health check passed", "success")
@@ -306,7 +305,7 @@ class LLMTester:
                 response = requests.get(health_url, timeout=5)
                 
                 if response.status_code == 200:
-                    self.print_status(f"✅ Orchestrator health check passed", "success")
+                    self.print_status("✅ Orchestrator health check passed", "success")
                     results["tested"] = True
                     results["base_url"] = base_url
                     

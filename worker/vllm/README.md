@@ -50,8 +50,8 @@ docker run --rm --gpus all nvidia/cuda:11.8-base-ubuntu20.04 nvidia-smi
 Copy `.env.example` to `.env` and configure:
 
 ```bash
-# Model configuration
-MODEL_NAME=mistralai/Mistral-7B-Instruct-v0.3
+# Model configuration (GPU path / no-compromises)
+MODEL_NAME=Qwen/Qwen3.5-9B
 HF_TOKEN=your_huggingface_token
 
 # GPU configuration
@@ -63,8 +63,8 @@ WORKER_VLLM_PORT=8000
 WORKER_PROXY_PORT=8443
 
 # Performance tuning
-MAX_MODEL_LEN=8192
-DTYPE=float16
+MAX_MODEL_LEN=32768
+DTYPE=bfloat16
 ENABLE_PREFIX_CACHING=true
 ```
 
@@ -92,11 +92,13 @@ ENABLE_PREFIX_CACHING=true
 ### Using Docker Compose
 
 ```bash
-# Start vLLM worker
-docker compose -f docker-compose.worker.yml up -d
+cd Birtha_bigger_n_badder/worker/vllm
+
+# Start Qwen3.5-9B vLLM worker on GPU host
+docker compose -f docker-compose.vllm.yml up -d
 
 # View logs
-docker compose -f docker-compose.worker.yml logs -f vllm
+docker compose -f docker-compose.vllm.yml logs -f qwen-vllm
 ```
 
 ### Manual Docker Run

@@ -1,12 +1,12 @@
 """Policy registry for dynamic policy discovery and management."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import structlog
 from pydantic import BaseModel
 
-from .evidence import EvidencePolicy
 from .citations import CitationPolicy
+from .evidence import EvidencePolicy
 from .hedging import HedgingPolicy
 from .units import SIUnitPolicy
 
@@ -15,11 +15,11 @@ logger = structlog.get_logger()
 
 class PolicyConfig(BaseModel):
     """Configuration for a policy."""
-    
+
     name: str
     description: str
     enabled: bool = True
-    config: Dict[str, Any] = {}
+    config: dict[str, Any] = {}
     priority: int = 0
 
 
@@ -54,7 +54,7 @@ class PolicyRegistry:
                 priority=1,
             ),
         )
-        
+
         # Citation policy
         self.register_policy(
             "citations",
@@ -71,7 +71,7 @@ class PolicyRegistry:
                 priority=2,
             ),
         )
-        
+
         # Hedging policy
         self.register_policy(
             "hedging",
@@ -87,7 +87,7 @@ class PolicyRegistry:
                 priority=3,
             ),
         )
-        
+
         # SI units policy
         self.register_policy(
             "si_units",
@@ -112,7 +112,7 @@ class PolicyRegistry:
         config: PolicyConfig,
     ) -> None:
         """Register a policy.
-        
+
         Args:
             name: Policy name
             policy_class: Policy class
@@ -120,34 +120,34 @@ class PolicyRegistry:
         """
         self.policies[name] = policy_class
         self.policy_configs[name] = config
-        
+
         logger.info("Registered policy", policy_name=name, config=config.dict())
 
-    def get_policy(self, name: str) -> Optional[Any]:
+    def get_policy(self, name: str) -> Any | None:
         """Get a policy instance.
-        
+
         Args:
             name: Policy name
-            
+
         Returns:
             Policy instance or None
         """
         if name not in self.policies:
             return None
-        
+
         policy_class = self.policies[name]
         config = self.policy_configs[name]
-        
+
         return policy_class(**config.config)
 
-    def get_available_policies(self) -> List[Dict[str, Any]]:
+    def get_available_policies(self) -> list[dict[str, Any]]:
         """Get list of available policies.
-        
+
         Returns:
             List of policy information
         """
         policies = []
-        
+
         for name, config in self.policy_configs.items():
             if config.enabled:
                 policies.append({
@@ -156,33 +156,33 @@ class PolicyRegistry:
                     "config": config.config,
                     "priority": config.priority,
                 })
-        
+
         # Sort by priority
         policies.sort(key=lambda x: x["priority"])
-        
+
         return policies
 
-    def get_policy_schema(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_policy_schema(self, name: str) -> dict[str, Any] | None:
         """Get JSON schema for a policy.
-        
+
         Args:
             name: Policy name
-            
+
         Returns:
             JSON schema or None
         """
         if name not in self.policy_configs:
             return None
-        
+
         config = self.policy_configs[name]
-        
+
         # Generate schema from config
         schema = {
             "type": "object",
             "properties": {},
             "required": [],
         }
-        
+
         for key, value in config.config.items():
             if isinstance(value, bool):
                 schema["properties"][key] = {"type": "boolean"}
@@ -198,67 +198,67 @@ class PolicyRegistry:
                 schema["properties"][key] = {"type": "object"}
             else:
                 schema["properties"][key] = {"type": "string"}
-        
+
         return schema
 
     def update_policy_config(
         self,
         name: str,
-        config: Dict[str, Any],
+        config: dict[str, Any],
     ) -> bool:
         """Update policy configuration.
-        
+
         Args:
             name: Policy name
             config: New configuration
-            
+
         Returns:
             True if successful, False otherwise
         """
         if name not in self.policy_configs:
             return False
-        
+
         # Update config
         self.policy_configs[name].config.update(config)
-        
+
         logger.info("Updated policy config", policy_name=name, config=config)
         return True
 
     def enable_policy(self, name: str) -> bool:
         """Enable a policy.
-        
+
         Args:
             name: Policy name
-            
+
         Returns:
             True if successful, False otherwise
         """
         if name not in self.policy_configs:
             return False
-        
+
         self.policy_configs[name].enabled = True
         logger.info("Enabled policy", policy_name=name)
         return True
 
     def disable_policy(self, name: str) -> bool:
         """Disable a policy.
-        
+
         Args:
             name: Policy name
-            
+
         Returns:
             True if successful, False otherwise
         """
         if name not in self.policy_configs:
             return False
-        
+
         self.policy_configs[name].enabled = False
         logger.info("Disabled policy", policy_name=name)
         return True
 
-    def get_enabled_policies(self) -> List[str]:
+    def get_enabled_policies(self) -> list[str]:
         """Get list of enabled policy names.
-        
+
         Returns:
             List of enabled policy names
         """
@@ -267,22 +267,22 @@ class PolicyRegistry:
             if config.enabled
         ]
 
-    def get_policy_summary(self) -> Dict[str, Any]:
+    def get_policy_summary(self) -> dict[str, Any]:
         """Get summary of all policies.
-        
+
         Returns:
             Policy summary
         """
         total_policies = len(self.policies)
         enabled_policies = len(self.get_enabled_policies())
-        
+
         policy_types = {}
-        for name, policy_class in self.policies.items():
+        for _name, policy_class in self.policies.items():
             policy_type = policy_class.__name__
             if policy_type not in policy_types:
                 policy_types[policy_type] = 0
             policy_types[policy_type] += 1
-        
+
         return {
             "total_policies": total_policies,
             "enabled_policies": enabled_policies,

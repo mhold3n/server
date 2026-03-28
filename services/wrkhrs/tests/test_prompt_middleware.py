@@ -5,12 +5,9 @@ Tests the ability to infer true intent from ambiguous prompts, especially coding
 """
 
 import pytest
-import asyncio
 import numpy as np
-import json
 import requests
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, List, Any
+from unittest.mock import Mock, patch
 import sys
 import os
 
@@ -21,22 +18,15 @@ from prompt_middleware.app import (
     PromptMiddleware, 
     PromptContext, 
     TransformationType, 
-    TransformationResult,
-    VoiceAnalyzer,
-    GeometricTransformer,
-    SemanticReprocessor
+    GeometricTransformer
 )
 from prompt_middleware.transformations.advanced_transforms import (
     AdvancedPromptTransformer,
-    TransformationConfig,
-    HyperbolicTransformer,
-    QuantumInspiredTransformer,
-    FractalTransformer
+    TransformationConfig
 )
 from prompt_middleware.voice.voice_analyzer import (
     AdvancedVoiceAnalyzer,
-    VoiceFeatures,
-    SubtextInference
+    VoiceFeatures
 )
 
 class TestPromptMiddleware:

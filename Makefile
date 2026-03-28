@@ -124,13 +124,13 @@ test-combined: test-api test-router
 test: test-combined
 
 lint:
-	ruff check services && black --check services
+	ruff check services mcp/servers --force-exclude && black --check services mcp/servers --extend-exclude '/services/wrkhrs/'
 
 type:
 	mypy --strict services/api/src services/router/src services/worker_client/src
 
 fix:
-	ruff check --fix services && black services
+	ruff check --fix services mcp/servers --force-exclude && black services mcp/servers --extend-exclude '/services/wrkhrs/'
 
 # CI simulation
 ci: lint type test-combined

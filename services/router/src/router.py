@@ -1,18 +1,18 @@
 """Agent router with MCP client integration."""
 
 import asyncio
-import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import structlog
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from httpx import AsyncClient, HTTPError
 from pydantic import BaseModel, Field
 from redis.asyncio import Redis
 
 from .config import settings
-from .mcp_client import MCPClient, mcp_client
+from .context_compaction import compact_tool_result_for_llm
+from .mcp_client import MCPClient
 
 # Configure structured logging
 structlog.configure(
@@ -36,8 +36,8 @@ structlog.configure(
 logger = structlog.get_logger()
 
 # Global clients
-redis_client: Optional[Redis] = None
-api_client: Optional[AsyncClient] = None
+redis_client: Redis | None = None
+api_client: AsyncClient | None = None
 
 app = FastAPI(
     title="Agent Router",
@@ -66,19 +66,19 @@ class TaskRequest(BaseModel):
         description="System prompt",
     )
     model: str = Field(
-        default="mistralai/Mistral-7B-Instruct-v0.3",
+        default=settings.default_llm_model,
         description="Model to use",
     )
-    tools: Optional[List[str]] = Field(
+    tools: list[str] | None = Field(
         default=None,
         description="List of MCP tools to use",
     )
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
-    max_tokens: Optional[int] = Field(default=None, gt=0)
+    max_tokens: int | None = Field(default=None, gt=0)
     # Optional: extra context for workflows (e.g., repo list)
-    context: Optional[Dict[str, Any]] = Field(default=None)
+    context: dict[str, Any] | None = Field(default=None)
     # Optional: per-tool arguments override. Key format: 'server:tool'.
-    tool_args: Optional[Dict[str, Dict[str, Any]]] = Field(default=None)
+    tool_args: dict[str, dict[str, Any]] | None = Field(default=None)
 
 
 class TaskResponse(BaseModel):
@@ -86,9 +86,9 @@ class TaskResponse(BaseModel):
 
     task_id: str
     status: str
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-    tools_used: List[str] = Field(default_factory=list)
+    result: dict[str, Any] | None = None
+    error: str | None = None
+    tools_used: list[str] = Field(default_factory=list)
     execution_time: float
 
 
@@ -98,17 +98,17 @@ class HealthResponse(BaseModel):
     status: str
     timestamp: float
     version: str
-    services: Dict[str, str]
-    mcp_servers: Dict[str, bool]
+    services: dict[str, str]
+    mcp_servers: dict[str, bool]
 
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize clients on startup."""
     global redis_client, api_client
-    
+
     logger.info("Starting Agent Router", version="0.1.0")
-    
+
     # Initialize Redis client
     try:
         redis_client = Redis.from_url(settings.redis_url, decode_responses=True)
@@ -117,7 +117,7 @@ async def startup_event():
     except Exception as e:
         logger.error("Failed to connect to Redis", error=str(e))
         redis_client = None
-    
+
     # Initialize API client
     try:
         api_client = AsyncClient(
@@ -134,11 +134,11 @@ async def startup_event():
 async def shutdown_event():
     """Cleanup on shutdown."""
     global redis_client, api_client
-    
+
     if redis_client:
         await redis_client.close()
         logger.info("Closed Redis connection")
-    
+
     if api_client:
         await api_client.aclose()
         logger.info("Closed API client connection")
@@ -148,7 +148,7 @@ async def shutdown_event():
 async def health_check():
     """Health check endpoint."""
     services = {}
-    
+
     # Check Redis
     if redis_client:
         try:
@@ -158,7 +158,7 @@ async def health_check():
             services["redis"] = "unhealthy"
     else:
         services["redis"] = "not_configured"
-    
+
     # Check API client
     if api_client:
         try:
@@ -168,12 +168,12 @@ async def health_check():
             services["api"] = "unhealthy"
     else:
         services["api"] = "not_configured"
-    
+
     # Check MCP servers
     mcp_servers = {}
     async with MCPClient() as mcp:
         mcp_servers = await mcp.health_check_all()
-    
+
     return HealthResponse(
         status="healthy" if all(s == "healthy" for s in services.values()) else "degraded",
         timestamp=asyncio.get_event_loop().time(),
@@ -221,21 +221,21 @@ async def get_server_tools(server_name: str):
             tools = await mcp.get_server_tools(server_name)
             return {"server": server_name, "tools": tools}
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
         logger.error(
             "Failed to get tools from MCP server",
             server=server_name,
             error=str(e),
         )
-        raise HTTPException(status_code=500, detail=f"Failed to get tools: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get tools: {str(e)}") from e
 
 
 @app.post("/mcp/servers/{server_name}/call")
 async def call_mcp_tool(
     server_name: str,
     tool_name: str,
-    arguments: Optional[Dict[str, Any]] = None,
+    arguments: dict[str, Any] | None = None,
 ):
     """Call a tool on an MCP server."""
     try:
@@ -248,7 +248,7 @@ async def call_mcp_tool(
                 "result": result,
             }
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
         logger.error(
             "Failed to call MCP tool",
@@ -256,7 +256,7 @@ async def call_mcp_tool(
             tool=tool_name,
             error=str(e),
         )
-        raise HTTPException(status_code=500, detail=f"Failed to call tool: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to call tool: {str(e)}") from e
 
 
 @app.post("/route", response_model=TaskResponse)
@@ -267,11 +267,11 @@ async def route_task(request: TaskRequest):
             status_code=503,
             detail="API client not available",
         )
-    
+
     start_time = asyncio.get_event_loop().time()
     task_id = f"task_{int(start_time)}"
     tools_used = []
-    
+
     try:
         logger.info(
             "Processing task",
@@ -279,13 +279,13 @@ async def route_task(request: TaskRequest):
             prompt_length=len(request.prompt),
             tools=request.tools,
         )
-        
+
         # Prepare messages
         messages = [
             {"role": "system", "content": request.system},
             {"role": "user", "content": request.prompt},
         ]
-        
+
         # If tools are specified, try to use them
         if request.tools:
             async with MCPClient() as mcp:
@@ -301,9 +301,9 @@ async def route_task(request: TaskRequest):
                                 continue
                             server_name = servers[0].name
                             tool_name = tool_spec
-                        
+
                         # Build tool arguments
-                        args: Dict[str, Any] = {"query": request.prompt}
+                        args: dict[str, Any] = {"query": request.prompt}
                         key = f"{server_name}:{tool_name}"
                         if request.tool_args and key in request.tool_args:
                             args.update(request.tool_args[key])
@@ -314,15 +314,18 @@ async def route_task(request: TaskRequest):
                             tool_name,
                             args,
                         )
-                        
-                        # Add tool result to messages
+
+                        # Add tool result to messages (compact RAG evidence for LLM)
+                        content = compact_tool_result_for_llm(
+                            server_name, tool_name, tool_result
+                        )
                         messages.append({
                             "role": "assistant",
-                            "content": f"Tool result from {server_name}:{tool_name}: {json.dumps(tool_result)}",
+                            "content": content,
                         })
-                        
+
                         tools_used.append(f"{server_name}:{tool_name}")
-                        
+
                     except Exception as e:
                         logger.warning(
                             "Failed to use MCP tool",
@@ -330,7 +333,7 @@ async def route_task(request: TaskRequest):
                             error=str(e),
                         )
                         continue
-        
+
         # Call the API service
         payload = {
             "model": request.model,
@@ -338,20 +341,20 @@ async def route_task(request: TaskRequest):
             "temperature": request.temperature,
             "max_tokens": request.max_tokens,
         }
-        
+
         response = await api_client.post("/v1/chat/completions", json=payload)
         response.raise_for_status()
-        
+
         result = response.json()
         execution_time = asyncio.get_event_loop().time() - start_time
-        
+
         logger.info(
             "Task completed successfully",
             task_id=task_id,
             execution_time=execution_time,
             tools_used=tools_used,
         )
-        
+
         return TaskResponse(
             task_id=task_id,
             status="completed",
@@ -359,19 +362,19 @@ async def route_task(request: TaskRequest):
             tools_used=tools_used,
             execution_time=execution_time,
         )
-        
+
     except HTTPError as e:
         execution_time = asyncio.get_event_loop().time() - start_time
         resp = getattr(e, "response", None)
         error_msg = f"API request failed: {resp.text if resp is not None else str(e)}"
-        
+
         logger.error(
             "Task failed with API error",
             task_id=task_id,
             error=error_msg,
             execution_time=execution_time,
         )
-        
+
         return TaskResponse(
             task_id=task_id,
             status="failed",
@@ -379,18 +382,18 @@ async def route_task(request: TaskRequest):
             tools_used=tools_used,
             execution_time=execution_time,
         )
-        
+
     except Exception as e:
         execution_time = asyncio.get_event_loop().time() - start_time
         error_msg = f"Unexpected error: {str(e)}"
-        
+
         logger.error(
             "Task failed with unexpected error",
             task_id=task_id,
             error=error_msg,
             execution_time=execution_time,
         )
-        
+
         return TaskResponse(
             task_id=task_id,
             status="failed",
@@ -402,7 +405,7 @@ async def route_task(request: TaskRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "router:app",
         host=settings.host,

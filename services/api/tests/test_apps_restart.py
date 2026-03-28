@@ -1,5 +1,6 @@
-from fastapi.testclient import TestClient
 from unittest import mock
+
+from fastapi.testclient import TestClient
 
 from src.app import app
 

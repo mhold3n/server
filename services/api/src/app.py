@@ -2,34 +2,33 @@
 
 import asyncio
 from datetime import datetime
-import logging
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any
 
 import structlog
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from openai import AsyncOpenAI
+from opentelemetry import trace
 from prometheus_client import Counter, Histogram, generate_latest
 from pydantic import BaseModel, Field
 from redis.asyncio import Redis
-from pathlib import Path
 
-from .config import settings
+from .config import get_worker_settings, settings
 from .observability.context import RequestContextMiddleware, get_request_context
-from .observability.trace import get_trace_context
 from .observability.mlflow_logger import MLflowLogger
 from .observability.provenance import ProvenanceLogger
+from .observability.trace import get_trace_context
 from .policies.middleware import policy_enforcer
 
 # Routers (scaffolded control plane API)
 try:
-    from .routes import vms as vms_router
-    from .routes import torrents as torrents_router
-    from .routes import search as search_router
-    from .routes import apps as apps_router
     from .routes import ai as ai_router
+    from .routes import apps as apps_router
+    from .routes import search as search_router
+    from .routes import torrents as torrents_router
+    from .routes import vms as vms_router
 except Exception:
     vms_router = None  # type: ignore
     torrents_router = None  # type: ignore
@@ -84,10 +83,10 @@ CHAT_DURATION = Histogram(
 )
 
 # Global clients
-redis_client: Optional[Redis] = None
-openai_client: Optional[AsyncOpenAI] = None
-mlflow_logger: Optional[MLflowLogger] = None
-provenance_logger: Optional[ProvenanceLogger] = None
+redis_client: Redis | None = None
+openai_client: AsyncOpenAI | None = None
+mlflow_logger: MLflowLogger | None = None
+provenance_logger: ProvenanceLogger | None = None
 
 app = FastAPI(
     title="Agent Orchestrator API",
@@ -141,9 +140,9 @@ class ChatRequest(BaseModel):
         default="mistralai/Mistral-7B-Instruct-v0.3",
         description="Model to use for completion",
     )
-    messages: List[ChatMessage] = Field(..., description="List of messages")
-    temperature: Optional[float] = Field(default=0.7, ge=0.0, le=2.0)
-    max_tokens: Optional[int] = Field(default=None, gt=0)
+    messages: list[ChatMessage] = Field(..., description="List of messages")
+    temperature: float | None = Field(default=0.7, ge=0.0, le=2.0)
+    max_tokens: int | None = Field(default=None, gt=0)
     stream: bool = Field(default=False, description="Enable streaming response")
 
 
@@ -154,8 +153,8 @@ class ChatResponse(BaseModel):
     object: str = "chat.completion"
     created: int
     model: str
-    choices: List[Dict[str, Any]]
-    usage: Dict[str, int]
+    choices: list[dict[str, Any]]
+    usage: dict[str, int]
 
 
 class HealthResponse(BaseModel):
@@ -164,29 +163,29 @@ class HealthResponse(BaseModel):
     status: str
     timestamp: str
     version: str
-    services: Dict[str, str]
+    services: dict[str, str]
 
 
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
     """Middleware to collect Prometheus metrics."""
     start_time = asyncio.get_event_loop().time()
-    
+
     response = await call_next(request)
-    
+
     duration = asyncio.get_event_loop().time() - start_time
-    
+
     REQUEST_COUNT.labels(
         method=request.method,
         endpoint=request.url.path,
         status_code=response.status_code,
     ).inc()
-    
+
     REQUEST_DURATION.labels(
         method=request.method,
         endpoint=request.url.path,
     ).observe(duration)
-    
+
     return response
 
 
@@ -194,9 +193,9 @@ async def metrics_middleware(request: Request, call_next):
 async def startup_event():
     """Initialize clients on startup."""
     global redis_client, openai_client, mlflow_logger, provenance_logger
-    
+
     logger.info("Starting Agent Orchestrator API", version="0.1.0")
-    
+
     # Initialize OpenTelemetry tracing
     try:
         trace_context = get_trace_context()
@@ -206,7 +205,7 @@ async def startup_event():
         logger.info("OpenTelemetry tracing initialized")
     except Exception as e:
         logger.error("Failed to initialize OpenTelemetry", error=str(e))
-    
+
     # Initialize MLflow logger
     try:
         mlflow_logger = MLflowLogger(
@@ -217,7 +216,7 @@ async def startup_event():
     except Exception as e:
         logger.error("Failed to initialize MLflow logger", error=str(e))
         mlflow_logger = None
-    
+
     # Initialize provenance logger
     try:
         if mlflow_logger:
@@ -226,7 +225,7 @@ async def startup_event():
     except Exception as e:
         logger.error("Failed to initialize provenance logger", error=str(e))
         provenance_logger = None
-    
+
     # Initialize Redis client
     try:
         redis_client = Redis.from_url(settings.redis_url, decode_responses=True)
@@ -235,14 +234,20 @@ async def startup_event():
     except Exception as e:
         logger.error("Failed to connect to Redis", error=str(e))
         redis_client = None
-    
+
     # Initialize OpenAI client
     try:
+        worker_cfg = get_worker_settings(settings)
         openai_client = AsyncOpenAI(
-            base_url=settings.openai_base_url,
+            base_url=worker_cfg.base_url,
             api_key=settings.openai_api_key,
         )
-        logger.info("Initialized OpenAI client", base_url=settings.openai_base_url)
+        logger.info(
+            "Initialized OpenAI client",
+            base_url=worker_cfg.base_url,
+            profile=str(settings.orch_profile),
+            default_model=worker_cfg.default_model,
+        )
     except Exception as e:
         logger.error("Failed to initialize OpenAI client", error=str(e))
         openai_client = None
@@ -252,7 +257,7 @@ async def startup_event():
 async def shutdown_event():
     """Cleanup on shutdown."""
     global redis_client
-    
+
     if redis_client:
         await redis_client.close()
         logger.info("Closed Redis connection")
@@ -262,7 +267,7 @@ async def shutdown_event():
 async def health_check():
     """Health check endpoint."""
     services = {}
-    
+
     # Check Redis
     if redis_client:
         try:
@@ -272,7 +277,7 @@ async def health_check():
             services["redis"] = "unhealthy"
     else:
         services["redis"] = "not_configured"
-    
+
     # Check OpenAI client
     if openai_client:
         try:
@@ -283,7 +288,7 @@ async def health_check():
             services["openai"] = "unhealthy"
     else:
         services["openai"] = "not_configured"
-    
+
     return HealthResponse(
         status="healthy" if all(s == "healthy" for s in services.values()) else "degraded",
         timestamp=datetime.utcnow().isoformat(),
@@ -297,7 +302,7 @@ async def metrics():
     """Prometheus metrics endpoint."""
     if not settings.enable_metrics:
         raise HTTPException(status_code=404, detail="Metrics disabled")
-    
+
     return Response(
         content=generate_latest(),
         media_type="text/plain; version=0.0.4; charset=utf-8",
@@ -315,15 +320,15 @@ async def chat_completions(request: ChatRequest, http_request: Request):
     # Basic validation: require at least one message
     if not request.messages:
         raise HTTPException(status_code=422, detail="'messages' must contain at least one item")
-    
+
     start_time = asyncio.get_event_loop().time()
-    
+
     # Get request context for provenance tracking
     context = get_request_context(http_request)
     trace_id = context.get("trace_id")
     run_id = context.get("run_id")
     policy_set = context.get("policy_set", "default")
-    
+
     try:
         logger.info(
             "Processing chat request",
@@ -334,12 +339,12 @@ async def chat_completions(request: ChatRequest, http_request: Request):
             run_id=run_id,
             policy_set=policy_set,
         )
-        
+
         # Convert to OpenAI format
         openai_messages = [
             {"role": msg.role, "content": msg.content} for msg in request.messages
         ]
-        
+
         # Make request to worker
         response = await openai_client.chat.completions.create(
             model=request.model,
@@ -348,14 +353,14 @@ async def chat_completions(request: ChatRequest, http_request: Request):
             max_tokens=request.max_tokens,
             stream=request.stream,
         )
-        
+
         duration = asyncio.get_event_loop().time() - start_time
-        
+
         # Extract output for policy enforcement
         output_text = ""
         if response.choices and len(response.choices) > 0:
             output_text = response.choices[0].message.content or ""
-        
+
         # Run policy enforcement
         policy_verdict = None
         if output_text and not request.stream:
@@ -365,7 +370,7 @@ async def chat_completions(request: ChatRequest, http_request: Request):
                     retrieval_docs=None,  # TODO: Add retrieval docs from RAG
                     policy_set=policy_set,
                 )
-                
+
                 # Log policy verdicts to MLflow
                 if mlflow_logger and trace_id:
                     try:
@@ -373,7 +378,7 @@ async def chat_completions(request: ChatRequest, http_request: Request):
                         with mlflow.start_run(run_name=run_id):
                             mlflow.set_tag("trace_id", trace_id)
                             mlflow.set_tag("policy_set", policy_set)
-                            
+
                             # Log policy metrics
                             mlflow.log_metrics({
                                 "policy_overall_score": policy_verdict.overall_score,
@@ -381,33 +386,33 @@ async def chat_completions(request: ChatRequest, http_request: Request):
                                 "policy_suggestions": policy_verdict.total_suggestions,
                                 "policy_passed": int(policy_verdict.overall_passed),
                             })
-                            
+
                             # Log individual policy scores
                             for policy_name, result in policy_verdict.policy_results.items():
                                 mlflow.log_metric(f"policy_{policy_name}_score", result.score)
                                 mlflow.log_metric(f"policy_{policy_name}_violations", len(result.violations))
-                                
+
                     except Exception as e:
                         logger.error("Failed to log policy verdicts to MLflow", error=str(e))
-                
+
                 # Set OTel span attributes
                 span = trace.get_current_span()
                 if span and span.is_recording():
                     span.set_attribute("app.policy_overall_passed", policy_verdict.overall_passed)
                     span.set_attribute("app.policy_overall_score", policy_verdict.overall_score)
                     span.set_attribute("app.policy_violations", policy_verdict.total_violations)
-                    
+
                     for policy_name, result in policy_verdict.policy_results.items():
                         span.set_attribute(f"app.policy_{policy_name}_passed", result.passed)
                         span.set_attribute(f"app.policy_{policy_name}_score", result.score)
-                
+
             except Exception as e:
                 logger.error("Policy enforcement failed", error=str(e))
-        
+
         # Update metrics
         CHAT_REQUESTS.labels(model=request.model, status="success").inc()
         CHAT_DURATION.labels(model=request.model).observe(duration)
-        
+
         logger.info(
             "Chat request completed",
             model=request.model,
@@ -415,22 +420,22 @@ async def chat_completions(request: ChatRequest, http_request: Request):
             usage=response.usage.dict() if response.usage else None,
             policy_verdict=policy_verdict.dict() if policy_verdict else None,
         )
-        
+
         # Add policy verdicts to response if available
         if policy_verdict:
             # Add to response headers or metadata
             response.headers["x-policy-verdict"] = str(policy_verdict.overall_passed)
             response.headers["x-policy-score"] = str(policy_verdict.overall_score)
-        
+
         return response
-        
+
     except Exception as e:
         duration = asyncio.get_event_loop().time() - start_time
-        
+
         # Update metrics
         CHAT_REQUESTS.labels(model=request.model, status="error").inc()
         CHAT_DURATION.labels(model=request.model).observe(duration)
-        
+
         logger.error(
             "Chat request failed",
             model=request.model,
@@ -438,26 +443,26 @@ async def chat_completions(request: ChatRequest, http_request: Request):
             duration=duration,
             trace_id=trace_id,
         )
-        
-        raise HTTPException(status_code=500, detail=f"Chat request failed: {str(e)}")
+
+        raise HTTPException(status_code=500, detail=f"Chat request failed: {str(e)}") from e
 
 
 class FeedbackRequest(BaseModel):
     """Feedback request model."""
-    
+
     run_id: str = Field(..., description="MLflow run ID")
     rating: int = Field(..., ge=1, le=5, description="User rating (1-5)")
-    reasons: List[str] = Field(default_factory=list, description="Feedback reasons")
-    notes: Optional[str] = Field(default=None, description="Additional notes")
+    reasons: list[str] = Field(default_factory=list, description="Feedback reasons")
+    notes: str | None = Field(default=None, description="Additional notes")
 
 
 @app.post("/v1/feedback")
 async def submit_feedback(feedback: FeedbackRequest):
     """Submit feedback for a run.
-    
+
     Args:
         feedback: Feedback request with run_id, rating, reasons, notes
-        
+
     Returns:
         Feedback submission result
     """
@@ -467,7 +472,7 @@ async def submit_feedback(feedback: FeedbackRequest):
                 status_code=503,
                 detail="Provenance logger not available",
             )
-        
+
         # Log feedback to MLflow and feedback.jsonl
         provenance_logger.log_feedback(
             run_id=feedback.run_id,
@@ -475,23 +480,23 @@ async def submit_feedback(feedback: FeedbackRequest):
             reasons=feedback.reasons,
             notes=feedback.notes,
         )
-        
+
         logger.info(
             "Feedback submitted",
             run_id=feedback.run_id,
             rating=feedback.rating,
             reasons=feedback.reasons,
         )
-        
+
         return {
             "status": "success",
             "message": "Feedback submitted successfully",
             "run_id": feedback.run_id,
         }
-        
+
     except Exception as e:
         logger.error("Failed to submit feedback", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to submit feedback: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to submit feedback: {str(e)}") from e
 
 
 @app.get("/")
@@ -516,7 +521,7 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app:app",
         host=settings.host,

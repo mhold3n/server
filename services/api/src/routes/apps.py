@@ -1,19 +1,18 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 import httpx
 from fastapi import APIRouter, HTTPException
 
 from ..clients.docker import DockerUnavailable, list_service_containers, restart_service
 
-
 router = APIRouter(prefix="/api/apps", tags=["Apps"])
 
 
 # Minimal catalog for common services exposed in this stack.
 # For a real implementation, consider discovering from compose or env.
-CATALOG: List[Dict[str, str]] = [
+CATALOG: list[dict[str, str]] = [
     {"id": "api", "name": "API", "url": "http://api:8080/health"},
     {"id": "router", "name": "Router", "url": "http://router:8000/health"},
     {"id": "grafana", "name": "Grafana", "url": "http://grafana:3000/login"},
@@ -24,9 +23,9 @@ CATALOG: List[Dict[str, str]] = [
 
 
 @router.get("")
-async def list_apps() -> Dict[str, Any]:
+async def list_apps() -> dict[str, Any]:
     """Return app catalog with HTTP reachability and container status (if available)."""
-    items: List[Dict[str, Any]] = []
+    items: list[dict[str, Any]] = []
     async with httpx.AsyncClient(timeout=5.0) as client:
         for app in CATALOG:
             http_status = "unknown"
@@ -57,7 +56,7 @@ async def list_apps() -> Dict[str, Any]:
 
 
 @router.post("/{app_id}/restart")
-async def restart_app(app_id: str) -> Dict[str, Any]:
+async def restart_app(app_id: str) -> dict[str, Any]:
     """Restart containers belonging to a compose service via Docker Engine.
 
     Requires `/var/run/docker.sock` to be mounted and docker SDK installed.
@@ -66,6 +65,6 @@ async def restart_app(app_id: str) -> Dict[str, Any]:
         result = restart_service(app_id)
         return {"status": "ok", **result}
     except DockerUnavailable as e:
-        raise HTTPException(status_code=501, detail=str(e))
+        raise HTTPException(status_code=501, detail=str(e)) from e
     except Exception as e:  # pragma: no cover - I/O wrapper
-        raise HTTPException(status_code=500, detail=f"Failed to restart: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to restart: {e}") from e

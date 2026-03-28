@@ -1,9 +1,9 @@
 """Integration tests for policy enforcement in chat flow."""
 
-import pytest
-import httpx
 from unittest.mock import Mock, patch
-from fastapi.testclient import TestClient
+
+import httpx
+import pytest
 
 
 class TestPolicyEnforcementIntegration:
@@ -63,10 +63,10 @@ class TestPolicyEnforcementIntegration:
                     "x-policy-set": "test-policy"
                 }
             )
-            
+
             # Should return 200 even if worker not available (will be 503)
             assert response.status_code in [200, 503]
-            
+
             # Check response headers
             assert "x-trace-id" in response.headers
             assert "x-run-id" in response.headers
@@ -83,10 +83,10 @@ class TestPolicyEnforcementIntegration:
                 f"{api_url}/v1/chat/completions",
                 json=sample_chat_request
             )
-            
+
             # Should return 200 even if worker not available (will be 503)
             assert response.status_code in [200, 503]
-            
+
             # Check response headers were generated
             assert "x-trace-id" in response.headers
             assert "x-run-id" in response.headers
@@ -103,9 +103,9 @@ class TestPolicyEnforcementIntegration:
         mock_response.choices[0].message.content = "This might be correct, but it seems like it could work."
         mock_response.usage = Mock()
         mock_response.usage.dict.return_value = {"total_tokens": 50}
-        
+
         mock_openai_client.chat.completions.create.return_value = mock_response
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{api_url}/v1/chat/completions",
@@ -116,13 +116,13 @@ class TestPolicyEnforcementIntegration:
                     "x-policy-set": "test-policy"
                 }
             )
-            
+
             assert response.status_code == 200
-            
+
             # Check policy verdict headers
             assert "x-policy-verdict" in response.headers
             assert "x-policy-score" in response.headers
-            
+
             # Policy verdict should be False due to hedging
             assert response.headers["x-policy-verdict"] == "False"
             assert float(response.headers["x-policy-score"]) < 1.0
@@ -137,9 +137,9 @@ class TestPolicyEnforcementIntegration:
         mock_response.choices[0].message.content = "Quantum computing is a field of study [1]. It uses quantum mechanics [2]. The theory is well-established [3]."
         mock_response.usage = Mock()
         mock_response.usage.dict.return_value = {"total_tokens": 50}
-        
+
         mock_openai_client.chat.completions.create.return_value = mock_response
-        
+
         chat_request = {
             "model": "mistralai/Mistral-7B-Instruct-v0.3",
             "messages": [
@@ -148,7 +148,7 @@ class TestPolicyEnforcementIntegration:
             "temperature": 0.7,
             "max_tokens": 100
         }
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{api_url}/v1/chat/completions",
@@ -159,13 +159,13 @@ class TestPolicyEnforcementIntegration:
                     "x-policy-set": "test-policy"
                 }
             )
-            
+
             assert response.status_code == 200
-            
+
             # Check policy verdict headers
             assert "x-policy-verdict" in response.headers
             assert "x-policy-score" in response.headers
-            
+
             # Should pass citation policy
             assert response.headers["x-policy-verdict"] == "True"
             assert float(response.headers["x-policy-score"]) > 0.5
@@ -180,9 +180,9 @@ class TestPolicyEnforcementIntegration:
         mock_response.choices[0].message.content = "The temperature is 298 K and the pressure is 101.3 kPa."
         mock_response.usage = Mock()
         mock_response.usage.dict.return_value = {"total_tokens": 50}
-        
+
         mock_openai_client.chat.completions.create.return_value = mock_response
-        
+
         chat_request = {
             "model": "mistralai/Mistral-7B-Instruct-v0.3",
             "messages": [
@@ -191,7 +191,7 @@ class TestPolicyEnforcementIntegration:
             "temperature": 0.7,
             "max_tokens": 100
         }
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{api_url}/v1/chat/completions",
@@ -202,13 +202,13 @@ class TestPolicyEnforcementIntegration:
                     "x-policy-set": "test-policy"
                 }
             )
-            
+
             assert response.status_code == 200
-            
+
             # Check policy verdict headers
             assert "x-policy-verdict" in response.headers
             assert "x-policy-score" in response.headers
-            
+
             # Should pass unit policy
             assert response.headers["x-policy-verdict"] == "True"
             assert float(response.headers["x-policy-score"]) > 0.5
@@ -223,9 +223,9 @@ class TestPolicyEnforcementIntegration:
         mock_response.choices[0].message.content = "The temperature is 77°F and the pressure is 14.7 psi."
         mock_response.usage = Mock()
         mock_response.usage.dict.return_value = {"total_tokens": 50}
-        
+
         mock_openai_client.chat.completions.create.return_value = mock_response
-        
+
         chat_request = {
             "model": "mistralai/Mistral-7B-Instruct-v0.3",
             "messages": [
@@ -234,7 +234,7 @@ class TestPolicyEnforcementIntegration:
             "temperature": 0.7,
             "max_tokens": 100
         }
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{api_url}/v1/chat/completions",
@@ -245,13 +245,13 @@ class TestPolicyEnforcementIntegration:
                     "x-policy-set": "test-policy"
                 }
             )
-            
+
             assert response.status_code == 200
-            
+
             # Check policy verdict headers
             assert "x-policy-verdict" in response.headers
             assert "x-policy-score" in response.headers
-            
+
             # Should fail unit policy
             assert response.headers["x-policy-verdict"] == "False"
             assert float(response.headers["x-policy-score"]) < 0.5
@@ -267,12 +267,12 @@ class TestPolicyEnforcementIntegration:
         mock_response.choices[0].message.content = "This might be correct."
         mock_response.usage = Mock()
         mock_response.usage.dict.return_value = {"total_tokens": 50}
-        
+
         mock_openai_client.chat.completions.create.return_value = mock_response
-        
+
         # Mock MLflow logger
         mock_mlflow_logger.return_value = Mock()
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{api_url}/v1/chat/completions",
@@ -283,9 +283,9 @@ class TestPolicyEnforcementIntegration:
                     "x-policy-set": "test-policy"
                 }
             )
-            
+
             assert response.status_code == 200
-            
+
             # Verify MLflow logger was called
             # Note: This is a simplified test - in practice, you'd need to mock the MLflow calls more specifically
 
@@ -298,7 +298,7 @@ class TestPolicyEnforcementIntegration:
                 f"{api_url}/v1/chat/completions",
                 json={"model": "test-model", "messages": []}
             )
-            
+
             assert response.status_code == 422
             assert "messages" in response.text
 
@@ -307,13 +307,13 @@ class TestPolicyEnforcementIntegration:
         """Test chat request when OpenAI client is not available."""
         # This test assumes the OpenAI client is not initialized
         # In a real scenario, this would be tested by not initializing the client
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{api_url}/v1/chat/completions",
                 json=sample_chat_request
             )
-            
+
             # Should return 503 if OpenAI client not available
             assert response.status_code == 503
             assert "OpenAI client not available" in response.text
@@ -328,9 +328,9 @@ class TestPolicyEnforcementIntegration:
         mock_response.choices[0].message.content = "This might be correct."
         mock_response.usage = Mock()
         mock_response.usage.dict.return_value = {"total_tokens": 50}
-        
+
         mock_openai_client.chat.completions.create.return_value = mock_response
-        
+
         chat_request = {
             "model": "mistralai/Mistral-7B-Instruct-v0.3",
             "messages": [
@@ -340,7 +340,7 @@ class TestPolicyEnforcementIntegration:
             "max_tokens": 100,
             "stream": True
         }
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{api_url}/v1/chat/completions",
@@ -351,9 +351,9 @@ class TestPolicyEnforcementIntegration:
                     "x-policy-set": "test-policy"
                 }
             )
-            
+
             assert response.status_code == 200
-            
+
             # Streaming requests should not have policy verdict headers
             assert "x-policy-verdict" not in response.headers
             assert "x-policy-score" not in response.headers
@@ -368,13 +368,13 @@ class TestPolicyEnforcementIntegration:
         mock_response.choices[0].message.content = "This might be correct."
         mock_response.usage = Mock()
         mock_response.usage.dict.return_value = {"total_tokens": 50}
-        
+
         mock_openai_client.chat.completions.create.return_value = mock_response
-        
+
         # Mock policy enforcer to raise exception
         with patch('src.policies.middleware.policy_enforcer.validate') as mock_validate:
             mock_validate.side_effect = Exception("Policy enforcement error")
-            
+
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{api_url}/v1/chat/completions",
@@ -385,10 +385,10 @@ class TestPolicyEnforcementIntegration:
                         "x-policy-set": "test-policy"
                     }
                 )
-                
+
                 # Should still return 200 even if policy enforcement fails
                 assert response.status_code == 200
-                
+
                 # Should not have policy verdict headers due to error
                 assert "x-policy-verdict" not in response.headers
                 assert "x-policy-score" not in response.headers
@@ -403,9 +403,9 @@ class TestPolicyEnforcementIntegration:
         mock_response.choices[0].message.content = "This might be correct based on the evidence."
         mock_response.usage = Mock()
         mock_response.usage.dict.return_value = {"total_tokens": 50}
-        
+
         mock_openai_client.chat.completions.create.return_value = mock_response
-        
+
         chat_request = {
             "model": "mistralai/Mistral-7B-Instruct-v0.3",
             "messages": [
@@ -414,7 +414,7 @@ class TestPolicyEnforcementIntegration:
             "temperature": 0.7,
             "max_tokens": 100
         }
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{api_url}/v1/chat/completions",
@@ -425,13 +425,13 @@ class TestPolicyEnforcementIntegration:
                     "x-policy-set": "test-policy"
                 }
             )
-            
+
             assert response.status_code == 200
-            
+
             # Check policy verdict headers
             assert "x-policy-verdict" in response.headers
             assert "x-policy-score" in response.headers
-            
+
             # Should have some policy verdict
             assert response.headers["x-policy-verdict"] in ["True", "False"]
             assert 0.0 <= float(response.headers["x-policy-score"]) <= 1.0

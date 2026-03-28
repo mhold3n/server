@@ -6,7 +6,6 @@ Quantizes and optimizes models for deployment
 
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from peft import PeftModel
 import argparse
 
 def quantize_model(model_path, output_path, quantization_type="4bit"):

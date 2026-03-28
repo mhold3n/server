@@ -5,11 +5,8 @@ Data file processing, analysis, and pattern extraction
 
 import os
 import re
-import json
-import csv
-import math
 import statistics
-from typing import Dict, Any, List, Optional, Tuple, Union
+from typing import Dict, Any, List
 from pathlib import Path
 from dataclasses import dataclass
 from enum import Enum
@@ -289,7 +286,7 @@ class FileAnalysisPlugin:
                 numbers = self._extract_column_numbers(content, separator, data_column)
             else:
                 numbers = self._extract_numbers(content)
-        except:
+        except Exception:
             numbers = self._extract_numbers(content)
         
         if not numbers:
@@ -523,7 +520,7 @@ class FileAnalysisPlugin:
                 if include_context:
                     # Find line number
                     start_pos = match.start()
-                    line_start = content.rfind('\n', 0, start_pos) + 1
+                    content.rfind('\n', 0, start_pos) + 1
                     line_num = content[:start_pos].count('\n') + 1
                     line_numbers.append(line_num)
                     

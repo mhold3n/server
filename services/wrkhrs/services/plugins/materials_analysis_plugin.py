@@ -4,7 +4,7 @@ Advanced materials science calculations and property analysis
 """
 
 import math
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -294,7 +294,7 @@ class MaterialsAnalysisPlugin:
         """Estimate fatigue life using S-N curve approximation"""
         stress_amplitude = params["stress_amplitude"]  # Pa
         ultimate_strength = params["ultimate_strength"]  # Pa
-        yield_strength = params.get("yield_strength", ultimate_strength * 0.8)
+        params.get("yield_strength", ultimate_strength * 0.8)
         surface_finish = params.get("surface_finish", "machined")  # rough, machined, polished
         
         # Endurance limit (rough approximation)
@@ -496,7 +496,7 @@ class MaterialsAnalysisPlugin:
         """Calculate principal stresses from stress state"""
         # For 3D case, solve cubic equation (simplified for demonstration)
         # This is a simplified calculation - actual implementation would use eigenvalue methods
-        sigma_avg = (stress.sigma_x + stress.sigma_y + stress.sigma_z) / 3
+        (stress.sigma_x + stress.sigma_y + stress.sigma_z) / 3
         
         # Approximate principal stresses
         sigma_1 = max(stress.sigma_x, stress.sigma_y, stress.sigma_z)

@@ -4,26 +4,20 @@ Advanced Prompt Middleware Suite
 Implements geometric transformations, voice-based subtext inference, and mathematical reprocessing
 """
 
-import os
-import json
 import numpy as np
 import torch
-import torch.nn as nn
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
 import logging
-from pathlib import Path
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import librosa
-import soundfile as sf
 from transformers import AutoTokenizer, AutoModel
 import networkx as nx
 from scipy.spatial.distance import cosine
-from scipy.optimize import minimize
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -494,9 +488,6 @@ class PromptMiddleware:
         return min(base_confidence, 1.0)
 
 # FastAPI integration
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
 app = FastAPI(title="Prompt Middleware API", version="1.0.0")
 
 class PromptRequest(BaseModel):

@@ -1,7 +1,6 @@
 import os
 import time
 import asyncio
-import hashlib
 import traceback
 from pathlib import Path
 from typing import Optional
@@ -61,7 +60,7 @@ def process_pdf(input_pdf: Path, output_dir: Path):
         try:
             import importlib
 
-            marker_module = importlib.import_module("marker")
+            importlib.import_module("marker")
             # Some marker distributions use command-line; fallback to shell call
             # Try: marker --output-format markdown input.pdf
             import subprocess

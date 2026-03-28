@@ -5,15 +5,11 @@ Implements sophisticated geometric and mathematical transformations
 """
 
 import numpy as np
-import torch
-import torch.nn as nn
-from typing import Dict, List, Any, Tuple
+from typing import Dict, Tuple
 import logging
-from scipy.spatial.transform import Rotation
 from scipy.spatial.distance import pdist, squareform
 from sklearn.manifold import TSNE, MDS
 from sklearn.decomposition import PCA, FastICA
-import networkx as nx
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)

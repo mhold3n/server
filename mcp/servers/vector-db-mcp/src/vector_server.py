@@ -2,7 +2,7 @@
 
 import json
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import structlog
 from fastapi import FastAPI, HTTPException
@@ -44,28 +44,28 @@ class ToolRequest(BaseModel):
     """Tool request model."""
 
     tool: str = Field(..., description="Tool name")
-    arguments: Dict[str, Any] = Field(default_factory=dict, description="Tool arguments")
+    arguments: dict[str, Any] = Field(default_factory=dict, description="Tool arguments")
 
 
 class ToolResponse(BaseModel):
     """Tool response model."""
 
-    content: List[Dict[str, str]] = Field(..., description="Response content")
+    content: list[dict[str, str]] = Field(..., description="Response content")
 
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
     global qdrant_client
-    
+
     try:
         qdrant_url = os.getenv("QDRANT_URL", "http://qdrant:6333")
         qdrant_client = QdrantClient(url=qdrant_url)
-        
+
         # Test connection
         collections = qdrant_client.get_collections()
         logger.info("Connected to Qdrant", url=qdrant_url, collections=len(collections.collections))
-        
+
     except Exception as e:
         logger.error("Failed to connect to Qdrant", error=str(e))
         qdrant_client = None
@@ -81,7 +81,7 @@ async def health_check():
                 qdrant_client.get_collections()
             except Exception:
                 qdrant_healthy = False
-        
+
         return {
             "status": "healthy" if qdrant_healthy else "degraded",
             "service": "vector-db-mcp",
@@ -193,7 +193,7 @@ async def call_tool(request: ToolRequest):
     """Call a tool with the given arguments."""
     if not qdrant_client:
         raise HTTPException(status_code=503, detail="Qdrant client not connected")
-    
+
     try:
         logger.info(
             "Calling tool",
@@ -246,7 +246,7 @@ async def call_tool(request: ToolRequest):
             tool=request.tool,
             error=str(e),
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 async def create_collection(name: str, vector_size: int, distance: str = "Cosine") -> str:
@@ -258,9 +258,9 @@ async def create_collection(name: str, vector_size: int, distance: str = "Cosine
             "Euclid": models.Distance.EUCLID,
             "Dot": models.Distance.DOT,
         }
-        
+
         qdrant_distance = distance_map.get(distance, models.Distance.COSINE)
-        
+
         # Create collection
         qdrant_client.create_collection(
             collection_name=name,
@@ -269,16 +269,16 @@ async def create_collection(name: str, vector_size: int, distance: str = "Cosine
                 distance=qdrant_distance,
             ),
         )
-        
+
         logger.info("Collection created", name=name, vector_size=vector_size, distance=distance)
-        
+
         return json.dumps({
             "name": name,
             "vector_size": vector_size,
             "distance": distance,
             "created": True,
         })
-        
+
     except Exception as e:
         logger.error("Failed to create collection", name=name, error=str(e))
         raise
@@ -288,7 +288,7 @@ async def list_collections() -> str:
     """List all collections."""
     try:
         collections = qdrant_client.get_collections()
-        
+
         collection_info = []
         for collection in collections.collections:
             info = qdrant_client.get_collection(collection.name)
@@ -299,18 +299,18 @@ async def list_collections() -> str:
                 "points_count": info.points_count,
                 "status": info.status,
             })
-        
+
         return json.dumps({
             "collections": collection_info,
             "count": len(collection_info),
         })
-        
+
     except Exception as e:
         logger.error("Failed to list collections", error=str(e))
         raise
 
 
-async def upsert_vectors(collection: str, points: List[Dict[str, Any]]) -> str:
+async def upsert_vectors(collection: str, points: list[dict[str, Any]]) -> str:
     """Upsert vectors to a collection."""
     try:
         # Convert points to Qdrant format
@@ -322,21 +322,21 @@ async def upsert_vectors(collection: str, points: List[Dict[str, Any]]) -> str:
                 payload=point.get("payload", {}),
             )
             qdrant_points.append(qdrant_point)
-        
+
         # Upsert points
         qdrant_client.upsert(
             collection_name=collection,
             points=qdrant_points,
         )
-        
+
         logger.info("Vectors upserted", collection=collection, count=len(points))
-        
+
         return json.dumps({
             "collection": collection,
             "upserted_count": len(points),
             "status": "success",
         })
-        
+
     except Exception as e:
         logger.error("Failed to upsert vectors", collection=collection, error=str(e))
         raise
@@ -344,9 +344,9 @@ async def upsert_vectors(collection: str, points: List[Dict[str, Any]]) -> str:
 
 async def search_vectors(
     collection: str,
-    query_vector: List[float],
+    query_vector: list[float],
     limit: int = 10,
-    score_threshold: Optional[float] = None,
+    score_threshold: float | None = None,
 ) -> str:
     """Search for similar vectors."""
     try:
@@ -356,13 +356,13 @@ async def search_vectors(
             "query_vector": query_vector,
             "limit": limit,
         }
-        
+
         if score_threshold is not None:
             search_params["score_threshold"] = score_threshold
-        
+
         # Search
         results = qdrant_client.search(**search_params)
-        
+
         # Format results
         formatted_results = []
         for result in results:
@@ -371,14 +371,14 @@ async def search_vectors(
                 "score": result.score,
                 "payload": result.payload,
             })
-        
+
         return json.dumps({
             "collection": collection,
             "query_vector": query_vector,
             "results": formatted_results,
             "count": len(formatted_results),
         })
-        
+
     except Exception as e:
         logger.error("Failed to search vectors", collection=collection, error=str(e))
         raise
@@ -388,22 +388,22 @@ async def search_by_text(
     collection: str,
     query_text: str,
     limit: int = 10,
-    score_threshold: Optional[float] = None,
+    score_threshold: float | None = None,
 ) -> str:
     """Search for similar vectors using text query."""
     try:
         # Generate embedding for query text
         query_vector = await embedding_service.embed_text(query_text)
-        
+
         # Search using the embedding
         return await search_vectors(collection, query_vector, limit, score_threshold)
-        
+
     except Exception as e:
         logger.error("Failed to search by text", collection=collection, query=query_text, error=str(e))
         raise
 
 
-async def delete_vectors(collection: str, ids: List[Union[str, int]]) -> str:
+async def delete_vectors(collection: str, ids: list[str | int]) -> str:
     """Delete vectors from a collection."""
     try:
         # Delete points
@@ -411,16 +411,16 @@ async def delete_vectors(collection: str, ids: List[Union[str, int]]) -> str:
             collection_name=collection,
             points_selector=models.PointIdsList(points=ids),
         )
-        
+
         logger.info("Vectors deleted", collection=collection, count=len(ids))
-        
+
         return json.dumps({
             "collection": collection,
             "deleted_ids": ids,
             "deleted_count": len(ids),
             "status": "success",
         })
-        
+
     except Exception as e:
         logger.error("Failed to delete vectors", collection=collection, error=str(e))
         raise
@@ -430,7 +430,7 @@ async def get_collection_info(collection: str) -> str:
     """Get information about a collection."""
     try:
         info = qdrant_client.get_collection(collection)
-        
+
         return json.dumps({
             "name": collection,
             "vectors_count": info.vectors_count,
@@ -442,7 +442,7 @@ async def get_collection_info(collection: str) -> str:
                 "distance": info.config.params.vectors.distance,
             },
         })
-        
+
     except Exception as e:
         logger.error("Failed to get collection info", collection=collection, error=str(e))
         raise

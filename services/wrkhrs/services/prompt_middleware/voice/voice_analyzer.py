@@ -6,17 +6,12 @@ Analyzes voice patterns to extract implied meaning and emotional context
 
 import numpy as np
 import librosa
-import soundfile as sf
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Dict
 import logging
 from dataclasses import dataclass
 from scipy import signal
 from scipy.stats import skew, kurtosis
-import torch
-import torch.nn as nn
 from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 

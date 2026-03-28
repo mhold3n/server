@@ -3,12 +3,11 @@ import json
 import logging
 from typing import Dict, List, Optional, Any, Union
 from datetime import datetime
-import asyncio
 import re
 
 import httpx
 from fastapi import FastAPI, HTTPException, UploadFile, File
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 import numpy as np
 try:
     from sentence_transformers import SentenceTransformer
@@ -20,7 +19,6 @@ from qdrant_client.http.models import Distance, VectorParams, PointStruct
 import hashlib
 from rank_bm25 import BM25Okapi
 import nltk
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Configure logging
 logging.basicConfig(
@@ -135,7 +133,7 @@ class RAGService:
             try:
                 nltk.download('punkt', quiet=True)
                 nltk.download('stopwords', quiet=True)
-            except:
+            except Exception:
                 logger.warning("Could not download NLTK data, BM25 may be less effective")
             
             # Initialize embedding backend (remote-first, local fallback, optional mock)
@@ -245,7 +243,7 @@ class RAGService:
                 tokens = word_tokenize(text)
                 # Remove stopwords and short tokens
                 tokens = [token for token in tokens if token not in stop_words and len(token) > 2]
-            except:
+            except Exception:
                 # Fallback if NLTK is not available
                 tokens = [word for word in text.split() if len(word) > 2]
             
@@ -397,8 +395,8 @@ class RAGService:
         for citation in citations:
             if citation.get("source_type") == "asr":
                 # Calculate overlap between chunk position and timestamp
-                timestamp_start = citation.get("timestamp_start", 0.0)
-                timestamp_end = citation.get("timestamp_end", 0.0)
+                citation.get("timestamp_start", 0.0)
+                citation.get("timestamp_end", 0.0)
                 
                 # For now, use a simple mapping based on chunk order
                 # In a more sophisticated implementation, you'd map character positions to timestamps
@@ -630,7 +628,7 @@ async def health_check():
         # Check Qdrant connection
         collections = rag_service.qdrant_client.get_collections() if rag_service.qdrant_client else None
         qdrant_status = "connected" if collections else "disconnected"
-    except:
+    except Exception:
         qdrant_status = "error"
     
     return {
@@ -699,7 +697,7 @@ async def upload_document(
         # Parse metadata
         try:
             metadata_dict = json.loads(metadata)
-        except:
+        except Exception:
             metadata_dict = {}
         
         # Add file info to metadata

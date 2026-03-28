@@ -1,7 +1,6 @@
 """Document ingestion functionality for document datasets."""
 
 import os
-import json
 import hashlib
 from typing import Any, Dict, List, Optional
 

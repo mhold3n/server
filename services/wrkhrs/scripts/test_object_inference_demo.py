@@ -4,11 +4,8 @@ Object Inference Demo
 Demonstrates the AI's ability to guess the "object" (true intent) from ambiguous prompts
 """
 
-import asyncio
-import json
-import requests
 import numpy as np
-from typing import Dict, List, Any
+from typing import Dict, List
 import sys
 import os
 

@@ -6,7 +6,6 @@ Integrates fine-tuned models with the AI stack
 
 import os
 import json
-import shutil
 import argparse
 from pathlib import Path
 
@@ -172,7 +171,7 @@ class CodingAssistantPlugin:
     
     def _complete_code(self, code: str, language: str, context: str) -> str:
         """Complete code using the model"""
-        prompt = f"# {language}\\n# Context: {context}\\n{code}\\n"
+        prompt = f"# {{language}}\\n# Context: {{context}}\\n{{code}}\\n"
         
         inputs = self.tokenizer(prompt, return_tensors="pt")
         
@@ -192,7 +191,7 @@ class CodingAssistantPlugin:
     
     def _review_code(self, code: str, language: str, context: str) -> str:
         """Review code for issues and improvements"""
-        prompt = f"Review this {language} code for potential issues and improvements:\\n\\n{code}\\n\\nReview:"
+        prompt = f"Review this {{language}} code for potential issues and improvements:\\n\\n{{code}}\\n\\nReview:"
         
         inputs = self.tokenizer(prompt, return_tensors="pt")
         
@@ -212,7 +211,7 @@ class CodingAssistantPlugin:
     
     def _generate_documentation(self, code: str, language: str, context: str) -> str:
         """Generate documentation for code"""
-        prompt = f"Generate documentation for this {language} code:\\n\\n{code}\\n\\nDocumentation:"
+        prompt = f"Generate documentation for this {{language}} code:\\n\\n{{code}}\\n\\nDocumentation:"
         
         inputs = self.tokenizer(prompt, return_tensors="pt")
         
@@ -232,7 +231,7 @@ class CodingAssistantPlugin:
     
     def _refactor_code(self, code: str, language: str, context: str) -> str:
         """Refactor code for better quality"""
-        prompt = f"Refactor this {language} code for better quality and performance:\\n\\n{code}\\n\\nRefactored:"
+        prompt = f"Refactor this {{language}} code for better quality and performance:\\n\\n{{code}}\\n\\nRefactored:"
         
         inputs = self.tokenizer(prompt, return_tensors="pt")
         
@@ -252,7 +251,7 @@ class CodingAssistantPlugin:
     
     def _debug_code(self, code: str, language: str, context: str) -> str:
         """Debug code and suggest fixes"""
-        prompt = f"Debug this {language} code and suggest fixes:\\n\\n{code}\\n\\nDebug suggestions:"
+        prompt = f"Debug this {{language}} code and suggest fixes:\\n\\n{{code}}\\n\\nDebug suggestions:"
         
         inputs = self.tokenizer(prompt, return_tensors="pt")
         
@@ -413,11 +412,11 @@ def main():
     # Create deployment script
     create_deployment_script(args.model_path)
     
-    print(f"\n🎉 Model integration complete!")
+    print("\n🎉 Model integration complete!")
     print(f"📊 Model: {args.model_name}")
     print(f"📁 Path: {args.model_path}")
-    print(f"🔌 Plugin: plugins/coding_assistant_plugin.py")
-    print(f"🚀 Deploy: ./deploy_trained_model.sh")
+    print("🔌 Plugin: plugins/coding_assistant_plugin.py")
+    print("🚀 Deploy: ./deploy_trained_model.sh")
     
     print("\nNext steps:")
     print("1. Review the updated configuration files")

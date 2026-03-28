@@ -1,8 +1,7 @@
 """Integration tests for MCP registry auto-registration."""
 
-import pytest
 import httpx
-from fastapi.testclient import TestClient
+import pytest
 
 
 class TestMCPRegistryIntegration:
@@ -52,7 +51,7 @@ class TestMCPRegistryIntegration:
                 f"{mcp_registry_url}/mcp/registry/register",
                 json=sample_mcp_server
             )
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["name"] == sample_mcp_server["name"]
@@ -68,14 +67,14 @@ class TestMCPRegistryIntegration:
                 f"{mcp_registry_url}/mcp/registry/register",
                 json=sample_mcp_server
             )
-            
+
             # Get all servers
             response = await client.get(f"{mcp_registry_url}/mcp/registry")
             assert response.status_code == 200
-            
+
             servers = response.json()
             assert len(servers) > 0
-            
+
             # Find our test server
             test_server = next(
                 (s for s in servers if s["name"] == sample_mcp_server["name"]),
@@ -94,13 +93,13 @@ class TestMCPRegistryIntegration:
                 f"{mcp_registry_url}/mcp/registry/register",
                 json=sample_mcp_server
             )
-            
+
             # Get specific server
             response = await client.get(
                 f"{mcp_registry_url}/mcp/registry/{sample_mcp_server['name']}"
             )
             assert response.status_code == 200
-            
+
             server = response.json()
             assert server["name"] == sample_mcp_server["name"]
             assert server["type"] == sample_mcp_server["type"]
@@ -121,14 +120,14 @@ class TestMCPRegistryIntegration:
                 f"{mcp_registry_url}/mcp/registry/register",
                 json=sample_mcp_server
             )
-            
+
             # Get all tools
             response = await client.get(f"{mcp_registry_url}/mcp/registry/tools")
             assert response.status_code == 200
-            
+
             tools = response.json()
             assert len(tools) > 0
-            
+
             # Find our test tool
             test_tool = next(
                 (t for t in tools if t["name"] == "test_tool"),
@@ -149,21 +148,21 @@ class TestMCPRegistryIntegration:
                 "mime_type": "text/plain"
             }
         ]
-        
+
         async with httpx.AsyncClient() as client:
             # Register server first
             await client.post(
                 f"{mcp_registry_url}/mcp/registry/register",
                 json=sample_mcp_server
             )
-            
+
             # Get all resources
             response = await client.get(f"{mcp_registry_url}/mcp/registry/resources")
             assert response.status_code == 200
-            
+
             resources = response.json()
             assert len(resources) > 0
-            
+
             # Find our test resource
             test_resource = next(
                 (r for r in resources if r["name"] == "test_resource"),
@@ -181,13 +180,13 @@ class TestMCPRegistryIntegration:
                 f"{mcp_registry_url}/mcp/registry/register",
                 json=sample_mcp_server
             )
-            
+
             # Get server schema
             response = await client.get(
                 f"{mcp_registry_url}/mcp/registry/{sample_mcp_server['name']}/schema"
             )
             assert response.status_code == 200
-            
+
             schema = response.json()
             assert schema is not None
 
@@ -200,14 +199,14 @@ class TestMCPRegistryIntegration:
                 f"{mcp_registry_url}/mcp/registry/register",
                 json=sample_mcp_server
             )
-            
+
             # Search for tools
             response = await client.get(
                 f"{mcp_registry_url}/mcp/registry/search/tools",
                 params={"q": "test"}
             )
             assert response.status_code == 200
-            
+
             tools = response.json()
             assert len(tools) > 0
             assert any("test" in tool["name"].lower() for tool in tools)
@@ -223,21 +222,21 @@ class TestMCPRegistryIntegration:
                 "mime_type": "text/plain"
             }
         ]
-        
+
         async with httpx.AsyncClient() as client:
             # Register server first
             await client.post(
                 f"{mcp_registry_url}/mcp/registry/register",
                 json=sample_mcp_server
             )
-            
+
             # Search for resources
             response = await client.get(
                 f"{mcp_registry_url}/mcp/registry/search/resources",
                 params={"q": "test"}
             )
             assert response.status_code == 200
-            
+
             resources = response.json()
             assert len(resources) > 0
             assert any("test" in resource["name"].lower() for resource in resources)
@@ -251,11 +250,11 @@ class TestMCPRegistryIntegration:
                 f"{mcp_registry_url}/mcp/registry/register",
                 json=sample_mcp_server
             )
-            
+
             # Get registry stats
             response = await client.get(f"{mcp_registry_url}/mcp/registry/stats")
             assert response.status_code == 200
-            
+
             stats = response.json()
             assert "total_servers" in stats
             assert "tool_servers" in stats
@@ -270,7 +269,7 @@ class TestMCPRegistryIntegration:
         async with httpx.AsyncClient() as client:
             response = await client.get(f"{mcp_registry_url}/health")
             assert response.status_code == 200
-            
+
             health = response.json()
             assert health["status"] == "healthy"
             assert "service" in health
@@ -286,24 +285,24 @@ class TestMCPRegistryIntegration:
                 json=sample_mcp_server
             )
             assert response1.status_code == 200
-            
+
             # Update server with new URL
             updated_server = sample_mcp_server.copy()
             updated_server["url"] = "http://test-mcp-updated:7000"
-            
+
             # Register server second time (should update)
             response2 = await client.post(
                 f"{mcp_registry_url}/mcp/registry/register",
                 json=updated_server
             )
             assert response2.status_code == 200
-            
+
             # Verify server was updated
             response3 = await client.get(
                 f"{mcp_registry_url}/mcp/registry/{sample_mcp_server['name']}"
             )
             assert response3.status_code == 200
-            
+
             server = response3.json()
             assert server["url"] == "http://test-mcp-updated:7000"
 
@@ -316,7 +315,7 @@ class TestMCPRegistryIntegration:
                 "name": "invalid-server",
                 # Missing required fields
             }
-            
+
             response = await client.post(
                 f"{mcp_registry_url}/mcp/registry/register",
                 json=invalid_server
@@ -336,7 +335,7 @@ class TestMCPRegistryIntegration:
             "tools": [],
             "resources": []
         }
-        
+
         # Register resource server
         resource_server = {
             "name": "test-resource-server",
@@ -347,30 +346,30 @@ class TestMCPRegistryIntegration:
             "tools": [],
             "resources": []
         }
-        
+
         async with httpx.AsyncClient() as client:
             # Register both servers
             await client.post(f"{mcp_registry_url}/mcp/registry/register", json=tool_server)
             await client.post(f"{mcp_registry_url}/mcp/registry/register", json=resource_server)
-            
+
             # Filter by tool type
             response = await client.get(
                 f"{mcp_registry_url}/mcp/registry",
                 params={"type": "tool"}
             )
             assert response.status_code == 200
-            
+
             tool_servers = response.json()
             assert len(tool_servers) > 0
             assert all(server["type"] == "tool" for server in tool_servers)
-            
+
             # Filter by resource type
             response = await client.get(
                 f"{mcp_registry_url}/mcp/registry",
                 params={"type": "resource"}
             )
             assert response.status_code == 200
-            
+
             resource_servers = response.json()
             assert len(resource_servers) > 0
             assert all(server["type"] == "resource" for server in resource_servers)

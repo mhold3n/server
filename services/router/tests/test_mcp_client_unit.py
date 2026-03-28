@@ -1,9 +1,10 @@
 import asyncio
+
 import httpx
 import respx
 
-from src.mcp_client import MCPClient
 from src.config import settings
+from src.mcp_client import MCPClient
 
 
 def test_mcp_client_loads_servers(monkeypatch):

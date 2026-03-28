@@ -1,13 +1,13 @@
 """JSON Schema definitions for MCP tools and resources."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
 
 class MCPSchema(BaseModel):
     """Base MCP schema definition."""
-    
+
     name: str = Field(..., description="Schema name")
     version: str = Field(..., description="Schema version")
     description: str = Field(..., description="Schema description")
@@ -16,21 +16,21 @@ class MCPSchema(BaseModel):
 
 class ToolSchema(MCPSchema):
     """Tool schema definition."""
-    
+
     type: str = Field(default="tool", description="Schema type")
-    parameters: Dict[str, Any] = Field(..., description="Tool parameters schema")
-    returns: Dict[str, Any] = Field(..., description="Tool return value schema")
-    examples: List[Dict[str, Any]] = Field(default_factory=list, description="Usage examples")
+    parameters: dict[str, Any] = Field(..., description="Tool parameters schema")
+    returns: dict[str, Any] = Field(..., description="Tool return value schema")
+    examples: list[dict[str, Any]] = Field(default_factory=list, description="Usage examples")
 
 
 class ResourceSchema(MCPSchema):
     """Resource schema definition."""
-    
+
     type: str = Field(default="resource", description="Schema type")
     content_type: str = Field(..., description="Resource content type")
-    metadata_schema: Dict[str, Any] = Field(..., description="Resource metadata schema")
-    access_methods: List[str] = Field(..., description="Available access methods")
-    examples: List[Dict[str, Any]] = Field(default_factory=list, description="Usage examples")
+    metadata_schema: dict[str, Any] = Field(..., description="Resource metadata schema")
+    access_methods: list[str] = Field(..., description="Available access methods")
+    examples: list[dict[str, Any]] = Field(default_factory=list, description="Usage examples")
 
 
 # Predefined schemas for common MCP types
@@ -383,33 +383,33 @@ SCHEMA_REGISTRY = {
 }
 
 
-def get_schema(schema_name: str) -> Optional[MCPSchema]:
+def get_schema(schema_name: str) -> MCPSchema | None:
     """Get schema by name.
-    
+
     Args:
         schema_name: Schema name
-        
+
     Returns:
         Schema or None if not found
     """
     return SCHEMA_REGISTRY.get(schema_name)
 
 
-def list_schemas() -> List[str]:
+def list_schemas() -> list[str]:
     """List all available schema names.
-    
+
     Returns:
         List of schema names
     """
     return list(SCHEMA_REGISTRY.keys())
 
 
-def get_schemas_by_type(schema_type: str) -> List[MCPSchema]:
+def get_schemas_by_type(schema_type: str) -> list[MCPSchema]:
     """Get schemas by type.
-    
+
     Args:
         schema_type: Schema type (tool|resource)
-        
+
     Returns:
         List of schemas of the specified type
     """

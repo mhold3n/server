@@ -1,7 +1,7 @@
 """Shared test fixtures for worker client."""
 
 import asyncio
-from typing import AsyncGenerator, Generator
+from collections.abc import Generator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -22,7 +22,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 def mock_openai_client() -> AsyncMock:
     """Mock OpenAI client."""
     mock = AsyncMock(spec=AsyncOpenAI)
-    
+
     # Mock models.list response
     mock_models = MagicMock()
     mock_models.data = [
@@ -36,7 +36,7 @@ def mock_openai_client() -> AsyncMock:
         )
     ]
     mock.models.list.return_value = mock_models
-    
+
     # Mock chat completions response
     mock_response = MagicMock()
     mock_response.id = "chatcmpl-test"
@@ -56,9 +56,9 @@ def mock_openai_client() -> AsyncMock:
         "completion_tokens": 5,
         "total_tokens": 15,
     }
-    
+
     mock.chat.completions.create.return_value = mock_response
-    
+
     return mock
 
 

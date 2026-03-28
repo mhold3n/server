@@ -1,7 +1,7 @@
 """Shared test fixtures for API service."""
 
 import asyncio
-from typing import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -9,7 +9,6 @@ from fastapi.testclient import TestClient
 from redis.asyncio import Redis
 
 from src.app import app
-from src.config import settings
 
 
 @pytest.fixture(scope="session")
@@ -38,12 +37,12 @@ def mock_redis() -> AsyncMock:
 def mock_openai_client() -> AsyncMock:
     """Mock OpenAI client."""
     mock = AsyncMock()
-    
+
     # Mock models.list response
     mock_models = MagicMock()
     mock_models.data = [MagicMock(id="test-model")]
     mock.models.list.return_value = mock_models
-    
+
     # Mock chat completions response
     mock_response = MagicMock()
     mock_response.id = "chatcmpl-test"
@@ -58,9 +57,9 @@ def mock_openai_client() -> AsyncMock:
         }
     ]
     mock_response.usage = {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}
-    
+
     mock.chat.completions.create.return_value = mock_response
-    
+
     return mock
 
 
@@ -70,17 +69,17 @@ async def setup_clients(
 ) -> AsyncGenerator[None, None]:
     """Setup mock clients for testing."""
     import src.app
-    
+
     # Store original clients
     original_redis = src.app.redis_client
     original_openai = src.app.openai_client
-    
+
     # Set mock clients (after TestClient startup ran)
     src.app.redis_client = mock_redis
     src.app.openai_client = mock_openai_client
-    
+
     yield
-    
+
     # Restore original clients
     src.app.redis_client = original_redis
     src.app.openai_client = original_openai

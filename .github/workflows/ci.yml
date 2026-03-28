@@ -60,8 +60,8 @@ jobs:
       # Run linting and type checking
       - name: Run linting
         run: |
-          ruff check services/ mcp/servers/
-          black --check services/ mcp/servers/
+          ruff check services/ mcp/servers/ --force-exclude
+          black --check services/ mcp/servers/ --extend-exclude '/services/wrkhrs/'
           (cd mbmh && make lint)
       
       - name: Run type checking

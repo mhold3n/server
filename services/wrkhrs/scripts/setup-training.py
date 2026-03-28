@@ -4,11 +4,9 @@ Training Setup Script for AI Stack
 Configures training infrastructure for coding-specific models
 """
 
-import os
 import sys
 import subprocess
 import argparse
-from pathlib import Path
 
 def run_command(cmd, check=True):
     """Run a command and return the result"""

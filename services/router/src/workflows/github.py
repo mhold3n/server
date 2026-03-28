@@ -1,11 +1,9 @@
 """GitHub workflow integration for code-related prompts."""
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import structlog
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
-from langchain_core.tools import BaseTool
 
 logger = structlog.get_logger()
 
@@ -15,7 +13,7 @@ class GitHubWorkflow:
 
     def __init__(self, mcp_client: Any):
         """Initialize GitHub workflow.
-        
+
         Args:
             mcp_client: MCP client for GitHub operations
         """
@@ -30,14 +28,14 @@ class GitHubWorkflow:
     async def process_prompt(
         self,
         prompt: str,
-        context: Dict[str, Any] = None,
-    ) -> Dict[str, Any]:
+        context: dict[str, Any] = None,
+    ) -> dict[str, Any]:
         """Process a code-related prompt through GitHub workflow.
-        
+
         Args:
             prompt: User prompt
             context: Additional context
-            
+
         Returns:
             Workflow result
         """
@@ -49,10 +47,10 @@ class GitHubWorkflow:
                     "action": "skip",
                     "reason": "Not a code-related prompt",
                 }
-            
+
             # Classify the type of code request
             request_type = self._classify_request(prompt)
-            
+
             # Execute appropriate workflow
             if request_type == "bug_report":
                 return await self._handle_bug_report(prompt, context)
@@ -64,7 +62,7 @@ class GitHubWorkflow:
                 return await self._handle_implementation(prompt, context)
             else:
                 return await self._handle_general_code_request(prompt, context)
-                
+
         except Exception as e:
             logger.error("GitHub workflow failed", error=str(e))
             return {
@@ -75,20 +73,20 @@ class GitHubWorkflow:
 
     def _is_code_related(self, prompt: str) -> bool:
         """Check if prompt is code-related.
-        
+
         Args:
             prompt: User prompt
-            
+
         Returns:
             True if code-related
         """
         prompt_lower = prompt.lower()
-        
+
         # Check for code-related keywords
         for indicator in self.code_indicators:
             if indicator in prompt_lower:
                 return True
-        
+
         # Check for code patterns
         code_patterns = [
             r'\b(def|class|function|method|import|from)\b',
@@ -98,11 +96,11 @@ class GitHubWorkflow:
             r'\b(test|spec|assert|expect)\b',
             r'\b(commit|push|pull|merge|branch)\b',
         ]
-        
+
         for pattern in code_patterns:
             if re.search(pattern, prompt_lower):
                 return True
-        
+
         return False
 
 class CodeDetector:
@@ -131,33 +129,33 @@ class CodeDetector:
 
     def classify_request(self, prompt: str) -> str:
         """Classify the type of code request.
-        
+
         Args:
             prompt: User prompt
-            
+
         Returns:
             Request type
         """
         prompt_lower = prompt.lower()
-        
+
         # Score each category
         scores = {}
         for category, keywords in self.classifiers.items():
             score = sum(1 for keyword in keywords if keyword in prompt_lower)
             scores[category] = score
-        
+
         # Return highest scoring category
         if not any(scores.values()):
             return "general"
-        
+
         return max(scores, key=scores.get)
 
     def _classify_request(self, prompt: str) -> str:
         """Classify the type of code request.
-        
+
         Args:
             prompt: User prompt
-            
+
         Returns:
             Request type
         """
@@ -167,21 +165,21 @@ class CodeDetector:
     async def _handle_bug_report(
         self,
         prompt: str,
-        context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle bug report workflow.
-        
+
         Args:
             prompt: User prompt
             context: Additional context
-            
+
         Returns:
             Workflow result
         """
         try:
             # Extract bug information
             bug_info = self._extract_bug_info(prompt)
-            
+
             # Create issue using template
             issue_result = await self.mcp_client.call_tool(
                 "apply_issue_template",
@@ -200,7 +198,7 @@ class CodeDetector:
                     "labels": ["bug", "needs-triage"],
                 }
             )
-            
+
             # Add to project if specified
             if context.get("project_id"):
                 await self.mcp_client.call_tool(
@@ -212,7 +210,7 @@ class CodeDetector:
                         "value": "New",
                     }
                 )
-            
+
             return {
                 "workflow": "github",
                 "action": "bug_report_created",
@@ -220,7 +218,7 @@ class CodeDetector:
                 "issue_url": issue_result["html_url"],
                 "template_used": "bug_report",
             }
-            
+
         except Exception as e:
             logger.error("Bug report workflow failed", error=str(e))
             return {
@@ -232,21 +230,21 @@ class CodeDetector:
     async def _handle_feature_request(
         self,
         prompt: str,
-        context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle feature request workflow.
-        
+
         Args:
             prompt: User prompt
             context: Additional context
-            
+
         Returns:
             Workflow result
         """
         try:
             # Extract feature information
             feature_info = self._extract_feature_info(prompt)
-            
+
             # Create issue using template
             issue_result = await self.mcp_client.call_tool(
                 "apply_issue_template",
@@ -264,7 +262,7 @@ class CodeDetector:
                     "labels": ["enhancement", "needs-discussion"],
                 }
             )
-            
+
             # Add to project if specified
             if context.get("project_id"):
                 await self.mcp_client.call_tool(
@@ -276,7 +274,7 @@ class CodeDetector:
                         "value": "Under Consideration",
                     }
                 )
-            
+
             return {
                 "workflow": "github",
                 "action": "feature_request_created",
@@ -284,7 +282,7 @@ class CodeDetector:
                 "issue_url": issue_result["html_url"],
                 "template_used": "feature_request",
             }
-            
+
         except Exception as e:
             logger.error("Feature request workflow failed", error=str(e))
             return {
@@ -296,21 +294,21 @@ class CodeDetector:
     async def _handle_code_review(
         self,
         prompt: str,
-        context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle code review workflow.
-        
+
         Args:
             prompt: User prompt
             context: Additional context
-            
+
         Returns:
             Workflow result
         """
         try:
             # Extract review information
             review_info = self._extract_review_info(prompt)
-            
+
             # Create pull request for review
             pr_result = await self.mcp_client.call_tool(
                 "create_pull_request",
@@ -324,7 +322,7 @@ class CodeDetector:
                     "draft": True,  # Create as draft for review
                 }
             )
-            
+
             # Link to issue if specified
             if review_info.get("issue_number"):
                 await self.mcp_client.call_tool(
@@ -336,7 +334,7 @@ class CodeDetector:
                         "issue_number": review_info["issue_number"],
                     }
                 )
-            
+
             return {
                 "workflow": "github",
                 "action": "code_review_created",
@@ -344,7 +342,7 @@ class CodeDetector:
                 "pr_url": pr_result["html_url"],
                 "draft": True,
             }
-            
+
         except Exception as e:
             logger.error("Code review workflow failed", error=str(e))
             return {
@@ -356,21 +354,21 @@ class CodeDetector:
     async def _handle_implementation(
         self,
         prompt: str,
-        context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle implementation workflow.
-        
+
         Args:
             prompt: User prompt
             context: Additional context
-            
+
         Returns:
             Workflow result
         """
         try:
             # Extract implementation information
             impl_info = self._extract_implementation_info(prompt)
-            
+
             # Create issue for implementation
             issue_result = await self.mcp_client.call_tool(
                 "apply_issue_template",
@@ -388,10 +386,10 @@ class CodeDetector:
                     "labels": ["implementation", "needs-assignment"],
                 }
             )
-            
+
             # Create branch for implementation
             branch_name = f"implement/{impl_info['title'].lower().replace(' ', '-')}"
-            
+
             # Add to project if specified
             if context.get("project_id"):
                 await self.mcp_client.call_tool(
@@ -403,7 +401,7 @@ class CodeDetector:
                         "value": "In Progress",
                     }
                 )
-            
+
             return {
                 "workflow": "github",
                 "action": "implementation_created",
@@ -412,7 +410,7 @@ class CodeDetector:
                 "suggested_branch": branch_name,
                 "template_used": "implementation",
             }
-            
+
         except Exception as e:
             logger.error("Implementation workflow failed", error=str(e))
             return {
@@ -424,14 +422,14 @@ class CodeDetector:
     async def _handle_general_code_request(
         self,
         prompt: str,
-        context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Handle general code request.
-        
+
         Args:
             prompt: User prompt
             context: Additional context
-            
+
         Returns:
             Workflow result
         """
@@ -447,14 +445,14 @@ class CodeDetector:
                     "labels": ["code", "needs-triage"],
                 }
             )
-            
+
             return {
                 "workflow": "github",
                 "action": "general_issue_created",
                 "issue_number": issue_result["number"],
                 "issue_url": issue_result["html_url"],
             }
-            
+
         except Exception as e:
             logger.error("General code request workflow failed", error=str(e))
             return {
@@ -463,12 +461,12 @@ class CodeDetector:
                 "error": str(e),
             }
 
-    def _extract_bug_info(self, prompt: str) -> Dict[str, str]:
+    def _extract_bug_info(self, prompt: str) -> dict[str, str]:
         """Extract bug information from prompt.
-        
+
         Args:
             prompt: User prompt
-            
+
         Returns:
             Bug information
         """
@@ -481,12 +479,12 @@ class CodeDetector:
             "environment": "Environment details",
         }
 
-    def _extract_feature_info(self, prompt: str) -> Dict[str, str]:
+    def _extract_feature_info(self, prompt: str) -> dict[str, str]:
         """Extract feature information from prompt.
-        
+
         Args:
             prompt: User prompt
-            
+
         Returns:
             Feature information
         """
@@ -498,12 +496,12 @@ class CodeDetector:
             "alternatives": "Alternative solutions considered",
         }
 
-    def _extract_review_info(self, prompt: str) -> Dict[str, str]:
+    def _extract_review_info(self, prompt: str) -> dict[str, str]:
         """Extract review information from prompt.
-        
+
         Args:
             prompt: User prompt
-            
+
         Returns:
             Review information
         """
@@ -514,12 +512,12 @@ class CodeDetector:
             "base_branch": "main",
         }
 
-    def _extract_implementation_info(self, prompt: str) -> Dict[str, str]:
+    def _extract_implementation_info(self, prompt: str) -> dict[str, str]:
         """Extract implementation information from prompt.
-        
+
         Args:
             prompt: User prompt
-            
+
         Returns:
             Implementation information
         """

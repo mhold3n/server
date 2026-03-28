@@ -5,7 +5,7 @@ Supports login, listing torrents, adding, pause/resume.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 
@@ -15,7 +15,7 @@ class QBittorrentClient:
         self,
         base_url: str,
         username: str,
-        password: Optional[str],
+        password: str | None,
         *,
         timeout: float = 20.0,
     ) -> None:
@@ -23,9 +23,9 @@ class QBittorrentClient:
         self.username = username
         self.password = password or ""
         self.timeout = timeout
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
-    async def __aenter__(self) -> "QBittorrentClient":
+    async def __aenter__(self) -> QBittorrentClient:
         self._client = httpx.AsyncClient(timeout=self.timeout)
         await self._login()
         return self
@@ -42,7 +42,7 @@ class QBittorrentClient:
         resp.raise_for_status()
         # On success, qB returns 'Ok.' and sets SID cookie automatically in the client
 
-    async def list_torrents(self) -> List[Dict[str, Any]]:
+    async def list_torrents(self) -> list[dict[str, Any]]:
         assert self._client is not None, "Client not started"
         url = f"{self.base_url}/api/v2/torrents/info"
         resp = await self._client.get(url)
@@ -50,21 +50,21 @@ class QBittorrentClient:
         data = resp.json()
         return data if isinstance(data, list) else []
 
-    async def add(self, urls: List[str]) -> Dict[str, Any]:
+    async def add(self, urls: list[str]) -> dict[str, Any]:
         assert self._client is not None, "Client not started"
         url = f"{self.base_url}/api/v2/torrents/add"
         resp = await self._client.post(url, data={"urls": "\n".join(urls)})
         resp.raise_for_status()
         return {"status": "ok", "added": len(urls)}
 
-    async def pause(self, hashes: List[str]) -> Dict[str, Any]:
+    async def pause(self, hashes: list[str]) -> dict[str, Any]:
         assert self._client is not None, "Client not started"
         url = f"{self.base_url}/api/v2/torrents/pause"
         resp = await self._client.post(url, data={"hashes": "|".join(hashes) if hashes else "all"})
         resp.raise_for_status()
         return {"status": "paused", "hashes": hashes or ["all"]}
 
-    async def resume(self, hashes: List[str]) -> Dict[str, Any]:
+    async def resume(self, hashes: list[str]) -> dict[str, Any]:
         assert self._client is not None, "Client not started"
         url = f"{self.base_url}/api/v2/torrents/resume"
         resp = await self._client.post(url, data={"hashes": "|".join(hashes) if hashes else "all"})

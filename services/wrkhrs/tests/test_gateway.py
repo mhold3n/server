@@ -1,10 +1,7 @@
 import pytest
-import json
 import hashlib
-import time
 from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
-from datetime import datetime, timedelta
 
 import sys
 import os
@@ -39,17 +36,17 @@ class TestAuthentication:
         """Test successful API key validation"""
         with patch.dict(os.environ, {"API_KEY_SECRET": "test-secret"}):
             # The API key should be the secret itself, not the hash
-            assert validate_api_key("test-secret") == True
+            assert validate_api_key("test-secret")
 
     def test_validate_api_key_failure(self):
         """Test failed API key validation"""
         with patch.dict(os.environ, {"API_KEY_SECRET": "test-secret"}):
-            assert validate_api_key("wrong-key") == False
+            assert not validate_api_key("wrong-key")
 
     def test_validate_api_key_empty(self):
         """Test empty API key validation"""
-        assert validate_api_key("") == False
-        assert validate_api_key(None) == False
+        assert not validate_api_key("")
+        assert not validate_api_key(None)
 
     def test_jwt_token_creation_and_verification(self):
         """Test JWT token creation and verification"""
@@ -78,12 +75,12 @@ class TestAuthentication:
         
         # First request should pass
         with patch.dict(os.environ, {"RATE_LIMIT_REQUESTS_PER_MINUTE": "5"}):
-            assert check_rate_limit(client_ip) == True
+            assert check_rate_limit(client_ip)
 
     def test_rate_limiting_disabled_auth(self):
         """Test rate limiting when auth is disabled"""
         with patch.dict(os.environ, {"ENABLE_AUTHENTICATION": "false"}):
-            assert check_rate_limit("any_ip") == True
+            assert check_rate_limit("any_ip")
 
 
 class TestHealthEndpoint:

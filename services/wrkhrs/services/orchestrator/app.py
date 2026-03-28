@@ -1,15 +1,11 @@
-import os
-import json
 import logging
-from typing import Dict, List, Optional, Any, Annotated
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 import requests
 from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolNode
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_core.tools import tool
 
 # Import our LLM backend manager
@@ -185,7 +181,7 @@ def gather_context(state: WorkflowState) -> WorkflowState:
                                     domain_weights["mechanical"] = float(part.split('=')[1])
                                 elif "Materials=" in part:
                                     domain_weights["materials"] = float(part.split('=')[1])
-                except:
+                except Exception:
                     pass
     
     # Execute tools based on needs

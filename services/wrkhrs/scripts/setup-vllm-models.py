@@ -4,7 +4,6 @@ vLLM Model Setup Script
 Downloads and configures models for vLLM multi-GPU inference
 """
 
-import os
 import sys
 import subprocess
 import argparse
@@ -173,12 +172,12 @@ def main():
         # Update .env file
         update_env_file(model_name)
         
-        print(f"\n🎉 Setup complete!")
+        print("\n🎉 Setup complete!")
         print(f"   Model: {model_name}")
         print(f"   Location: {args.models_dir}")
-        print(f"   Configuration: Updated .env file")
-        print(f"\n🚀 To start vLLM with this model:")
-        print(f"   docker compose -f compose/docker-compose.base.yml -f compose/docker-compose.prod.yml up -d llm-runner")
+        print("   Configuration: Updated .env file")
+        print("\n🚀 To start vLLM with this model:")
+        print("   docker compose -f compose/docker-compose.base.yml -f compose/docker-compose.prod.yml up -d llm-runner")
     else:
         print("❌ Setup failed")
         sys.exit(1)

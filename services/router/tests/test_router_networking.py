@@ -1,6 +1,6 @@
-import asyncio
-from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
+
+from fastapi.testclient import TestClient
 
 from src.router import app
 
@@ -20,7 +20,6 @@ def test_health_includes_mcp_and_api(monkeypatch):
     monkeypatch.setattr(router_mod, "api_client", fake_api)
 
     # Mock MCP client health
-    from src.mcp_client import MCPClient
 
     class FakeMCP:
         async def __aenter__(self):
@@ -42,7 +41,6 @@ def test_health_includes_mcp_and_api(monkeypatch):
 def test_mcp_tool_call_forwards_tool_args(monkeypatch):
     client = TestClient(app)
 
-    from src.mcp_client import MCPClient
 
     class FakeMCP:
         async def __aenter__(self):

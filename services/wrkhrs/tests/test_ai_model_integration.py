@@ -5,18 +5,13 @@ Tests the integration of prompt middleware with actual AI models
 """
 
 import pytest
-import asyncio
-import json
-import requests
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, List, Any
+from typing import Dict
 import sys
 import os
 
 # Add the services directory to the path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'services'))
 
-from prompt_middleware.app import PromptMiddleware, PromptContext, TransformationType
 
 class TestAIModelIntegration:
     """Test integration with AI models for object inference"""
@@ -190,7 +185,7 @@ class TestAIModelIntegration:
         assert "coding context" in transformed_prompt, "Domain context should be added"
         assert "debug" in ai_response.lower(), "AI should understand this is a debugging request"
         
-        print(f"✅ Workflow test passed:")
+        print("✅ Workflow test passed:")
         print(f"   Original: '{ambiguous_prompt}'")
         print(f"   Transformed: '{transformed_prompt}'")
         print(f"   AI Response: '{ai_response}'")

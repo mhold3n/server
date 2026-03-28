@@ -2,9 +2,8 @@ import httpx
 import respx
 from fastapi.testclient import TestClient
 
-from src.app import app
-import src.routes.vms as vms_route
 import src.config as cfg
+from src.app import app
 
 
 def test_proxmox_vms_list_and_actions(monkeypatch):

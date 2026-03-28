@@ -1,7 +1,7 @@
 """OpenTelemetry tracing configuration for router service."""
 
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 import structlog
 from opentelemetry import trace
@@ -9,9 +9,9 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExport
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.sdk.resources import Resource
 
 logger = structlog.get_logger()
 
@@ -26,7 +26,7 @@ class TraceContext:
         tempo_endpoint: str = "http://tempo:4317",
     ):
         """Initialize trace context.
-        
+
         Args:
             service_name: Name of the service
             service_version: Version of the service
@@ -47,30 +47,30 @@ class TraceContext:
                 "service.version": self.service_version,
                 "service.instance.id": os.getenv("HOSTNAME", "unknown"),
             })
-            
+
             # Create tracer provider
             tracer_provider = TracerProvider(resource=resource)
             trace.set_tracer_provider(tracer_provider)
-            
+
             # Create OTLP exporter
             otlp_exporter = OTLPSpanExporter(
                 endpoint=self.tempo_endpoint,
                 insecure=True,
             )
-            
+
             # Create span processor
             span_processor = BatchSpanProcessor(otlp_exporter)
             tracer_provider.add_span_processor(span_processor)
-            
+
             # Get tracer
             self.tracer = trace.get_tracer(__name__)
-            
+
             logger.info(
                 "OpenTelemetry tracing configured",
                 service=self.service_name,
                 endpoint=self.tempo_endpoint,
             )
-            
+
         except Exception as e:
             logger.error("Failed to setup OpenTelemetry tracing", error=str(e))
             # Create a no-op tracer
@@ -78,7 +78,7 @@ class TraceContext:
 
     def instrument_fastapi(self, app) -> None:
         """Instrument FastAPI application.
-        
+
         Args:
             app: FastAPI application instance
         """
@@ -106,7 +106,7 @@ class TraceContext:
 
     def get_tracer(self):
         """Get tracer instance.
-        
+
         Returns:
             Tracer instance
         """
@@ -115,14 +115,14 @@ class TraceContext:
     def create_span(
         self,
         name: str,
-        attributes: Optional[Dict[str, Any]] = None,
+        attributes: dict[str, Any] | None = None,
     ):
         """Create a new span.
-        
+
         Args:
             name: Span name
             attributes: Optional span attributes
-            
+
         Returns:
             Span context manager
         """
@@ -131,10 +131,10 @@ class TraceContext:
     def add_span_attributes(
         self,
         span,
-        attributes: Dict[str, Any],
+        attributes: dict[str, Any],
     ) -> None:
         """Add attributes to span.
-        
+
         Args:
             span: Span instance
             attributes: Attributes to add
@@ -147,10 +147,10 @@ class TraceContext:
         self,
         span,
         name: str,
-        attributes: Optional[Dict[str, Any]] = None,
+        attributes: dict[str, Any] | None = None,
     ) -> None:
         """Add event to span.
-        
+
         Args:
             span: Span instance
             name: Event name
@@ -163,10 +163,10 @@ class TraceContext:
         self,
         span,
         status_code: str,
-        description: Optional[str] = None,
+        description: str | None = None,
     ) -> None:
         """Set span status.
-        
+
         Args:
             span: Span instance
             status_code: Status code (OK, ERROR, UNSET)
@@ -174,7 +174,7 @@ class TraceContext:
         """
         if span and span.is_recording():
             from opentelemetry.trace import Status, StatusCode
-            
+
             if status_code == "OK":
                 span.set_status(Status(StatusCode.OK, description))
             elif status_code == "ERROR":
@@ -189,7 +189,7 @@ trace_context = TraceContext()
 
 def get_trace_context() -> TraceContext:
     """Get global trace context.
-    
+
     Returns:
         Trace context instance
     """
@@ -198,7 +198,7 @@ def get_trace_context() -> TraceContext:
 
 def get_tracer():
     """Get tracer instance.
-    
+
     Returns:
         Tracer instance
     """
@@ -207,14 +207,14 @@ def get_tracer():
 
 def create_span(
     name: str,
-    attributes: Optional[Dict[str, Any]] = None,
+    attributes: dict[str, Any] | None = None,
 ):
     """Create a new span.
-    
+
     Args:
         name: Span name
         attributes: Optional span attributes
-        
+
     Returns:
         Span context manager
     """
@@ -223,10 +223,10 @@ def create_span(
 
 def add_span_attributes(
     span,
-    attributes: Dict[str, Any],
+    attributes: dict[str, Any],
 ) -> None:
     """Add attributes to span.
-    
+
     Args:
         span: Span instance
         attributes: Attributes to add
@@ -237,10 +237,10 @@ def add_span_attributes(
 def add_span_event(
     span,
     name: str,
-    attributes: Optional[Dict[str, Any]] = None,
+    attributes: dict[str, Any] | None = None,
     ) -> None:
     """Add event to span.
-    
+
     Args:
         span: Span instance
         name: Event name
@@ -252,10 +252,10 @@ def add_span_event(
 def set_span_status(
     span,
     status_code: str,
-    description: Optional[str] = None,
+    description: str | None = None,
 ) -> None:
     """Set span status.
-    
+
     Args:
         span: Span instance
         status_code: Status code (OK, ERROR, UNSET)

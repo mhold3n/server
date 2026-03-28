@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 
-from src.router import app
 import src.router as router_mod
+from src.router import app
 
 
 def test_root_endpoint():

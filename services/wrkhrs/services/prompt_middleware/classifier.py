@@ -5,7 +5,6 @@ Rule-based mapping from text to intent labels; to be replaced by trained model o
 """
 
 from typing import Dict
-import re
 
 
 INTENT_KEYWORDS = {

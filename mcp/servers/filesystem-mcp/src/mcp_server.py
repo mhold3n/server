@@ -1,13 +1,8 @@
 """File system operations and code analysis MCP server."""
 
-import asyncio
-import os
-import re
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import structlog
-import tree_sitter
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
@@ -46,13 +41,13 @@ class ToolRequest(BaseModel):
     """Tool request model."""
 
     tool: str = Field(..., description="Tool name")
-    arguments: Dict[str, Any] = Field(default_factory=dict, description="Tool arguments")
+    arguments: dict[str, Any] = Field(default_factory=dict, description="Tool arguments")
 
 
 class ToolResponse(BaseModel):
     """Tool response model."""
 
-    content: List[Dict[str, str]] = Field(..., description="Response content")
+    content: list[dict[str, str]] = Field(..., description="Response content")
 
 
 @app.get("/health")
@@ -224,7 +219,7 @@ async def call_tool(request: ToolRequest):
             tool=request.tool,
             error=str(e),
         )
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 """Shared test fixtures for router service."""
 
 import asyncio
-from typing import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -9,7 +9,6 @@ from fastapi.testclient import TestClient
 from redis.asyncio import Redis
 
 from src.router import app
-from src.config import settings
 
 
 @pytest.fixture(scope="session")
@@ -38,12 +37,12 @@ def mock_redis() -> AsyncMock:
 def mock_api_client() -> AsyncMock:
     """Mock API client."""
     mock = AsyncMock()
-    
+
     # Mock health check response
     mock_health_response = MagicMock()
     mock_health_response.status_code = 200
     mock.get.return_value = mock_health_response
-    
+
     # Mock chat completions response
     mock_chat_response = MagicMock()
     mock_chat_response.status_code = 200
@@ -63,7 +62,7 @@ def mock_api_client() -> AsyncMock:
     }
     mock_chat_response.raise_for_status.return_value = None
     mock.post.return_value = mock_chat_response
-    
+
     return mock
 
 
@@ -71,47 +70,47 @@ def mock_api_client() -> AsyncMock:
 def mock_mcp_client() -> AsyncMock:
     """Mock MCP client."""
     mock = AsyncMock()
-    
+
     # Mock server list
     mock_server = MagicMock()
     mock_server.name = "test-server"
     mock_server.server_type = "http"
     mock_server.url = "http://test-server:7000"
     mock.list_servers.return_value = [mock_server]
-    
+
     # Mock tools
     mock.get_server_tools.return_value = [
         {"name": "test-tool", "description": "A test tool"}
     ]
-    
+
     # Mock tool call
     mock.call_tool.return_value = {"result": "test result"}
-    
+
     # Mock health check
     mock.health_check_all.return_value = {"test-server": True}
-    
+
     return mock
 
 
 @pytest.fixture
 async def setup_clients(
-    mock_redis: AsyncMock, 
+    mock_redis: AsyncMock,
     mock_api_client: AsyncMock,
     test_client: TestClient
 ) -> AsyncGenerator[None, None]:
     """Setup mock clients for testing."""
     import src.router
-    
+
     # Store original clients
     original_redis = src.router.redis_client
     original_api = src.router.api_client
-    
+
     # Set mock clients
     src.router.redis_client = mock_redis
     src.router.api_client = mock_api_client
-    
+
     yield
-    
+
     # Restore original clients
     src.router.redis_client = original_redis
     src.router.api_client = original_api

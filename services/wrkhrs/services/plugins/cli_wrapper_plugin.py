@@ -9,7 +9,7 @@ executing command-line tools safely and parsing their output.
 import subprocess
 import json
 import shlex
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from pluggy import HookspecMarker, HookimplMarker
 
 # Plugin metadata
@@ -214,7 +214,7 @@ class CLIWrapperPlugin:
         exec_timeout = min(timeout, cmd_config["timeout"])
         
         # Build command
-        cmd_parts = [cmd_config["binary"]] + args
+        [cmd_config["binary"]] + args
         
         # Sanitize arguments to prevent injection
         safe_args = []

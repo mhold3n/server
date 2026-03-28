@@ -28,4 +28,6 @@ def test_ai_status_aggregates_ok(setup_clients):
         data = resp.json()
         assert data["status"] in ("healthy", "degraded")
         assert "router" in data and "ai_stack" in data and "worker" in data
+        assert "qwen" in data and "rag" in data and "asr" in data
+        assert "reachable" in data["qwen"] and "model_name" in data["qwen"] and "latency_ms" in data["qwen"]
 

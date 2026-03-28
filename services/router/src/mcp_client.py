@@ -1,8 +1,7 @@
 """MCP client for communicating with MCP servers."""
 
 import asyncio
-import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import structlog
 import yaml
@@ -16,7 +15,7 @@ logger = structlog.get_logger()
 class MCPServer:
     """Represents an MCP server configuration."""
 
-    def __init__(self, name: str, url: str, server_type: Optional[str] = None, type: Optional[str] = None, **kwargs):
+    def __init__(self, name: str, url: str, server_type: str | None = None, type: str | None = None, **kwargs):
         # Accept either 'server_type' or legacy 'type' key from config
         resolved_type = server_type or type
         if not resolved_type:
@@ -34,21 +33,21 @@ class MCPClient:
     """Client for communicating with MCP servers."""
 
     def __init__(self):
-        self.servers: Dict[str, MCPServer] = {}
-        self.http_client: Optional[AsyncClient] = None
+        self.servers: dict[str, MCPServer] = {}
+        self.http_client: AsyncClient | None = None
         self._load_servers()
 
     def _load_servers(self) -> None:
         """Load MCP servers from configuration file."""
         try:
-            with open(settings.mcp_servers_config, 'r') as f:
+            with open(settings.mcp_servers_config) as f:
                 config = yaml.safe_load(f)
-            
+
             servers_config = config.get('servers', [])
             for server_config in servers_config:
                 server = MCPServer(**server_config)
                 self.servers[server.name] = server
-                
+
             logger.info(
                 "Loaded MCP servers",
                 count=len(self.servers),
@@ -78,17 +77,17 @@ class MCPClient:
         if self.http_client:
             await self.http_client.aclose()
 
-    async def list_servers(self) -> List[MCPServer]:
+    async def list_servers(self) -> list[MCPServer]:
         """List all configured MCP servers."""
         return list(self.servers.values())
 
-    async def get_server_tools(self, server_name: str) -> List[Dict[str, Any]]:
+    async def get_server_tools(self, server_name: str) -> list[dict[str, Any]]:
         """Get available tools from an MCP server."""
         if server_name not in self.servers:
             raise ValueError(f"Server '{server_name}' not found")
-        
+
         server = self.servers[server_name]
-        
+
         try:
             response = await self.http_client.get(f"{server.url}/tools")
             response.raise_for_status()
@@ -112,19 +111,19 @@ class MCPClient:
         self,
         server_name: str,
         tool_name: str,
-        arguments: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        arguments: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Call a tool on an MCP server."""
         if server_name not in self.servers:
             raise ValueError(f"Server '{server_name}' not found")
-        
+
         server = self.servers[server_name]
-        
+
         payload = {
             "tool": tool_name,
             "arguments": arguments or {},
         }
-        
+
         try:
             logger.info(
                 "Calling MCP tool",
@@ -132,24 +131,24 @@ class MCPClient:
                 tool=tool_name,
                 arguments=arguments,
             )
-            
+
             response = await self.http_client.post(
                 f"{server.url}/call",
                 json=payload,
             )
             response.raise_for_status()
-            
+
             result = response.json()
-            
+
             logger.info(
                 "MCP tool call successful",
                 server=server_name,
                 tool=tool_name,
                 result_keys=list(result.keys()) if isinstance(result, dict) else None,
             )
-            
+
             return result
-            
+
         except HTTPError as e:
             logger.error(
                 "Failed to call MCP tool",
@@ -172,26 +171,26 @@ class MCPClient:
         """Check if an MCP server is healthy."""
         if server_name not in self.servers:
             return False
-        
+
         server = self.servers[server_name]
-        
+
         try:
             response = await self.http_client.get(f"{server.url}/health")
             return response.status_code == 200
         except Exception:
             return False
 
-    async def health_check_all(self) -> Dict[str, bool]:
+    async def health_check_all(self) -> dict[str, bool]:
         """Check health of all MCP servers."""
         health_status = {}
-        
+
         tasks = [
             self.health_check(server_name)
             for server_name in self.servers.keys()
         ]
-        
+
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        
+
         for i, server_name in enumerate(self.servers.keys()):
             result = results[i]
             if isinstance(result, Exception):
@@ -203,7 +202,7 @@ class MCPClient:
                 )
             else:
                 health_status[server_name] = result
-        
+
         return health_status
 
 

@@ -1,7 +1,7 @@
 """Non-generative conditioning for domain weighting and SI unit normalization."""
 
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import structlog
 
@@ -28,7 +28,7 @@ class NonGenerativeConditioning:
             "mm": ("m", 0.001),
             "cm": ("m", 0.01),
             "km": ("m", 1000),
-            
+
             # Mass
             "lb": ("kg", 0.453592),
             "lbs": ("kg", 0.453592),
@@ -40,15 +40,14 @@ class NonGenerativeConditioning:
             "ton": ("kg", 907.185),
             "tons": ("kg", 907.185),
             "g": ("kg", 0.001),
-            
+
             # Force
-            "lbf": ("N", 4.44822),
             "lbf": ("N", 4.44822),
             "pound-force": ("N", 4.44822),
             "pounds-force": ("N", 4.44822),
             "kip": ("N", 4448.22),
             "kips": ("N", 4448.22),
-            
+
             # Pressure
             "psi": ("Pa", 6894.76),
             "psia": ("Pa", 6894.76),
@@ -59,7 +58,7 @@ class NonGenerativeConditioning:
             "torr": ("Pa", 133.322),
             "mmHg": ("Pa", 133.322),
             "inHg": ("Pa", 3386.39),
-            
+
             # Temperature
             "°F": ("K", lambda f: (f - 32) * 5/9 + 273.15),
             "F": ("K", lambda f: (f - 32) * 5/9 + 273.15),
@@ -67,7 +66,7 @@ class NonGenerativeConditioning:
             "°C": ("K", lambda c: c + 273.15),
             "C": ("K", lambda c: c + 273.15),
             "celsius": ("K", lambda c: c + 273.15),
-            
+
             # Energy
             "BTU": ("J", 1055.06),
             "btu": ("J", 1055.06),
@@ -75,7 +74,7 @@ class NonGenerativeConditioning:
             "kcal": ("J", 4184),
             "Wh": ("J", 3600),
             "kWh": ("J", 3600000),
-            
+
             # Power
             "hp": ("W", 745.7),
             "horsepower": ("W", 745.7),
@@ -86,22 +85,22 @@ class NonGenerativeConditioning:
     def apply_domain_weighting(
         self,
         prompt: str,
-        domain_weights: Dict[str, float],
-        context: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        domain_weights: dict[str, float],
+        context: str | None = None,
+    ) -> dict[str, Any]:
         """Apply domain weighting to enhance context without changing prompt.
-        
+
         Args:
             prompt: Original user prompt
             domain_weights: Domain weights (chemistry, mechanical, materials)
             context: Optional additional context
-            
+
         Returns:
             Dictionary with conditioned prompt and metadata
         """
         # Create domain context
         domain_context = self._build_domain_context(domain_weights)
-        
+
         # Build enhanced system context
         system_context = f"""Domain Analysis: {domain_context}
 
@@ -124,47 +123,53 @@ Please provide a comprehensive, technically accurate response that draws from th
         self,
         text: str,
         normalize: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Normalize units to SI system.
-        
+
         Args:
             text: Text containing units to normalize
             normalize: Whether to actually convert units (False for detection only)
-            
+
         Returns:
             Dictionary with normalized text and unit information
         """
         if not normalize:
             return self._detect_units(text)
-        
+
         normalized_text = text
         unit_conversions = []
-        
+
         # Find and convert units
         for unit, (si_unit, conversion) in self.si_units.items():
             pattern = rf"\b(\d+(?:\.\d+)?)\s*{re.escape(unit)}\b"
-            
-            def replace_unit(match):
+
+            def replace_unit(
+                match,
+                *,
+                _unit=unit,
+                _si_unit=si_unit,
+                _conversion=conversion,
+            ):
                 value = float(match.group(1))
-                
-                if callable(conversion):
-                    si_value = conversion(value)
+
+                if callable(_conversion):
+                    si_value = _conversion(value)
                 else:
-                    si_value = value * conversion
-                
+                    si_value = value * _conversion
+
                 unit_conversions.append({
-                    "original": f"{value} {unit}",
-                    "converted": f"{si_value:.3f} {si_unit}",
+                    "original": f"{value} {_unit}",
+                    "converted": f"{si_value:.3f} {_si_unit}",
                     "value": value,
                     "si_value": si_value,
-                    "unit": unit,
-                    "si_unit": si_unit,
+                    "unit": _unit,
+                    "si_unit": _si_unit,
                 })
-                
-                return f"{si_value:.3f} {si_unit}"
-            
+
+                return f"{si_value:.3f} {_si_unit}"
+
             normalized_text = re.sub(pattern, replace_unit, normalized_text, flags=re.IGNORECASE)
-        
+
         return {
             "original_text": text,
             "normalized_text": normalized_text,
@@ -175,12 +180,12 @@ Please provide a comprehensive, technically accurate response that draws from th
     def apply_constraint_detection(
         self,
         text: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Detect safety and operational constraints in text.
-        
+
         Args:
             text: Text to analyze for constraints
-            
+
         Returns:
             Dictionary with detected constraints
         """
@@ -189,25 +194,25 @@ Please provide a comprehensive, technically accurate response that draws from th
             "flammable", "toxic", "corrosive", "explosive", "pressure", "temperature",
             "limit", "maximum", "minimum", "critical", "failure", "breakdown",
         ]
-        
+
         operational_keywords = [
             "operating", "operation", "maintenance", "inspection", "service",
             "lifecycle", "durability", "reliability", "efficiency", "performance",
             "cost", "budget", "schedule", "timeline", "deadline", "delivery",
         ]
-        
+
         text_lower = text.lower()
-        
+
         safety_constraints = [
-            keyword for keyword in safety_keywords 
+            keyword for keyword in safety_keywords
             if keyword in text_lower
         ]
-        
+
         operational_constraints = [
-            keyword for keyword in operational_keywords 
+            keyword for keyword in operational_keywords
             if keyword in text_lower
         ]
-        
+
         return {
             "safety_constraints": safety_constraints,
             "operational_constraints": operational_constraints,
@@ -218,16 +223,16 @@ Please provide a comprehensive, technically accurate response that draws from th
     def apply_evidence_weighting(
         self,
         prompt: str,
-        evidence_sources: List[Dict[str, Any]],
+        evidence_sources: list[dict[str, Any]],
         min_sources: int = 3,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Apply evidence weighting for RAG retrieval.
-        
+
         Args:
             prompt: Original prompt
             evidence_sources: List of evidence sources with metadata
             min_sources: Minimum number of sources required
-            
+
         Returns:
             Dictionary with evidence weighting information
         """
@@ -239,7 +244,7 @@ Please provide a comprehensive, technically accurate response that draws from th
                 "min_required": min_sources,
                 "evidence_context": "Insufficient evidence sources available.",
             }
-        
+
         # Build evidence context
         evidence_context = "Evidence Sources:\n"
         for i, source in enumerate(evidence_sources, 1):
@@ -247,7 +252,7 @@ Please provide a comprehensive, technically accurate response that draws from th
             evidence_context += f"(Score: {source.get('score', 0):.3f})\n"
             if source.get('snippet'):
                 evidence_context += f"   {source['snippet'][:100]}...\n"
-        
+
         return {
             "original_prompt": prompt,
             "evidence_sufficient": True,
@@ -257,36 +262,36 @@ Please provide a comprehensive, technically accurate response that draws from th
             "evidence_sources": evidence_sources,
         }
 
-    def _build_domain_context(self, domain_weights: Dict[str, float]) -> str:
+    def _build_domain_context(self, domain_weights: dict[str, float]) -> str:
         """Build domain context string from weights."""
         sorted_domains = sorted(
-            domain_weights.items(), 
-            key=lambda x: x[1], 
+            domain_weights.items(),
+            key=lambda x: x[1],
             reverse=True
         )
-        
+
         context_parts = []
         for domain, weight in sorted_domains:
             if weight > 0.1:  # Only include significant domains
                 context_parts.append(f"{domain.title()}: {weight:.2f}")
-        
+
         return ", ".join(context_parts) if context_parts else "General"
 
-    def _format_domain_weights(self, domain_weights: Dict[str, float]) -> str:
+    def _format_domain_weights(self, domain_weights: dict[str, float]) -> str:
         """Format domain weights for display."""
         formatted = []
         for domain, weight in domain_weights.items():
             formatted.append(f"- {domain.title()}: {weight:.1%}")
         return "\n".join(formatted)
 
-    def _detect_units(self, text: str) -> Dict[str, Any]:
+    def _detect_units(self, text: str) -> dict[str, Any]:
         """Detect units in text without converting."""
         detected_units = []
-        
-        for unit, (si_unit, conversion) in self.si_units.items():
+
+        for unit, (si_unit, _conversion) in self.si_units.items():
             pattern = rf"\b(\d+(?:\.\d+)?)\s*{re.escape(unit)}\b"
             matches = re.finditer(pattern, text, re.IGNORECASE)
-            
+
             for match in matches:
                 value = float(match.group(1))
                 detected_units.append({
@@ -296,7 +301,7 @@ Please provide a comprehensive, technically accurate response that draws from th
                     "position": match.span(),
                     "text": match.group(0),
                 })
-        
+
         return {
             "original_text": text,
             "detected_units": detected_units,

@@ -12,7 +12,7 @@
 | **Birtha** | Infrastructure & control plane | Docker networks, Caddy routing, DNS, VPN, observability stack, MCP servers, Redis queue | Zero AI logic—never classifies, generates, or validates |
 | **Structure** | Deterministic reasoning engine | Task classification, validation gates, kernel dispatch, audit trail, mode selection | LLM inference, vector search, audio transcription |
 | **WrkHrs** | Probabilistic AI services | RAG retrieval, ASR transcription, prompt conditioning, LLM orchestration | Request routing, gating, domain classification, policy enforcement on inputs |
-| **Worker** | GPU inference node (separate machine) | vLLM / Ollama runtime, model weights, VRAM management | Everything else—pure compute |
+| **Worker** | GPU inference node (separate machine) | vLLM generation & embedding, cross-encoder reranker, VRAM management | Everything else—pure compute |
 
 ---
 
@@ -72,11 +72,15 @@ graph TD
         end
     end
 
-    subgraph "Workstation (RTX 4070 Ti)"
+    subgraph "Workstation (RTX 4070 Ti + RTX 2080)"
         subgraph "net: worker"
-            LLM["vLLM / Ollama :8000"]
+            LLM_GEN["vLLM Gen :8000 (GPU 0)"]
+            LLM_EMBED["vLLM Embed :8001 (GPU 1)"]
+            RERANK["Reranker :8002 (GPU 1)"]
             WCADDY["Worker Caddy :8443"]
-            WCADDY --> LLM
+            WCADDY -->|"chat/completions"| LLM_GEN
+            WCADDY -->|"embeddings"| LLM_EMBED
+            WCADDY -->|"rerank"| RERANK
         end
     end
 
@@ -109,7 +113,7 @@ graph TD
 | `data` | Redis, Qdrant, Postgres, MinIO | Persistence. Shared by services that need state |
 | `observability` | Prometheus, Grafana, Loki, Tempo, Jaeger, MLflow | Metrics/traces. All services push here; nothing pulls from here back |
 | `mcp` | All MCP servers, MCP Registry | Tool servers. Reachable from Birtha Router and WrkHrs Orchestrator |
-| `worker` | vLLM/Ollama, Worker Caddy | GPU inference. Separate machine, connected via LAN/mTLS only |
+| `worker` | vLLM Gen, vLLM Embed, Reranker, Worker Caddy | GPU inference. Separate machine; gen on GPU 0, embed+rerank on GPU 1 |
 
 **Network access rules:**
 
@@ -155,7 +159,9 @@ worker      ──X──► frontend    (GPU node never calls Birtha directly)
 | Loki | 3100 | 3100 | `docker-compose.platform.yml` |
 | Tempo | 3200/4317 | 3200/4317 | `docker-compose.platform.yml` |
 | Jaeger | 16686 | 16686 | `docker-compose.platform.yml` |
-| vLLM (worker) | 8000 | `$WORKER_VLLM_PORT` (def 8000) | `docker-compose.worker.yml` |
+| vLLM Gen (worker) | 8000 | `$WORKER_GEN_PORT` (def 8000) | `docker-compose.worker.yml` |
+| vLLM Embed (worker) | 8001 | `$WORKER_EMBED_PORT` (def 8001) | `docker-compose.worker.yml` |
+| Reranker (worker) | 8000 | `$WORKER_RERANKER_PORT` (def 8002) | `docker-compose.worker.yml` |
 | Worker Caddy | 8443 | `$WORKER_PROXY_PORT` (def 8443) | `docker-compose.worker.yml` |
 
 ---
@@ -282,8 +288,13 @@ Phase 5: Frontend
   Pi-hole / WireGuard / Homarr
 
 Phase 6 (separate machine): Worker
-  vLLM or Ollama → Worker Caddy
+  vLLM Gen (GPU 0) → vLLM Embed (GPU 1) →
+  Reranker (GPU 1, optional) → Worker Caddy
 ```
+
+> **Note:** WrkHrs RAG can operate in *local-embed* mode (loads SentenceTransformer
+> in-process) or *remote-embed* mode (calls `EMBEDDING_ENDPOINT_URL` on the Worker).
+> Remote-embed is the production default; local-embed is for dev/test.
 
 ---
 
@@ -307,3 +318,4 @@ Phase 6 (separate machine): Worker
 |------|--------|
 | 2026-02-23 | v1: Abstract boundary definitions |
 | 2026-02-23 | v2: Hardened framework — concrete service graph, network segmentation, port map, boot sequence, adapter contract |
+| 2026-02-24 | v3: Worker GPU specialization — gen/embed/reranker lanes, remote embedding support in RAG |

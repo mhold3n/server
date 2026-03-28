@@ -5,8 +5,7 @@ External API integration for data enrichment and validation
 
 import json
 import time
-from typing import Dict, Any, List, Optional, Union
-from urllib.parse import urlencode, quote
+from typing import Dict, Any, Optional
 from dataclasses import dataclass
 import hashlib
 
@@ -181,7 +180,7 @@ class WebAPIPlugin:
     def fetch_weather_data(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Fetch weather data for a location (mock implementation)"""
         location = params["location"]
-        api_key = params.get("api_key", "demo_key")
+        params.get("api_key", "demo_key")
         units = params.get("units", "metric")
         
         # Mock weather data (in real implementation, would call actual API)
@@ -208,7 +207,7 @@ class WebAPIPlugin:
     def geocode_address(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Convert address to coordinates (mock implementation)"""
         address = params["address"]
-        country = params.get("country", "")
+        params.get("country", "")
         
         # Mock geocoding result
         mock_result = {

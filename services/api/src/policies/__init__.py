@@ -1,14 +1,14 @@
 """Policy middleware for answer quality guardrails."""
 
-from .evidence import EvidencePolicy
 from .citations import CitationPolicy
+from .evidence import EvidencePolicy
 from .hedging import HedgingPolicy
-from .units import SIUnitPolicy
 from .registry import PolicyRegistry
+from .units import SIUnitPolicy
 
 __all__ = [
     "EvidencePolicy",
-    "CitationPolicy", 
+    "CitationPolicy",
     "HedgingPolicy",
     "SIUnitPolicy",
     "PolicyRegistry",

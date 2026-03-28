@@ -1,16 +1,16 @@
 """Integration tests for WrkHrs integration."""
 
-import pytest
-import httpx
 from unittest.mock import AsyncMock, patch
-from fastapi.testclient import TestClient
 
+import pytest
+from fastapi.testclient import TestClient
 from src.main import app
-from src.wrkhrs.gateway_client import WrkHrsGatewayClient
-from src.wrkhrs.domain_classifier import DomainClassifier
-from src.wrkhrs.conditioning import RequestConditioner
+
 from src.observability.mlflow_logger import MLflowLogger
 from src.policies.evidence import EvidencePolicy
+from src.wrkhrs.conditioning import RequestConditioner
+from src.wrkhrs.domain_classifier import DomainClassifier
+from src.wrkhrs.gateway_client import WrkHrsGatewayClient
 
 
 class TestWrkHrsIntegration:
@@ -98,7 +98,7 @@ class TestWrkHrsIntegration:
             "messages": [{"role": "user", "content": "Hello"}]
         }
         response = await gateway_client.chat_completion(payload)
-        
+
         assert response == mock_response
         gateway_client.chat_completion.assert_called_once_with(payload)
 
@@ -116,7 +116,7 @@ class TestWrkHrsIntegration:
 
         # Test tool registry
         response = await gateway_client.get_tool_registry()
-        
+
         assert response == mock_response
         gateway_client.get_tool_registry.assert_called_once()
 
@@ -132,7 +132,7 @@ class TestWrkHrsIntegration:
 
         # Test ASR transcription
         response = await gateway_client.get_asr_transcription("test.wav")
-        
+
         assert response == mock_response
         gateway_client.get_asr_transcription.assert_called_once_with("test.wav")
 
@@ -147,8 +147,8 @@ class TestWrkHrsIntegration:
             ]
         }
         violations = evidence_policy.validate_response(
-            response_with_citations, 
-            require_evidence=True, 
+            response_with_citations,
+            require_evidence=True,
             min_citations=2
         )
         assert len(violations) == 0
@@ -159,8 +159,8 @@ class TestWrkHrsIntegration:
             "citations": []
         }
         violations = evidence_policy.validate_response(
-            response_without_citations, 
-            require_evidence=True, 
+            response_without_citations,
+            require_evidence=True,
             min_citations=1
         )
         assert len(violations) > 0
@@ -174,8 +174,8 @@ class TestWrkHrsIntegration:
             "citations": []
         }
         violations = evidence_policy.validate_response(
-            response_with_inline, 
-            require_evidence=True, 
+            response_with_inline,
+            require_evidence=True,
             min_citations=1
         )
         assert len(violations) == 0
@@ -187,7 +187,7 @@ class TestWrkHrsIntegration:
              patch('mlflow.end_run') as mock_end_run, \
              patch('mlflow.log_params') as mock_log_params, \
              patch('mlflow.log_metrics') as mock_log_metrics:
-            
+
             # Mock active run
             mock_run = AsyncMock()
             mock_run.info.run_id = "test-run-id"
@@ -222,7 +222,7 @@ class TestWrkHrsIntegration:
         with patch('src.wrkhrs.gateway_client.WrkHrsGatewayClient') as mock_client_class:
             # Mock client instance
             mock_client_class.return_value = gateway_client
-            
+
             # Mock gateway response
             mock_response = {
                 "choices": [{"message": {"content": "Test response with citations [1]"}}]
@@ -237,7 +237,7 @@ class TestWrkHrsIntegration:
                     "domain": "rag"
                 }
             )
-            
+
             assert response.status_code == 200
             assert "Test response" in response.json()["content"]
 
@@ -261,7 +261,7 @@ class TestWrkHrsIntegration:
             "reason": "Excellent response",
             "suggestions": "None"
         }
-        
+
         response = client.post("/v1/feedback", json=feedback_data)
         assert response.status_code == 200
         assert response.json()["status"] == "success"
@@ -286,7 +286,7 @@ class TestWrkHrsIntegration:
         # Test tracing headers
         response = client.get("/health", headers={"X-Trace-Id": "test-trace-id"})
         assert response.status_code == 200
-        
+
         # Test metrics endpoint
         response = client.get("/metrics")
         assert response.status_code == 200

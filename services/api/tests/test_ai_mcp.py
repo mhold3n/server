@@ -1,10 +1,11 @@
+from unittest.mock import AsyncMock
+
 import httpx
 import respx
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock
 
-from src.app import app
 import src.app as app_mod
+from src.app import app
 
 
 def test_mcp_servers_list_uses_toggle(setup_clients):

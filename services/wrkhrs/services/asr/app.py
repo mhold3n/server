@@ -1,21 +1,16 @@
 import os
-import json
 import logging
 import tempfile
 import subprocess
 import base64
 import requests
-import mimetypes
-import asyncio
-from typing import Dict, List, Optional, Any, Union
-from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
-import hashlib
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
-from pydantic import BaseModel, Field
-import numpy as np
+from pydantic import BaseModel
 from faster_whisper import WhisperModel
 
 # Configure logging
@@ -541,7 +536,7 @@ async def transcribe_file(
                 os.unlink(temp_file_path)
                 if audio_file_path != temp_file_path:
                     os.unlink(audio_file_path)
-            except:
+            except Exception:
                 pass
         
     except HTTPException:
@@ -590,12 +585,12 @@ async def transcribe_request(request: TranscriptionRequest):
             if temp_file_path and temp_file_path != audio_file_path:
                 try:
                     os.unlink(temp_file_path)
-                except:
+                except Exception:
                     pass
             if audio_file_path != extracted_audio_path:
                 try:
                     os.unlink(audio_file_path)
-                except:
+                except Exception:
                     pass
             
             audio_file_path = extracted_audio_path
@@ -621,12 +616,12 @@ async def transcribe_request(request: TranscriptionRequest):
         if temp_file_path:
             try:
                 os.unlink(temp_file_path)
-            except:
+            except Exception:
                 pass
         if audio_file_path and audio_file_path != temp_file_path:
             try:
                 os.unlink(audio_file_path)
-            except:
+            except Exception:
                 pass
 
 @api.get("/technical/keywords")

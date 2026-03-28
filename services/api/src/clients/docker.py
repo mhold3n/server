@@ -5,9 +5,8 @@ Requires mounting `/var/run/docker.sock` into the `api` service.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
-
 import os
+from typing import Any
 
 try:
     import docker  # type: ignore
@@ -28,11 +27,11 @@ def _client():
     return docker.from_env()
 
 
-def list_service_containers(service: str) -> List[Dict[str, Any]]:
+def list_service_containers(service: str) -> list[dict[str, Any]]:
     client = _client()
     try:
         containers = client.containers.list(all=True, filters={"label": f"com.docker.compose.service={service}"})
-        items: List[Dict[str, Any]] = []
+        items: list[dict[str, Any]] = []
         for c in containers:
             items.append(
                 {
@@ -50,7 +49,7 @@ def list_service_containers(service: str) -> List[Dict[str, Any]]:
             pass
 
 
-def restart_service(service: str, timeout: int = 10) -> Dict[str, Any]:
+def restart_service(service: str, timeout: int = 10) -> dict[str, Any]:
     client = _client()
     restarted = []
     try:

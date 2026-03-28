@@ -1,15 +1,12 @@
 """MCP server for indexed codebase datasets with embeddings and provenance."""
 
 import os
-import json
-import hashlib
 from typing import Any, Dict, List, Optional
 
 import structlog
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from qdrant_client import QdrantClient
-from sentence_transformers import SentenceTransformer
 
 from .indexer import CodeIndexer
 from .embeddings import CodeEmbedder

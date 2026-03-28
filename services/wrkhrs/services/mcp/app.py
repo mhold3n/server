@@ -1,29 +1,16 @@
-import os
 import json
 import yaml
 import logging
 import math
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 from pathlib import Path
 import hashlib
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
-from pydantic import BaseModel, Field
-import requests
-import numpy as np
-from scipy import constants
-try:
-    from mendeleev import element
-    from rdkit import Chem
-    from rdkit.Chem import Descriptors, rdMolDescriptors
-    import pubchempy as pcp
-    CHEMISTRY_LIBS_AVAILABLE = True
-except ImportError:
-    CHEMISTRY_LIBS_AVAILABLE = False
-    logger.warning("Chemistry libraries not available. Some features will be disabled.")
+from pydantic import BaseModel
 
-# Configure logging
+# Configure logging before optional chemistry imports (logger used in ImportError path)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -33,6 +20,16 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+try:
+    from mendeleev import element  # noqa: F401
+    from rdkit import Chem
+    from rdkit.Chem import Descriptors, rdMolDescriptors
+    import pubchempy as pcp
+    CHEMISTRY_LIBS_AVAILABLE = True
+except ImportError:
+    CHEMISTRY_LIBS_AVAILABLE = False
+    logger.warning("Chemistry libraries not available. Some features will be disabled.")
 
 # Initialize FastAPI app
 api = FastAPI(
@@ -470,7 +467,7 @@ class ChemistryDomain(BaseDomain):
                         molecule_info["name"] = name
                         molecule_info["pubchem_cid"] = compounds[0].cid
                         molecule_info["input_type"] = "name"
-                except:
+                except Exception:
                     pass
             elif formula:
                 # For formula, we can only do basic calculations
@@ -1014,9 +1011,9 @@ async def upload_domain_file(
     try:
         # Parse metadata
         try:
-            metadata_dict = json.loads(metadata)
-        except:
-            metadata_dict = {}
+            json.loads(metadata)
+        except Exception:
+            pass
         
         # Save file to domain directory
         domain_data_path = mcp_service.data_dir / domain_name

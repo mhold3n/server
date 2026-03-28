@@ -1,0 +1,8 @@
+# Repo-wide Ruff settings. Vendored WrkHrs (`services/wrkhrs`) is third-party
+# code; lint it separately or fix incrementally — do not block CI on it here.
+extend-exclude = [
+    "services/wrkhrs",
+]
+
+line-length = 88
+target-version = "py311"

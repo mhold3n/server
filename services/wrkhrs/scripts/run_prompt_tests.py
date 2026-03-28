@@ -6,7 +6,6 @@ Runs comprehensive tests for the prompt middleware suite
 
 import subprocess
 import sys
-import os
 import argparse
 from pathlib import Path
 

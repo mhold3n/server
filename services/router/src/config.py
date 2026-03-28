@@ -1,9 +1,17 @@
 """Configuration management for router service."""
 
-from typing import Optional
+
+from enum import StrEnum
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class WorkerProfile(StrEnum):
+    """LLM worker profile from the router's perspective."""
+
+    GPU = "gpu"
+    APPLE = "apple"
 
 
 class Settings(BaseSettings):
@@ -46,8 +54,18 @@ class Settings(BaseSettings):
         description="Maximum concurrent requests to handle",
     )
     request_timeout: int = Field(
-        default=120,
+        default=600,
         description="Request timeout in seconds",
+    )
+
+    # LLM defaults (kept in sync with API)
+    orch_profile: WorkerProfile = Field(
+        default=WorkerProfile.GPU,
+        description="LLM worker profile (gpu or apple)",
+    )
+    default_llm_model: str = Field(
+        default="Qwen/Qwen3.5-9B",
+        description="Default model to assume when none is specified",
     )
 
     # MCP client settings

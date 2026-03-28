@@ -31,7 +31,14 @@ RUN pip install --upgrade pip && \
       pydantic-settings>=2.1.0 \
       httpx>=0.25.0 \
       structlog>=23.2.0 \
-      docker>=6.1.0
+      docker>=6.1.0 \
+      opentelemetry-api \
+      opentelemetry-sdk \
+      opentelemetry-instrumentation-fastapi \
+      opentelemetry-instrumentation-httpx \
+      opentelemetry-instrumentation-requests \
+      opentelemetry-exporter-otlp \
+      mlflow
 
 # Production stage
 FROM python:3.11-slim as production

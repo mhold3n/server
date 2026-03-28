@@ -1,8 +1,6 @@
 import pytest
-import json
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
-from datetime import datetime
 
 import sys
 import os

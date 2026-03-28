@@ -1,12 +1,11 @@
 """Request context middleware for provenance tracking."""
 
 import uuid
-from typing import Optional
 
 import structlog
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi import Request
 from opentelemetry import trace
+from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = structlog.get_logger()
 
@@ -54,10 +53,10 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
 
 def get_request_context(request: Request) -> dict:
     """Get request context from state.
-    
+
     Args:
         request: FastAPI request object
-        
+
     Returns:
         Context dictionary with trace_id, run_id, policy_set
     """

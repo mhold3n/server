@@ -1,13 +1,12 @@
 """Configuration management using Pydantic Settings."""
 
-from typing import Optional
+from enum import StrEnum
 
-from enum import Enum
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class WorkerProfile(str, Enum):
+class WorkerProfile(StrEnum):
     """LLM worker profile."""
 
     GPU = "gpu"
@@ -59,8 +58,8 @@ class Settings(BaseSettings):
     port: int = Field(default=8080, description="Port to bind to")
 
     # Security
-    jwt_secret: Optional[str] = Field(default=None, description="JWT secret key")
-    encryption_key: Optional[str] = Field(default=None, description="Encryption key")
+    jwt_secret: str | None = Field(default=None, description="JWT secret key")
+    encryption_key: str | None = Field(default=None, description="Encryption key")
 
     # Metrics
     enable_metrics: bool = Field(default=True, description="Enable Prometheus metrics")
@@ -70,11 +69,11 @@ class Settings(BaseSettings):
         default="https://192.168.50.180:8006",
         description="Proxmox API base URL (e.g., https://host:8006)",
     )
-    proxmox_token_id: Optional[str] = Field(
+    proxmox_token_id: str | None = Field(
         default=None,
         description="Proxmox API token ID (user@realm!token)",
     )
-    proxmox_token_secret: Optional[str] = Field(
+    proxmox_token_secret: str | None = Field(
         default=None,
         description="Proxmox API token secret",
     )
@@ -89,7 +88,7 @@ class Settings(BaseSettings):
         description="qBittorrent base URL (gluetun exposes qb at 8080 in-cluster)",
     )
     qb_username: str = Field(default="admin", description="qBittorrent username")
-    qb_password: Optional[str] = Field(
+    qb_password: str | None = Field(
         default=None, description="qBittorrent password (set via UI/env)"
     )
 
@@ -98,7 +97,7 @@ class Settings(BaseSettings):
         default="http://meilisearch:7700",
         description="Meilisearch base URL",
     )
-    meili_api_key: Optional[str] = Field(
+    meili_api_key: str | None = Field(
         default=None, description="Meilisearch API key (master/search key)"
     )
     meili_index: str = Field(default="files", description="Meilisearch index name")
@@ -112,11 +111,11 @@ class Settings(BaseSettings):
     ai_stack_url: str = Field(default="http://ai-stack:8090", description="AI stack base URL")
 
     # Wrkhrs RAG/ASR health (optional; for status endpoint; set to empty to skip)
-    rag_health_url: Optional[str] = Field(
+    rag_health_url: str | None = Field(
         default=None,
         description="Base URL for RAG worker health (e.g. http://wrkhrs-rag:8000)",
     )
-    asr_health_url: Optional[str] = Field(
+    asr_health_url: str | None = Field(
         default=None,
         description="Base URL for ASR worker health (e.g. http://wrkhrs-asr:8000)",
     )

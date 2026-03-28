@@ -1,9 +1,8 @@
 """Code indexing functionality for codebase datasets."""
 
 import os
-import json
 import hashlib
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 import structlog
 from git import Repo

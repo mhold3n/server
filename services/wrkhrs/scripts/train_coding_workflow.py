@@ -4,7 +4,6 @@ Complete Training Workflow for Coding Models
 End-to-end training pipeline for coding-specific AI models
 """
 
-import os
 import sys
 import subprocess
 import argparse
@@ -170,7 +169,7 @@ def start_training(config):
     print("🔄 Starting training process...")
     
     # Run training
-    result = run_command(f"python train_coding_model.py", check=False, capture_output=True)
+    result = run_command("python train_coding_model.py", check=False, capture_output=True)
     
     if result.returncode == 0:
         print("✅ Training completed successfully!")

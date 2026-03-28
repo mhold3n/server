@@ -5,7 +5,7 @@ Comprehensive chemistry calculations and analysis tools for the AI Stack
 
 import math
 import re
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -361,7 +361,7 @@ class ChemistryToolkitPlugin:
         E_cell = E_standard - (Constants.R * temperature / (n * Constants.F)) * math.log(Q)
         
         # Calculate at standard conditions for comparison
-        E_standard_calc = E_standard - (Constants.R * 298.15 / (n * Constants.F)) * math.log(Q)
+        E_standard - (Constants.R * 298.15 / (n * Constants.F)) * math.log(Q)
         
         return {
             "cell_potential": round(E_cell, 4),

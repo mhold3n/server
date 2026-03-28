@@ -1,4 +1,3 @@
-import os
 import json
 import yaml
 import logging
@@ -9,7 +8,7 @@ import importlib.util
 import inspect
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 import pluggy
 
 # Configure logging

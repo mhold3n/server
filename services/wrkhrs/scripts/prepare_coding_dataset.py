@@ -7,8 +7,7 @@ Prepares datasets for training coding-specific models
 import os
 import json
 import argparse
-from pathlib import Path
-from datasets import load_dataset, Dataset
+from datasets import load_dataset
 import re
 
 def clean_code(code):
@@ -429,7 +428,7 @@ def main():
         print("No action specified. Use --help for options.")
         return
     
-    print(f"\n🎉 Dataset preparation complete!")
+    print("\n🎉 Dataset preparation complete!")
     print(f"📊 Total samples prepared: {total_samples}")
     print("\nNext steps:")
     print("1. Review the prepared datasets in the data/ directory")

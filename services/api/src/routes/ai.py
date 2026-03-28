@@ -1,33 +1,41 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
-
 import json
+import time
+from typing import Any
+
 import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from ..config import settings
-
+from ..config import get_worker_settings, settings
+from ..workflows import (
+    build_tool_args_for_card,
+    get_task_card,
+    list_task_cards,
+)
 
 router = APIRouter(prefix="/api/ai", tags=["AI"])
 
+_worker_settings = get_worker_settings(settings)
+DEFAULT_LLM_MODEL = _worker_settings.default_model
+
 
 class QueryRequest(BaseModel):
-    prompt: Optional[str] = Field(default=None)
-    messages: Optional[List[Dict[str, str]]] = Field(default=None)
-    model: str = Field(default="mistralai/Mistral-7B-Instruct-v0.3")
+    prompt: str | None = Field(default=None)
+    messages: list[dict[str, str]] | None = Field(default=None)
+    model: str = Field(default=DEFAULT_LLM_MODEL)
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
-    max_tokens: Optional[int] = Field(default=None, gt=0)
-    tools: Optional[List[str]] = Field(default=None, description="MCP tools to use via router (server:tool)")
-    tool_args: Optional[Dict[str, Dict[str, Any]]] = Field(default=None, description="Per-tool argument overrides (key: server:tool)")
-    context: Optional[Dict[str, Any]] = Field(default=None)
+    max_tokens: int | None = Field(default=None, gt=0)
+    tools: list[str] | None = Field(default=None, description="MCP tools to use via router (server:tool)")
+    tool_args: dict[str, dict[str, Any]] | None = Field(default=None, description="Per-tool argument overrides (key: server:tool)")
+    context: dict[str, Any] | None = Field(default=None)
     use_router: bool = Field(default=True, description="Route via agent router with MCP integration")
     system: str = Field(default="You are a helpful AI assistant.")
 
 
 @router.post("/query")
-async def ai_query(req: QueryRequest) -> Dict[str, Any]:
+async def ai_query(req: QueryRequest) -> dict[str, Any]:
     if not req.prompt and not req.messages:
         raise HTTPException(status_code=400, detail="Provide 'prompt' or 'messages'")
 
@@ -41,125 +49,103 @@ async def ai_query(req: QueryRequest) -> Dict[str, Any]:
             "temperature": req.temperature,
             "max_tokens": req.max_tokens,
         }
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        # Router calls can take a while when the backing LLM is running locally.
+        async with httpx.AsyncClient(timeout=180.0) as client:
             resp = await client.post(f"{settings.router_url}/route", json=payload)
             try:
                 resp.raise_for_status()
             except httpx.HTTPError:
-                raise HTTPException(status_code=resp.status_code, detail=resp.text)
+                raise HTTPException(status_code=resp.status_code, detail=resp.text) from None
             return resp.json()
     else:
         # Simple LLM call via AI stack
         payload = {"prompt": req.prompt or (req.messages[-1]["content"] if req.messages else ""), "model": req.model}
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=180.0) as client:
             resp = await client.post(f"{settings.ai_stack_url}/llm/prompt", json=payload)
             try:
                 resp.raise_for_status()
             except httpx.HTTPError:
-                raise HTTPException(status_code=resp.status_code, detail=resp.text)
+                raise HTTPException(status_code=resp.status_code, detail=resp.text) from None
             return resp.json()
 
 
 class WorkflowRunRequest(BaseModel):
     name: str = Field(description="Workflow name (e.g., code-rag, media-fixups, sysadmin-ops)")
-    input: Dict[str, Any] = Field(default_factory=dict)
-    model: str = Field(default="mistralai/Mistral-7B-Instruct-v0.3")
+    input: dict[str, Any] = Field(default_factory=dict)
+    model: str = Field(default=DEFAULT_LLM_MODEL)
     temperature: float = Field(default=0.2)
-    max_tokens: Optional[int] = Field(default=None)
+    max_tokens: int | None = Field(default=None)
+
+
+@router.get("/tasks")
+async def list_tasks() -> dict[str, Any]:
+    """Return available task cards for UI/CLI. Used to drive orchestration workflows."""
+    cards = list_task_cards()
+    return {
+        "task_cards": [c.model_dump() for c in cards],
+    }
 
 
 @router.post("/workflows/run")
-async def run_workflow(req: WorkflowRunRequest) -> Dict[str, Any]:
+async def run_workflow(req: WorkflowRunRequest) -> dict[str, Any]:
     name = req.name.lower()
-    if name == "code-rag":
-        # Route via agent router with MCP tools and repo context
-        repos = [r.strip() for r in settings.ai_repos.split(",") if r.strip()]
-        tools = [
-            "github-mcp:search",  # placeholder; depends on actual MCP tool names
-            "filesystem-mcp:code_analysis",
-            "vector-db-mcp:embedding_search",
-        ]
-        tool_args = {
-            "github-mcp:search": {"repos": repos, "query": req.input.get("query", "")},
-            "filesystem-mcp:code_analysis": {"path": req.input.get("path", "/workspace")},
-            "vector-db-mcp:embedding_search": {"text": req.input.get("query", ""), "top_k": 5},
-        }
-        payload = {
-            "prompt": req.input.get("query", "Summarize repository context and answer."),
-            "system": "You are a code assistant using tools to retrieve context.",
-            "model": req.model,
-            "tools": tools,
-            "tool_args": tool_args,
-            "temperature": req.temperature,
-            "max_tokens": req.max_tokens,
-        }
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.post(f"{settings.router_url}/route", json=payload)
-            try:
-                resp.raise_for_status()
-            except httpx.HTTPError:
-                raise HTTPException(status_code=resp.status_code, detail=resp.text)
-            return resp.json()
+    card = get_task_card(name)
+    if not card:
+        raise HTTPException(status_code=400, detail=f"Unknown workflow: {req.name}")
 
-    if name == "media-fixups":
-        # Use marker directories (processed docs) as context via filesystem MCP
-        tools = [
-            "filesystem-mcp:directory_traversal",
-            "filesystem-mcp:file_read",
-        ]
-        tool_args = {
-            "filesystem-mcp:directory_traversal": {"path": settings.marker_processed_dir},
-            "filesystem-mcp:file_read": {"path": req.input.get("file")},
-        }
-        prompt = req.input.get("instruction", "Analyze document and propose fixes.")
-        payload = {
-            "prompt": prompt,
-            "system": "You assist with media/document fix-ups using filesystem context.",
-            "model": req.model,
-            "tools": tools,
-            "tool_args": tool_args,
-            "temperature": req.temperature,
-            "max_tokens": req.max_tokens,
-        }
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.post(f"{settings.router_url}/route", json=payload)
-            try:
-                resp.raise_for_status()
-            except httpx.HTTPError:
-                raise HTTPException(status_code=resp.status_code, detail=resp.text)
-            return resp.json()
+    tool_args = build_tool_args_for_card(
+        name,
+        req.input,
+        ai_repos=getattr(settings, "ai_repos", ""),
+        marker_processed_dir=getattr(settings, "marker_processed_dir", ""),
+    )
 
-    if name == "sysadmin-ops":
-        # Basic prompt routed through router (tools optional)
-        payload = {
-            "prompt": req.input.get("task", ""),
-            "system": "You are a sysadmin assistant.",
-            "model": req.model,
-            "temperature": req.temperature,
-            "max_tokens": req.max_tokens,
-        }
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            resp = await client.post(f"{settings.router_url}/route", json=payload)
-            try:
-                resp.raise_for_status()
-            except httpx.HTTPError:
-                raise HTTPException(status_code=resp.status_code, detail=resp.text)
-            return resp.json()
+    prompt = _workflow_prompt_from_card(name, req.input)
+    payload: dict[str, Any] = {
+        "prompt": prompt,
+        "system": card.system_prompt,
+        "model": req.model or DEFAULT_LLM_MODEL,
+        "temperature": req.temperature if req.temperature is not None else card.temperature,
+        "max_tokens": req.max_tokens if req.max_tokens is not None else card.max_tokens,
+    }
+    if card.required_tools:
+        payload["tools"] = card.required_tools
+        payload["tool_args"] = tool_args
 
-    raise HTTPException(status_code=400, detail=f"Unknown workflow: {req.name}")
+    async with httpx.AsyncClient(timeout=180.0) as client:
+        resp = await client.post(f"{settings.router_url}/route", json=payload)
+        try:
+            resp.raise_for_status()
+        except httpx.HTTPError:
+            raise HTTPException(status_code=resp.status_code, detail=resp.text) from None
+        result = resp.json()
+        if isinstance(result, dict):
+            result["task_card_id"] = name
+        return result
+
+
+def _workflow_prompt_from_card(card_id: str, input_: dict[str, Any]) -> str:
+    """Build the user-facing prompt for a task card from input."""
+    if card_id == "code-rag":
+        return input_.get("query", "Summarize repository context and answer.")
+    if card_id == "media-fixups":
+        return input_.get("instruction", "Analyze document and propose fixes.")
+    if card_id == "sysadmin-ops":
+        return input_.get("task", "")
+    return input_.get("query", input_.get("prompt", ""))
 
 
 class SimulationAnalyzeRequest(BaseModel):
-    payload: Dict[str, Any] = Field(default_factory=dict)
+    payload: dict[str, Any] = Field(default_factory=dict)
     instructions: str = Field(default="Analyze and summarize insights.")
-    model: str = Field(default="mistralai/Mistral-7B-Instruct-v0.3")
+    model: str = Field(default=DEFAULT_LLM_MODEL)
 
 
 @router.post("/simulations/analyze")
-async def simulations_analyze(req: SimulationAnalyzeRequest) -> Dict[str, Any]:
+async def simulations_analyze(req: SimulationAnalyzeRequest) -> dict[str, Any]:
     # Simple analysis via AI stack LLM
     prompt = f"Instructions: {req.instructions}\n\nPayload JSON:\n{json.dumps(req.payload, indent=2)}\n\nProvide concise analysis."
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx.AsyncClient(timeout=180.0) as client:
         resp = await client.post(
             f"{settings.ai_stack_url}/llm/prompt",
             json={"prompt": prompt, "model": req.model},
@@ -167,21 +153,38 @@ async def simulations_analyze(req: SimulationAnalyzeRequest) -> Dict[str, Any]:
         try:
             resp.raise_for_status()
         except httpx.HTTPError:
-            raise HTTPException(status_code=resp.status_code, detail=resp.text)
+            raise HTTPException(status_code=resp.status_code, detail=resp.text) from None
         return resp.json()
 
 
-@router.get("/status")
-async def ai_status() -> Dict[str, Any]:
-    """Aggregate health/status for AI components: API (worker), Router, AI Stack, MCPs."""
-    status: Dict[str, Any] = {"api": {}, "router": {}, "ai_stack": {}, "worker": {}}
+def _health_url(path: str, base: str | None) -> str | None:
+    if not base:
+        return None
+    return f"{base.rstrip('/')}{path}"
 
-    # API/Worker (OpenAI client in API)
+
+@router.get("/status")
+async def ai_status() -> dict[str, Any]:
+    """Aggregate health/status for AI components: API (worker), Qwen, Router, AI Stack, RAG, ASR, MCPs."""
+    status: dict[str, Any] = {"api": {}, "router": {}, "ai_stack": {}, "worker": {}, "qwen": {}, "rag": {}, "asr": {}}
+
+    # API/Worker (OpenAI-compatible client; typically Qwen)
+    qwen_reachable = False
+    qwen_latency_ms: float | None = None
+    qwen_model_name: str | None = None
     try:
         from ..app import openai_client  # lazy import to reuse initialized client
         if openai_client:
             try:
+                t0 = time.perf_counter()
                 models = await openai_client.models.list()
+                qwen_latency_ms = (time.perf_counter() - t0) * 1000
+                qwen_reachable = True
+                if models.data:
+                    first = models.data[0]
+                    qwen_model_name = getattr(first, "id", None) if first is not None else None
+                if not qwen_model_name:
+                    qwen_model_name = DEFAULT_LLM_MODEL
                 status["worker"] = {"status": "healthy", "model_count": len(models.data)}
                 status["api"]["openai"] = "healthy"
             except Exception as e:  # pragma: no cover - I/O
@@ -192,6 +195,13 @@ async def ai_status() -> Dict[str, Any]:
             status["api"]["openai"] = "not_configured"
     except Exception:
         status["worker"] = {"status": "unknown"}
+
+    # Qwen section (explicit reachable, model_name, latency)
+    status["qwen"] = {
+        "reachable": qwen_reachable,
+        "model_name": qwen_model_name or DEFAULT_LLM_MODEL,
+        "latency_ms": round(qwen_latency_ms, 2) if qwen_latency_ms is not None else None,
+    }
 
     # Router health (+ MCP servers)
     try:
@@ -221,7 +231,57 @@ async def ai_status() -> Dict[str, Any]:
     except Exception as e:  # pragma: no cover - I/O
         status["ai_stack"] = {"status": "unreachable", "error": str(e)}
 
-    # Overall status
+    # RAG worker health (when URL configured)
+    rag_url = _health_url("/health", getattr(settings, "rag_health_url", None))
+    if rag_url:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                r = await client.get(rag_url)
+                if r.status_code == 200:
+                    data = r.json()
+                    status["rag"] = {
+                        "status": data.get("status", "unknown"),
+                        "embedding_model_loaded": data.get("embedding_model_loaded"),
+                        "qdrant_status": data.get("qdrant_status"),
+                    }
+                else:
+                    status["rag"] = {"status": "unhealthy", "code": r.status_code}
+        except Exception as e:  # pragma: no cover - I/O
+            status["rag"] = {"status": "unreachable", "error": str(e)}
+    else:
+        status["rag"] = {"status": "not_configured"}
+
+    # ASR worker health (when URL configured)
+    asr_url = _health_url("/health", getattr(settings, "asr_health_url", None))
+    if asr_url:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                r = await client.get(asr_url)
+                if r.status_code == 200:
+                    data = r.json()
+                    status["asr"] = {
+                        "status": data.get("status", "unknown"),
+                        "model_loaded": data.get("model_loaded"),
+                        "use_mock": data.get("use_mock"),
+                    }
+                else:
+                    status["asr"] = {"status": "unhealthy", "code": r.status_code}
+        except Exception as e:  # pragma: no cover - I/O
+            status["asr"] = {"status": "unreachable", "error": str(e)}
+    else:
+        status["asr"] = {"status": "not_configured"}
+
+    # Profile + worker wiring (for dashboard / debugging)
+    try:
+        from ..config import WorkerProfile  # type: ignore
+        profile_value: str = str(getattr(settings, "orch_profile", WorkerProfile.GPU))
+    except Exception:
+        profile_value = str(getattr(settings, "orch_profile", "gpu"))
+
+    status["profile"] = profile_value
+    status["worker_base_url"] = getattr(settings, "openai_base_url", "")
+
+    # Overall status (worker, router, ai_stack are required; qwen/rag/asr inform but don't fail overall)
     components = [status.get("worker", {}), status.get("router", {}), status.get("ai_stack", {})]
     overall = "healthy" if all(c.get("status") == "healthy" for c in components) else "degraded"
     status["status"] = overall
@@ -240,10 +300,10 @@ class ToggleRequest(BaseModel):
 class MCPCallRequest(BaseModel):
     server: str
     tool: str
-    arguments: Optional[Dict[str, Any]] = None
+    arguments: dict[str, Any] | None = None
 
 
-async def _get_disabled_servers() -> List[str]:
+async def _get_disabled_servers() -> list[str]:
     try:
         from ..app import redis_client  # type: ignore
         if redis_client:
@@ -268,13 +328,13 @@ async def _set_server_enabled(name: str, enabled: bool) -> None:
 
 
 @router.get("/mcp/servers")
-async def mcp_servers() -> Dict[str, Any]:
+async def mcp_servers() -> dict[str, Any]:
     async with httpx.AsyncClient(timeout=15.0) as client:
         r = await client.get(f"{settings.router_url}/mcp/servers")
         try:
             r.raise_for_status()
         except httpx.HTTPError:
-            raise HTTPException(status_code=r.status_code, detail=r.text)
+            raise HTTPException(status_code=r.status_code, detail=r.text) from None
         data = r.json() or {}
         servers = data.get("servers", [])
         disabled = set(await _get_disabled_servers())
@@ -284,28 +344,28 @@ async def mcp_servers() -> Dict[str, Any]:
 
 
 @router.post("/mcp/servers/{name}/enable")
-async def mcp_toggle_server(name: str, body: ToggleRequest) -> Dict[str, Any]:
+async def mcp_toggle_server(name: str, body: ToggleRequest) -> dict[str, Any]:
     await _set_server_enabled(name, body.enabled)
     return {"server": name, "enabled": body.enabled}
 
 
 @router.get("/mcp/servers/{name}/tools")
-async def mcp_server_tools(name: str) -> Dict[str, Any]:
+async def mcp_server_tools(name: str) -> dict[str, Any]:
     async with httpx.AsyncClient(timeout=20.0) as client:
         r = await client.get(f"{settings.router_url}/mcp/servers/{name}/tools")
         try:
             r.raise_for_status()
         except httpx.HTTPError:
-            raise HTTPException(status_code=r.status_code, detail=r.text)
+            raise HTTPException(status_code=r.status_code, detail=r.text) from None
         return r.json()
 
 
 @router.post("/mcp/call")
-async def mcp_call(req: MCPCallRequest) -> Dict[str, Any]:
+async def mcp_call(req: MCPCallRequest) -> dict[str, Any]:
     disabled = await _get_disabled_servers()
     if req.server in disabled:
         raise HTTPException(status_code=403, detail=f"Server '{req.server}' is disabled")
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx.AsyncClient(timeout=180.0) as client:
         # Router expects tool_name and arguments; send as JSON body
         r = await client.post(
             f"{settings.router_url}/mcp/servers/{req.server}/call",
@@ -314,5 +374,5 @@ async def mcp_call(req: MCPCallRequest) -> Dict[str, Any]:
         try:
             r.raise_for_status()
         except httpx.HTTPError:
-            raise HTTPException(status_code=r.status_code, detail=r.text)
+            raise HTTPException(status_code=r.status_code, detail=r.text) from None
         return r.json()

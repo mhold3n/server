@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 
 
 async def meili_search(
     base_url: str,
-    api_key: Optional[str],
+    api_key: str | None,
     index: str,
     query: str,
     *,
     limit: int = 10,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     url = f"{base_url.rstrip('/')}/indexes/{index}/search"
-    headers: Dict[str, str] = {}
+    headers: dict[str, str] = {}
     if api_key:
         # Meili supports X-Meili-API-Key header; Authorization: Bearer also works
         headers["X-Meili-API-Key"] = api_key
@@ -26,7 +26,7 @@ async def meili_search(
         data = resp.json()
         hits = data.get("hits", [])
         # normalize: id, title/name, snippet/path
-        results: List[Dict[str, Any]] = []
+        results: list[dict[str, Any]] = []
         for h in hits:
             results.append(
                 {
@@ -45,7 +45,7 @@ async def searx_search(
     query: str,
     *,
     limit: int = 10,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     url = f"{base_url.rstrip('/')}/search"
     params = {"q": query, "format": "json", "pageno": 1}
     async with httpx.AsyncClient(timeout=10.0) as client:
@@ -53,7 +53,7 @@ async def searx_search(
         resp.raise_for_status()
         data = resp.json()
         items = data.get("results", [])[:limit]
-        results: List[Dict[str, Any]] = []
+        results: list[dict[str, Any]] = []
         for it in items:
             results.append(
                 {

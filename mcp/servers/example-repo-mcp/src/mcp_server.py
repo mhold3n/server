@@ -3,11 +3,8 @@ Example Per-Repo MCP Server
 Custom code indexer and project-specific tools for agent orchestration.
 """
 
-import asyncio
-import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -28,22 +25,22 @@ app = FastAPI(
 )
 
 # Global instances
-code_indexer: Optional[CodeIndexer] = None
-dependency_analyzer: Optional[DependencyAnalyzer] = None
-project_analyzer: Optional[ProjectAnalyzer] = None
+code_indexer: CodeIndexer | None = None
+dependency_analyzer: DependencyAnalyzer | None = None
+project_analyzer: ProjectAnalyzer | None = None
 
 
 class IndexRequest(BaseModel):
     """Request to index a codebase."""
     path: str = Field(..., description="Path to the codebase to index")
-    languages: List[str] = Field(default=["python", "javascript", "typescript"], description="Languages to index")
+    languages: list[str] = Field(default=["python", "javascript", "typescript"], description="Languages to index")
     include_tests: bool = Field(default=True, description="Include test files in index")
 
 
 class SearchRequest(BaseModel):
     """Request to search the codebase."""
     query: str = Field(..., description="Search query")
-    file_types: Optional[List[str]] = Field(default=None, description="File types to search in")
+    file_types: list[str] | None = Field(default=None, description="File types to search in")
     max_results: int = Field(default=10, description="Maximum number of results")
 
 
@@ -61,13 +58,13 @@ class ProjectInfoRequest(BaseModel):
 async def startup_event():
     """Initialize MCP server components."""
     global code_indexer, dependency_analyzer, project_analyzer
-    
+
     logger.info("Initializing Example Repo MCP Server...")
-    
+
     code_indexer = CodeIndexer()
     dependency_analyzer = DependencyAnalyzer()
     project_analyzer = ProjectAnalyzer()
-    
+
     logger.info("Example Repo MCP Server initialized successfully")
 
 
@@ -83,30 +80,30 @@ async def index_codebase(request: IndexRequest):
     try:
         if not code_indexer:
             raise HTTPException(status_code=500, detail="Code indexer not initialized")
-        
+
         path = Path(request.path)
         if not path.exists():
             raise HTTPException(status_code=404, detail=f"Path not found: {request.path}")
-        
+
         logger.info(f"Indexing codebase at {request.path}")
-        
+
         # Index the codebase
         index_result = await code_indexer.index_codebase(
             path=path,
             languages=request.languages,
             include_tests=request.include_tests
         )
-        
+
         return {
             "status": "success",
             "indexed_files": index_result["files_count"],
             "languages": index_result["languages"],
             "index_size": index_result["index_size"]
         }
-        
+
     except Exception as e:
         logger.error(f"Error indexing codebase: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/search")
@@ -115,26 +112,26 @@ async def search_codebase(request: SearchRequest):
     try:
         if not code_indexer:
             raise HTTPException(status_code=500, detail="Code indexer not initialized")
-        
+
         logger.info(f"Searching codebase for: {request.query}")
-        
+
         # Search the codebase
         results = await code_indexer.search(
             query=request.query,
             file_types=request.file_types,
             max_results=request.max_results
         )
-        
+
         return {
             "status": "success",
             "query": request.query,
             "results": results,
             "total_results": len(results)
         }
-        
+
     except Exception as e:
         logger.error(f"Error searching codebase: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/analyze-dependencies")
@@ -143,16 +140,16 @@ async def analyze_dependencies(request: DependencyRequest):
     try:
         if not dependency_analyzer:
             raise HTTPException(status_code=500, detail="Dependency analyzer not initialized")
-        
+
         path = Path(request.path)
         if not path.exists():
             raise HTTPException(status_code=404, detail=f"Path not found: {request.path}")
-        
+
         logger.info(f"Analyzing dependencies for {request.path}")
-        
+
         # Analyze dependencies
         analysis = await dependency_analyzer.analyze_dependencies(path)
-        
+
         return {
             "status": "success",
             "path": request.path,
@@ -161,10 +158,10 @@ async def analyze_dependencies(request: DependencyRequest):
             "vulnerabilities": analysis.get("vulnerabilities", []),
             "outdated": analysis.get("outdated", [])
         }
-        
+
     except Exception as e:
         logger.error(f"Error analyzing dependencies: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.post("/project-info")
@@ -173,25 +170,25 @@ async def get_project_info(request: ProjectInfoRequest):
     try:
         if not project_analyzer:
             raise HTTPException(status_code=500, detail="Project analyzer not initialized")
-        
+
         path = Path(request.path)
         if not path.exists():
             raise HTTPException(status_code=404, detail=f"Path not found: {request.path}")
-        
+
         logger.info(f"Analyzing project at {request.path}")
-        
+
         # Analyze project
         project_info = await project_analyzer.analyze_project(path)
-        
+
         return {
             "status": "success",
             "path": request.path,
             "project_info": project_info
         }
-        
+
     except Exception as e:
         logger.error(f"Error analyzing project: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @app.get("/stats")
@@ -203,27 +200,27 @@ async def get_stats():
             "version": "0.1.0",
             "status": "running"
         }
-        
+
         if code_indexer:
             stats["indexer"] = await code_indexer.get_stats()
-        
+
         if dependency_analyzer:
             stats["dependency_analyzer"] = await dependency_analyzer.get_stats()
-        
+
         if project_analyzer:
             stats["project_analyzer"] = await project_analyzer.get_stats()
-        
+
         return stats
-        
+
     except Exception as e:
         logger.error(f"Error getting stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 def main():
     """Main entry point for the MCP server."""
     import uvicorn
-    
+
     uvicorn.run(
         "src.mcp_server:app",
         host="0.0.0.0",

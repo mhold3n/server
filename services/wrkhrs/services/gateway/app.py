@@ -8,11 +8,10 @@ import hashlib
 import time
 from collections import defaultdict
 
-import numpy as np
 from fastapi import FastAPI, HTTPException, Request, Depends, Header, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 import requests
 from requests.adapters import HTTPAdapter
@@ -22,7 +21,6 @@ import jwt
 # Configure logging
 import logging.config
 import sys
-from datetime import datetime
 
 # JSON logging configuration
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -461,7 +459,7 @@ def extract_constraints(text: str) -> List[str]:
 async def get_weighted_evidence(prompt: str, weights: DomainWeights) -> str:
     """Get weighted evidence from RAG system"""
     try:
-        rag_url = f"http://rag-api:8000/search"
+        rag_url = "http://rag-api:8000/search"
         payload = {
             "query": prompt,
             "domain_weights": weights.dict(),
@@ -568,7 +566,7 @@ Please respond with SI units and consider the safety constraints mentioned.
             enhanced_messages.insert(0, {"role": "system", "content": system_context})
         
         # Forward to orchestrator
-        orchestrator_url = f"http://orchestrator:8000/chat"
+        orchestrator_url = "http://orchestrator:8000/chat"
         orchestrator_payload = {
             "messages": enhanced_messages,
             "model": request.model,

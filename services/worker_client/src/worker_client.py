@@ -1,7 +1,7 @@
 """Typed client for vLLM/TGI worker communication."""
 
-import asyncio
-from typing import Any, AsyncGenerator, Dict, List, Optional, Union
+from collections.abc import AsyncGenerator
+from typing import Any
 
 import structlog
 from openai import AsyncOpenAI
@@ -51,7 +51,7 @@ class ChatRequest(BaseModel):
         default=settings.default_model,
         description="Model to use for completion",
     )
-    messages: List[ChatMessage] = Field(..., description="List of messages")
+    messages: list[ChatMessage] = Field(..., description="List of messages")
     temperature: float = Field(
         default=settings.default_temperature,
         ge=0.0,
@@ -67,19 +67,19 @@ class ChatRequest(BaseModel):
         default=False,
         description="Enable streaming response",
     )
-    top_p: Optional[float] = Field(
+    top_p: float | None = Field(
         default=None,
         ge=0.0,
         le=1.0,
         description="Nucleus sampling parameter",
     )
-    frequency_penalty: Optional[float] = Field(
+    frequency_penalty: float | None = Field(
         default=None,
         ge=-2.0,
         le=2.0,
         description="Frequency penalty",
     )
-    presence_penalty: Optional[float] = Field(
+    presence_penalty: float | None = Field(
         default=None,
         ge=-2.0,
         le=2.0,
@@ -94,8 +94,8 @@ class ChatResponse(BaseModel):
     object: str = "chat.completion"
     created: int
     model: str
-    choices: List[Dict[str, Any]]
-    usage: Optional[Dict[str, int]] = None
+    choices: list[dict[str, Any]]
+    usage: dict[str, int] | None = None
 
 
 class ModelInfo(BaseModel):
@@ -105,9 +105,9 @@ class ModelInfo(BaseModel):
     object: str = "model"
     created: int
     owned_by: str = "vllm"
-    permission: List[Dict[str, Any]] = Field(default_factory=list)
-    root: Optional[str] = None
-    parent: Optional[str] = None
+    permission: list[dict[str, Any]] = Field(default_factory=list)
+    root: str | None = None
+    parent: str | None = None
 
 
 class WorkerClient:
@@ -115,19 +115,19 @@ class WorkerClient:
 
     def __init__(
         self,
-        base_url: Optional[str] = None,
-        api_key: Optional[str] = None,
-        timeout: Optional[int] = None,
-        max_retries: Optional[int] = None,
+        base_url: str | None = None,
+        api_key: str | None = None,
+        timeout: int | None = None,
+        max_retries: int | None = None,
     ):
         """Initialize the worker client."""
         self.base_url = base_url or settings.worker_base_url
         self.api_key = api_key or settings.worker_api_key
         self.timeout = timeout or settings.timeout
         self.max_retries = max_retries or settings.max_retries
-        
-        self._client: Optional[AsyncOpenAI] = None
-        
+
+        self._client: AsyncOpenAI | None = None
+
         logger.info(
             "Initialized worker client",
             base_url=self.base_url,
@@ -164,14 +164,14 @@ class WorkerClient:
             logger.error("Worker health check failed", error=str(e))
             return False
 
-    async def list_models(self) -> List[ModelInfo]:
+    async def list_models(self) -> list[ModelInfo]:
         """List available models."""
         await self._ensure_client()
-        
+
         try:
             response = await self._client.models.list()
             models = []
-            
+
             for model in response.data:
                 models.append(ModelInfo(
                     id=model.id,
@@ -181,10 +181,10 @@ class WorkerClient:
                     root=getattr(model, 'root', None),
                     parent=getattr(model, 'parent', None),
                 ))
-            
+
             logger.info("Listed models", count=len(models))
             return models
-            
+
         except Exception as e:
             logger.error("Failed to list models", error=str(e))
             raise
@@ -195,12 +195,12 @@ class WorkerClient:
     ) -> ChatResponse:
         """Send a chat completion request with retries."""
         await self._ensure_client()
-        
+
         # Convert to OpenAI format
         openai_messages = [
             {"role": msg.role, "content": msg.content} for msg in request.messages
         ]
-        
+
         # Prepare request parameters
         request_params = {
             "model": request.model,
@@ -209,7 +209,7 @@ class WorkerClient:
             "max_tokens": request.max_tokens,
             "stream": request.stream,
         }
-        
+
         # Add optional parameters
         if request.top_p is not None:
             request_params["top_p"] = request.top_p
@@ -217,7 +217,7 @@ class WorkerClient:
             request_params["frequency_penalty"] = request.frequency_penalty
         if request.presence_penalty is not None:
             request_params["presence_penalty"] = request.presence_penalty
-        
+
         # Retry logic
         retry_strategy = AsyncRetrying(
             stop=stop_after_attempt(self.max_retries),
@@ -227,7 +227,7 @@ class WorkerClient:
             ),
             reraise=True,
         )
-        
+
         try:
             async for attempt in retry_strategy:
                 try:
@@ -237,9 +237,9 @@ class WorkerClient:
                         message_count=len(request.messages),
                         attempt=attempt.retry_state.attempt_number,
                     )
-                    
+
                     response = await self._client.chat.completions.create(**request_params)
-                    
+
                     # Convert to our response model
                     chat_response = ChatResponse(
                         id=response.id,
@@ -258,16 +258,16 @@ class WorkerClient:
                         ],
                         usage=response.usage.dict() if response.usage else None,
                     )
-                    
+
                     logger.info(
                         "Chat completion successful",
                         model=request.model,
                         response_id=chat_response.id,
                         usage=chat_response.usage,
                     )
-                    
+
                     return chat_response
-                    
+
                 except Exception as e:
                     logger.warning(
                         "Chat completion attempt failed",
@@ -276,7 +276,7 @@ class WorkerClient:
                         error=str(e),
                     )
                     raise
-                    
+
         except RetryError as e:
             logger.error(
                 "Chat completion failed after all retries",
@@ -289,18 +289,18 @@ class WorkerClient:
     async def chat_completion_stream(
         self,
         request: ChatRequest,
-    ) -> AsyncGenerator[Dict[str, Any], None]:
+    ) -> AsyncGenerator[dict[str, Any], None]:
         """Send a streaming chat completion request."""
         await self._ensure_client()
-        
+
         # Ensure streaming is enabled
         request.stream = True
-        
+
         # Convert to OpenAI format
         openai_messages = [
             {"role": msg.role, "content": msg.content} for msg in request.messages
         ]
-        
+
         # Prepare request parameters
         request_params = {
             "model": request.model,
@@ -309,7 +309,7 @@ class WorkerClient:
             "max_tokens": request.max_tokens,
             "stream": True,
         }
-        
+
         # Add optional parameters
         if request.top_p is not None:
             request_params["top_p"] = request.top_p
@@ -317,16 +317,16 @@ class WorkerClient:
             request_params["frequency_penalty"] = request.frequency_penalty
         if request.presence_penalty is not None:
             request_params["presence_penalty"] = request.presence_penalty
-        
+
         try:
             logger.info(
                 "Starting streaming chat completion",
                 model=request.model,
                 message_count=len(request.messages),
             )
-            
+
             stream = await self._client.chat.completions.create(**request_params)
-            
+
             async for chunk in stream:
                 if chunk.choices:
                     choice = chunk.choices[0]
@@ -347,9 +347,9 @@ class WorkerClient:
                                 }
                             ],
                         }
-            
+
             logger.info("Streaming chat completion completed", model=request.model)
-            
+
         except Exception as e:
             logger.error(
                 "Streaming chat completion failed",
@@ -358,7 +358,7 @@ class WorkerClient:
             )
             raise
 
-    async def get_model_info(self, model_id: str) -> Optional[ModelInfo]:
+    async def get_model_info(self, model_id: str) -> ModelInfo | None:
         """Get information about a specific model."""
         models = await self.list_models()
         for model in models:
@@ -375,7 +375,7 @@ class WorkerClient:
 
 # Convenience functions
 async def create_chat_completion(
-    messages: List[ChatMessage],
+    messages: list[ChatMessage],
     model: str = None,
     temperature: float = None,
     max_tokens: int = None,
@@ -389,18 +389,18 @@ async def create_chat_completion(
         max_tokens=max_tokens or settings.default_max_tokens,
         **kwargs
     )
-    
+
     async with WorkerClient() as client:
         return await client.chat_completion(request)
 
 
 async def create_chat_completion_stream(
-    messages: List[ChatMessage],
+    messages: list[ChatMessage],
     model: str = None,
     temperature: float = None,
     max_tokens: int = None,
     **kwargs
-) -> AsyncGenerator[Dict[str, Any], None]:
+) -> AsyncGenerator[dict[str, Any], None]:
     """Convenience function to create a streaming chat completion."""
     request = ChatRequest(
         messages=messages,
@@ -410,7 +410,7 @@ async def create_chat_completion_stream(
         stream=True,
         **kwargs
     )
-    
+
     async with WorkerClient() as client:
         async for chunk in client.chat_completion_stream(request):
             yield chunk

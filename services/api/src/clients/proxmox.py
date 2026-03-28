@@ -6,7 +6,7 @@ token-based authentication and targets the JSON API.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import httpx
 
@@ -15,8 +15,8 @@ class ProxmoxClient:
     def __init__(
         self,
         base_url: str,
-        token_id: Optional[str],
-        token_secret: Optional[str],
+        token_id: str | None,
+        token_secret: str | None,
         *,
         verify_ssl: bool = True,
         timeout: float = 15.0,
@@ -26,9 +26,9 @@ class ProxmoxClient:
         self.token_secret = token_secret
         self.verify_ssl = verify_ssl
         self.timeout = timeout
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
 
-    async def __aenter__(self) -> "ProxmoxClient":
+    async def __aenter__(self) -> ProxmoxClient:
         self._client = httpx.AsyncClient(verify=self.verify_ssl, timeout=self.timeout)
         return self
 
@@ -37,23 +37,23 @@ class ProxmoxClient:
             await self._client.aclose()
             self._client = None
 
-    def _headers(self) -> Dict[str, str]:
+    def _headers(self) -> dict[str, str]:
         # Proxmox API token header format
         # Authorization: PVEAPIToken=<token-id>=<token-secret>
         if self.token_id and self.token_secret:
             return {"Authorization": f"PVEAPIToken={self.token_id}={self.token_secret}"}
         return {}
 
-    async def list_vms(self) -> List[Dict[str, Any]]:
+    async def list_vms(self) -> list[dict[str, Any]]:
         """Return a simplified list of VMs/LXCs from cluster resources."""
         assert self._client is not None, "Client not started"
         url = f"{self.base_url}/api2/json/cluster/resources"
         resp = await self._client.get(url, params={"type": "vm"}, headers=self._headers())
         resp.raise_for_status()
         payload = resp.json()
-        items: List[Dict[str, Any]] = payload.get("data", [])
+        items: list[dict[str, Any]] = payload.get("data", [])
 
-        result: List[Dict[str, Any]] = []
+        result: list[dict[str, Any]] = []
         for it in items:
             result.append(
                 {
@@ -69,7 +69,7 @@ class ProxmoxClient:
             )
         return result
 
-    async def _find_vm(self, vmid: int) -> Tuple[str, str]:
+    async def _find_vm(self, vmid: int) -> tuple[str, str]:
         """Find the node and type for a given VMID.
 
         Returns (node, type), where type is usually 'qemu' or 'lxc'.
@@ -82,7 +82,7 @@ class ProxmoxClient:
                 return node, vm_type
         raise ValueError(f"VMID {vmid} not found")
 
-    async def start_vm(self, vmid: int) -> Dict[str, Any]:
+    async def start_vm(self, vmid: int) -> dict[str, Any]:
         """Start a VM or LXC by VMID."""
         assert self._client is not None, "Client not started"
         node, vm_type = await self._find_vm(vmid)
@@ -91,7 +91,7 @@ class ProxmoxClient:
         resp.raise_for_status()
         return {"status": "started", "vmid": vmid, "node": node, "type": vm_type}
 
-    async def stop_vm(self, vmid: int) -> Dict[str, Any]:
+    async def stop_vm(self, vmid: int) -> dict[str, Any]:
         """Stop a VM or LXC by VMID."""
         assert self._client is not None, "Client not started"
         node, vm_type = await self._find_vm(vmid)

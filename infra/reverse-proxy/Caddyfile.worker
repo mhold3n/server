@@ -1,5 +1,7 @@
 # Caddyfile for worker (GPU node)
-# Secures vLLM API with mTLS and LAN allowlist
+# Routes requests to specialised GPU lanes:
+#   llm-runner-gen:8000   — chat/completions (GPU 0, RTX 4070 Ti)
+#   llm-runner-embed:8001 — embeddings       (GPU 1, RTX 2080)
 
 {
     # Global options
@@ -21,21 +23,45 @@
         remote_ip 192.168.0.0/16 10.0.0.0/8 172.16.0.0/12
     }
 
-    # Health check endpoint
+    # ── Health check (aggregates both upstreams) ──────────────────
     handle /health {
         respond "OK" 200
     }
 
-    # vLLM OpenAI-compatible API
+    # ── Embedding lane → GPU 1 ────────────────────────────────────
     handle @allow {
-        reverse_proxy vllm:8000 {
-            header_up Host {host}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
-            
-            # Timeout settings for long-running requests
-            timeout 300s
+        handle /v1/embeddings {
+            reverse_proxy llm-runner-embed:8001 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto {scheme}
+                timeout 120s
+            }
+        }
+
+        # ── Reranker lane → GPU 1 (when deployed) ────────────────
+        handle /rerank* {
+            reverse_proxy reranker:8002 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto {scheme}
+                timeout 120s
+            }
+        }
+
+        # ── Generation lane → GPU 0 (default) ────────────────────
+        handle {
+            reverse_proxy llm-runner-gen:8000 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto {scheme}
+
+                # Timeout settings for long-running requests
+                timeout 300s
+            }
         }
     }
 
