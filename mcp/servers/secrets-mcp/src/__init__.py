@@ -1,0 +1,1 @@
+"""Secrets MCP server package."""
