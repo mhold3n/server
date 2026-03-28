@@ -1,0 +1,4 @@
+server_mode: "transformers"
+host: "127.0.0.1"
+port: 8000
+batch_size: 1

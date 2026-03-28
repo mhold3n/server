@@ -1,0 +1,17 @@
+.venv
+pycache/
+__pycache__/
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.env
+logs/
+outputs/runs/
+outputs/checkpoints/
+outputs/evals/
+outputs/packaged/
+*.db
+*.swp
+*~
+.DS_Store

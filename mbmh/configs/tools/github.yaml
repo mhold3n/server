@@ -1,0 +1,6 @@
+name: "github"
+enabled: false
+auth_reference: "gh_pat"
+allowed_repos: []
+limits: {}
+logging_policy: "strict"

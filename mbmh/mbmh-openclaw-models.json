@@ -1,0 +1,78 @@
+{
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "mbmh-local": {
+        "baseUrl": "http://127.0.0.1:8000/v1",
+        "apiKey": "sk-local-dev-001",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "automation-agent",
+            "name": "MBMH automation-agent",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 8192,
+            "maxTokens": 8192
+          },
+          {
+            "id": "base-agent",
+            "name": "MBMH base-agent",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 8192,
+            "maxTokens": 8192
+          },
+          {
+            "id": "openclaw-agent",
+            "name": "MBMH openclaw-agent",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 8192,
+            "maxTokens": 8192
+          },
+          {
+            "id": "retrieval-agent",
+            "name": "MBMH retrieval-agent",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 8192,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  }
+}

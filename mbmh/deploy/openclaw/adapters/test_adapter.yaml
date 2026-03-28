@@ -1,0 +1,5 @@
+name: "local_openclaw_bridge"
+version: "1.0"
+mappings:
+  - from: "local_model"
+    to: "openclaw-native-format"

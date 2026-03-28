@@ -8,6 +8,11 @@
 - **Workstation (RTX 4070 Ti):** vLLM/Ollama LLM runners in Docker with `nvidia-container-toolkit`, exposed only to the server via LAN/mTLS.
 - **Dev flow:** Remote dev via VS Code Dev Containers → CI builds → Deploy to server → Server routes AI requests to WrkHrs services → WrkHrs orchestrator routes LLM inference to GPU worker.
 
+### MBMH vs platform scaffolding
+
+- **`mbmh/`** — Authoritative **multi-platform LLM training** (SFT, PEFT, continued pretraining) and **local OpenAI-compatible runtime** (`serve_local.py`), runtime bundles under `mbmh/outputs/`, and OpenClaw-oriented docs under `mbmh/deploy/openclaw/`. Work here when training models or running the local inference adapter.
+- **Rest of the repo** — **Production scaffolding**: Birtha API, router, WrkHrs services, worker compose, MCP servers, observability, and deployment glue. See [`docs/mbmh.md`](docs/mbmh.md) for a short orientation.
+
 ## Project Management
 
 This project uses GitHub Projects for task tracking and project management.

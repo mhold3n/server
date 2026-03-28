@@ -1,0 +1,6 @@
+use_peft: false
+# NVIDIA-preferred
+distributed: true
+fp16: false
+bf16: true
+gradient_checkpointing: true

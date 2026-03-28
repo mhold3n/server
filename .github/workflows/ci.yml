@@ -51,11 +51,18 @@ jobs:
           pip install -e .
           pip install -e ".[dev]"
 
+      - name: Install MBMH dependencies
+        run: |
+          cd mbmh
+          pip install -e .
+          pip install -e ".[dev]"
+
       # Run linting and type checking
       - name: Run linting
         run: |
           ruff check services/ mcp/servers/
           black --check services/ mcp/servers/
+          (cd mbmh && make lint)
       
       - name: Run type checking
         run: |
@@ -71,6 +78,7 @@ jobs:
           pytest mcp/servers/filesystem-mcp/tests/ -v --cov=mcp/servers/filesystem-mcp/src --cov-report=xml
           pytest mcp/servers/secrets-mcp/tests/ -v --cov=mcp/servers/secrets-mcp/src --cov-report=xml
           pytest mcp/servers/vector-db-mcp/tests/ -v --cov=mcp/servers/vector-db-mcp/src --cov-report=xml
+          pytest mbmh/tests/ -v
 
       # Node.js for GitHub MCP server
       - uses: actions/setup-node@v4

@@ -1,0 +1,50 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ai-training-monorepo"
+version = "0.1.0"
+description = "Cross-Platform LLM Training + Local Runtime Monorepo"
+requires-python = ">=3.9"
+dependencies = [
+    "transformers",
+    "datasets",
+    "accelerate",
+    "peft",
+    "trl",
+    "safetensors",
+    "evaluate",
+    "pyyaml",
+    "pydantic",
+    "jinja2",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "packaging",
+    "rich",
+    "tqdm",
+    "fastapi",
+    "uvicorn[standard]",
+    "httpx",
+    "urllib3<2"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "mypy",
+    "ruff"
+]
+eval = [
+    "lm-eval"
+]
+# Explicity tracking apple/nvidia deps conceptually
+apple = []
+nvidia = [
+    "bitsandbytes"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

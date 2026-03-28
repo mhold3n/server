@@ -1,0 +1,6 @@
+name: "email"
+enabled: false
+auth_reference: "smtp_creds"
+allowed_domains: []
+limits: {}
+logging_policy: "strict"

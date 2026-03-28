@@ -1,0 +1,8 @@
+use_peft: true
+peft_type: "lora"
+r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+target_modules: null  # overridden by model config
+bias: "none"
+task_type: "CAUSAL_LM"
