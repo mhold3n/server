@@ -36,9 +36,11 @@ class RawImportStage(PipelineStage[dict, Document]):
             source_uri=source_path,
             author=input_data.get("author"),
             date_acquired=datetime.now(timezone.utc),
-            license=License(license_str)
-            if license_str in License.__members__.values()
-            else License.UNKNOWN,
+            license=(
+                License(license_str)
+                if license_str in License.__members__.values()
+                else License.UNKNOWN
+            ),
             ingestion_id=self.context.run_id,
         )
 
@@ -79,7 +81,9 @@ class DeduplicationStage(PipelineStage[Document, Optional[Document]]):
 
     def run(self, doc: Document) -> Optional[Document]:
         if doc.content_hash in self.test_hashes:
-            print(f"REJECTED: Document content matches Test index. Hash: {doc.content_hash}")
+            print(
+                f"REJECTED: Document content matches Test index. Hash: {doc.content_hash}"
+            )
             return None
         return doc
 

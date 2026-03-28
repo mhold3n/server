@@ -24,7 +24,9 @@ class FeedbackRequest(BaseModel):
 
     run_id: str = Field(..., description="MLflow run ID")
     rating: int = Field(..., ge=1, le=5, description="Rating from 1 to 5")
-    reasons: list[str] = Field(default_factory=list, description="List of feedback reasons")
+    reasons: list[str] = Field(
+        default_factory=list, description="List of feedback reasons"
+    )
     notes: str | None = Field(None, description="Optional feedback notes")
     user_id: str | None = Field(None, description="User ID (if available)")
     session_id: str | None = Field(None, description="Session ID (if available)")
@@ -93,11 +95,12 @@ async def submit_feedback(
     """
     try:
         # Validate reasons
-        invalid_reasons = [reason for reason in request.reasons if reason not in FEEDBACK_REASONS]
+        invalid_reasons = [
+            reason for reason in request.reasons if reason not in FEEDBACK_REASONS
+        ]
         if invalid_reasons:
             raise HTTPException(
-                status_code=400,
-                detail=f"Invalid feedback reasons: {invalid_reasons}"
+                status_code=400, detail=f"Invalid feedback reasons: {invalid_reasons}"
             )
 
         # Create feedback ID
@@ -227,14 +230,16 @@ async def get_feedback_summary(
 
         common_reasons = [
             {"reason": reason, "count": count}
-            for reason, count in sorted(reason_counts.items(), key=lambda x: x[1], reverse=True)
-        ][:10]  # Top 10 reasons
+            for reason, count in sorted(
+                reason_counts.items(), key=lambda x: x[1], reverse=True
+            )
+        ][
+            :10
+        ]  # Top 10 reasons
 
         # Recent feedback
         recent_feedback = sorted(
-            all_feedback,
-            key=lambda x: x["timestamp"],
-            reverse=True
+            all_feedback, key=lambda x: x["timestamp"], reverse=True
         )[:limit]
 
         recent_feedback_responses = [
@@ -357,13 +362,17 @@ async def _log_feedback_to_mlflow(request: FeedbackRequest, feedback_id: str) ->
         )
 
         # Update run tags
-        mlflow_logger.log_params({
-            "feedback_rating": str(request.rating),
-            "feedback_reasons": ",".join(request.reasons),
-            "feedback_id": feedback_id,
-        })
+        mlflow_logger.log_params(
+            {
+                "feedback_rating": str(request.rating),
+                "feedback_reasons": ",".join(request.reasons),
+                "feedback_id": feedback_id,
+            }
+        )
 
-        logger.info("Feedback logged to MLflow", feedback_id=feedback_id, run_id=request.run_id)
+        logger.info(
+            "Feedback logged to MLflow", feedback_id=feedback_id, run_id=request.run_id
+        )
 
     except Exception as e:
         logger.error("Failed to log feedback to MLflow", error=str(e))
@@ -392,7 +401,7 @@ async def _store_feedback(feedback_data: dict[str, Any]) -> None:
         all_feedback.append(feedback_data)
 
         # Save back to file
-        with open(feedback_file, 'w') as f:
+        with open(feedback_file, "w") as f:
             json.dump(all_feedback, f, indent=2)
 
         logger.info("Feedback stored locally", feedback_id=feedback_data["feedback_id"])
@@ -497,7 +506,7 @@ async def _delete_feedback(feedback_id: str) -> bool:
             return False  # Not found
 
         # Save back to file
-        with open(feedback_file, 'w') as f:
+        with open(feedback_file, "w") as f:
             json.dump(all_feedback, f, indent=2)
 
         return True
@@ -505,14 +514,3 @@ async def _delete_feedback(feedback_id: str) -> bool:
     except Exception as e:
         logger.error("Failed to delete feedback", feedback_id=feedback_id, error=str(e))
         return False
-
-
-
-
-
-
-
-
-
-
-

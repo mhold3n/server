@@ -42,7 +42,9 @@ class SchemaValidator:
                 return schema
         return None
 
-    def validate_against_schema(self, data: dict, schema_id: str) -> tuple[bool, list[str]]:
+    def validate_against_schema(
+        self, data: dict, schema_id: str
+    ) -> tuple[bool, list[str]]:
         """
         Validate data against a schema.
 
@@ -122,7 +124,9 @@ class RegistryValidator:
             try:
                 validate(instance=kernel, schema=self.KERNEL_ENTRY_SCHEMA)
             except ValidationError as e:
-                errors.append(f"kernels[{i}] ({kernel.get('kernel_id', 'unknown')}): {e.message}")
+                errors.append(
+                    f"kernels[{i}] ({kernel.get('kernel_id', 'unknown')}): {e.message}"
+                )
 
         return (len(errors) == 0, errors)
 
@@ -142,7 +146,9 @@ class RegistryValidator:
             try:
                 validate(instance=qty, schema=self.QUANTITY_ENTRY_SCHEMA)
             except ValidationError as e:
-                errors.append(f"quantities[{i}] ({qty.get('quantity_id', 'unknown')}): {e.message}")
+                errors.append(
+                    f"quantities[{i}] ({qty.get('quantity_id', 'unknown')}): {e.message}"
+                )
 
         return (len(errors) == 0, errors)
 
@@ -186,7 +192,10 @@ class PolicyValidator:
                     },
                 },
             },
-            "disallowed_without_disambiguator": {"type": "array", "items": {"type": "string"}},
+            "disallowed_without_disambiguator": {
+                "type": "array",
+                "items": {"type": "string"},
+            },
         },
     }
 

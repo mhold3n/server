@@ -26,10 +26,16 @@ class MCPServer(BaseModel):
     version: str = Field(..., description="Server version")
     url: str = Field(..., description="Server URL")
     health_url: str | None = Field(None, description="Health check URL")
-    tools: list[dict[str, Any]] = Field(default_factory=list, description="Available tools")
-    resources: list[dict[str, Any]] = Field(default_factory=list, description="Available resources")
+    tools: list[dict[str, Any]] = Field(
+        default_factory=list, description="Available tools"
+    )
+    resources: list[dict[str, Any]] = Field(
+        default_factory=list, description="Available resources"
+    )
     schema: dict[str, Any] = Field(default_factory=dict, description="JSON Schema")
-    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
 
 class MCPRegistry:
@@ -55,7 +61,7 @@ class MCPRegistry:
             with open(self.config_path) as f:
                 config = yaml.safe_load(f)
 
-            servers_config = config.get('servers', [])
+            servers_config = config.get("servers", [])
 
             for server_config in servers_config:
                 server = MCPServer(**server_config)
@@ -158,8 +164,10 @@ class MCPRegistry:
         matching_tools = []
 
         for tool in self.get_tools():
-            if (query_lower in tool.get("name", "").lower() or
-                query_lower in tool.get("description", "").lower()):
+            if (
+                query_lower in tool.get("name", "").lower()
+                or query_lower in tool.get("description", "").lower()
+            ):
                 matching_tools.append(tool)
 
         return matching_tools
@@ -177,8 +185,10 @@ class MCPRegistry:
         matching_resources = []
 
         for resource in self.get_resources():
-            if (query_lower in resource.get("name", "").lower() or
-                query_lower in resource.get("description", "").lower()):
+            if (
+                query_lower in resource.get("name", "").lower()
+                or query_lower in resource.get("description", "").lower()
+            ):
                 matching_resources.append(resource)
 
         return matching_resources
@@ -267,7 +277,9 @@ async def get_server_schema(name: str) -> dict[str, Any]:
     """
     schema = registry.get_server_schema(name)
     if not schema:
-        raise HTTPException(status_code=404, detail=f"Schema for server '{name}' not found")
+        raise HTTPException(
+            status_code=404, detail=f"Schema for server '{name}' not found"
+        )
     return schema
 
 
@@ -324,7 +336,9 @@ async def register_server(server: MCPServer) -> MCPServer:
 
     except Exception as e:
         logger.error("Failed to register MCP server", name=server.name, error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to register server: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Failed to register server: {str(e)}"
+        ) from e
 
 
 @app.get("/mcp/servers")
@@ -402,7 +416,9 @@ async def get_registry_stats() -> dict[str, Any]:
     resources = registry.get_resources()
 
     tool_servers = len([s for s in registry.servers.values() if s.type == "tool"])
-    resource_servers = len([s for s in registry.servers.values() if s.type == "resource"])
+    resource_servers = len(
+        [s for s in registry.servers.values() if s.type == "resource"]
+    )
 
     return {
         "total_servers": len(registry.servers),
@@ -423,15 +439,5 @@ async def get_registry_stats() -> dict[str, Any]:
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
-
-
-
-
-
-
-
-
-

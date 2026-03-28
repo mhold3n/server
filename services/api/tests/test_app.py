@@ -19,7 +19,9 @@ class TestHealthEndpoint:
         assert data["version"] == "0.1.0"
         assert "services" in data
 
-    def test_health_check_with_redis_failure(self, test_client: TestClient, mock_openai_client: AsyncMock):
+    def test_health_check_with_redis_failure(
+        self, test_client: TestClient, mock_openai_client: AsyncMock
+    ):
         """Test health check when Redis is unavailable."""
         import src.app
 
@@ -27,8 +29,8 @@ class TestHealthEndpoint:
         mock_redis = AsyncMock()
         mock_redis.ping.side_effect = Exception("Connection failed")
 
-        with patch.object(src.app, 'redis_client', mock_redis):
-            with patch.object(src.app, 'openai_client', mock_openai_client):
+        with patch.object(src.app, "redis_client", mock_redis):
+            with patch.object(src.app, "openai_client", mock_openai_client):
                 response = test_client.get("/health")
 
                 assert response.status_code == 200
@@ -45,7 +47,10 @@ class TestMetricsEndpoint:
         response = test_client.get("/metrics")
 
         assert response.status_code == 200
-        assert response.headers["content-type"] == "text/plain; version=0.0.4; charset=utf-8"
+        assert (
+            response.headers["content-type"]
+            == "text/plain; version=0.0.4; charset=utf-8"
+        )
         assert "api_requests_total" in response.text
 
     def test_metrics_disabled(self, test_client: TestClient):
@@ -63,7 +68,7 @@ class TestChatCompletions:
         test_client: TestClient,
         setup_clients,
         sample_chat_request: dict,
-        sample_chat_response: dict
+        sample_chat_response: dict,
     ):
         """Test successful chat completion."""
         import src.app
@@ -72,6 +77,7 @@ class TestChatCompletions:
         class UsageDict(dict):
             def dict(self):
                 return self
+
         mock_response = AsyncMock()
         mock_response.id = sample_chat_response["id"]
         mock_response.object = sample_chat_response["object"]
@@ -96,44 +102,46 @@ class TestChatCompletions:
         assert data["choices"][0]["message"]["content"] == "Test response"
 
     def test_chat_completions_no_openai_client(
-        self,
-        test_client: TestClient,
-        mock_redis: AsyncMock
+        self, test_client: TestClient, mock_redis: AsyncMock
     ):
         """Test chat completion when OpenAI client is not available."""
         import src.app
 
-        with patch.object(src.app, 'redis_client', mock_redis):
-            with patch.object(src.app, 'openai_client', None):
+        with patch.object(src.app, "redis_client", mock_redis):
+            with patch.object(src.app, "openai_client", None):
                 response = test_client.post(
                     "/v1/chat/completions",
-                    json={"model": "test", "messages": [{"role": "user", "content": "test"}]}
+                    json={
+                        "model": "test",
+                        "messages": [{"role": "user", "content": "test"}],
+                    },
                 )
 
                 assert response.status_code == 503
                 assert "OpenAI client not available" in response.json()["detail"]
 
     def test_chat_completions_openai_error(
-        self,
-        test_client: TestClient,
-        setup_clients,
-        sample_chat_request: dict
+        self, test_client: TestClient, setup_clients, sample_chat_request: dict
     ):
         """Test chat completion when OpenAI client raises an error."""
         import src.app
 
-        src.app.openai_client.chat.completions.create.side_effect = Exception("OpenAI error")
+        src.app.openai_client.chat.completions.create.side_effect = Exception(
+            "OpenAI error"
+        )
 
         response = test_client.post("/v1/chat/completions", json=sample_chat_request)
 
         assert response.status_code == 500
         assert "Chat request failed" in response.json()["detail"]
 
-    def test_chat_completions_invalid_request(self, test_client: TestClient, setup_clients):
+    def test_chat_completions_invalid_request(
+        self, test_client: TestClient, setup_clients
+    ):
         """Test chat completion with invalid request."""
         invalid_request = {
             "model": "test",
-            "messages": []  # Empty messages should fail validation
+            "messages": [],  # Empty messages should fail validation
         }
 
         response = test_client.post("/v1/chat/completions", json=invalid_request)
@@ -141,10 +149,7 @@ class TestChatCompletions:
         assert response.status_code == 422  # Validation error
 
     def test_chat_completions_with_temperature(
-        self,
-        test_client: TestClient,
-        setup_clients,
-        sample_chat_response: dict
+        self, test_client: TestClient, setup_clients, sample_chat_response: dict
     ):
         """Test chat completion with custom temperature."""
         import src.app
@@ -152,6 +157,7 @@ class TestChatCompletions:
         class UsageDict(dict):
             def dict(self):
                 return self
+
         mock_response = AsyncMock()
         mock_response.id = sample_chat_response["id"]
         mock_response.object = sample_chat_response["object"]
@@ -213,6 +219,7 @@ class TestMiddleware:
     def test_cors_middleware(self, test_client: TestClient):
         """Test CORS middleware allows cross-origin requests."""
         import src.app
+
         original_debug = src.app.settings.debug
         src.app.settings.debug = True
         try:
@@ -221,7 +228,7 @@ class TestMiddleware:
                 headers={
                     "Origin": "http://localhost:3000",
                     "Access-Control-Request-Method": "GET",
-                }
+                },
             )
             # Ensure CORS preflight returns headers (at least methods)
             assert "access-control-allow-methods" in response.headers

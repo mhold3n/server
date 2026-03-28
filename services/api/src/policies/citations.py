@@ -70,8 +70,12 @@ class CitationPolicy:
 
         # Check citation formats
         if citation_analysis["invalid_formats"]:
-            violations.append(f"Invalid citation formats: {len(citation_analysis['invalid_formats'])}")
-            suggestions.append("Use standard citation formats: [1], (Author, Year), or (Author et al., Year)")
+            violations.append(
+                f"Invalid citation formats: {len(citation_analysis['invalid_formats'])}"
+            )
+            suggestions.append(
+                "Use standard citation formats: [1], (Author, Year), or (Author et al., Year)"
+            )
             metadata["invalid_citations"] = citation_analysis["invalid_formats"]
 
         # Check for unsupported claims
@@ -84,14 +88,20 @@ class CitationPolicy:
 
         # Check citation distribution
         if citation_analysis["total_citations"] > 0:
-            distribution_score = self._calculate_distribution_score(output, citation_analysis)
+            distribution_score = self._calculate_distribution_score(
+                output, citation_analysis
+            )
             if distribution_score < 0.5:
                 violations.append("Poor citation distribution")
-                suggestions.append("Distribute citations more evenly throughout the text")
+                suggestions.append(
+                    "Distribute citations more evenly throughout the text"
+                )
             metadata["distribution_score"] = distribution_score
 
         # Calculate overall score
-        score = self._calculate_score(citation_analysis, len(violations), len(retrieval_set))
+        score = self._calculate_score(
+            citation_analysis, len(violations), len(retrieval_set)
+        )
 
         return PolicyResult(
             passed=len(violations) == 0,
@@ -112,9 +122,9 @@ class CitationPolicy:
         """
         # Citation patterns
         patterns = {
-            "numeric": r'\[(\d+)\]',  # [1], [2], etc.
-            "author_year": r'\(([A-Z][a-z]+(?:\s+et\s+al\.)?,\s*\d{4})\)',  # (Smith, 2023)
-            "author_title": r'\(([A-Z][a-z]+(?:\s+et\s+al\.)?\s+[^,]+,\s*\d{4})\)',  # (Smith et al., 2023)
+            "numeric": r"\[(\d+)\]",  # [1], [2], etc.
+            "author_year": r"\(([A-Z][a-z]+(?:\s+et\s+al\.)?,\s*\d{4})\)",  # (Smith, 2023)
+            "author_title": r"\(([A-Z][a-z]+(?:\s+et\s+al\.)?\s+[^,]+,\s*\d{4})\)",  # (Smith et al., 2023)
         }
 
         citations = {
@@ -132,7 +142,7 @@ class CitationPolicy:
             total_citations += len(matches)
 
         # Find invalid citation patterns
-        invalid_pattern = r'\[[^\]]*\]|\([^)]*\)'
+        invalid_pattern = r"\[[^\]]*\]|\([^)]*\)"
         all_citations = re.findall(invalid_pattern, text)
 
         valid_citations = []
@@ -151,8 +161,7 @@ class CitationPolicy:
             "total_citations": total_citations,
             "invalid_formats": invalid_citations,
             "format_counts": {
-                format_name: len(matches)
-                for format_name, matches in citations.items()
+                format_name: len(matches) for format_name, matches in citations.items()
             },
         }
 
@@ -171,17 +180,17 @@ class CitationPolicy:
             List of potentially unsupported claims
         """
         # Split into sentences
-        sentences = re.split(r'[.!?]+', text)
+        sentences = re.split(r"[.!?]+", text)
         unsupported_claims = []
 
         # Keywords that indicate factual claims
         factual_indicators = [
-            r'\b(is|are|was|were|has|have|had)\b',
-            r'\b(according to|studies show|research indicates|data shows)\b',
-            r'\b(typically|usually|generally|commonly|often|frequently)\b',
-            r'\b\d+%',  # Percentages
-            r'\b\d+\s*(mm|cm|m|kg|g|N|Pa|MPa|GPa|°C|°F)\b',  # Measurements
-            r'\b(proven|demonstrated|established|confirmed)\b',
+            r"\b(is|are|was|were|has|have|had)\b",
+            r"\b(according to|studies show|research indicates|data shows)\b",
+            r"\b(typically|usually|generally|commonly|often|frequently)\b",
+            r"\b\d+%",  # Percentages
+            r"\b\d+\s*(mm|cm|m|kg|g|N|Pa|MPa|GPa|°C|°F)\b",  # Measurements
+            r"\b(proven|demonstrated|established|confirmed)\b",
         ]
 
         for sentence in sentences:
@@ -199,7 +208,7 @@ class CitationPolicy:
                 # Check if sentence has nearby citation
                 has_citation = any(
                     pattern in sentence
-                    for pattern in ['[', '(', 'et al', '2023', '2024', '2025']
+                    for pattern in ["[", "(", "et al", "2023", "2024", "2025"]
                 )
 
                 if not has_citation:
@@ -236,7 +245,7 @@ class CitationPolicy:
             doc.get("metadata", {})
 
             # Extract key terms from claim
-            claim_terms = re.findall(r'\b\w{4,}\b', claim_lower)
+            claim_terms = re.findall(r"\b\w{4,}\b", claim_lower)
 
             # Check if significant terms appear in document
             matching_terms = sum(1 for term in claim_terms if term in content)
@@ -264,7 +273,7 @@ class CitationPolicy:
             return 0.0
 
         # Split text into paragraphs
-        paragraphs = [p.strip() for p in text.split('\n\n') if p.strip()]
+        paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
 
         if len(paragraphs) < 2:
             return 1.0  # Single paragraph, distribution is perfect
@@ -287,8 +296,10 @@ class CitationPolicy:
         if mean_citations == 0:
             return 0.0
 
-        variance = sum((x - mean_citations) ** 2 for x in citations_per_paragraph) / len(citations_per_paragraph)
-        std_dev = variance ** 0.5
+        variance = sum(
+            (x - mean_citations) ** 2 for x in citations_per_paragraph
+        ) / len(citations_per_paragraph)
+        std_dev = variance**0.5
 
         # Normalize to 0-1 scale (lower std dev = better distribution)
         max_std_dev = mean_citations * 2  # Reasonable upper bound
@@ -314,8 +325,7 @@ class CitationPolicy:
         """
         # Base score from citation count
         citation_score = min(
-            citation_analysis["total_citations"] / self.min_citations,
-            1.0
+            citation_analysis["total_citations"] / self.min_citations, 1.0
         )
 
         # Penalty for violations
@@ -327,16 +337,7 @@ class CitationPolicy:
         # Bonus for good distribution
         distribution_bonus = citation_analysis.get("distribution_score", 0.0) * 0.1
 
-        score = citation_score - violation_penalty + retrieval_bonus + distribution_bonus
+        score = (
+            citation_score - violation_penalty + retrieval_bonus + distribution_bonus
+        )
         return max(0.0, min(1.0, score))
-
-
-
-
-
-
-
-
-
-
-

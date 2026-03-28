@@ -61,7 +61,9 @@ class TestLabAmbiguityGate:
     def test_clear_request_passes(self):
         """Clear, unambiguous request should pass."""
         gate = LabAmbiguityGate()
-        result = gate.evaluate({"raw_input": "Calculate the mean and standard deviation"})
+        result = gate.evaluate(
+            {"raw_input": "Calculate the mean and standard deviation"}
+        )
 
         assert result.decision == GateDecision.PASS
 

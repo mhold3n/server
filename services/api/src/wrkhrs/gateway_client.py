@@ -211,14 +211,3 @@ class WrkHrsGatewayClient:
         except HTTPError as e:
             logger.error("Conditioning application failed", error=str(e))
             raise
-
-
-
-
-
-
-
-
-
-
-

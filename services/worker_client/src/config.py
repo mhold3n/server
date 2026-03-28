@@ -1,6 +1,5 @@
 """Configuration management for worker client."""
 
-
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 

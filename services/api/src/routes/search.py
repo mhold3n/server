@@ -65,4 +65,3 @@ async def search_web(q: str, limit: int = 10) -> dict[str, Any]:
         return {"query": q, "items": items}
     except Exception as e:  # pragma: no cover - I/O wrapper
         raise HTTPException(status_code=502, detail=f"SearXNG error: {e}") from e
-

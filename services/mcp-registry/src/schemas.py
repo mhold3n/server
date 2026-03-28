@@ -20,7 +20,9 @@ class ToolSchema(MCPSchema):
     type: str = Field(default="tool", description="Schema type")
     parameters: dict[str, Any] = Field(..., description="Tool parameters schema")
     returns: dict[str, Any] = Field(..., description="Tool return value schema")
-    examples: list[dict[str, Any]] = Field(default_factory=list, description="Usage examples")
+    examples: list[dict[str, Any]] = Field(
+        default_factory=list, description="Usage examples"
+    )
 
 
 class ResourceSchema(MCPSchema):
@@ -30,7 +32,9 @@ class ResourceSchema(MCPSchema):
     content_type: str = Field(..., description="Resource content type")
     metadata_schema: dict[str, Any] = Field(..., description="Resource metadata schema")
     access_methods: list[str] = Field(..., description="Available access methods")
-    examples: list[dict[str, Any]] = Field(default_factory=list, description="Usage examples")
+    examples: list[dict[str, Any]] = Field(
+        default_factory=list, description="Usage examples"
+    )
 
 
 # Predefined schemas for common MCP types
@@ -44,27 +48,21 @@ GITHUB_TOOL_SCHEMA = ToolSchema(
             "operation": {
                 "type": "string",
                 "enum": ["create_issue", "create_pr", "get_repo", "list_issues"],
-                "description": "GitHub operation to perform"
+                "description": "GitHub operation to perform",
             },
             "repository": {
                 "type": "string",
-                "description": "Repository name (owner/repo)"
+                "description": "Repository name (owner/repo)",
             },
-            "title": {
-                "type": "string",
-                "description": "Issue or PR title"
-            },
-            "body": {
-                "type": "string",
-                "description": "Issue or PR body content"
-            },
+            "title": {"type": "string", "description": "Issue or PR title"},
+            "body": {"type": "string", "description": "Issue or PR body content"},
             "labels": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "Labels to apply"
-            }
+                "description": "Labels to apply",
+            },
         },
-        "required": ["operation", "repository"]
+        "required": ["operation", "repository"],
     },
     returns={
         "type": "object",
@@ -72,8 +70,8 @@ GITHUB_TOOL_SCHEMA = ToolSchema(
             "success": {"type": "boolean"},
             "url": {"type": "string"},
             "id": {"type": "integer"},
-            "message": {"type": "string"}
-        }
+            "message": {"type": "string"},
+        },
     },
     examples=[
         {
@@ -81,9 +79,9 @@ GITHUB_TOOL_SCHEMA = ToolSchema(
             "repository": "owner/repo",
             "title": "Bug report",
             "body": "Description of the bug",
-            "labels": ["bug", "priority-high"]
+            "labels": ["bug", "priority-high"],
         }
-    ]
+    ],
 )
 
 FILESYSTEM_TOOL_SCHEMA = ToolSchema(
@@ -96,22 +94,19 @@ FILESYSTEM_TOOL_SCHEMA = ToolSchema(
             "operation": {
                 "type": "string",
                 "enum": ["read", "write", "list", "delete", "copy", "move"],
-                "description": "Filesystem operation to perform"
+                "description": "Filesystem operation to perform",
             },
-            "path": {
-                "type": "string",
-                "description": "File or directory path"
-            },
+            "path": {"type": "string", "description": "File or directory path"},
             "content": {
                 "type": "string",
-                "description": "Content to write (for write operations)"
+                "description": "Content to write (for write operations)",
             },
             "destination": {
                 "type": "string",
-                "description": "Destination path (for copy/move operations)"
-            }
+                "description": "Destination path (for copy/move operations)",
+            },
         },
-        "required": ["operation", "path"]
+        "required": ["operation", "path"],
     },
     returns={
         "type": "object",
@@ -119,20 +114,13 @@ FILESYSTEM_TOOL_SCHEMA = ToolSchema(
             "success": {"type": "boolean"},
             "content": {"type": "string"},
             "files": {"type": "array", "items": {"type": "string"}},
-            "message": {"type": "string"}
-        }
+            "message": {"type": "string"},
+        },
     },
     examples=[
-        {
-            "operation": "read",
-            "path": "/path/to/file.txt"
-        },
-        {
-            "operation": "write",
-            "path": "/path/to/file.txt",
-            "content": "File content"
-        }
-    ]
+        {"operation": "read", "path": "/path/to/file.txt"},
+        {"operation": "write", "path": "/path/to/file.txt", "content": "File content"},
+    ],
 )
 
 CODE_RESOURCE_SCHEMA = ResourceSchema(
@@ -150,8 +138,8 @@ CODE_RESOURCE_SCHEMA = ResourceSchema(
             "line_end": {"type": "integer"},
             "language": {"type": "string"},
             "function_name": {"type": "string"},
-            "class_name": {"type": "string"}
-        }
+            "class_name": {"type": "string"},
+        },
     },
     access_methods=["search", "retrieve", "embed"],
     examples=[
@@ -162,9 +150,9 @@ CODE_RESOURCE_SCHEMA = ResourceSchema(
             "line_start": 10,
             "line_end": 20,
             "language": "python",
-            "function_name": "main"
+            "function_name": "main",
         }
-    ]
+    ],
 )
 
 DOCUMENT_RESOURCE_SCHEMA = ResourceSchema(
@@ -184,8 +172,8 @@ DOCUMENT_RESOURCE_SCHEMA = ResourceSchema(
             "page_number": {"type": "integer"},
             "section": {"type": "string"},
             "chapter": {"type": "string"},
-            "content_sha256": {"type": "string"}
-        }
+            "content_sha256": {"type": "string"},
+        },
     },
     access_methods=["search", "retrieve", "embed"],
     examples=[
@@ -196,9 +184,9 @@ DOCUMENT_RESOURCE_SCHEMA = ResourceSchema(
             "publication_date": "2023-01-01",
             "isbn": "978-0-123456-78-9",
             "page_number": 45,
-            "section": "Chapter 3: Materials Selection"
+            "section": "Chapter 3: Materials Selection",
         }
-    ]
+    ],
 )
 
 CHEMISTRY_TOOL_SCHEMA = ToolSchema(
@@ -210,27 +198,20 @@ CHEMISTRY_TOOL_SCHEMA = ToolSchema(
         "properties": {
             "operation": {
                 "type": "string",
-                "enum": ["molecular_weight", "stoichiometry", "concentration", "ph_calculation"],
-                "description": "Chemistry operation to perform"
+                "enum": [
+                    "molecular_weight",
+                    "stoichiometry",
+                    "concentration",
+                    "ph_calculation",
+                ],
+                "description": "Chemistry operation to perform",
             },
-            "formula": {
-                "type": "string",
-                "description": "Chemical formula"
-            },
-            "concentration": {
-                "type": "number",
-                "description": "Concentration value"
-            },
-            "volume": {
-                "type": "number",
-                "description": "Volume in liters"
-            },
-            "moles": {
-                "type": "number",
-                "description": "Number of moles"
-            }
+            "formula": {"type": "string", "description": "Chemical formula"},
+            "concentration": {"type": "number", "description": "Concentration value"},
+            "volume": {"type": "number", "description": "Volume in liters"},
+            "moles": {"type": "number", "description": "Number of moles"},
         },
-        "required": ["operation"]
+        "required": ["operation"],
     },
     returns={
         "type": "object",
@@ -238,20 +219,13 @@ CHEMISTRY_TOOL_SCHEMA = ToolSchema(
             "result": {"type": "number"},
             "unit": {"type": "string"},
             "formula": {"type": "string"},
-            "calculation": {"type": "string"}
-        }
+            "calculation": {"type": "string"},
+        },
     },
     examples=[
-        {
-            "operation": "molecular_weight",
-            "formula": "H2O"
-        },
-        {
-            "operation": "concentration",
-            "moles": 0.1,
-            "volume": 0.5
-        }
-    ]
+        {"operation": "molecular_weight", "formula": "H2O"},
+        {"operation": "concentration", "moles": 0.1, "volume": 0.5},
+    ],
 )
 
 MECHANICAL_TOOL_SCHEMA = ToolSchema(
@@ -264,30 +238,15 @@ MECHANICAL_TOOL_SCHEMA = ToolSchema(
             "operation": {
                 "type": "string",
                 "enum": ["stress_calculation", "deflection", "torque", "gear_ratio"],
-                "description": "Mechanical operation to perform"
+                "description": "Mechanical operation to perform",
             },
-            "force": {
-                "type": "number",
-                "description": "Force value in Newtons"
-            },
-            "area": {
-                "type": "number",
-                "description": "Cross-sectional area in m²"
-            },
-            "length": {
-                "type": "number",
-                "description": "Length in meters"
-            },
-            "modulus": {
-                "type": "number",
-                "description": "Elastic modulus in Pa"
-            },
-            "moment": {
-                "type": "number",
-                "description": "Moment of inertia in m⁴"
-            }
+            "force": {"type": "number", "description": "Force value in Newtons"},
+            "area": {"type": "number", "description": "Cross-sectional area in m²"},
+            "length": {"type": "number", "description": "Length in meters"},
+            "modulus": {"type": "number", "description": "Elastic modulus in Pa"},
+            "moment": {"type": "number", "description": "Moment of inertia in m⁴"},
         },
-        "required": ["operation"]
+        "required": ["operation"],
     },
     returns={
         "type": "object",
@@ -295,23 +254,19 @@ MECHANICAL_TOOL_SCHEMA = ToolSchema(
             "result": {"type": "number"},
             "unit": {"type": "string"},
             "formula": {"type": "string"},
-            "calculation": {"type": "string"}
-        }
+            "calculation": {"type": "string"},
+        },
     },
     examples=[
-        {
-            "operation": "stress_calculation",
-            "force": 1000,
-            "area": 0.01
-        },
+        {"operation": "stress_calculation", "force": 1000, "area": 0.01},
         {
             "operation": "deflection",
             "force": 1000,
             "length": 2.0,
             "modulus": 200e9,
-            "moment": 0.001
-        }
-    ]
+            "moment": 0.001,
+        },
+    ],
 )
 
 MATERIALS_TOOL_SCHEMA = ToolSchema(
@@ -324,27 +279,24 @@ MATERIALS_TOOL_SCHEMA = ToolSchema(
             "operation": {
                 "type": "string",
                 "enum": ["property_lookup", "alloy_composition", "heat_treatment"],
-                "description": "Materials operation to perform"
+                "description": "Materials operation to perform",
             },
             "material": {
                 "type": "string",
-                "description": "Material name or alloy designation"
+                "description": "Material name or alloy designation",
             },
             "property": {
                 "type": "string",
                 "enum": ["yield_strength", "tensile_strength", "hardness", "density"],
-                "description": "Property to look up"
+                "description": "Property to look up",
             },
-            "temperature": {
-                "type": "number",
-                "description": "Temperature in °C"
-            },
+            "temperature": {"type": "number", "description": "Temperature in °C"},
             "composition": {
                 "type": "object",
-                "description": "Alloy composition percentages"
-            }
+                "description": "Alloy composition percentages",
+            },
         },
-        "required": ["operation", "material"]
+        "required": ["operation", "material"],
     },
     returns={
         "type": "object",
@@ -353,21 +305,21 @@ MATERIALS_TOOL_SCHEMA = ToolSchema(
             "unit": {"type": "string"},
             "temperature": {"type": "number"},
             "source": {"type": "string"},
-            "notes": {"type": "string"}
-        }
+            "notes": {"type": "string"},
+        },
     },
     examples=[
         {
             "operation": "property_lookup",
             "material": "AISI 316L",
-            "property": "yield_strength"
+            "property": "yield_strength",
         },
         {
             "operation": "alloy_composition",
             "material": "304 Stainless Steel",
-            "composition": {"Fe": 70, "Cr": 18, "Ni": 8, "C": 0.08}
-        }
-    ]
+            "composition": {"Fe": 70, "Cr": 18, "Ni": 8, "C": 0.08},
+        },
+    ],
 )
 
 
@@ -413,18 +365,4 @@ def get_schemas_by_type(schema_type: str) -> list[MCPSchema]:
     Returns:
         List of schemas of the specified type
     """
-    return [
-        schema for schema in SCHEMA_REGISTRY.values()
-        if schema.type == schema_type
-    ]
-
-
-
-
-
-
-
-
-
-
-
+    return [schema for schema in SCHEMA_REGISTRY.values() if schema.type == schema_type]

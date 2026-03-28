@@ -29,10 +29,14 @@ class EmbeddingService:
                 self.model = SentenceTransformer(self.model_name)
                 logger.info("Embedding model loaded", model=self.model_name)
             else:
-                logger.warning("sentence-transformers not installed; using fallback hasher embeddings")
+                logger.warning(
+                    "sentence-transformers not installed; using fallback hasher embeddings"
+                )
                 self.model = None
         except Exception as e:
-            logger.error("Failed to load embedding model", model=self.model_name, error=str(e))
+            logger.error(
+                "Failed to load embedding model", model=self.model_name, error=str(e)
+            )
             self.model = None
 
     async def embed_text(self, text: str) -> list[float]:
@@ -40,6 +44,7 @@ class EmbeddingService:
         if not self.model:
             # Fallback: deterministic hashing-based embedding
             import hashlib
+
             dim = 384
             h = hashlib.blake2b(text.encode("utf-8"), digest_size=64).digest()
             # Repeat hash to fill dim, convert bytes to floats in [0,1]
@@ -50,11 +55,7 @@ class EmbeddingService:
         try:
             # Run embedding in thread pool to avoid blocking
             loop = asyncio.get_event_loop()
-            embedding = await loop.run_in_executor(
-                None,
-                self.model.encode,
-                text
-            )
+            embedding = await loop.run_in_executor(None, self.model.encode, text)
 
             # Convert numpy array to list
             return embedding.tolist()
@@ -72,17 +73,15 @@ class EmbeddingService:
         try:
             # Run embedding in thread pool to avoid blocking
             loop = asyncio.get_event_loop()
-            embeddings = await loop.run_in_executor(
-                None,
-                self.model.encode,
-                texts
-            )
+            embeddings = await loop.run_in_executor(None, self.model.encode, texts)
 
             # Convert numpy array to list of lists
             return [embedding.tolist() for embedding in embeddings]
 
         except Exception as e:
-            logger.error("Failed to generate embeddings", count=len(texts), error=str(e))
+            logger.error(
+                "Failed to generate embeddings", count=len(texts), error=str(e)
+            )
             raise
 
     def get_embedding_dimension(self) -> int:

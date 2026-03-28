@@ -94,9 +94,7 @@ def mock_mcp_client() -> AsyncMock:
 
 @pytest.fixture
 async def setup_clients(
-    mock_redis: AsyncMock,
-    mock_api_client: AsyncMock,
-    test_client: TestClient
+    mock_redis: AsyncMock, mock_api_client: AsyncMock, test_client: TestClient
 ) -> AsyncGenerator[None, None]:
     """Setup mock clients for testing."""
     import src.router

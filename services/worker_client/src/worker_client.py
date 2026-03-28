@@ -173,14 +173,16 @@ class WorkerClient:
             models = []
 
             for model in response.data:
-                models.append(ModelInfo(
-                    id=model.id,
-                    created=model.created,
-                    owned_by=getattr(model, 'owned_by', 'vllm'),
-                    permission=getattr(model, 'permission', []),
-                    root=getattr(model, 'root', None),
-                    parent=getattr(model, 'parent', None),
-                ))
+                models.append(
+                    ModelInfo(
+                        id=model.id,
+                        created=model.created,
+                        owned_by=getattr(model, "owned_by", "vllm"),
+                        permission=getattr(model, "permission", []),
+                        root=getattr(model, "root", None),
+                        parent=getattr(model, "parent", None),
+                    )
+                )
 
             logger.info("Listed models", count=len(models))
             return models
@@ -223,7 +225,7 @@ class WorkerClient:
             stop=stop_after_attempt(self.max_retries),
             wait=wait_exponential(
                 multiplier=settings.retry_delay,
-                max=settings.retry_delay * settings.retry_backoff ** self.max_retries,
+                max=settings.retry_delay * settings.retry_backoff**self.max_retries,
             ),
             reraise=True,
         )
@@ -238,7 +240,9 @@ class WorkerClient:
                         attempt=attempt.retry_state.attempt_number,
                     )
 
-                    response = await self._client.chat.completions.create(**request_params)
+                    response = await self._client.chat.completions.create(
+                        **request_params
+                    )
 
                     # Convert to our response model
                     chat_response = ChatResponse(
@@ -340,7 +344,7 @@ class WorkerClient:
                                 {
                                     "index": choice.index,
                                     "delta": {
-                                        "role": getattr(choice.delta, 'role', None),
+                                        "role": getattr(choice.delta, "role", None),
                                         "content": choice.delta.content,
                                     },
                                     "finish_reason": choice.finish_reason,

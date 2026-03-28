@@ -16,7 +16,11 @@ CATALOG: list[dict[str, str]] = [
     {"id": "api", "name": "API", "url": "http://api:8080/health"},
     {"id": "router", "name": "Router", "url": "http://router:8000/health"},
     {"id": "grafana", "name": "Grafana", "url": "http://grafana:3000/login"},
-    {"id": "prometheus", "name": "Prometheus", "url": "http://prometheus:9090/-/healthy"},
+    {
+        "id": "prometheus",
+        "name": "Prometheus",
+        "url": "http://prometheus:9090/-/healthy",
+    },
     {"id": "homarr", "name": "Homarr", "url": "http://homarr:7575"},
     {"id": "pihole", "name": "Pi-hole", "url": "http://pihole:80/admin"},
 ]

@@ -268,8 +268,8 @@ class WorkflowEngine:
 
         return {
             "name": workflow_name,
-            "nodes": list(workflow.nodes.keys()) if hasattr(workflow, 'nodes') else [],
-            "edges": list(workflow.edges.keys()) if hasattr(workflow, 'edges') else [],
+            "nodes": list(workflow.nodes.keys()) if hasattr(workflow, "nodes") else [],
+            "edges": list(workflow.edges.keys()) if hasattr(workflow, "edges") else [],
         }
 
     def get_chain_info(self, chain_name: str) -> dict[str, Any]:
@@ -289,8 +289,8 @@ class WorkflowEngine:
         return {
             "name": chain_name,
             "type": type(chain).__name__,
-            "input_keys": getattr(chain, 'input_keys', []),
-            "output_keys": getattr(chain, 'output_keys', []),
+            "input_keys": getattr(chain, "input_keys", []),
+            "output_keys": getattr(chain, "output_keys", []),
         }
 
     def get_tool_info(self, tool_name: str) -> dict[str, Any]:
@@ -310,16 +310,5 @@ class WorkflowEngine:
         return {
             "name": tool_name,
             "description": tool.description,
-            "args_schema": getattr(tool, 'args_schema', None),
+            "args_schema": getattr(tool, "args_schema", None),
         }
-
-
-
-
-
-
-
-
-
-
-

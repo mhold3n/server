@@ -1,6 +1,5 @@
 """Configuration management for router service."""
 
-
 from enum import StrEnum
 
 from pydantic import Field

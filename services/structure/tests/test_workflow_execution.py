@@ -31,7 +31,10 @@ async def test_orchestrator_single_step():
     )
 
     step = WorkflowStep(
-        step_id="step1", description="Calculate mean", spec=spec, status=WorkflowStatus.PENDING
+        step_id="step1",
+        description="Calculate mean",
+        spec=spec,
+        status=WorkflowStatus.PENDING,
     )
 
     workflow = Workflow(workflow_id="wf1", name="Test Workflow", steps=[step])

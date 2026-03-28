@@ -70,7 +70,9 @@ class TestHarness:
                 metric_results[metric.name] = res
 
             results.append(
-                EvaluationResult(example_id=example.id, metrics=metric_results, output=str(output))
+                EvaluationResult(
+                    example_id=example.id, metrics=metric_results, output=str(output)
+                )
             )
 
         return results

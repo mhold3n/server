@@ -31,7 +31,7 @@ class ProjectAnalyzer:
             "configuration": await self._analyze_configuration(path),
             "documentation": await self._analyze_documentation(path),
             "testing": await self._analyze_testing(path),
-            "ci_cd": await self._analyze_ci_cd(path)
+            "ci_cd": await self._analyze_ci_cd(path),
         }
 
         return project_info
@@ -48,7 +48,7 @@ class ProjectAnalyzer:
             "docker": ["Dockerfile", "docker-compose.yml"],
             "terraform": ["*.tf", "*.tfvars"],
             "ansible": ["playbook.yml", "inventory.ini"],
-            "kubernetes": ["*.yaml", "*.yml", "kustomization.yaml"]
+            "kubernetes": ["*.yaml", "*.yml", "kustomization.yaml"],
         }
 
         detected_types = []
@@ -93,19 +93,25 @@ class ProjectAnalyzer:
             "total_files": total_files,
             "total_size_bytes": total_size,
             "total_size_mb": round(total_size / (1024 * 1024), 2),
-            "file_types": file_types
+            "file_types": file_types,
         }
 
     async def _analyze_structure(self, path: Path) -> dict[str, Any]:
         """Analyze project directory structure."""
-        structure = {
-            "directories": [],
-            "key_files": [],
-            "depth": 0
-        }
+        structure = {"directories": [], "key_files": [], "depth": 0}
 
         # Find key directories
-        key_dirs = ["src", "lib", "app", "tests", "test", "docs", "doc", "config", "scripts"]
+        key_dirs = [
+            "src",
+            "lib",
+            "app",
+            "tests",
+            "test",
+            "docs",
+            "doc",
+            "config",
+            "scripts",
+        ]
         for dir_name in key_dirs:
             dir_path = path / dir_name
             if dir_path.exists() and dir_path.is_dir():
@@ -113,12 +119,22 @@ class ProjectAnalyzer:
 
         # Find key files
         key_files = [
-            "README.md", "README.rst", "README.txt",
-            "LICENSE", "LICENSE.txt", "LICENSE.md",
-            "CHANGELOG.md", "CHANGELOG.rst", "CHANGELOG.txt",
-            "CONTRIBUTING.md", "CONTRIBUTING.rst",
-            ".gitignore", ".dockerignore",
-            "Makefile", "Dockerfile", "docker-compose.yml"
+            "README.md",
+            "README.rst",
+            "README.txt",
+            "LICENSE",
+            "LICENSE.txt",
+            "LICENSE.md",
+            "CHANGELOG.md",
+            "CHANGELOG.rst",
+            "CHANGELOG.txt",
+            "CONTRIBUTING.md",
+            "CONTRIBUTING.rst",
+            ".gitignore",
+            ".dockerignore",
+            "Makefile",
+            "Dockerfile",
+            "docker-compose.yml",
         ]
 
         for file_name in key_files:
@@ -143,7 +159,7 @@ class ProjectAnalyzer:
             "lines_of_code": 0,
             "blank_lines": 0,
             "comment_lines": 0,
-            "languages": {}
+            "languages": {},
         }
 
         # Common code file extensions
@@ -185,7 +201,7 @@ class ProjectAnalyzer:
             ".sql": "sql",
             ".md": "markdown",
             ".rst": "rst",
-            ".tex": "latex"
+            ".tex": "latex",
         }
 
         for file_path in path.rglob("*"):
@@ -195,7 +211,7 @@ class ProjectAnalyzer:
                     language = code_extensions[suffix]
 
                     try:
-                        with open(file_path, encoding='utf-8', errors='ignore') as f:
+                        with open(file_path, encoding="utf-8", errors="ignore") as f:
                             lines = f.readlines()
 
                         file_metrics = self._analyze_file_lines(lines, language)
@@ -205,13 +221,17 @@ class ProjectAnalyzer:
                                 "files": 0,
                                 "lines": 0,
                                 "blank_lines": 0,
-                                "comment_lines": 0
+                                "comment_lines": 0,
                             }
 
                         metrics["languages"][language]["files"] += 1
                         metrics["languages"][language]["lines"] += file_metrics["lines"]
-                        metrics["languages"][language]["blank_lines"] += file_metrics["blank_lines"]
-                        metrics["languages"][language]["comment_lines"] += file_metrics["comment_lines"]
+                        metrics["languages"][language]["blank_lines"] += file_metrics[
+                            "blank_lines"
+                        ]
+                        metrics["languages"][language]["comment_lines"] += file_metrics[
+                            "comment_lines"
+                        ]
 
                         metrics["lines_of_code"] += file_metrics["lines"]
                         metrics["blank_lines"] += file_metrics["blank_lines"]
@@ -259,7 +279,7 @@ class ProjectAnalyzer:
             "sql": ["--", "/*", "*"],
             "markdown": [],  # Markdown doesn't have traditional comments
             "rst": [".."],
-            "latex": ["%"]
+            "latex": ["%"],
         }
 
         patterns = comment_patterns.get(language, [])
@@ -283,7 +303,7 @@ class ProjectAnalyzer:
         return {
             "lines": total_lines,
             "blank_lines": blank_lines,
-            "comment_lines": comment_lines
+            "comment_lines": comment_lines,
         }
 
     async def _analyze_configuration(self, path: Path) -> dict[str, Any]:
@@ -316,7 +336,7 @@ class ProjectAnalyzer:
             ".dockerignore": "docker",
             "Makefile": "make",
             ".env.example": "environment",
-            ".env": "environment"
+            ".env": "environment",
         }
 
         for pattern, config_type in config_patterns.items():
@@ -326,16 +346,13 @@ class ProjectAnalyzer:
                 if matches:
                     config_files[pattern] = {
                         "type": config_type,
-                        "files": [str(f.relative_to(path)) for f in matches]
+                        "files": [str(f.relative_to(path)) for f in matches],
                     }
             else:
                 # Handle exact file names
                 file_path = path / pattern
                 if file_path.exists():
-                    config_files[pattern] = {
-                        "type": config_type,
-                        "files": [pattern]
-                    }
+                    config_files[pattern] = {"type": config_type, "files": [pattern]}
 
         return config_files
 
@@ -346,8 +363,15 @@ class ProjectAnalyzer:
 
         # Common documentation files
         doc_patterns = [
-            "README*", "CHANGELOG*", "CONTRIBUTING*", "LICENSE*",
-            "docs/**/*", "doc/**/*", "*.md", "*.rst", "*.txt"
+            "README*",
+            "CHANGELOG*",
+            "CONTRIBUTING*",
+            "LICENSE*",
+            "docs/**/*",
+            "doc/**/*",
+            "*.md",
+            "*.rst",
+            "*.txt",
         ]
 
         for pattern in doc_patterns:
@@ -372,11 +396,7 @@ class ProjectAnalyzer:
                     else:
                         doc_types["other"] = doc_types.get("other", 0) + 1
 
-        return {
-            "files": doc_files,
-            "types": doc_types,
-            "total_files": len(doc_files)
-        }
+        return {"files": doc_files, "types": doc_types, "total_files": len(doc_files)}
 
     async def _analyze_testing(self, path: Path) -> dict[str, Any]:
         """Analyze testing setup and files."""
@@ -385,12 +405,21 @@ class ProjectAnalyzer:
 
         # Common test file patterns
         test_patterns = [
-            "test_*.py", "*_test.py", "tests/**/*",
-            "*.test.js", "*.test.ts", "*.spec.js", "*.spec.ts",
-            "test/**/*", "__tests__/**/*",
-            "*Test.java", "*Tests.java",
-            "*_test.go", "*_test.rs",
-            "*.test.cs", "*.Tests.cs"
+            "test_*.py",
+            "*_test.py",
+            "tests/**/*",
+            "*.test.js",
+            "*.test.ts",
+            "*.spec.js",
+            "*.spec.ts",
+            "test/**/*",
+            "__tests__/**/*",
+            "*Test.java",
+            "*Tests.java",
+            "*_test.go",
+            "*_test.rs",
+            "*.test.cs",
+            "*.Tests.cs",
         ]
 
         for pattern in test_patterns:
@@ -407,16 +436,20 @@ class ProjectAnalyzer:
                     elif match.suffix == ".java":
                         test_frameworks["junit"] = test_frameworks.get("junit", 0) + 1
                     elif match.suffix == ".go":
-                        test_frameworks["go_test"] = test_frameworks.get("go_test", 0) + 1
+                        test_frameworks["go_test"] = (
+                            test_frameworks.get("go_test", 0) + 1
+                        )
                     elif match.suffix == ".rs":
-                        test_frameworks["cargo_test"] = test_frameworks.get("cargo_test", 0) + 1
+                        test_frameworks["cargo_test"] = (
+                            test_frameworks.get("cargo_test", 0) + 1
+                        )
                     elif match.suffix == ".cs":
                         test_frameworks["nunit"] = test_frameworks.get("nunit", 0) + 1
 
         return {
             "files": test_files,
             "frameworks": test_frameworks,
-            "total_files": len(test_files)
+            "total_files": len(test_files),
         }
 
     async def _analyze_ci_cd(self, path: Path) -> dict[str, Any]:
@@ -426,14 +459,22 @@ class ProjectAnalyzer:
 
         # Common CI/CD files
         ci_patterns = [
-            ".github/workflows/*.yml", ".github/workflows/*.yaml",
-            ".gitlab-ci.yml", ".gitlab-ci.yaml",
-            ".travis.yml", ".travis.yaml",
-            ".circleci/config.yml", ".circleci/config.yaml",
-            "azure-pipelines.yml", "azure-pipelines.yaml",
-            "Jenkinsfile", "Jenkinsfile.*",
-            ".drone.yml", ".drone.yaml",
-            "buildkite.yml", "buildkite.yaml"
+            ".github/workflows/*.yml",
+            ".github/workflows/*.yaml",
+            ".gitlab-ci.yml",
+            ".gitlab-ci.yaml",
+            ".travis.yml",
+            ".travis.yaml",
+            ".circleci/config.yml",
+            ".circleci/config.yaml",
+            "azure-pipelines.yml",
+            "azure-pipelines.yaml",
+            "Jenkinsfile",
+            "Jenkinsfile.*",
+            ".drone.yml",
+            ".drone.yaml",
+            "buildkite.yml",
+            "buildkite.yaml",
         ]
 
         for pattern in ci_patterns:
@@ -444,7 +485,9 @@ class ProjectAnalyzer:
 
                     # Detect CI platform
                     if ".github/workflows" in str(match):
-                        ci_platforms["github_actions"] = ci_platforms.get("github_actions", 0) + 1
+                        ci_platforms["github_actions"] = (
+                            ci_platforms.get("github_actions", 0) + 1
+                        )
                     elif "gitlab-ci" in match.name:
                         ci_platforms["gitlab_ci"] = ci_platforms.get("gitlab_ci", 0) + 1
                     elif "travis" in match.name:
@@ -452,7 +495,9 @@ class ProjectAnalyzer:
                     elif "circleci" in str(match):
                         ci_platforms["circleci"] = ci_platforms.get("circleci", 0) + 1
                     elif "azure-pipelines" in match.name:
-                        ci_platforms["azure_devops"] = ci_platforms.get("azure_devops", 0) + 1
+                        ci_platforms["azure_devops"] = (
+                            ci_platforms.get("azure_devops", 0) + 1
+                        )
                     elif "Jenkinsfile" in match.name:
                         ci_platforms["jenkins"] = ci_platforms.get("jenkins", 0) + 1
                     elif "drone" in match.name:
@@ -463,12 +508,12 @@ class ProjectAnalyzer:
         return {
             "files": ci_files,
             "platforms": ci_platforms,
-            "total_files": len(ci_files)
+            "total_files": len(ci_files),
         }
 
     async def get_stats(self) -> dict[str, Any]:
         """Get analyzer statistics."""
         return {
             "analyzed_projects": len(self.analysis_cache),
-            "cache_size": len(self.analysis_cache)
+            "cache_size": len(self.analysis_cache),
         }

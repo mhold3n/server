@@ -175,7 +175,9 @@ async def health_check():
         mcp_servers = await mcp.health_check_all()
 
     return HealthResponse(
-        status="healthy" if all(s == "healthy" for s in services.values()) else "degraded",
+        status=(
+            "healthy" if all(s == "healthy" for s in services.values()) else "degraded"
+        ),
         timestamp=asyncio.get_event_loop().time(),
         version="0.1.0",
         services=services,
@@ -228,7 +230,9 @@ async def get_server_tools(server_name: str):
             server=server_name,
             error=str(e),
         )
-        raise HTTPException(status_code=500, detail=f"Failed to get tools: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get tools: {str(e)}"
+        ) from e
 
 
 @app.post("/mcp/servers/{server_name}/call")
@@ -256,7 +260,9 @@ async def call_mcp_tool(
             tool=tool_name,
             error=str(e),
         )
-        raise HTTPException(status_code=500, detail=f"Failed to call tool: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Failed to call tool: {str(e)}"
+        ) from e
 
 
 @app.post("/route", response_model=TaskResponse)
@@ -319,10 +325,12 @@ async def route_task(request: TaskRequest):
                         content = compact_tool_result_for_llm(
                             server_name, tool_name, tool_result
                         )
-                        messages.append({
-                            "role": "assistant",
-                            "content": content,
-                        })
+                        messages.append(
+                            {
+                                "role": "assistant",
+                                "content": content,
+                            }
+                        )
 
                         tools_used.append(f"{server_name}:{tool_name}")
 

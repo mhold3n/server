@@ -33,24 +33,60 @@ class HedgingPolicy:
         self.allow_justified_hedging = allow_justified_hedging
         self.hedging_indicators = hedging_indicators or [
             # Uncertainty indicators
-            "maybe", "perhaps", "possibly", "potentially", "might", "could", "may",
-            "likely", "unlikely", "probably", "presumably", "supposedly",
-
+            "maybe",
+            "perhaps",
+            "possibly",
+            "potentially",
+            "might",
+            "could",
+            "may",
+            "likely",
+            "unlikely",
+            "probably",
+            "presumably",
+            "supposedly",
             # Tentative language
-            "seems", "appears", "suggests", "indicates", "implies", "hints",
-            "tends to", "generally", "typically", "usually", "often", "frequently",
-
+            "seems",
+            "appears",
+            "suggests",
+            "indicates",
+            "implies",
+            "hints",
+            "tends to",
+            "generally",
+            "typically",
+            "usually",
+            "often",
+            "frequently",
             # Weak assertions
-            "somewhat", "rather", "quite", "fairly", "relatively", "comparatively",
-            "to some extent", "in some cases", "under certain conditions",
-
+            "somewhat",
+            "rather",
+            "quite",
+            "fairly",
+            "relatively",
+            "comparatively",
+            "to some extent",
+            "in some cases",
+            "under certain conditions",
             # Conditional language
-            "if", "unless", "provided that", "assuming", "given that",
-            "depending on", "subject to", "contingent upon",
-
+            "if",
+            "unless",
+            "provided that",
+            "assuming",
+            "given that",
+            "depending on",
+            "subject to",
+            "contingent upon",
             # Approximation
-            "approximately", "roughly", "about", "around", "nearly", "almost",
-            "more or less", "give or take", "in the ballpark of",
+            "approximately",
+            "roughly",
+            "about",
+            "around",
+            "nearly",
+            "almost",
+            "more or less",
+            "give or take",
+            "in the ballpark of",
         ]
 
     async def validate(
@@ -77,7 +113,9 @@ class HedgingPolicy:
 
         # Check if hedging is banned
         if self.ban_hedging and hedging_analysis["hedging_count"] > 0:
-            violations.append(f"Hedging language detected: {hedging_analysis['hedging_count']} instances")
+            violations.append(
+                f"Hedging language detected: {hedging_analysis['hedging_count']} instances"
+            )
             suggestions.append("Remove all hedging language and state facts directly")
             metadata["hedging_instances"] = hedging_analysis["hedging_instances"]
 
@@ -92,8 +130,12 @@ class HedgingPolicy:
         if self.allow_justified_hedging:
             unjustified_hedging = self._find_unjustified_hedging(output, retrieval_set)
             if unjustified_hedging:
-                violations.append(f"Unjustified hedging: {len(unjustified_hedging)} instances")
-                suggestions.append("Provide justification for uncertain statements or remove hedging")
+                violations.append(
+                    f"Unjustified hedging: {len(unjustified_hedging)} instances"
+                )
+                suggestions.append(
+                    "Provide justification for uncertain statements or remove hedging"
+                )
                 metadata["unjustified_hedging"] = unjustified_hedging
 
         # Check for weak language patterns
@@ -132,7 +174,7 @@ class HedgingPolicy:
 
         # Find hedging indicators
         for indicator in self.hedging_indicators:
-            pattern = r'\b' + re.escape(indicator) + r'\b'
+            pattern = r"\b" + re.escape(indicator) + r"\b"
             matches = re.finditer(pattern, text_lower)
 
             for match in matches:
@@ -141,11 +183,13 @@ class HedgingPolicy:
                 end = min(len(text), match.end() + 50)
                 context = text[start:end].strip()
 
-                hedging_instances.append({
-                    "word": indicator,
-                    "position": match.start(),
-                    "context": context,
-                })
+                hedging_instances.append(
+                    {
+                        "word": indicator,
+                        "position": match.start(),
+                        "context": context,
+                    }
+                )
                 hedging_count += 1
 
         # Calculate hedging ratio
@@ -160,7 +204,9 @@ class HedgingPolicy:
             "total_words": total_words,
             "hedging_instances": hedging_instances,
             "hedging_clusters": hedging_clusters,
-            "unique_hedging_words": len({instance["word"] for instance in hedging_instances}),
+            "unique_hedging_words": len(
+                {instance["word"] for instance in hedging_instances}
+            ),
         }
 
     def _find_hedging_clusters(
@@ -191,22 +237,26 @@ class HedgingPolicy:
             else:
                 # End current cluster if it has multiple instances
                 if len(current_cluster) > 1:
-                    clusters.append({
-                        "instances": current_cluster,
-                        "start_position": current_cluster[0]["position"],
-                        "end_position": current_cluster[-1]["position"],
-                        "cluster_size": len(current_cluster),
-                    })
+                    clusters.append(
+                        {
+                            "instances": current_cluster,
+                            "start_position": current_cluster[0]["position"],
+                            "end_position": current_cluster[-1]["position"],
+                            "cluster_size": len(current_cluster),
+                        }
+                    )
                 current_cluster = [instance]
 
         # Don't forget the last cluster
         if len(current_cluster) > 1:
-            clusters.append({
-                "instances": current_cluster,
-                "start_position": current_cluster[0]["position"],
-                "end_position": current_cluster[-1]["position"],
-                "cluster_size": len(current_cluster),
-            })
+            clusters.append(
+                {
+                    "instances": current_cluster,
+                    "start_position": current_cluster[0]["position"],
+                    "end_position": current_cluster[-1]["position"],
+                    "cluster_size": len(current_cluster),
+                }
+            )
 
         return clusters
 
@@ -228,7 +278,7 @@ class HedgingPolicy:
             return []
 
         # Split into sentences
-        sentences = re.split(r'[.!?]+', text)
+        sentences = re.split(r"[.!?]+", text)
         unjustified_instances = []
 
         for sentence in sentences:
@@ -239,18 +289,21 @@ class HedgingPolicy:
             # Check if sentence contains hedging
             sentence_lower = sentence.lower()
             hedging_in_sentence = [
-                indicator for indicator in self.hedging_indicators
-                if re.search(r'\b' + re.escape(indicator) + r'\b', sentence_lower)
+                indicator
+                for indicator in self.hedging_indicators
+                if re.search(r"\b" + re.escape(indicator) + r"\b", sentence_lower)
             ]
 
             if hedging_in_sentence:
                 # Check if hedging is justified by evidence
                 if not self._is_hedging_justified(sentence, retrieval_set):
-                    unjustified_instances.append({
-                        "sentence": sentence,
-                        "hedging_words": hedging_in_sentence,
-                        "reason": "No supporting evidence found",
-                    })
+                    unjustified_instances.append(
+                        {
+                            "sentence": sentence,
+                            "hedging_words": hedging_in_sentence,
+                            "reason": "No supporting evidence found",
+                        }
+                    )
 
         return unjustified_instances
 
@@ -269,7 +322,7 @@ class HedgingPolicy:
             True if hedging appears justified
         """
         # Extract key terms from sentence
-        key_terms = re.findall(r'\b\w{4,}\b', sentence.lower())
+        key_terms = re.findall(r"\b\w{4,}\b", sentence.lower())
 
         # Check if key terms appear in retrieval set
         for doc in retrieval_set:
@@ -300,22 +353,22 @@ class HedgingPolicy:
         patterns = [
             {
                 "name": "excessive_qualifiers",
-                "pattern": r'\b(very|quite|rather|somewhat|fairly|relatively)\s+\w+',
+                "pattern": r"\b(very|quite|rather|somewhat|fairly|relatively)\s+\w+",
                 "description": "Excessive use of qualifiers",
             },
             {
                 "name": "double_negatives",
-                "pattern": r'\b(not\s+un\w+|not\s+in\w+)',
+                "pattern": r"\b(not\s+un\w+|not\s+in\w+)",
                 "description": "Double negative constructions",
             },
             {
                 "name": "passive_voice",
-                "pattern": r'\b(is\s+\w+ed|are\s+\w+ed|was\s+\w+ed|were\s+\w+ed)',
+                "pattern": r"\b(is\s+\w+ed|are\s+\w+ed|was\s+\w+ed|were\s+\w+ed)",
                 "description": "Passive voice constructions",
             },
             {
                 "name": "vague_pronouns",
-                "pattern": r'\b(this|that|these|those|it)\s+(is|are|was|were)',
+                "pattern": r"\b(this|that|these|those|it)\s+(is|are|was|were)",
                 "description": "Vague pronoun references",
             },
         ]
@@ -324,12 +377,14 @@ class HedgingPolicy:
             matches = re.finditer(pattern_info["pattern"], text, re.IGNORECASE)
 
             for match in matches:
-                weak_patterns.append({
-                    "type": pattern_info["name"],
-                    "description": pattern_info["description"],
-                    "text": match.group(0),
-                    "position": match.start(),
-                })
+                weak_patterns.append(
+                    {
+                        "type": pattern_info["name"],
+                        "description": pattern_info["description"],
+                        "text": match.group(0),
+                        "position": match.start(),
+                    }
+                )
 
         return weak_patterns
 
@@ -362,14 +417,3 @@ class HedgingPolicy:
 
         score = ratio_score - violation_penalty - cluster_penalty + count_bonus
         return max(0.0, min(1.0, score))
-
-
-
-
-
-
-
-
-
-
-

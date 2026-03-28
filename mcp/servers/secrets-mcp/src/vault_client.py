@@ -81,8 +81,7 @@ class VaultClient:
         try:
             # Write secret
             response = self.client.secrets.kv.v2.create_or_update_secret(
-                path=path,
-                secret=data
+                path=path, secret=data
             )
 
             logger.info("Secret stored", path=path, keys=list(data.keys()))

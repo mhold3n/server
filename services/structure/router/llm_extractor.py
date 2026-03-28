@@ -245,7 +245,9 @@ class LLMSpecExtractor:
         ]
         for term in ambiguous_terms:
             if term in text_lower:
-                ambiguities.append(f"'{term}' may have multiple meanings in this context")
+                ambiguities.append(
+                    f"'{term}' may have multiple meanings in this context"
+                )
 
         return {
             "domain": domain,

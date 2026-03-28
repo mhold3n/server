@@ -37,7 +37,9 @@ def test_mcp_call_error_maps_to_500():
             raise RuntimeError("boom")
 
     with patch("src.router.MCPClient", return_value=FakeMCP()):
-        resp = client.post("/mcp/servers/github-mcp/call", params={"tool_name": "search"})
+        resp = client.post(
+            "/mcp/servers/github-mcp/call", params={"tool_name": "search"}
+        )
         assert resp.status_code == 500
 
 

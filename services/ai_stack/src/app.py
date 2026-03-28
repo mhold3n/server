@@ -48,4 +48,3 @@ async def llm_prompt(req: PromptRequest) -> Dict[str, Any]:
     except Exception as e:  # pragma: no cover - simple scaffold
         logger.error("llm_prompt_failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
-

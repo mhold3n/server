@@ -23,7 +23,7 @@ class TestPolicyEnforcementIntegration:
                 {"role": "user", "content": "Tell me about quantum computing."}
             ],
             "temperature": 0.7,
-            "max_tokens": 100
+            "max_tokens": 100,
         }
 
     @pytest.fixture
@@ -32,10 +32,13 @@ class TestPolicyEnforcementIntegration:
         return {
             "model": "mistralai/Mistral-7B-Instruct-v0.3",
             "messages": [
-                {"role": "user", "content": "What might be the best approach for this problem?"}
+                {
+                    "role": "user",
+                    "content": "What might be the best approach for this problem?",
+                }
             ],
             "temperature": 0.7,
-            "max_tokens": 100
+            "max_tokens": 100,
         }
 
     @pytest.fixture
@@ -47,7 +50,7 @@ class TestPolicyEnforcementIntegration:
                 {"role": "user", "content": "Explain the theory of relativity."}
             ],
             "temperature": 0.7,
-            "max_tokens": 100
+            "max_tokens": 100,
         }
 
     @pytest.mark.asyncio
@@ -60,8 +63,8 @@ class TestPolicyEnforcementIntegration:
                 headers={
                     "x-trace-id": "test-trace-123",
                     "x-run-id": "test-run-456",
-                    "x-policy-set": "test-policy"
-                }
+                    "x-policy-set": "test-policy",
+                },
             )
 
             # Should return 200 even if worker not available (will be 503)
@@ -80,8 +83,7 @@ class TestPolicyEnforcementIntegration:
         """Test chat request without headers generates context."""
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{api_url}/v1/chat/completions",
-                json=sample_chat_request
+                f"{api_url}/v1/chat/completions", json=sample_chat_request
             )
 
             # Should return 200 even if worker not available (will be 503)
@@ -94,13 +96,17 @@ class TestPolicyEnforcementIntegration:
             assert response.headers["x-policy-set"] == "default"
 
     @pytest.mark.asyncio
-    @patch('src.app.openai_client')
-    async def test_policy_enforcement_with_mock_worker(self, mock_openai_client, api_url, sample_chat_request):
+    @patch("src.app.openai_client")
+    async def test_policy_enforcement_with_mock_worker(
+        self, mock_openai_client, api_url, sample_chat_request
+    ):
         """Test policy enforcement with mocked OpenAI client."""
         # Mock OpenAI response
         mock_response = Mock()
         mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "This might be correct, but it seems like it could work."
+        mock_response.choices[0].message.content = (
+            "This might be correct, but it seems like it could work."
+        )
         mock_response.usage = Mock()
         mock_response.usage.dict.return_value = {"total_tokens": 50}
 
@@ -113,8 +119,8 @@ class TestPolicyEnforcementIntegration:
                 headers={
                     "x-trace-id": "test-trace-123",
                     "x-run-id": "test-run-456",
-                    "x-policy-set": "test-policy"
-                }
+                    "x-policy-set": "test-policy",
+                },
             )
 
             assert response.status_code == 200
@@ -128,13 +134,15 @@ class TestPolicyEnforcementIntegration:
             assert float(response.headers["x-policy-score"]) < 1.0
 
     @pytest.mark.asyncio
-    @patch('src.app.openai_client')
+    @patch("src.app.openai_client")
     async def test_policy_enforcement_with_citations(self, mock_openai_client, api_url):
         """Test policy enforcement with citations."""
         # Mock OpenAI response with citations
         mock_response = Mock()
         mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "Quantum computing is a field of study [1]. It uses quantum mechanics [2]. The theory is well-established [3]."
+        mock_response.choices[0].message.content = (
+            "Quantum computing is a field of study [1]. It uses quantum mechanics [2]. The theory is well-established [3]."
+        )
         mock_response.usage = Mock()
         mock_response.usage.dict.return_value = {"total_tokens": 50}
 
@@ -146,7 +154,7 @@ class TestPolicyEnforcementIntegration:
                 {"role": "user", "content": "Explain quantum computing with citations."}
             ],
             "temperature": 0.7,
-            "max_tokens": 100
+            "max_tokens": 100,
         }
 
         async with httpx.AsyncClient() as client:
@@ -156,8 +164,8 @@ class TestPolicyEnforcementIntegration:
                 headers={
                     "x-trace-id": "test-trace-123",
                     "x-run-id": "test-run-456",
-                    "x-policy-set": "test-policy"
-                }
+                    "x-policy-set": "test-policy",
+                },
             )
 
             assert response.status_code == 200
@@ -171,13 +179,15 @@ class TestPolicyEnforcementIntegration:
             assert float(response.headers["x-policy-score"]) > 0.5
 
     @pytest.mark.asyncio
-    @patch('src.app.openai_client')
+    @patch("src.app.openai_client")
     async def test_policy_enforcement_with_units(self, mock_openai_client, api_url):
         """Test policy enforcement with SI units."""
         # Mock OpenAI response with proper SI units
         mock_response = Mock()
         mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "The temperature is 298 K and the pressure is 101.3 kPa."
+        mock_response.choices[0].message.content = (
+            "The temperature is 298 K and the pressure is 101.3 kPa."
+        )
         mock_response.usage = Mock()
         mock_response.usage.dict.return_value = {"total_tokens": 50}
 
@@ -189,7 +199,7 @@ class TestPolicyEnforcementIntegration:
                 {"role": "user", "content": "What are the standard conditions?"}
             ],
             "temperature": 0.7,
-            "max_tokens": 100
+            "max_tokens": 100,
         }
 
         async with httpx.AsyncClient() as client:
@@ -199,8 +209,8 @@ class TestPolicyEnforcementIntegration:
                 headers={
                     "x-trace-id": "test-trace-123",
                     "x-run-id": "test-run-456",
-                    "x-policy-set": "test-policy"
-                }
+                    "x-policy-set": "test-policy",
+                },
             )
 
             assert response.status_code == 200
@@ -214,13 +224,17 @@ class TestPolicyEnforcementIntegration:
             assert float(response.headers["x-policy-score"]) > 0.5
 
     @pytest.mark.asyncio
-    @patch('src.app.openai_client')
-    async def test_policy_enforcement_with_imperial_units(self, mock_openai_client, api_url):
+    @patch("src.app.openai_client")
+    async def test_policy_enforcement_with_imperial_units(
+        self, mock_openai_client, api_url
+    ):
         """Test policy enforcement with imperial units (should fail)."""
         # Mock OpenAI response with imperial units
         mock_response = Mock()
         mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "The temperature is 77°F and the pressure is 14.7 psi."
+        mock_response.choices[0].message.content = (
+            "The temperature is 77°F and the pressure is 14.7 psi."
+        )
         mock_response.usage = Mock()
         mock_response.usage.dict.return_value = {"total_tokens": 50}
 
@@ -232,7 +246,7 @@ class TestPolicyEnforcementIntegration:
                 {"role": "user", "content": "What are the standard conditions?"}
             ],
             "temperature": 0.7,
-            "max_tokens": 100
+            "max_tokens": 100,
         }
 
         async with httpx.AsyncClient() as client:
@@ -242,8 +256,8 @@ class TestPolicyEnforcementIntegration:
                 headers={
                     "x-trace-id": "test-trace-123",
                     "x-run-id": "test-run-456",
-                    "x-policy-set": "test-policy"
-                }
+                    "x-policy-set": "test-policy",
+                },
             )
 
             assert response.status_code == 200
@@ -257,9 +271,11 @@ class TestPolicyEnforcementIntegration:
             assert float(response.headers["x-policy-score"]) < 0.5
 
     @pytest.mark.asyncio
-    @patch('src.app.openai_client')
-    @patch('src.app.mlflow_logger')
-    async def test_mlflow_logging_integration(self, mock_mlflow_logger, mock_openai_client, api_url, sample_chat_request):
+    @patch("src.app.openai_client")
+    @patch("src.app.mlflow_logger")
+    async def test_mlflow_logging_integration(
+        self, mock_mlflow_logger, mock_openai_client, api_url, sample_chat_request
+    ):
         """Test MLflow logging integration."""
         # Mock OpenAI response
         mock_response = Mock()
@@ -280,8 +296,8 @@ class TestPolicyEnforcementIntegration:
                 headers={
                     "x-trace-id": "test-trace-123",
                     "x-run-id": "test-run-456",
-                    "x-policy-set": "test-policy"
-                }
+                    "x-policy-set": "test-policy",
+                },
             )
 
             assert response.status_code == 200
@@ -296,22 +312,23 @@ class TestPolicyEnforcementIntegration:
             # Test with empty messages
             response = await client.post(
                 f"{api_url}/v1/chat/completions",
-                json={"model": "test-model", "messages": []}
+                json={"model": "test-model", "messages": []},
             )
 
             assert response.status_code == 422
             assert "messages" in response.text
 
     @pytest.mark.asyncio
-    async def test_chat_request_without_openai_client(self, api_url, sample_chat_request):
+    async def test_chat_request_without_openai_client(
+        self, api_url, sample_chat_request
+    ):
         """Test chat request when OpenAI client is not available."""
         # This test assumes the OpenAI client is not initialized
         # In a real scenario, this would be tested by not initializing the client
 
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{api_url}/v1/chat/completions",
-                json=sample_chat_request
+                f"{api_url}/v1/chat/completions", json=sample_chat_request
             )
 
             # Should return 503 if OpenAI client not available
@@ -319,7 +336,7 @@ class TestPolicyEnforcementIntegration:
             assert "OpenAI client not available" in response.text
 
     @pytest.mark.asyncio
-    @patch('src.app.openai_client')
+    @patch("src.app.openai_client")
     async def test_streaming_request_policy_bypass(self, mock_openai_client, api_url):
         """Test that streaming requests bypass policy enforcement."""
         # Mock OpenAI response
@@ -338,7 +355,7 @@ class TestPolicyEnforcementIntegration:
             ],
             "temperature": 0.7,
             "max_tokens": 100,
-            "stream": True
+            "stream": True,
         }
 
         async with httpx.AsyncClient() as client:
@@ -348,8 +365,8 @@ class TestPolicyEnforcementIntegration:
                 headers={
                     "x-trace-id": "test-trace-123",
                     "x-run-id": "test-run-456",
-                    "x-policy-set": "test-policy"
-                }
+                    "x-policy-set": "test-policy",
+                },
             )
 
             assert response.status_code == 200
@@ -359,8 +376,10 @@ class TestPolicyEnforcementIntegration:
             assert "x-policy-score" not in response.headers
 
     @pytest.mark.asyncio
-    @patch('src.app.openai_client')
-    async def test_policy_enforcement_error_handling(self, mock_openai_client, api_url, sample_chat_request):
+    @patch("src.app.openai_client")
+    async def test_policy_enforcement_error_handling(
+        self, mock_openai_client, api_url, sample_chat_request
+    ):
         """Test policy enforcement error handling."""
         # Mock OpenAI response
         mock_response = Mock()
@@ -372,7 +391,7 @@ class TestPolicyEnforcementIntegration:
         mock_openai_client.chat.completions.create.return_value = mock_response
 
         # Mock policy enforcer to raise exception
-        with patch('src.policies.middleware.policy_enforcer.validate') as mock_validate:
+        with patch("src.policies.middleware.policy_enforcer.validate") as mock_validate:
             mock_validate.side_effect = Exception("Policy enforcement error")
 
             async with httpx.AsyncClient() as client:
@@ -382,8 +401,8 @@ class TestPolicyEnforcementIntegration:
                     headers={
                         "x-trace-id": "test-trace-123",
                         "x-run-id": "test-run-456",
-                        "x-policy-set": "test-policy"
-                    }
+                        "x-policy-set": "test-policy",
+                    },
                 )
 
                 # Should still return 200 even if policy enforcement fails
@@ -394,13 +413,17 @@ class TestPolicyEnforcementIntegration:
                 assert "x-policy-score" not in response.headers
 
     @pytest.mark.asyncio
-    @patch('src.app.openai_client')
-    async def test_policy_enforcement_with_retrieval_docs(self, mock_openai_client, api_url):
+    @patch("src.app.openai_client")
+    async def test_policy_enforcement_with_retrieval_docs(
+        self, mock_openai_client, api_url
+    ):
         """Test policy enforcement with retrieval documents."""
         # Mock OpenAI response
         mock_response = Mock()
         mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "This might be correct based on the evidence."
+        mock_response.choices[0].message.content = (
+            "This might be correct based on the evidence."
+        )
         mock_response.usage = Mock()
         mock_response.usage.dict.return_value = {"total_tokens": 50}
 
@@ -408,11 +431,9 @@ class TestPolicyEnforcementIntegration:
 
         chat_request = {
             "model": "mistralai/Mistral-7B-Instruct-v0.3",
-            "messages": [
-                {"role": "user", "content": "What do you think about this?"}
-            ],
+            "messages": [{"role": "user", "content": "What do you think about this?"}],
             "temperature": 0.7,
-            "max_tokens": 100
+            "max_tokens": 100,
         }
 
         async with httpx.AsyncClient() as client:
@@ -422,8 +443,8 @@ class TestPolicyEnforcementIntegration:
                 headers={
                     "x-trace-id": "test-trace-123",
                     "x-run-id": "test-run-456",
-                    "x-policy-set": "test-policy"
-                }
+                    "x-policy-set": "test-policy",
+                },
             )
 
             assert response.status_code == 200

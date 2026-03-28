@@ -31,7 +31,9 @@ class WorkflowStep(BaseModel):
 
     step_id: str = Field(..., description="Unique ID for this step")
     description: str = Field(..., description="Human-readable description")
-    spec: Optional[TaskSpec] = Field(None, description="The executable task specification")
+    spec: Optional[TaskSpec] = Field(
+        None, description="The executable task specification"
+    )
     status: WorkflowStatus = Field(default=WorkflowStatus.PENDING)
     depends_on: list[str] = Field(
         default_factory=list, description="IDs of steps that must complete first"
@@ -69,7 +71,9 @@ class Workflow(BaseModel):
     workflow_id: str = Field(..., description="Unique workflow ID")
     name: str = Field(..., description="Workflow name or objective")
     steps: list[WorkflowStep] = Field(default_factory=list)
-    context: dict[str, Any] = Field(default_factory=dict, description="Shared workflow context")
+    context: dict[str, Any] = Field(
+        default_factory=dict, description="Shared workflow context"
+    )
     status: WorkflowStatus = Field(default=WorkflowStatus.PENDING)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -90,7 +94,9 @@ class Workflow(BaseModel):
 
     def get_ready_steps(self) -> list[WorkflowStep]:
         """Get steps that are pending and have all dependencies met."""
-        completed_ids = {s.step_id for s in self.steps if s.status == WorkflowStatus.COMPLETED}
+        completed_ids = {
+            s.step_id for s in self.steps if s.status == WorkflowStatus.COMPLETED
+        }
         ready = []
         for step in self.steps:
             if step.status == WorkflowStatus.PENDING:

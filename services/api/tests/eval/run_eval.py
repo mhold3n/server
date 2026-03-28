@@ -317,8 +317,16 @@ class EvalRunner:
             passed_tests = sum(1 for r in results if r.overall_score >= 0.7)
             failed_tests = total_tests - passed_tests
 
-            avg_score = sum(r.overall_score for r in results) / total_tests if total_tests > 0 else 0
-            avg_response_time = sum(r.response_time for r in results) / total_tests if total_tests > 0 else 0
+            avg_score = (
+                sum(r.overall_score for r in results) / total_tests
+                if total_tests > 0
+                else 0
+            )
+            avg_response_time = (
+                sum(r.response_time for r in results) / total_tests
+                if total_tests > 0
+                else 0
+            )
 
             # Score distribution
             score_ranges = {
@@ -354,9 +362,7 @@ class EvalRunner:
                 violation_counts[violation] = violation_counts.get(violation, 0) + 1
 
             common_violations = sorted(
-                violation_counts.items(),
-                key=lambda x: x[1],
-                reverse=True
+                violation_counts.items(), key=lambda x: x[1], reverse=True
             )[:10]
 
             # Generate report
@@ -383,7 +389,9 @@ class EvalRunner:
 
             for violation, count in common_violations:
                 percentage = count / total_tests * 100 if total_tests > 0 else 0
-                report += f"- **{violation}**: {count} occurrences ({percentage:.1f}%)\n"
+                report += (
+                    f"- **{violation}**: {count} occurrences ({percentage:.1f}%)\n"
+                )
 
             report += """
 ## Test Results
@@ -394,7 +402,11 @@ class EvalRunner:
 
             for result in results:
                 status = "PASS" if result.overall_score >= 0.7 else "FAIL"
-                violation_count = len(result.citation_violations) + len(result.si_unit_violations) + len(result.hedging_violations)
+                violation_count = (
+                    len(result.citation_violations)
+                    + len(result.si_unit_violations)
+                    + len(result.hedging_violations)
+                )
 
                 report += f"| {result.test_id} | {result.overall_score:.3f} | {result.response_time:.2f}s | {status} | {violation_count} |\n"
 
@@ -417,17 +429,23 @@ class EvalRunner:
 """
 
                 if result.citation_violations:
-                    report += "- Citation: " + ", ".join(result.citation_violations) + "\n"
+                    report += (
+                        "- Citation: " + ", ".join(result.citation_violations) + "\n"
+                    )
                 if result.si_unit_violations:
-                    report += "- SI Units: " + ", ".join(result.si_unit_violations) + "\n"
+                    report += (
+                        "- SI Units: " + ", ".join(result.si_unit_violations) + "\n"
+                    )
                 if result.hedging_violations:
-                    report += "- Hedging: " + ", ".join(result.hedging_violations) + "\n"
+                    report += (
+                        "- Hedging: " + ", ".join(result.hedging_violations) + "\n"
+                    )
 
                 report += f"\n**Response**: {result.response[:200]}...\n\n"
 
             # Save report
             if output_file:
-                with open(output_file, 'w') as f:
+                with open(output_file, "w") as f:
                     f.write(report)
                 logger.info(f"Report saved to: {output_file}")
 
@@ -450,7 +468,9 @@ async def main():
     parser.add_argument("--golden-set", help="Golden set name to use")
     parser.add_argument("--test-ids", nargs="+", help="Specific test IDs to run")
     parser.add_argument("--output", help="Output file for report")
-    parser.add_argument("--api-url", default="http://localhost:8080", help="API base URL")
+    parser.add_argument(
+        "--api-url", default="http://localhost:8080", help="API base URL"
+    )
 
     args = parser.parse_args()
 
@@ -475,14 +495,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-
-
-
-
-
-
-
-
-

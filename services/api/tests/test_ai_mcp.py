@@ -20,8 +20,16 @@ def test_mcp_servers_list_uses_toggle(setup_clients):
                 200,
                 json={
                     "servers": [
-                        {"name": "filesystem-mcp", "type": "http", "url": "http://mcp-filesystem:7001"},
-                        {"name": "github-mcp", "type": "http", "url": "http://mcp-github:7000"},
+                        {
+                            "name": "filesystem-mcp",
+                            "type": "http",
+                            "url": "http://mcp-filesystem:7001",
+                        },
+                        {
+                            "name": "github-mcp",
+                            "type": "http",
+                            "url": "http://mcp-github:7000",
+                        },
                     ]
                 },
             )
@@ -65,7 +73,11 @@ def test_mcp_tools_and_call_respects_toggle(setup_clients):
     # Call blocked for disabled server
     resp = client.post(
         "/api/ai/mcp/call",
-        json={"server": "filesystem-mcp", "tool": "directory_traversal", "arguments": {"path": "/"}},
+        json={
+            "server": "filesystem-mcp",
+            "tool": "directory_traversal",
+            "arguments": {"path": "/"},
+        },
     )
     assert resp.status_code == 403
 
@@ -77,7 +89,11 @@ def test_mcp_tools_and_call_respects_toggle(setup_clients):
         )
         resp = client.post(
             "/api/ai/mcp/call",
-            json={"server": "github-mcp", "tool": "search", "arguments": {"query": "test"}},
+            json={
+                "server": "github-mcp",
+                "tool": "search",
+                "arguments": {"query": "test"},
+            },
         )
         assert resp.status_code == 200
         assert resp.json()["ok"] is True
@@ -85,6 +101,7 @@ def test_mcp_tools_and_call_respects_toggle(setup_clients):
 
 def test_mcp_servers_no_redis_marks_enabled(monkeypatch):
     from src import app as app_mod
+
     # Simulate no redis
     monkeypatch.setattr(app_mod, "redis_client", None)
     client = TestClient(app_mod.app)
@@ -92,7 +109,15 @@ def test_mcp_servers_no_redis_marks_enabled(monkeypatch):
         mock.get("http://router:8000/mcp/servers").mock(
             return_value=httpx.Response(
                 200,
-                json={"servers": [{"name": "filesystem-mcp", "type": "http", "url": "http://mcp-filesystem:7001"}]},
+                json={
+                    "servers": [
+                        {
+                            "name": "filesystem-mcp",
+                            "type": "http",
+                            "url": "http://mcp-filesystem:7001",
+                        }
+                    ]
+                },
             )
         )
         resp = client.get("/api/ai/mcp/servers")

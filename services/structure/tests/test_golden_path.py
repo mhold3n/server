@@ -15,7 +15,12 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from models.task_spec import TaskRequest, TaskSpec, Domain, RiskLevel
 from models.gate_decision import GateDecision, Decision
 from router.classifier import classify_task, extract_features
-from validator.gates import run_gates, get_blocking_decisions, ambiguity_gate, unit_consistency_gate
+from validator.gates import (
+    run_gates,
+    get_blocking_decisions,
+    ambiguity_gate,
+    unit_consistency_gate,
+)
 from kernels.units import UnitsKernel
 from kernels.constants import ConstantsKernel
 
@@ -60,13 +65,16 @@ class TestRouter:
 
     def test_detects_high_risk(self):
         request = TaskRequest(
-            request_id="test-3", user_input="Convert 10 lb to kg using specific weight and density"
+            request_id="test-3",
+            user_input="Convert 10 lb to kg using specific weight and density",
         )
         spec = classify_task(request)
         assert spec.risk_level in (RiskLevel.MEDIUM, RiskLevel.HIGH)
 
     def test_selects_unit_kernel(self):
-        request = TaskRequest(request_id="test-4", user_input="Convert 100 kg to pounds")
+        request = TaskRequest(
+            request_id="test-4", user_input="Convert 100 kg to pounds"
+        )
         spec = classify_task(request)
         assert "unit_converter_v1" in spec.selected_kernels
 
@@ -118,7 +126,9 @@ class TestKernels:
 
     def test_units_kernel_converts_kg_to_lb(self):
         kernel = UnitsKernel()
-        result = kernel.execute_legacy({"value": 1.0, "from_unit": "kg", "to_unit": "[lb_av]"})
+        result = kernel.execute_legacy(
+            {"value": 1.0, "from_unit": "kg", "to_unit": "[lb_av]"}
+        )
 
         assert result.success is True
         assert abs(result.result["converted_value"] - 2.2046) < 0.001
@@ -187,7 +197,8 @@ class TestGoldenPath:
     def test_unambiguous_request_passes(self):
         """Clear requests should pass all gates."""
         request = TaskRequest(
-            request_id="golden-2", user_input="Calculate the area of a circle with radius 5 meters"
+            request_id="golden-2",
+            user_input="Calculate the area of a circle with radius 5 meters",
         )
 
         spec = classify_task(request)

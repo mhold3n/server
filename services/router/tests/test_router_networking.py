@@ -35,12 +35,15 @@ def test_health_includes_mcp_and_api(monkeypatch):
         resp = client.get("/health")
         assert resp.status_code == 200
         data = resp.json()
-        assert "mcp_servers" in data and data["services"]["api"] in ("healthy", "unhealthy", "not_configured")
+        assert "mcp_servers" in data and data["services"]["api"] in (
+            "healthy",
+            "unhealthy",
+            "not_configured",
+        )
 
 
 def test_mcp_tool_call_forwards_tool_args(monkeypatch):
     client = TestClient(app)
-
 
     class FakeMCP:
         async def __aenter__(self):
@@ -61,4 +64,3 @@ def test_mcp_tool_call_forwards_tool_args(monkeypatch):
         resp = client.post("/route", json=payload)
         assert resp.status_code == 200
         assert resp.json()["status"] in ("completed", "failed")
-

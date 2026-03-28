@@ -15,11 +15,20 @@ logger = structlog.get_logger()
 class MCPServer:
     """Represents an MCP server configuration."""
 
-    def __init__(self, name: str, url: str, server_type: str | None = None, type: str | None = None, **kwargs):
+    def __init__(
+        self,
+        name: str,
+        url: str,
+        server_type: str | None = None,
+        type: str | None = None,
+        **kwargs,
+    ):
         # Accept either 'server_type' or legacy 'type' key from config
         resolved_type = server_type or type
         if not resolved_type:
-            raise ValueError("server_type is required (use 'server_type' or 'type' in config)")
+            raise ValueError(
+                "server_type is required (use 'server_type' or 'type' in config)"
+            )
         self.name = name
         self.server_type = resolved_type
         self.url = url
@@ -43,7 +52,7 @@ class MCPClient:
             with open(settings.mcp_servers_config) as f:
                 config = yaml.safe_load(f)
 
-            servers_config = config.get('servers', [])
+            servers_config = config.get("servers", [])
             for server_config in servers_config:
                 server = MCPServer(**server_config)
                 self.servers[server.name] = server
@@ -184,10 +193,7 @@ class MCPClient:
         """Check health of all MCP servers."""
         health_status = {}
 
-        tasks = [
-            self.health_check(server_name)
-            for server_name in self.servers.keys()
-        ]
+        tasks = [self.health_check(server_name) for server_name in self.servers.keys()]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 

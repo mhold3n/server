@@ -14,11 +14,11 @@ class CitationValidator:
     def __init__(self):
         """Initialize citation validator."""
         self.citation_patterns = [
-            r'\[\d+\]',          # [1], [2]
-            r'\(Source \d+\)',   # (Source 1)
-            r'\(Ref\. \d+\)',    # (Ref. 1)
-            r'\(p\.\d+\)',       # (p.123)
-            r'\(.+?, \d{4}\)',   # (Author, 2023)
+            r"\[\d+\]",  # [1], [2]
+            r"\(Source \d+\)",  # (Source 1)
+            r"\(Ref\. \d+\)",  # (Ref. 1)
+            r"\(p\.\d+\)",  # (p.123)
+            r"\(.+?, \d{4}\)",  # (Author, 2023)
         ]
 
     async def validate(
@@ -48,12 +48,16 @@ class CitationValidator:
 
         # Check minimum citations
         if citation_count < min_citations:
-            violations.append(f"Insufficient citations: {citation_count}/{min_citations}")
+            violations.append(
+                f"Insufficient citations: {citation_count}/{min_citations}"
+            )
             score -= 0.3
 
         # Check for source diversity
         if expected_sources:
-            source_diversity_score = self._check_source_diversity(response, expected_sources)
+            source_diversity_score = self._check_source_diversity(
+                response, expected_sources
+            )
             if source_diversity_score < 0.5:
                 violations.append("Poor source diversity")
                 score -= 0.2
@@ -68,7 +72,9 @@ class CitationValidator:
             "score": max(0.0, score),
             "violations": violations,
             "citation_count": citation_count,
-            "source_diversity_score": source_diversity_score if expected_sources else 1.0,
+            "source_diversity_score": (
+                source_diversity_score if expected_sources else 1.0
+            ),
             "quality_score": quality_score,
         }
 
@@ -115,8 +121,8 @@ class CitationValidator:
         """
         # Check for proper citation formatting
         quality_indicators = [
-            r'\[\d+\]',  # Numeric citations
-            r'\([^)]+\d{4}[^)]*\)',  # Author-year citations
+            r"\[\d+\]",  # Numeric citations
+            r"\([^)]+\d{4}[^)]*\)",  # Author-year citations
         ]
 
         quality_score = 0.0
@@ -174,13 +180,24 @@ class SIUnitValidator:
 
         # Allowed non-SI units
         self.allowed_units = {
-            "°C", "°F", "K",  # Temperature
-            "%", "percent", "percentage",  # Percentages
-            "°", "degrees", "deg",  # Angles
-            "rad", "radians",  # Radians
-            "mol", "mole", "moles",  # Moles
-            "Hz", "hertz",  # Frequency
-            "rpm", "rev/min",  # Rotational speed
+            "°C",
+            "°F",
+            "K",  # Temperature
+            "%",
+            "percent",
+            "percentage",  # Percentages
+            "°",
+            "degrees",
+            "deg",  # Angles
+            "rad",
+            "radians",  # Radians
+            "mol",
+            "mole",
+            "moles",  # Moles
+            "Hz",
+            "hertz",  # Frequency
+            "rpm",
+            "rev/min",  # Rotational speed
         }
 
     async def validate(
@@ -211,7 +228,7 @@ class SIUnitValidator:
         # Find non-SI units
         non_si_units_found = []
         for unit, (_si_unit, _factor) in self.non_si_units.items():
-            pattern = r'\b\d+(?:\.\d+)?\s*' + re.escape(unit) + r'\b'
+            pattern = r"\b\d+(?:\.\d+)?\s*" + re.escape(unit) + r"\b"
             if re.search(pattern, response, re.IGNORECASE):
                 non_si_units_found.append(unit)
 
@@ -246,7 +263,7 @@ class SIUnitValidator:
         missing_units = []
 
         # Pattern for numbers that should have units
-        number_pattern = r'\b(\d+(?:\.\d+)?)\s*([a-zA-Z°%]+(?:\s*[a-zA-Z°%]+)*)?\b'
+        number_pattern = r"\b(\d+(?:\.\d+)?)\s*([a-zA-Z°%]+(?:\s*[a-zA-Z°%]+)*)?\b"
 
         matches = re.finditer(number_pattern, response)
 
@@ -291,14 +308,29 @@ class SIUnitValidator:
             return False
 
         # Check context for unit indicators
-        context = text[max(0, position - 100):position + 100].lower()
+        context = text[max(0, position - 100) : position + 100].lower()
 
         # If context suggests units are expected
         unit_indicators = [
-            "length", "width", "height", "diameter", "radius",
-            "mass", "weight", "force", "pressure", "stress",
-            "temperature", "energy", "power", "voltage", "current",
-            "speed", "velocity", "acceleration", "frequency",
+            "length",
+            "width",
+            "height",
+            "diameter",
+            "radius",
+            "mass",
+            "weight",
+            "force",
+            "pressure",
+            "stress",
+            "temperature",
+            "energy",
+            "power",
+            "voltage",
+            "current",
+            "speed",
+            "velocity",
+            "acceleration",
+            "frequency",
         ]
 
         if any(indicator in context for indicator in unit_indicators):
@@ -314,24 +346,60 @@ class HedgingValidator:
         """Initialize hedging validator."""
         self.hedging_indicators = [
             # Uncertainty indicators
-            "maybe", "perhaps", "possibly", "potentially", "might", "could", "may",
-            "likely", "unlikely", "probably", "presumably", "supposedly",
-
+            "maybe",
+            "perhaps",
+            "possibly",
+            "potentially",
+            "might",
+            "could",
+            "may",
+            "likely",
+            "unlikely",
+            "probably",
+            "presumably",
+            "supposedly",
             # Tentative language
-            "seems", "appears", "suggests", "indicates", "implies", "hints",
-            "tends to", "generally", "typically", "usually", "often", "frequently",
-
+            "seems",
+            "appears",
+            "suggests",
+            "indicates",
+            "implies",
+            "hints",
+            "tends to",
+            "generally",
+            "typically",
+            "usually",
+            "often",
+            "frequently",
             # Weak assertions
-            "somewhat", "rather", "quite", "fairly", "relatively", "comparatively",
-            "to some extent", "in some cases", "under certain conditions",
-
+            "somewhat",
+            "rather",
+            "quite",
+            "fairly",
+            "relatively",
+            "comparatively",
+            "to some extent",
+            "in some cases",
+            "under certain conditions",
             # Conditional language
-            "if", "unless", "provided that", "assuming", "given that",
-            "depending on", "subject to", "contingent upon",
-
+            "if",
+            "unless",
+            "provided that",
+            "assuming",
+            "given that",
+            "depending on",
+            "subject to",
+            "contingent upon",
             # Approximation
-            "approximately", "roughly", "about", "around", "nearly", "almost",
-            "more or less", "give or take", "in the ballpark of",
+            "approximately",
+            "roughly",
+            "about",
+            "around",
+            "nearly",
+            "almost",
+            "more or less",
+            "give or take",
+            "in the ballpark of",
         ]
 
     async def validate(
@@ -364,7 +432,7 @@ class HedgingValidator:
         text_lower = response.lower()
 
         for indicator in self.hedging_indicators:
-            pattern = r'\b' + re.escape(indicator) + r'\b'
+            pattern = r"\b" + re.escape(indicator) + r"\b"
             matches = re.findall(pattern, text_lower)
             hedging_count += len(matches)
 
@@ -388,14 +456,3 @@ class HedgingValidator:
             "hedging_count": hedging_count,
             "hedging_ratio": hedging_ratio,
         }
-
-
-
-
-
-
-
-
-
-
-

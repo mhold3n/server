@@ -44,7 +44,9 @@ class ToolRequest(BaseModel):
     """Tool request model."""
 
     tool: str = Field(..., description="Tool name")
-    arguments: dict[str, Any] = Field(default_factory=dict, description="Tool arguments")
+    arguments: dict[str, Any] = Field(
+        default_factory=dict, description="Tool arguments"
+    )
 
 
 class ToolResponse(BaseModel):
@@ -64,7 +66,11 @@ async def startup_event():
 
         # Test connection
         collections = qdrant_client.get_collections()
-        logger.info("Connected to Qdrant", url=qdrant_url, collections=len(collections.collections))
+        logger.info(
+            "Connected to Qdrant",
+            url=qdrant_url,
+            collections=len(collections.collections),
+        )
 
     except Exception as e:
         logger.error("Failed to connect to Qdrant", error=str(e))
@@ -107,8 +113,15 @@ async def list_tools():
                     "type": "object",
                     "properties": {
                         "name": {"type": "string", "description": "Collection name"},
-                        "vector_size": {"type": "integer", "description": "Vector dimension size"},
-                        "distance": {"type": "string", "enum": ["Cosine", "Euclid", "Dot"], "description": "Distance metric"},
+                        "vector_size": {
+                            "type": "integer",
+                            "description": "Vector dimension size",
+                        },
+                        "distance": {
+                            "type": "string",
+                            "enum": ["Cosine", "Euclid", "Dot"],
+                            "description": "Distance metric",
+                        },
                     },
                     "required": ["name", "vector_size"],
                 },
@@ -127,8 +140,14 @@ async def list_tools():
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "collection": {"type": "string", "description": "Collection name"},
-                        "points": {"type": "array", "description": "List of points to upsert"},
+                        "collection": {
+                            "type": "string",
+                            "description": "Collection name",
+                        },
+                        "points": {
+                            "type": "array",
+                            "description": "List of points to upsert",
+                        },
                     },
                     "required": ["collection", "points"],
                 },
@@ -139,10 +158,22 @@ async def list_tools():
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "collection": {"type": "string", "description": "Collection name"},
-                        "query_vector": {"type": "array", "description": "Query vector"},
-                        "limit": {"type": "integer", "description": "Number of results to return"},
-                        "score_threshold": {"type": "number", "description": "Minimum similarity score"},
+                        "collection": {
+                            "type": "string",
+                            "description": "Collection name",
+                        },
+                        "query_vector": {
+                            "type": "array",
+                            "description": "Query vector",
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Number of results to return",
+                        },
+                        "score_threshold": {
+                            "type": "number",
+                            "description": "Minimum similarity score",
+                        },
                     },
                     "required": ["collection", "query_vector"],
                 },
@@ -153,10 +184,19 @@ async def list_tools():
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "collection": {"type": "string", "description": "Collection name"},
+                        "collection": {
+                            "type": "string",
+                            "description": "Collection name",
+                        },
                         "query_text": {"type": "string", "description": "Text query"},
-                        "limit": {"type": "integer", "description": "Number of results to return"},
-                        "score_threshold": {"type": "number", "description": "Minimum similarity score"},
+                        "limit": {
+                            "type": "integer",
+                            "description": "Number of results to return",
+                        },
+                        "score_threshold": {
+                            "type": "number",
+                            "description": "Minimum similarity score",
+                        },
                     },
                     "required": ["collection", "query_text"],
                 },
@@ -167,7 +207,10 @@ async def list_tools():
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "collection": {"type": "string", "description": "Collection name"},
+                        "collection": {
+                            "type": "string",
+                            "description": "Collection name",
+                        },
                         "ids": {"type": "array", "description": "Vector IDs to delete"},
                     },
                     "required": ["collection", "ids"],
@@ -179,7 +222,10 @@ async def list_tools():
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "collection": {"type": "string", "description": "Collection name"},
+                        "collection": {
+                            "type": "string",
+                            "description": "Collection name",
+                        },
                     },
                     "required": ["collection"],
                 },
@@ -249,7 +295,9 @@ async def call_tool(request: ToolRequest):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-async def create_collection(name: str, vector_size: int, distance: str = "Cosine") -> str:
+async def create_collection(
+    name: str, vector_size: int, distance: str = "Cosine"
+) -> str:
     """Create a new collection."""
     try:
         # Map distance string to Qdrant distance
@@ -270,14 +318,18 @@ async def create_collection(name: str, vector_size: int, distance: str = "Cosine
             ),
         )
 
-        logger.info("Collection created", name=name, vector_size=vector_size, distance=distance)
+        logger.info(
+            "Collection created", name=name, vector_size=vector_size, distance=distance
+        )
 
-        return json.dumps({
-            "name": name,
-            "vector_size": vector_size,
-            "distance": distance,
-            "created": True,
-        })
+        return json.dumps(
+            {
+                "name": name,
+                "vector_size": vector_size,
+                "distance": distance,
+                "created": True,
+            }
+        )
 
     except Exception as e:
         logger.error("Failed to create collection", name=name, error=str(e))
@@ -292,18 +344,22 @@ async def list_collections() -> str:
         collection_info = []
         for collection in collections.collections:
             info = qdrant_client.get_collection(collection.name)
-            collection_info.append({
-                "name": collection.name,
-                "vectors_count": info.vectors_count,
-                "indexed_vectors_count": info.indexed_vectors_count,
-                "points_count": info.points_count,
-                "status": info.status,
-            })
+            collection_info.append(
+                {
+                    "name": collection.name,
+                    "vectors_count": info.vectors_count,
+                    "indexed_vectors_count": info.indexed_vectors_count,
+                    "points_count": info.points_count,
+                    "status": info.status,
+                }
+            )
 
-        return json.dumps({
-            "collections": collection_info,
-            "count": len(collection_info),
-        })
+        return json.dumps(
+            {
+                "collections": collection_info,
+                "count": len(collection_info),
+            }
+        )
 
     except Exception as e:
         logger.error("Failed to list collections", error=str(e))
@@ -331,11 +387,13 @@ async def upsert_vectors(collection: str, points: list[dict[str, Any]]) -> str:
 
         logger.info("Vectors upserted", collection=collection, count=len(points))
 
-        return json.dumps({
-            "collection": collection,
-            "upserted_count": len(points),
-            "status": "success",
-        })
+        return json.dumps(
+            {
+                "collection": collection,
+                "upserted_count": len(points),
+                "status": "success",
+            }
+        )
 
     except Exception as e:
         logger.error("Failed to upsert vectors", collection=collection, error=str(e))
@@ -366,18 +424,22 @@ async def search_vectors(
         # Format results
         formatted_results = []
         for result in results:
-            formatted_results.append({
-                "id": result.id,
-                "score": result.score,
-                "payload": result.payload,
-            })
+            formatted_results.append(
+                {
+                    "id": result.id,
+                    "score": result.score,
+                    "payload": result.payload,
+                }
+            )
 
-        return json.dumps({
-            "collection": collection,
-            "query_vector": query_vector,
-            "results": formatted_results,
-            "count": len(formatted_results),
-        })
+        return json.dumps(
+            {
+                "collection": collection,
+                "query_vector": query_vector,
+                "results": formatted_results,
+                "count": len(formatted_results),
+            }
+        )
 
     except Exception as e:
         logger.error("Failed to search vectors", collection=collection, error=str(e))
@@ -399,7 +461,12 @@ async def search_by_text(
         return await search_vectors(collection, query_vector, limit, score_threshold)
 
     except Exception as e:
-        logger.error("Failed to search by text", collection=collection, query=query_text, error=str(e))
+        logger.error(
+            "Failed to search by text",
+            collection=collection,
+            query=query_text,
+            error=str(e),
+        )
         raise
 
 
@@ -414,12 +481,14 @@ async def delete_vectors(collection: str, ids: list[str | int]) -> str:
 
         logger.info("Vectors deleted", collection=collection, count=len(ids))
 
-        return json.dumps({
-            "collection": collection,
-            "deleted_ids": ids,
-            "deleted_count": len(ids),
-            "status": "success",
-        })
+        return json.dumps(
+            {
+                "collection": collection,
+                "deleted_ids": ids,
+                "deleted_count": len(ids),
+                "status": "success",
+            }
+        )
 
     except Exception as e:
         logger.error("Failed to delete vectors", collection=collection, error=str(e))
@@ -431,20 +500,24 @@ async def get_collection_info(collection: str) -> str:
     try:
         info = qdrant_client.get_collection(collection)
 
-        return json.dumps({
-            "name": collection,
-            "vectors_count": info.vectors_count,
-            "indexed_vectors_count": info.indexed_vectors_count,
-            "points_count": info.points_count,
-            "status": info.status,
-            "config": {
-                "vector_size": info.config.params.vectors.size,
-                "distance": info.config.params.vectors.distance,
-            },
-        })
+        return json.dumps(
+            {
+                "name": collection,
+                "vectors_count": info.vectors_count,
+                "indexed_vectors_count": info.indexed_vectors_count,
+                "points_count": info.points_count,
+                "status": info.status,
+                "config": {
+                    "vector_size": info.config.params.vectors.size,
+                    "distance": info.config.params.vectors.distance,
+                },
+            }
+        )
 
     except Exception as e:
-        logger.error("Failed to get collection info", collection=collection, error=str(e))
+        logger.error(
+            "Failed to get collection info", collection=collection, error=str(e)
+        )
         raise
 
 

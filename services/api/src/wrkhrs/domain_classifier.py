@@ -16,17 +16,46 @@ class DomainClassifier:
             "chemistry": {
                 "keywords": [
                     # Chemical compounds and elements
-                    "molecule", "compound", "element", "atom", "ion", "bond",
-                    "reaction", "catalyst", "synthesis", "oxidation", "reduction",
-                    "acid", "base", "pH", "solvent", "solution", "concentration",
-                    "molarity", "molality", "stoichiometry", "equilibrium",
-                    "thermodynamics", "kinetics", "activation energy",
+                    "molecule",
+                    "compound",
+                    "element",
+                    "atom",
+                    "ion",
+                    "bond",
+                    "reaction",
+                    "catalyst",
+                    "synthesis",
+                    "oxidation",
+                    "reduction",
+                    "acid",
+                    "base",
+                    "pH",
+                    "solvent",
+                    "solution",
+                    "concentration",
+                    "molarity",
+                    "molality",
+                    "stoichiometry",
+                    "equilibrium",
+                    "thermodynamics",
+                    "kinetics",
+                    "activation energy",
                     # Chemical processes
-                    "polymerization", "crystallization", "precipitation",
-                    "distillation", "extraction", "chromatography",
+                    "polymerization",
+                    "crystallization",
+                    "precipitation",
+                    "distillation",
+                    "extraction",
+                    "chromatography",
                     # Chemical properties
-                    "viscosity", "density", "boiling point", "melting point",
-                    "solubility", "reactivity", "stability", "purity",
+                    "viscosity",
+                    "density",
+                    "boiling point",
+                    "melting point",
+                    "solubility",
+                    "reactivity",
+                    "stability",
+                    "purity",
                 ],
                 "formulas": [
                     r"\b[A-Z][a-z]?\d*\b",  # Chemical formulas like H2O, NaCl
@@ -34,27 +63,79 @@ class DomainClassifier:
                     r"\b[A-Z][a-z]?\d*[A-Z][a-z]?\d*\b",  # Complex formulas
                 ],
                 "units": [
-                    "mol", "molar", "M", "ppm", "ppb", "pH", "pKa", "pKb",
-                    "kJ/mol", "kcal/mol", "atm", "bar", "torr", "mmHg",
+                    "mol",
+                    "molar",
+                    "M",
+                    "ppm",
+                    "ppb",
+                    "pH",
+                    "pKa",
+                    "pKb",
+                    "kJ/mol",
+                    "kcal/mol",
+                    "atm",
+                    "bar",
+                    "torr",
+                    "mmHg",
                 ],
             },
             "mechanical": {
                 "keywords": [
                     # Mechanical systems and components
-                    "gear", "bearing", "shaft", "motor", "engine", "pump",
-                    "valve", "spring", "damper", "actuator", "transmission",
-                    "clutch", "brake", "coupling", "joint", "linkage",
+                    "gear",
+                    "bearing",
+                    "shaft",
+                    "motor",
+                    "engine",
+                    "pump",
+                    "valve",
+                    "spring",
+                    "damper",
+                    "actuator",
+                    "transmission",
+                    "clutch",
+                    "brake",
+                    "coupling",
+                    "joint",
+                    "linkage",
                     # Mechanical properties and analysis
-                    "stress", "strain", "tension", "compression", "shear",
-                    "torque", "moment", "force", "pressure", "load",
-                    "deflection", "deformation", "fatigue", "creep",
-                    "yield strength", "tensile strength", "elastic modulus",
+                    "stress",
+                    "strain",
+                    "tension",
+                    "compression",
+                    "shear",
+                    "torque",
+                    "moment",
+                    "force",
+                    "pressure",
+                    "load",
+                    "deflection",
+                    "deformation",
+                    "fatigue",
+                    "creep",
+                    "yield strength",
+                    "tensile strength",
+                    "elastic modulus",
                     # Mechanical processes
-                    "machining", "welding", "casting", "forging", "rolling",
-                    "extrusion", "milling", "turning", "drilling", "grinding",
+                    "machining",
+                    "welding",
+                    "casting",
+                    "forging",
+                    "rolling",
+                    "extrusion",
+                    "milling",
+                    "turning",
+                    "drilling",
+                    "grinding",
                     # Mechanical design
-                    "tolerance", "clearance", "interference", "fit",
-                    "dimension", "specification", "drawing", "blueprint",
+                    "tolerance",
+                    "clearance",
+                    "interference",
+                    "fit",
+                    "dimension",
+                    "specification",
+                    "drawing",
+                    "blueprint",
                 ],
                 "formulas": [
                     r"\bF\s*=\s*ma\b",  # Force = mass * acceleration
@@ -63,38 +144,101 @@ class DomainClassifier:
                     r"\bE\s*=\s*σ/ε\b",  # Young's modulus
                 ],
                 "units": [
-                    "N", "kN", "MPa", "GPa", "Pa", "psi", "ksi",
-                    "Nm", "lb-ft", "rpm", "Hz", "rad/s", "m/s²",
-                    "mm", "μm", "in", "ft", "m", "kg", "lb",
+                    "N",
+                    "kN",
+                    "MPa",
+                    "GPa",
+                    "Pa",
+                    "psi",
+                    "ksi",
+                    "Nm",
+                    "lb-ft",
+                    "rpm",
+                    "Hz",
+                    "rad/s",
+                    "m/s²",
+                    "mm",
+                    "μm",
+                    "in",
+                    "ft",
+                    "m",
+                    "kg",
+                    "lb",
                 ],
             },
             "materials": {
                 "keywords": [
                     # Material types
-                    "steel", "aluminum", "titanium", "copper", "brass", "bronze",
-                    "plastic", "polymer", "ceramic", "composite", "alloy",
-                    "carbon fiber", "glass fiber", "epoxy", "resin",
+                    "steel",
+                    "aluminum",
+                    "titanium",
+                    "copper",
+                    "brass",
+                    "bronze",
+                    "plastic",
+                    "polymer",
+                    "ceramic",
+                    "composite",
+                    "alloy",
+                    "carbon fiber",
+                    "glass fiber",
+                    "epoxy",
+                    "resin",
                     # Material properties
-                    "hardness", "toughness", "ductility", "brittleness",
-                    "corrosion", "oxidation", "wear", "friction", "lubrication",
-                    "thermal conductivity", "electrical conductivity",
-                    "magnetic properties", "optical properties",
+                    "hardness",
+                    "toughness",
+                    "ductility",
+                    "brittleness",
+                    "corrosion",
+                    "oxidation",
+                    "wear",
+                    "friction",
+                    "lubrication",
+                    "thermal conductivity",
+                    "electrical conductivity",
+                    "magnetic properties",
+                    "optical properties",
                     # Material processing
-                    "heat treatment", "annealing", "quenching", "tempering",
-                    "case hardening", "surface treatment", "coating",
-                    "galvanizing", "anodizing", "plating",
+                    "heat treatment",
+                    "annealing",
+                    "quenching",
+                    "tempering",
+                    "case hardening",
+                    "surface treatment",
+                    "coating",
+                    "galvanizing",
+                    "anodizing",
+                    "plating",
                     # Material testing
-                    "tensile test", "compression test", "bend test",
-                    "impact test", "fatigue test", "creep test",
-                    "microstructure", "grain size", "phase", "crystal",
+                    "tensile test",
+                    "compression test",
+                    "bend test",
+                    "impact test",
+                    "fatigue test",
+                    "creep test",
+                    "microstructure",
+                    "grain size",
+                    "phase",
+                    "crystal",
                 ],
                 "formulas": [
                     r"\b[A-Z][a-z]?\d*[A-Z][a-z]?\d*\b",  # Alloy compositions
                     r"\b\d+%[A-Z][a-z]?\b",  # Percentage compositions
                 ],
                 "units": [
-                    "HRC", "HRB", "HV", "HB", "MPa", "GPa", "J/m²",
-                    "W/m·K", "Ω·m", "S/m", "°C", "°F", "K",
+                    "HRC",
+                    "HRB",
+                    "HV",
+                    "HB",
+                    "MPa",
+                    "GPa",
+                    "J/m²",
+                    "W/m·K",
+                    "Ω·m",
+                    "S/m",
+                    "°C",
+                    "°F",
+                    "K",
                 ],
             },
         }
@@ -126,8 +270,7 @@ class DomainClassifier:
                 continue
 
             domain_score = self._calculate_domain_score(
-                text_lower,
-                self.domain_patterns[domain]
+                text_lower, self.domain_patterns[domain]
             )
 
             if domain_score >= threshold:
@@ -189,11 +332,15 @@ class DomainClassifier:
             return 0.0
 
         # Normalize by text length (longer texts can have more matches)
-        text_length_factor = min(len(text) / 100, 1.0)  # Cap at 1.0 for texts > 100 chars
+        text_length_factor = min(
+            len(text) / 100, 1.0
+        )  # Cap at 1.0 for texts > 100 chars
 
         # Normalize by total possible matches
         max_possible_matches = len(keywords) + len(formulas) + len(units)
-        match_ratio = total_matches / max_possible_matches if max_possible_matches > 0 else 0
+        match_ratio = (
+            total_matches / max_possible_matches if max_possible_matches > 0 else 0
+        )
 
         # Combine factors
         normalized_score = (score / total_matches) * match_ratio * text_length_factor
@@ -253,14 +400,3 @@ class DomainClassifier:
             weights = {k: v / total_weight for k, v in weights.items()}
 
         return weights
-
-
-
-
-
-
-
-
-
-
-

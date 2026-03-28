@@ -83,10 +83,14 @@ class MLflowLogger:
                 experiment = mlflow.get_experiment_by_name(self.experiment_name)
                 if experiment is None:
                     experiment_id = mlflow.create_experiment(self.experiment_name)
-                    logger.info("Created MLflow experiment", experiment_id=experiment_id)
+                    logger.info(
+                        "Created MLflow experiment", experiment_id=experiment_id
+                    )
                 else:
                     experiment_id = experiment.experiment_id
-                    logger.info("Using existing MLflow experiment", experiment_id=experiment_id)
+                    logger.info(
+                        "Using existing MLflow experiment", experiment_id=experiment_id
+                    )
 
                 self.experiment_id = experiment_id
 
@@ -208,13 +212,17 @@ class MLflowLogger:
         }
 
         if retrieval_docs:
-            metrics["avg_retrieval_score"] = sum(doc.score for doc in retrieval_docs) / len(retrieval_docs)
+            metrics["avg_retrieval_score"] = sum(
+                doc.score for doc in retrieval_docs
+            ) / len(retrieval_docs)
             metrics["max_retrieval_score"] = max(doc.score for doc in retrieval_docs)
             metrics["min_retrieval_score"] = min(doc.score for doc in retrieval_docs)
 
         if tool_calls:
             metrics["total_tool_duration"] = sum(tc.duration for tc in tool_calls)
-            metrics["avg_tool_duration"] = sum(tc.duration for tc in tool_calls) / len(tool_calls)
+            metrics["avg_tool_duration"] = sum(tc.duration for tc in tool_calls) / len(
+                tool_calls
+            )
 
         if feedback:
             metrics["user_rating"] = feedback.get("rating", 0)
@@ -268,6 +276,7 @@ class MLflowLogger:
         finally:
             # Cleanup
             import shutil
+
             shutil.rmtree(artifacts_dir, ignore_errors=True)
 
     def _log_tags(
@@ -318,17 +327,21 @@ class MLflowLogger:
         try:
             with mlflow.start_run(run_id=run_id):
                 # Log feedback metrics
-                mlflow.log_metrics({
-                    "user_rating": feedback.get("rating", 0),
-                    "feedback_reasons_count": len(feedback.get("reasons", [])),
-                })
+                mlflow.log_metrics(
+                    {
+                        "user_rating": feedback.get("rating", 0),
+                        "feedback_reasons_count": len(feedback.get("reasons", [])),
+                    }
+                )
 
                 # Log feedback tags
-                mlflow.set_tags({
-                    "has_feedback": "true",
-                    "feedback_rating": str(feedback.get("rating", 0)),
-                    "feedback_timestamp": datetime.now().isoformat(),
-                })
+                mlflow.set_tags(
+                    {
+                        "has_feedback": "true",
+                        "feedback_rating": str(feedback.get("rating", 0)),
+                        "feedback_timestamp": datetime.now().isoformat(),
+                    }
+                )
 
                 if feedback.get("reasons"):
                     mlflow.set_tag("feedback_reasons", ",".join(feedback["reasons"]))
@@ -347,7 +360,9 @@ class MLflowLogger:
                 return True
 
         except Exception as e:
-            logger.error("Failed to log feedback to MLflow", run_id=run_id, error=str(e))
+            logger.error(
+                "Failed to log feedback to MLflow", run_id=run_id, error=str(e)
+            )
             return False
 
     def get_run_info(self, run_id: str) -> dict[str, Any] | None:
@@ -407,14 +422,3 @@ class MLflowLogger:
         except Exception as e:
             logger.error("Failed to search runs", error=str(e))
             return []
-
-
-
-
-
-
-
-
-
-
-

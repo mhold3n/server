@@ -20,7 +20,9 @@ def test_ai_status_aggregates_ok(setup_clients):
             )
         )
         mock.get(f"{settings.ai_stack_url}/health").mock(
-            return_value=httpx.Response(200, json={"status": "ok", "openai_base_url": "http://worker/v1"})
+            return_value=httpx.Response(
+                200, json={"status": "ok", "openai_base_url": "http://worker/v1"}
+            )
         )
 
         resp = client.get("/api/ai/status")
@@ -29,5 +31,8 @@ def test_ai_status_aggregates_ok(setup_clients):
         assert data["status"] in ("healthy", "degraded")
         assert "router" in data and "ai_stack" in data and "worker" in data
         assert "qwen" in data and "rag" in data and "asr" in data
-        assert "reachable" in data["qwen"] and "model_name" in data["qwen"] and "latency_ms" in data["qwen"]
-
+        assert (
+            "reachable" in data["qwen"]
+            and "model_name" in data["qwen"]
+            and "latency_ms" in data["qwen"]
+        )

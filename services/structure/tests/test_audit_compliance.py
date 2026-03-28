@@ -23,7 +23,9 @@ async def test_audit_logging_success():
     ):
         # Setup mock kernel
         mock_kernel_instance = MagicMock()
-        mock_kernel_instance.execute.return_value = MagicMock(success=True, result={"status": "ok"})
+        mock_kernel_instance.execute.return_value = MagicMock(
+            success=True, result={"status": "ok"}
+        )
         mock_kernel_class = MagicMock(return_value=mock_kernel_instance)
         mock_get_kernel.return_value = mock_kernel_class
 
@@ -66,7 +68,9 @@ async def test_compliance_blocking():
             domain=Domain.CODE,
             selected_kernels=["project_mgmt_v1"],
         )
-        step = WorkflowStep(step_id="step_sensitive", description="Sensitive", spec=spec)
+        step = WorkflowStep(
+            step_id="step_sensitive", description="Sensitive", spec=spec
+        )
 
         result = await orchestrator.run_step(step, session)
 
@@ -95,7 +99,9 @@ async def test_gate_blocking_audit():
             domain=Domain.CODE,
             required_gates=["file_write_gate"],
         )
-        step = WorkflowStep(step_id="step_gate_fail", description="Fail Gate", spec=spec)
+        step = WorkflowStep(
+            step_id="step_gate_fail", description="Fail Gate", spec=spec
+        )
 
         await orchestrator.run_step(step, session)
 

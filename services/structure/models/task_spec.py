@@ -70,7 +70,9 @@ class TaskRequest(BaseModel):
     request_id: str = Field(..., description="Unique request ID")
     user_input: str = Field(..., min_length=1, description="Raw user input")
     domain_hint: Optional[str] = Field(None, description="Optional domain hint")
-    partition: Partition = Field(default=Partition.TRAIN, description="Data partition to use")
+    partition: Partition = Field(
+        default=Partition.TRAIN, description="Data partition to use"
+    )
     context: Optional[dict] = Field(default_factory=dict, description="Session context")
 
 
@@ -94,7 +96,9 @@ class TaskSpec(BaseModel):
     subdomain: Optional[str] = Field(None, description="Subdomain (e.g., fluids)")
 
     # Partition
-    partition: Partition = Field(default=Partition.TRAIN, description="Assigned partition")
+    partition: Partition = Field(
+        default=Partition.TRAIN, description="Assigned partition"
+    )
 
     # Risk assessment
     risk_level: RiskLevel = Field(default=RiskLevel.LOW)

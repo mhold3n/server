@@ -36,15 +36,13 @@ class APIKeyAuth:
             api_key = request.headers.get("X-API-Key")
             if not api_key:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="API key required"
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="API key required"
                 )
 
             # Validate API key
             if api_key not in self.api_keys:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid API key"
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key"
                 )
 
             # Get key info
@@ -54,7 +52,7 @@ class APIKeyAuth:
             if not key_info.get("active", True):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="API key deactivated"
+                    detail="API key deactivated",
                 )
 
             # Check expiration
@@ -62,7 +60,7 @@ class APIKeyAuth:
                 if time.time() > key_info["expires_at"]:
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="API key expired"
+                        detail="API key expired",
                     )
 
             # Check rate limits
@@ -99,7 +97,9 @@ class APIKeyAuth:
 
         # This would integrate with Redis for rate limiting
         # For now, just log the check
-        logger.info("Rate limit check", api_key=api_key[:8] + "...", rate_limit=rate_limit)
+        logger.info(
+            "Rate limit check", api_key=api_key[:8] + "...", rate_limit=rate_limit
+        )
 
 
 class MCPAllowlist:
@@ -260,7 +260,9 @@ class RateLimiter:
             current_count = results[1]
 
             if current_count >= limit:
-                logger.warning("Rate limit exceeded", key=key, count=current_count, limit=limit)
+                logger.warning(
+                    "Rate limit exceeded", key=key, count=current_count, limit=limit
+                )
                 return False
 
             return True
@@ -320,7 +322,7 @@ class SecurityMiddleware:
             if not allowed:
                 raise HTTPException(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail="Rate limit exceeded"
+                    detail="Rate limit exceeded",
                 )
 
         return auth_result

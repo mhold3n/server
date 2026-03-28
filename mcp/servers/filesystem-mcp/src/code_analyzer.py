@@ -36,10 +36,7 @@ class CodeAnalyzer:
         return self.supported_languages.get(suffix)
 
     async def analyze_code(
-        self,
-        path: str,
-        language: str | None = None,
-        include_ast: bool = False
+        self, path: str, language: str | None = None, include_ast: bool = False
     ) -> dict[str, Any]:
         """Analyze code structure and dependencies."""
         try:
@@ -60,10 +57,7 @@ class CodeAnalyzer:
             raise
 
     async def _analyze_file(
-        self,
-        file_path: Path,
-        language: str | None = None,
-        include_ast: bool = False
+        self, file_path: Path, language: str | None = None, include_ast: bool = False
     ) -> dict[str, Any]:
         """Analyze a single file."""
         detected_language = language or self._detect_language(file_path)
@@ -102,7 +96,9 @@ class CodeAnalyzer:
 
         return analysis
 
-    async def _analyze_python(self, content: str, include_ast: bool = False) -> dict[str, Any]:
+    async def _analyze_python(
+        self, content: str, include_ast: bool = False
+    ) -> dict[str, Any]:
         """Analyze Python code."""
         try:
             tree = ast.parse(content)
@@ -117,40 +113,59 @@ class CodeAnalyzer:
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
                     for alias in node.names:
-                        analysis["imports"].append({
-                            "type": "import",
-                            "module": alias.name,
-                            "alias": alias.asname,
-                        })
+                        analysis["imports"].append(
+                            {
+                                "type": "import",
+                                "module": alias.name,
+                                "alias": alias.asname,
+                            }
+                        )
                 elif isinstance(node, ast.ImportFrom):
                     for alias in node.names:
-                        analysis["imports"].append({
-                            "type": "from_import",
-                            "module": node.module,
-                            "name": alias.name,
-                            "alias": alias.asname,
-                        })
+                        analysis["imports"].append(
+                            {
+                                "type": "from_import",
+                                "module": node.module,
+                                "name": alias.name,
+                                "alias": alias.asname,
+                            }
+                        )
                 elif isinstance(node, ast.FunctionDef):
-                    analysis["functions"].append({
-                        "name": node.name,
-                        "line": node.lineno,
-                        "args": [arg.arg for arg in node.args.args],
-                        "decorators": [d.id if hasattr(d, 'id') else str(d) for d in node.decorator_list],
-                    })
+                    analysis["functions"].append(
+                        {
+                            "name": node.name,
+                            "line": node.lineno,
+                            "args": [arg.arg for arg in node.args.args],
+                            "decorators": [
+                                d.id if hasattr(d, "id") else str(d)
+                                for d in node.decorator_list
+                            ],
+                        }
+                    )
                 elif isinstance(node, ast.ClassDef):
-                    analysis["classes"].append({
-                        "name": node.name,
-                        "line": node.lineno,
-                        "bases": [base.id if hasattr(base, 'id') else str(base) for base in node.bases],
-                        "decorators": [d.id if hasattr(d, 'id') else str(d) for d in node.decorator_list],
-                    })
+                    analysis["classes"].append(
+                        {
+                            "name": node.name,
+                            "line": node.lineno,
+                            "bases": [
+                                base.id if hasattr(base, "id") else str(base)
+                                for base in node.bases
+                            ],
+                            "decorators": [
+                                d.id if hasattr(d, "id") else str(d)
+                                for d in node.decorator_list
+                            ],
+                        }
+                    )
                 elif isinstance(node, ast.Assign):
                     for target in node.targets:
                         if isinstance(target, ast.Name):
-                            analysis["variables"].append({
-                                "name": target.id,
-                                "line": node.lineno,
-                            })
+                            analysis["variables"].append(
+                                {
+                                    "name": target.id,
+                                    "line": node.lineno,
+                                }
+                            )
 
             if include_ast:
                 analysis["ast"] = ast.dump(tree)
@@ -162,7 +177,9 @@ class CodeAnalyzer:
         except Exception as e:
             return {"error": f"Analysis error: {e}"}
 
-    async def _analyze_javascript(self, content: str, include_ast: bool = False) -> dict[str, Any]:
+    async def _analyze_javascript(
+        self, content: str, include_ast: bool = False
+    ) -> dict[str, Any]:
         """Analyze JavaScript/TypeScript code (basic analysis)."""
         import re
 
@@ -180,60 +197,69 @@ class CodeAnalyzer:
 
             # Import statements
             if line.startswith("import "):
-                analysis["imports"].append({
-                    "type": "import",
-                    "line": i,
-                    "statement": line,
-                })
+                analysis["imports"].append(
+                    {
+                        "type": "import",
+                        "line": i,
+                        "statement": line,
+                    }
+                )
             elif line.startswith("require("):
-                analysis["imports"].append({
-                    "type": "require",
-                    "line": i,
-                    "statement": line,
-                })
+                analysis["imports"].append(
+                    {
+                        "type": "require",
+                        "line": i,
+                        "statement": line,
+                    }
+                )
 
             # Function declarations
             func_match = re.match(r"function\s+(\w+)\s*\(", line)
             if func_match:
-                analysis["functions"].append({
-                    "name": func_match.group(1),
-                    "line": i,
-                    "type": "function",
-                })
+                analysis["functions"].append(
+                    {
+                        "name": func_match.group(1),
+                        "line": i,
+                        "type": "function",
+                    }
+                )
 
             # Arrow functions
             arrow_match = re.match(r"(\w+)\s*=\s*\([^)]*\)\s*=>", line)
             if arrow_match:
-                analysis["functions"].append({
-                    "name": arrow_match.group(1),
-                    "line": i,
-                    "type": "arrow_function",
-                })
+                analysis["functions"].append(
+                    {
+                        "name": arrow_match.group(1),
+                        "line": i,
+                        "type": "arrow_function",
+                    }
+                )
 
             # Class declarations
             class_match = re.match(r"class\s+(\w+)", line)
             if class_match:
-                analysis["classes"].append({
-                    "name": class_match.group(1),
-                    "line": i,
-                })
+                analysis["classes"].append(
+                    {
+                        "name": class_match.group(1),
+                        "line": i,
+                    }
+                )
 
             # Variable declarations
             var_match = re.match(r"(const|let|var)\s+(\w+)", line)
             if var_match:
-                analysis["variables"].append({
-                    "name": var_match.group(2),
-                    "line": i,
-                    "type": var_match.group(1),
-                })
+                analysis["variables"].append(
+                    {
+                        "name": var_match.group(2),
+                        "line": i,
+                        "type": var_match.group(1),
+                    }
+                )
 
         return analysis
 
     async def _analyze_directory(
-        self,
-        dir_path: Path,
-        language: str | None = None,
-        include_ast: bool = False
+        self, dir_path: Path, language: str | None = None, include_ast: bool = False
     ) -> dict[str, Any]:
         """Analyze all files in a directory."""
         analysis = {
@@ -254,7 +280,11 @@ class CodeAnalyzer:
                 continue
 
             # Skip hidden files and common non-code files
-            if file_path.name.startswith(".") or file_path.suffix in [".pyc", ".pyo", "__pycache__"]:
+            if file_path.name.startswith(".") or file_path.suffix in [
+                ".pyc",
+                ".pyo",
+                "__pycache__",
+            ]:
                 continue
 
             file_language = language or self._detect_language(file_path)
@@ -262,23 +292,35 @@ class CodeAnalyzer:
                 continue
 
             try:
-                file_analysis = await self._analyze_file(file_path, file_language, include_ast)
+                file_analysis = await self._analyze_file(
+                    file_path, file_language, include_ast
+                )
                 analysis["files"].append(file_analysis)
 
                 # Update summary
                 analysis["summary"]["total_files"] += 1
-                analysis["summary"]["languages"][file_language] = analysis["summary"]["languages"].get(file_language, 0) + 1
+                analysis["summary"]["languages"][file_language] = (
+                    analysis["summary"]["languages"].get(file_language, 0) + 1
+                )
                 analysis["summary"]["total_lines"] += file_analysis.get("lines", 0)
-                analysis["summary"]["total_functions"] += len(file_analysis.get("functions", []))
-                analysis["summary"]["total_classes"] += len(file_analysis.get("classes", []))
+                analysis["summary"]["total_functions"] += len(
+                    file_analysis.get("functions", [])
+                )
+                analysis["summary"]["total_classes"] += len(
+                    file_analysis.get("classes", [])
+                )
 
             except Exception as e:
-                logger.warning("Failed to analyze file", file=str(file_path), error=str(e))
+                logger.warning(
+                    "Failed to analyze file", file=str(file_path), error=str(e)
+                )
                 continue
 
         return analysis
 
-    async def get_dependencies(self, path: str, language: str | None = None) -> dict[str, Any]:
+    async def get_dependencies(
+        self, path: str, language: str | None = None
+    ) -> dict[str, Any]:
         """Get dependencies for a project."""
         try:
             project_path = Path(path)
@@ -304,7 +346,11 @@ class CodeAnalyzer:
                 dependencies["language"] = "python"
 
             # Node.js dependencies
-            elif language == "javascript" or language == "typescript" or (project_path / "package.json").exists():
+            elif (
+                language == "javascript"
+                or language == "typescript"
+                or (project_path / "package.json").exists()
+            ):
                 deps = await self._get_node_dependencies(project_path)
                 dependencies.update(deps)
                 dependencies["language"] = "javascript"
@@ -354,7 +400,10 @@ class CodeAnalyzer:
                 content = f.read()
                 # Simple regex to find dependencies
                 import re
-                deps_match = re.search(r'\[project\]\s*dependencies\s*=\s*\[(.*?)\]', content, re.DOTALL)
+
+                deps_match = re.search(
+                    r"\[project\]\s*dependencies\s*=\s*\[(.*?)\]", content, re.DOTALL
+                )
                 if deps_match:
                     deps_text = deps_match.group(1)
                     for dep in re.findall(r'"([^"]+)"', deps_text):
@@ -377,8 +426,12 @@ class CodeAnalyzer:
                 with open(package_file) as f:
                     package_data = json.load(f)
 
-                dependencies["dependencies"] = list(package_data.get("dependencies", {}).keys())
-                dependencies["dev_dependencies"] = list(package_data.get("devDependencies", {}).keys())
+                dependencies["dependencies"] = list(
+                    package_data.get("dependencies", {}).keys()
+                )
+                dependencies["dev_dependencies"] = list(
+                    package_data.get("devDependencies", {}).keys()
+                )
 
             except json.JSONDecodeError as e:
                 dependencies["error"] = f"Failed to parse package.json: {e}"
@@ -405,7 +458,11 @@ class CodeAnalyzer:
                     elif line.startswith("require ("):
                         # Multi-line require block
                         continue
-                    elif line and not line.startswith("module ") and not line.startswith("go "):
+                    elif (
+                        line
+                        and not line.startswith("module ")
+                        and not line.startswith("go ")
+                    ):
                         # Dependency in multi-line block
                         dep = line.split()[0]
                         if dep and not dep.startswith(")"):
@@ -431,7 +488,9 @@ class CodeAnalyzer:
                 import re
 
                 # Find [dependencies] section
-                deps_match = re.search(r'\[dependencies\]\s*(.*?)(?=\[|$)', content, re.DOTALL)
+                deps_match = re.search(
+                    r"\[dependencies\]\s*(.*?)(?=\[|$)", content, re.DOTALL
+                )
                 if deps_match:
                     deps_text = deps_match.group(1)
                     for line in deps_text.splitlines():
@@ -441,7 +500,9 @@ class CodeAnalyzer:
                             dependencies["dependencies"].append(dep_name)
 
                 # Find [dev-dependencies] section
-                dev_deps_match = re.search(r'\[dev-dependencies\]\s*(.*?)(?=\[|$)', content, re.DOTALL)
+                dev_deps_match = re.search(
+                    r"\[dev-dependencies\]\s*(.*?)(?=\[|$)", content, re.DOTALL
+                )
                 if dev_deps_match:
                     dev_deps_text = dev_deps_match.group(1)
                     for line in dev_deps_text.splitlines():

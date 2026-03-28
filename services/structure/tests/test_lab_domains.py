@@ -29,7 +29,9 @@ class TestLabDomainRouting:
         for prompt in prompts:
             request = TaskRequest(request_id="test", user_input=prompt)
             spec = classify_task(request)
-            assert spec.domain == Domain.EXPERIMENT, f"'{prompt}' should route to experiment"
+            assert (
+                spec.domain == Domain.EXPERIMENT
+            ), f"'{prompt}' should route to experiment"
 
     def test_survey_keywords(self):
         """Survey research keywords should route to survey domain."""
@@ -68,7 +70,9 @@ class TestLabDomainRouting:
         for prompt in prompts:
             request = TaskRequest(request_id="test", user_input=prompt)
             spec = classify_task(request)
-            assert spec.domain == Domain.OPERATIONS, f"'{prompt}' should route to operations"
+            assert (
+                spec.domain == Domain.OPERATIONS
+            ), f"'{prompt}' should route to operations"
 
     def test_analysis_keywords(self):
         """Data analysis keywords should route to analysis domain."""
@@ -81,7 +85,9 @@ class TestLabDomainRouting:
         for prompt in prompts:
             request = TaskRequest(request_id="test", user_input=prompt)
             spec = classify_task(request)
-            assert spec.domain == Domain.ANALYSIS, f"'{prompt}' should route to analysis"
+            assert (
+                spec.domain == Domain.ANALYSIS
+            ), f"'{prompt}' should route to analysis"
 
 
 class TestLabAmbiguousTerms:

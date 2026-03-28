@@ -111,8 +111,7 @@ class PolicyEnforcer:
             "policy_names": enabled_policies,
             "scores": {name: result.score for name, result in policy_results.items()},
             "violation_counts": {
-                name: len(result.violations)
-                for name, result in policy_results.items()
+                name: len(result.violations) for name, result in policy_results.items()
             },
         }
 

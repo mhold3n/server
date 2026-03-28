@@ -27,7 +27,9 @@ class ProjectKernel(KernelInterface):
         valid, errors = self.validate_args(args)
         if not valid:
             return self._make_output(
-                input.request_id, success=False, error="Invalid arguments: " + "; ".join(errors)
+                input.request_id,
+                success=False,
+                error="Invalid arguments: " + "; ".join(errors),
             )
 
         method = args.get("method")
@@ -35,12 +37,18 @@ class ProjectKernel(KernelInterface):
         if method == "validate_timeline":
             output = self._validate_timeline(args.get("tasks", []))
             return self._make_output(
-                input.request_id, success=output.success, result=output.result, error=output.error
+                input.request_id,
+                success=output.success,
+                result=output.result,
+                error=output.error,
             )
         elif method == "critical_path":
             output = self._critical_path(args.get("tasks", []))
             return self._make_output(
-                input.request_id, success=output.success, result=output.result, error=output.error
+                input.request_id,
+                success=output.success,
+                result=output.result,
+                error=output.error,
             )
         else:
             return self._make_output(
@@ -58,10 +66,14 @@ class ProjectKernel(KernelInterface):
                 for dep in t["dependencies"]:
                     # check if dep exists
                     if not any(x["id"] == dep for x in tasks):
-                        errors.append(f"Task '{t.get('id')}' depends on unknown task '{dep}'.")
+                        errors.append(
+                            f"Task '{t.get('id')}' depends on unknown task '{dep}'."
+                        )
 
         if errors:
-            return KernelOutput(success=False, result={"valid": False, "errors": errors})
+            return KernelOutput(
+                success=False, result={"valid": False, "errors": errors}
+            )
         return KernelOutput(success=True, result={"valid": True})
 
     def _critical_path(self, tasks: List[Dict]) -> KernelOutput:
@@ -71,5 +83,6 @@ class ProjectKernel(KernelInterface):
         # 3. Backward pass (LS, LF)
         # 4. Identifying slack=0
         return KernelOutput(
-            success=True, result={"message": "Critical path calculation not fully implemented yet."}
+            success=True,
+            result={"message": "Critical path calculation not fully implemented yet."},
         )

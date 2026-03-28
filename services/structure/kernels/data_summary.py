@@ -30,7 +30,9 @@ class DataSummaryKernel(KernelInterface):
         valid, errors = self.validate_args(args)
         if not valid:
             return self._make_output(
-                input.request_id, success=False, error="Invalid arguments: " + "; ".join(errors)
+                input.request_id,
+                success=False,
+                error="Invalid arguments: " + "; ".join(errors),
             )
 
         method = args.get("method")
@@ -39,12 +41,18 @@ class DataSummaryKernel(KernelInterface):
         if method == "extractive":
             output = self._extractive_summary(text, count=args.get("count", 3))
             return self._make_output(
-                input.request_id, success=output.success, result=output.result, error=output.error
+                input.request_id,
+                success=output.success,
+                result=output.result,
+                error=output.error,
             )
         elif method == "frequency":
             output = self._frequency_dist(text)
             return self._make_output(
-                input.request_id, success=output.success, result=output.result, error=output.error
+                input.request_id,
+                success=output.success,
+                result=output.result,
+                error=output.error,
             )
         else:
             return self._make_output(
@@ -70,7 +78,9 @@ class DataSummaryKernel(KernelInterface):
 
         # 3. Pick top N
         top_indices = sorted(scores, key=lambda x: x[1], reverse=True)[:count]
-        top_indices = sorted([x[0] for x in top_indices])  # Reorder by original position
+        top_indices = sorted(
+            [x[0] for x in top_indices]
+        )  # Reorder by original position
 
         summary = [sentences[i] for i in top_indices]
 

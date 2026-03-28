@@ -107,8 +107,12 @@ class Settings(BaseSettings):
     )
 
     # Router/AI stack URLs
-    router_url: str = Field(default="http://router:8000", description="Agent router base URL")
-    ai_stack_url: str = Field(default="http://ai-stack:8090", description="AI stack base URL")
+    router_url: str = Field(
+        default="http://router:8000", description="Agent router base URL"
+    )
+    ai_stack_url: str = Field(
+        default="http://ai-stack:8090", description="AI stack base URL"
+    )
 
     # Wrkhrs RAG/ASR health (optional; for status endpoint; set to empty to skip)
     rag_health_url: str | None = Field(
@@ -123,8 +127,7 @@ class Settings(BaseSettings):
     # AI workflow configuration
     ai_repos: str = Field(
         default=(
-            "https://github.com/mhold3n/server,"
-            "https://github.com/datalab-to/marker"
+            "https://github.com/mhold3n/server," "https://github.com/datalab-to/marker"
         ),
         description="Comma-separated list of repositories for code-RAG workflows",
     )

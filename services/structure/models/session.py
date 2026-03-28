@@ -32,6 +32,10 @@ class Session(BaseModel):
     def add_history(self, event_type: str, data: Any):
         """Add an event to history."""
         self.history.append(
-            {"timestamp": datetime.utcnow().isoformat(), "type": event_type, "data": data}
+            {
+                "timestamp": datetime.utcnow().isoformat(),
+                "type": event_type,
+                "data": data,
+            }
         )
         self.updated_at = datetime.utcnow()

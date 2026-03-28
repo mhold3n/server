@@ -47,14 +47,15 @@ class TestRequestContextMiddleware:
         # Mock call_next
         async def call_next(req):
             # Check that context was set
-            assert hasattr(req.state, 'trace_id')
-            assert hasattr(req.state, 'run_id')
-            assert hasattr(req.state, 'policy_set')
+            assert hasattr(req.state, "trace_id")
+            assert hasattr(req.state, "run_id")
+            assert hasattr(req.state, "policy_set")
             assert req.state.trace_id == trace_id
             assert req.state.run_id == run_id
             assert req.state.policy_set == policy_set
 
             from fastapi import Response
+
             return Response(content="OK")
 
         middleware = RequestContextMiddleware(app)
@@ -82,14 +83,15 @@ class TestRequestContextMiddleware:
 
         async def call_next(req):
             # Check that context was generated
-            assert hasattr(req.state, 'trace_id')
-            assert hasattr(req.state, 'run_id')
-            assert hasattr(req.state, 'policy_set')
+            assert hasattr(req.state, "trace_id")
+            assert hasattr(req.state, "run_id")
+            assert hasattr(req.state, "policy_set")
             assert req.state.trace_id is not None
             assert req.state.run_id is not None
             assert req.state.policy_set == "default"
 
             from fastapi import Response
+
             return Response(content="OK")
 
         middleware = RequestContextMiddleware(app)
@@ -138,7 +140,7 @@ class TestTraceContext:
         trace_context = get_trace_context()
         assert trace_context is not None
 
-    @patch('src.observability.trace.trace')
+    @patch("src.observability.trace.trace")
     def test_span_attributes(self, mock_trace):
         """Test span attribute setting."""
         # Mock span
@@ -152,7 +154,7 @@ class TestTraceContext:
         trace_context.add_span_attributes(mock_span, {"test_key": "test_value"})
         mock_span.set_attribute.assert_called_with("test_key", "test_value")
 
-    @patch('src.observability.trace.trace')
+    @patch("src.observability.trace.trace")
     def test_span_events(self, mock_trace):
         """Test span event addition."""
         # Mock span
@@ -164,9 +166,11 @@ class TestTraceContext:
 
         # Test adding events
         trace_context.add_span_event(mock_span, "test_event", {"key": "value"})
-        mock_span.add_event.assert_called_with("test_event", attributes={"key": "value"})
+        mock_span.add_event.assert_called_with(
+            "test_event", attributes={"key": "value"}
+        )
 
-    @patch('src.observability.trace.trace')
+    @patch("src.observability.trace.trace")
     def test_span_status(self, mock_trace):
         """Test span status setting."""
         # Mock span
@@ -184,19 +188,18 @@ class TestTraceContext:
 class TestMLflowLogger:
     """Test MLflow logger functionality."""
 
-    @patch('src.observability.mlflow_logger.mlflow')
+    @patch("src.observability.mlflow_logger.mlflow")
     def test_mlflow_logger_initialization(self, mock_mlflow):
         """Test MLflow logger initialization."""
         logger = MLflowLogger(
-            tracking_uri="http://test-mlflow:5000",
-            experiment_name="test-experiment"
+            tracking_uri="http://test-mlflow:5000", experiment_name="test-experiment"
         )
 
         assert logger.tracking_uri == "http://test-mlflow:5000"
         assert logger.experiment_name == "test-experiment"
         mock_mlflow.set_tracking_uri.assert_called_with("http://test-mlflow:5000")
 
-    @patch('src.observability.mlflow_logger.mlflow')
+    @patch("src.observability.mlflow_logger.mlflow")
     def test_log_parameters(self, mock_mlflow):
         """Test parameter logging."""
         logger = MLflowLogger()
@@ -205,18 +208,14 @@ class TestMLflowLogger:
 
         from src.observability.mlflow_logger import EnvironmentSnapshot, RunSpec
 
-        run_spec = RunSpec(
-            prompt="Test prompt",
-            model="test-model",
-            temperature=0.7
-        )
+        run_spec = RunSpec(prompt="Test prompt", model="test-model", temperature=0.7)
 
         environment = EnvironmentSnapshot(
             timestamp=datetime.now(),
             service_version="1.0.0",
             model_version="1.0.0",
             config_hash="abc123",
-            dependencies={"test": "1.0.0"}
+            dependencies={"test": "1.0.0"},
         )
 
         logger._log_parameters(run_spec, environment)
@@ -226,7 +225,7 @@ class TestMLflowLogger:
         assert params["model"] == "test-model"
         assert params["temperature"] == 0.7
 
-    @patch('src.observability.mlflow_logger.mlflow')
+    @patch("src.observability.mlflow_logger.mlflow")
     def test_log_metrics(self, mock_mlflow):
         """Test metrics logging."""
         logger = MLflowLogger()
@@ -238,7 +237,9 @@ class TestMLflowLogger:
             RetrievalDoc(content="test", metadata={}, score=0.8, source="test")
         ]
         tool_calls = [
-            ToolCall(tool_name="test", tool_args={}, result="ok", duration=1.0, success=True)
+            ToolCall(
+                tool_name="test", tool_args={}, result="ok", duration=1.0, success=True
+            )
         ]
 
         logger._log_metrics(run_spec, retrieval_docs, tool_calls, None)
@@ -249,7 +250,7 @@ class TestMLflowLogger:
         assert "retrieval_count" in metrics
         assert "tool_calls_count" in metrics
 
-    @patch('src.observability.mlflow_logger.mlflow')
+    @patch("src.observability.mlflow_logger.mlflow")
     def test_log_tags(self, mock_mlflow):
         """Test tags logging."""
         logger = MLflowLogger()
@@ -262,7 +263,7 @@ class TestMLflowLogger:
             prompt="Test prompt",
             model="test-model",
             domain_weights={"code": 0.8, "docs": 0.2},
-            policies=["evidence", "hedging"]
+            policies=["evidence", "hedging"],
         )
 
         environment = EnvironmentSnapshot(
@@ -270,7 +271,7 @@ class TestMLflowLogger:
             service_version="1.0.0",
             model_version="1.0.0",
             config_hash="abc123",
-            dependencies={}
+            dependencies={},
         )
 
         logger._log_tags(run_spec, environment, None)
@@ -281,22 +282,19 @@ class TestMLflowLogger:
         assert tags["primary_domain"] == "code"
         assert tags["policies_applied"] == "evidence,hedging"
 
-    @patch('src.observability.mlflow_logger.mlflow')
+    @patch("src.observability.mlflow_logger.mlflow")
     def test_log_feedback(self, mock_mlflow):
         """Test feedback logging."""
         logger = MLflowLogger()
 
-        feedback = {
-            "rating": 4,
-            "reasons": ["helpful", "accurate"]
-        }
+        feedback = {"rating": 4, "reasons": ["helpful", "accurate"]}
 
         result = logger.log_feedback("test-run-id", feedback)
 
         # Should return False if MLflow not available
         assert result is False
 
-    @patch('src.observability.mlflow_logger.mlflow')
+    @patch("src.observability.mlflow_logger.mlflow")
     def test_get_run_info(self, mock_mlflow):
         """Test getting run information."""
         logger = MLflowLogger()
@@ -322,7 +320,7 @@ class TestMLflowLogger:
         assert run_info["params"]["model"] == "test"
         assert run_info["metrics"]["score"] == 0.8
 
-    @patch('src.observability.mlflow_logger.mlflow')
+    @patch("src.observability.mlflow_logger.mlflow")
     def test_search_runs(self, mock_mlflow):
         """Test searching runs."""
         logger = MLflowLogger()
@@ -331,7 +329,7 @@ class TestMLflowLogger:
         mock_runs = Mock()
         mock_runs.to_dict.return_value = [
             {"run_id": "run1", "status": "FINISHED"},
-            {"run_id": "run2", "status": "RUNNING"}
+            {"run_id": "run2", "status": "RUNNING"},
         ]
 
         mock_mlflow.search_runs.return_value = mock_runs
@@ -365,8 +363,8 @@ class TestObservabilityIntegration:
             headers={
                 "x-trace-id": "test-trace-123",
                 "x-run-id": "test-run-456",
-                "x-policy-set": "test-policy"
-            }
+                "x-policy-set": "test-policy",
+            },
         )
 
         assert response.status_code == 200
@@ -406,7 +404,7 @@ class TestObservabilityIntegration:
         assert "x-run-id" in response.headers
         assert "x-policy-set" in response.headers
 
-    @patch('src.observability.trace.trace')
+    @patch("src.observability.trace.trace")
     def test_otel_integration(self, mock_trace):
         """Test OpenTelemetry integration."""
         # Mock span
@@ -416,11 +414,14 @@ class TestObservabilityIntegration:
 
         # Test span attribute setting
         trace_context = get_trace_context()
-        trace_context.add_span_attributes(mock_span, {
-            "app.trace_id": "test-trace",
-            "app.run_id": "test-run",
-            "app.policy_set": "test-policy"
-        })
+        trace_context.add_span_attributes(
+            mock_span,
+            {
+                "app.trace_id": "test-trace",
+                "app.run_id": "test-run",
+                "app.policy_set": "test-policy",
+            },
+        )
 
         # Verify attributes were set
         assert mock_span.set_attribute.call_count == 3

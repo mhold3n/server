@@ -1,6 +1,5 @@
 """Unit tests for policy modules."""
 
-
 import pytest
 
 from src.policies.citations import CitationPolicy
@@ -52,7 +51,9 @@ class TestHedgingPolicy:
         """Test hedging ratio limit."""
         policy = HedgingPolicy(max_hedging_ratio=0.05)  # Very strict
 
-        text_with_excessive_hedging = "This might be correct, perhaps it could work, maybe it will succeed."
+        text_with_excessive_hedging = (
+            "This might be correct, perhaps it could work, maybe it will succeed."
+        )
         result = await policy.validate(text_with_excessive_hedging)
 
         assert not result.passed
@@ -187,10 +188,10 @@ class TestPolicyEnforcer:
         verdict = await policy_enforcer.validate(output, [])
 
         assert verdict is not None
-        assert hasattr(verdict, 'overall_passed')
-        assert hasattr(verdict, 'overall_score')
-        assert hasattr(verdict, 'total_violations')
-        assert hasattr(verdict, 'policy_results')
+        assert hasattr(verdict, "overall_passed")
+        assert hasattr(verdict, "overall_score")
+        assert hasattr(verdict, "total_violations")
+        assert hasattr(verdict, "policy_results")
 
     async def test_policy_enforcement_with_retrieval(self, policy_enforcer):
         """Test policy enforcement with retrieval documents."""

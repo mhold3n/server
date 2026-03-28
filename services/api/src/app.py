@@ -121,7 +121,7 @@ if ai_router:
     app.include_router(ai_router.router)  # type: ignore[attr-defined]
 
 # Static UI (small SPA panels)
-_static_dir = (Path(__file__).resolve().parent / "static")
+_static_dir = Path(__file__).resolve().parent / "static"
 if _static_dir.exists():
     app.mount("/ui", StaticFiles(directory=str(_static_dir), html=True), name="ui")
 
@@ -209,8 +209,8 @@ async def startup_event():
     # Initialize MLflow logger
     try:
         mlflow_logger = MLflowLogger(
-            tracking_uri=getattr(settings, 'mlflow_tracking_uri', 'http://mlflow:5000'),
-            experiment_name="birtha-ai-runs"
+            tracking_uri=getattr(settings, "mlflow_tracking_uri", "http://mlflow:5000"),
+            experiment_name="birtha-ai-runs",
         )
         logger.info("MLflow logger initialized")
     except Exception as e:
@@ -290,7 +290,9 @@ async def health_check():
         services["openai"] = "not_configured"
 
     return HealthResponse(
-        status="healthy" if all(s == "healthy" for s in services.values()) else "degraded",
+        status=(
+            "healthy" if all(s == "healthy" for s in services.values()) else "degraded"
+        ),
         timestamp=datetime.utcnow().isoformat(),
         version="0.1.0",
         services=services,
@@ -319,7 +321,9 @@ async def chat_completions(request: ChatRequest, http_request: Request):
         )
     # Basic validation: require at least one message
     if not request.messages:
-        raise HTTPException(status_code=422, detail="'messages' must contain at least one item")
+        raise HTTPException(
+            status_code=422, detail="'messages' must contain at least one item"
+        )
 
     start_time = asyncio.get_event_loop().time()
 
@@ -375,36 +379,59 @@ async def chat_completions(request: ChatRequest, http_request: Request):
                 if mlflow_logger and trace_id:
                     try:
                         import mlflow
+
                         with mlflow.start_run(run_name=run_id):
                             mlflow.set_tag("trace_id", trace_id)
                             mlflow.set_tag("policy_set", policy_set)
 
                             # Log policy metrics
-                            mlflow.log_metrics({
-                                "policy_overall_score": policy_verdict.overall_score,
-                                "policy_violations": policy_verdict.total_violations,
-                                "policy_suggestions": policy_verdict.total_suggestions,
-                                "policy_passed": int(policy_verdict.overall_passed),
-                            })
+                            mlflow.log_metrics(
+                                {
+                                    "policy_overall_score": policy_verdict.overall_score,
+                                    "policy_violations": policy_verdict.total_violations,
+                                    "policy_suggestions": policy_verdict.total_suggestions,
+                                    "policy_passed": int(policy_verdict.overall_passed),
+                                }
+                            )
 
                             # Log individual policy scores
-                            for policy_name, result in policy_verdict.policy_results.items():
-                                mlflow.log_metric(f"policy_{policy_name}_score", result.score)
-                                mlflow.log_metric(f"policy_{policy_name}_violations", len(result.violations))
+                            for (
+                                policy_name,
+                                result,
+                            ) in policy_verdict.policy_results.items():
+                                mlflow.log_metric(
+                                    f"policy_{policy_name}_score", result.score
+                                )
+                                mlflow.log_metric(
+                                    f"policy_{policy_name}_violations",
+                                    len(result.violations),
+                                )
 
                     except Exception as e:
-                        logger.error("Failed to log policy verdicts to MLflow", error=str(e))
+                        logger.error(
+                            "Failed to log policy verdicts to MLflow", error=str(e)
+                        )
 
                 # Set OTel span attributes
                 span = trace.get_current_span()
                 if span and span.is_recording():
-                    span.set_attribute("app.policy_overall_passed", policy_verdict.overall_passed)
-                    span.set_attribute("app.policy_overall_score", policy_verdict.overall_score)
-                    span.set_attribute("app.policy_violations", policy_verdict.total_violations)
+                    span.set_attribute(
+                        "app.policy_overall_passed", policy_verdict.overall_passed
+                    )
+                    span.set_attribute(
+                        "app.policy_overall_score", policy_verdict.overall_score
+                    )
+                    span.set_attribute(
+                        "app.policy_violations", policy_verdict.total_violations
+                    )
 
                     for policy_name, result in policy_verdict.policy_results.items():
-                        span.set_attribute(f"app.policy_{policy_name}_passed", result.passed)
-                        span.set_attribute(f"app.policy_{policy_name}_score", result.score)
+                        span.set_attribute(
+                            f"app.policy_{policy_name}_passed", result.passed
+                        )
+                        span.set_attribute(
+                            f"app.policy_{policy_name}_score", result.score
+                        )
 
             except Exception as e:
                 logger.error("Policy enforcement failed", error=str(e))
@@ -444,7 +471,9 @@ async def chat_completions(request: ChatRequest, http_request: Request):
             trace_id=trace_id,
         )
 
-        raise HTTPException(status_code=500, detail=f"Chat request failed: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Chat request failed: {str(e)}"
+        ) from e
 
 
 class FeedbackRequest(BaseModel):
@@ -496,7 +525,9 @@ async def submit_feedback(feedback: FeedbackRequest):
 
     except Exception as e:
         logger.error("Failed to submit feedback", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to submit feedback: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Failed to submit feedback: {str(e)}"
+        ) from e
 
 
 @app.get("/")

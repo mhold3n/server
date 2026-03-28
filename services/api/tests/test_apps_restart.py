@@ -35,7 +35,10 @@ def test_apps_restart_success(monkeypatch):
             self.containers = self
 
         def list(self, all=True, filters=None):  # type: ignore[override]
-            return [FakeContainer("api.1", status="exited"), FakeContainer("api.2", status="running")]
+            return [
+                FakeContainer("api.1", status="exited"),
+                FakeContainer("api.2", status="running"),
+            ]
 
         def close(self):
             pass
@@ -48,4 +51,3 @@ def test_apps_restart_success(monkeypatch):
     assert resp.status_code == 200
     data = resp.json()
     assert data["service"] == "api" and len(data["restarted"]) == 2
-

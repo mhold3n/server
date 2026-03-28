@@ -38,7 +38,9 @@ class QBittorrentClient:
     async def _login(self) -> None:
         assert self._client is not None, "Client not started"
         url = f"{self.base_url}/api/v2/auth/login"
-        resp = await self._client.post(url, data={"username": self.username, "password": self.password})
+        resp = await self._client.post(
+            url, data={"username": self.username, "password": self.password}
+        )
         resp.raise_for_status()
         # On success, qB returns 'Ok.' and sets SID cookie automatically in the client
 
@@ -60,14 +62,17 @@ class QBittorrentClient:
     async def pause(self, hashes: list[str]) -> dict[str, Any]:
         assert self._client is not None, "Client not started"
         url = f"{self.base_url}/api/v2/torrents/pause"
-        resp = await self._client.post(url, data={"hashes": "|".join(hashes) if hashes else "all"})
+        resp = await self._client.post(
+            url, data={"hashes": "|".join(hashes) if hashes else "all"}
+        )
         resp.raise_for_status()
         return {"status": "paused", "hashes": hashes or ["all"]}
 
     async def resume(self, hashes: list[str]) -> dict[str, Any]:
         assert self._client is not None, "Client not started"
         url = f"{self.base_url}/api/v2/torrents/resume"
-        resp = await self._client.post(url, data={"hashes": "|".join(hashes) if hashes else "all"})
+        resp = await self._client.post(
+            url, data={"hashes": "|".join(hashes) if hashes else "all"}
+        )
         resp.raise_for_status()
         return {"status": "resumed", "hashes": hashes or ["all"]}
-

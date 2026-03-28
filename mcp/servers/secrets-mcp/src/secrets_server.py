@@ -41,7 +41,9 @@ class ToolRequest(BaseModel):
     """Tool request model."""
 
     tool: str = Field(..., description="Tool name")
-    arguments: dict[str, Any] = Field(default_factory=dict, description="Tool arguments")
+    arguments: dict[str, Any] = Field(
+        default_factory=dict, description="Tool arguments"
+    )
 
 
 class ToolResponse(BaseModel):
@@ -80,7 +82,10 @@ async def list_tools():
                     "type": "object",
                     "properties": {
                         "path": {"type": "string", "description": "Secret path"},
-                        "key": {"type": "string", "description": "Secret key (optional)"},
+                        "key": {
+                            "type": "string",
+                            "description": "Secret key (optional)",
+                        },
                     },
                     "required": ["path"],
                 },
@@ -136,7 +141,10 @@ async def list_tools():
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "encrypted_data": {"type": "string", "description": "Encrypted data"},
+                        "encrypted_data": {
+                            "type": "string",
+                            "description": "Encrypted data",
+                        },
                     },
                     "required": ["encrypted_data"],
                 },

@@ -34,7 +34,12 @@ class ExperimentKernel(KernelInterface):
     version = "1.0.0"
     determinism_level = "D1"
 
-    SUPPORTED_OPERATIONS = ["randomize", "power_calc", "block_randomize", "balance_check"]
+    SUPPORTED_OPERATIONS = [
+        "randomize",
+        "power_calc",
+        "block_randomize",
+        "balance_check",
+    ]
 
     def execute(self, input: KernelInput) -> KernelOutput:
         """Execute with typed KernelInput."""

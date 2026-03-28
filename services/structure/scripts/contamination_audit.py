@@ -93,7 +93,9 @@ def check_contamination():
     check_overlap(dev_sigs, test_sigs, "Dev")
 
 
-def check_overlap(source_sigs: Dict[str, List[int]], target_sigs: Dict[str, List[int]], name: str):
+def check_overlap(
+    source_sigs: Dict[str, List[int]], target_sigs: Dict[str, List[int]], name: str
+):
     threshold = 0.8  # Jaccard similarity threshold for "near duplicate"
     violations = 0
 

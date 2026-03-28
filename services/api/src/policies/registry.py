@@ -150,12 +150,14 @@ class PolicyRegistry:
 
         for name, config in self.policy_configs.items():
             if config.enabled:
-                policies.append({
-                    "name": name,
-                    "description": config.description,
-                    "config": config.config,
-                    "priority": config.priority,
-                })
+                policies.append(
+                    {
+                        "name": name,
+                        "description": config.description,
+                        "config": config.config,
+                        "priority": config.priority,
+                    }
+                )
 
         # Sort by priority
         policies.sort(key=lambda x: x["priority"])
@@ -262,10 +264,7 @@ class PolicyRegistry:
         Returns:
             List of enabled policy names
         """
-        return [
-            name for name, config in self.policy_configs.items()
-            if config.enabled
-        ]
+        return [name for name, config in self.policy_configs.items() if config.enabled]
 
     def get_policy_summary(self) -> dict[str, Any]:
         """Get summary of all policies.
@@ -294,14 +293,3 @@ class PolicyRegistry:
 
 # Global policy registry instance
 policy_registry = PolicyRegistry()
-
-
-
-
-
-
-
-
-
-
-

@@ -55,12 +55,18 @@ class HedgingPolicy(BasePolicy):
         if hedging_instances:
             # Calculate hedging ratio
             total_words = len(output.split())
-            hedging_ratio = len(hedging_instances) / total_words if total_words > 0 else 0
+            hedging_ratio = (
+                len(hedging_instances) / total_words if total_words > 0 else 0
+            )
 
             # Check for complete ban
             if self.ban_hedging:
-                violations.append(f"Hedging language detected: {len(hedging_instances)} instances")
-                suggestions.append("Remove all hedging language and state facts directly")
+                violations.append(
+                    f"Hedging language detected: {len(hedging_instances)} instances"
+                )
+                suggestions.append(
+                    "Remove all hedging language and state facts directly"
+                )
                 score = 0.0
             else:
                 # Check ratio threshold
@@ -72,7 +78,9 @@ class HedgingPolicy(BasePolicy):
                     score -= 0.5
                 else:
                     # Mild warning for any hedging
-                    violations.append(f"Hedging language detected: {len(hedging_instances)} instances")
+                    violations.append(
+                        f"Hedging language detected: {len(hedging_instances)} instances"
+                    )
                     suggestions.append("Consider being more direct in your statements")
                     score -= 0.2
 
@@ -96,29 +104,70 @@ class HedgingPolicy(BasePolicy):
         """Get default list of hedging phrases."""
         return [
             # Uncertainty markers
-            "might", "may", "could", "possibly", "perhaps", "maybe",
-            "potentially", "likely", "unlikely", "probably", "probably not",
-
+            "might",
+            "may",
+            "could",
+            "possibly",
+            "perhaps",
+            "maybe",
+            "potentially",
+            "likely",
+            "unlikely",
+            "probably",
+            "probably not",
             # Softening language
-            "seems", "appears", "suggests", "indicates", "implies",
-            "tends to", "often", "sometimes", "usually", "generally",
-            "typically", "commonly", "frequently", "rarely",
-
+            "seems",
+            "appears",
+            "suggests",
+            "indicates",
+            "implies",
+            "tends to",
+            "often",
+            "sometimes",
+            "usually",
+            "generally",
+            "typically",
+            "commonly",
+            "frequently",
+            "rarely",
             # Tentative language
-            "I think", "I believe", "I feel", "I suspect", "I assume",
-            "I guess", "I suppose", "I imagine", "I wonder",
-
+            "I think",
+            "I believe",
+            "I feel",
+            "I suspect",
+            "I assume",
+            "I guess",
+            "I suppose",
+            "I imagine",
+            "I wonder",
             # Qualifiers
-            "somewhat", "rather", "quite", "fairly", "relatively",
-            "more or less", "sort of", "kind of", "pretty much",
-
+            "somewhat",
+            "rather",
+            "quite",
+            "fairly",
+            "relatively",
+            "more or less",
+            "sort of",
+            "kind of",
+            "pretty much",
             # Conditional language
-            "if", "unless", "provided that", "assuming", "supposing",
-            "in case", "contingent on", "dependent on",
-
+            "if",
+            "unless",
+            "provided that",
+            "assuming",
+            "supposing",
+            "in case",
+            "contingent on",
+            "dependent on",
             # Approximation
-            "about", "approximately", "roughly", "around", "nearly",
-            "almost", "close to", "in the vicinity of",
+            "about",
+            "approximately",
+            "roughly",
+            "around",
+            "nearly",
+            "almost",
+            "close to",
+            "in the vicinity of",
         ]
 
     def _detect_hedging(self, text: str) -> list[str]:
@@ -135,7 +184,7 @@ class HedgingPolicy(BasePolicy):
 
         for phrase in self.hedging_phrases:
             # Use word boundaries for exact phrase matching
-            pattern = r'\b' + re.escape(phrase.lower()) + r'\b'
+            pattern = r"\b" + re.escape(phrase.lower()) + r"\b"
             matches = re.findall(pattern, text_lower)
             detected.extend(matches)
 
@@ -181,7 +230,9 @@ class HedgingPolicy(BasePolicy):
             suggestions.append("Replace uncertainty markers with direct statements")
 
         if any(phrase in detected_phrases for phrase in softening_phrases):
-            suggestions.append("Use more definitive language instead of softening phrases")
+            suggestions.append(
+                "Use more definitive language instead of softening phrases"
+            )
 
         if any(phrase in detected_phrases for phrase in tentative_phrases):
             suggestions.append("Remove personal opinions and state facts directly")

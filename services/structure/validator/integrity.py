@@ -70,7 +70,9 @@ def validate_kernel_references() -> tuple[bool, list[str]]:
             module = importlib.import_module(module_path)
             kernel_class = getattr(module, class_name, None)
             if kernel_class is None:
-                errors.append(f"Kernel {kernel_id}: class {class_name} not found in {module_path}")
+                errors.append(
+                    f"Kernel {kernel_id}: class {class_name} not found in {module_path}"
+                )
         except ImportError as e:
             errors.append(f"Kernel {kernel_id}: failed to import {module_path}: {e}")
 
@@ -178,7 +180,9 @@ def validate_registry_kernel_interface() -> tuple[bool, list[str]]:
             if not hasattr(kernel_class, "version"):
                 errors.append(f"Kernel {kernel_id}: missing version attribute")
             if not hasattr(kernel_class, "determinism_level"):
-                errors.append(f"Kernel {kernel_id}: missing determinism_level attribute")
+                errors.append(
+                    f"Kernel {kernel_id}: missing determinism_level attribute"
+                )
 
             # Check required methods
             if not hasattr(kernel_class, "execute"):
@@ -187,7 +191,10 @@ def validate_registry_kernel_interface() -> tuple[bool, list[str]]:
                 errors.append(f"Kernel {kernel_id}: missing validate_args method")
 
             # Validate kernel_id matches registry
-            if hasattr(kernel_class, "kernel_id") and kernel_class.kernel_id != kernel_id:
+            if (
+                hasattr(kernel_class, "kernel_id")
+                and kernel_class.kernel_id != kernel_id
+            ):
                 errors.append(
                     f"Kernel {kernel_id}: class kernel_id '{kernel_class.kernel_id}' "
                     f"does not match registry '{kernel_id}'"

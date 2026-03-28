@@ -19,7 +19,6 @@ from models.gate_decision import Decision
 from router.classifier import classify_task
 from validator.gates import run_gates, get_blocking_decisions
 
-
 # --- Paraphrase Sets ---
 
 # All of these should trigger CLARIFY for "specific weight" ambiguity
@@ -113,9 +112,9 @@ class TestSpecificWeightParaphrase:
             request = TaskRequest(request_id=f"sw-gate-{i}", user_input=phrase)
             spec = classify_task(request)
 
-            assert "ambiguity_gate" in spec.required_gates, (
-                f"Should need ambiguity gate: '{phrase}'"
-            )
+            assert (
+                "ambiguity_gate" in spec.required_gates
+            ), f"Should need ambiguity gate: '{phrase}'"
 
 
 class TestLbParaphrase:
@@ -143,7 +142,9 @@ class TestUnambiguousParaphrase:
             gate_results = run_gates(spec)
             blocking = get_blocking_decisions(gate_results)
 
-            assert len(blocking) == 0, f"Phrase should NOT block: '{phrase}' - got {blocking}"
+            assert (
+                len(blocking) == 0
+            ), f"Phrase should NOT block: '{phrase}' - got {blocking}"
 
 
 class TestFluidsParaphrase:

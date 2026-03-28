@@ -116,10 +116,7 @@ class ProvenanceLogger:
             "timestamp": datetime.utcnow().isoformat(),
         }
 
-        mlflow.log_text(
-            json.dumps(spec_data, indent=2),
-            "run_spec.json"
-        )
+        mlflow.log_text(json.dumps(spec_data, indent=2), "run_spec.json")
 
     def _log_environment(self, environment: EnvironmentSnapshot) -> None:
         """Log environment snapshot as JSON artifact."""
@@ -133,10 +130,7 @@ class ProvenanceLogger:
             "system_info": environment.system_info,
         }
 
-        mlflow.log_text(
-            json.dumps(env_data, indent=2),
-            "environment.json"
-        )
+        mlflow.log_text(json.dumps(env_data, indent=2), "environment.json")
 
     def _log_retrieval_provenance(self, retrieval_docs: list[RetrievalDoc]) -> None:
         """Log retrieval provenance with document metadata."""
@@ -152,21 +146,23 @@ class ProvenanceLogger:
                 "index_version": doc.index_version,
                 "embedding_model": doc.embedding_model,
                 "metadata": doc.metadata,
-                "content_preview": doc.content[:200] + "..." if len(doc.content) > 200 else doc.content,
+                "content_preview": (
+                    doc.content[:200] + "..." if len(doc.content) > 200 else doc.content
+                ),
             }
             retrieval_data.append(doc_info)
 
-        mlflow.log_text(
-            json.dumps(retrieval_data, indent=2),
-            "retrieval.json"
-        )
+        mlflow.log_text(json.dumps(retrieval_data, indent=2), "retrieval.json")
 
         # Log retrieval metrics
-        mlflow.log_metrics({
-            "retrieval_count": len(retrieval_docs),
-            "avg_retrieval_score": sum(doc.score for doc in retrieval_docs) / len(retrieval_docs),
-            "unique_sources": len({doc.source_uri for doc in retrieval_docs}),
-        })
+        mlflow.log_metrics(
+            {
+                "retrieval_count": len(retrieval_docs),
+                "avg_retrieval_score": sum(doc.score for doc in retrieval_docs)
+                / len(retrieval_docs),
+                "unique_sources": len({doc.source_uri for doc in retrieval_docs}),
+            }
+        )
 
     def _log_tool_execution(self, tool_calls: list[ToolCall]) -> None:
         """Log tool execution details."""
@@ -184,48 +180,51 @@ class ProvenanceLogger:
             }
             tool_data.append(tool_info)
 
-        mlflow.log_text(
-            json.dumps(tool_data, indent=2),
-            "tool_execution.json"
-        )
+        mlflow.log_text(json.dumps(tool_data, indent=2), "tool_execution.json")
 
         # Log tool metrics
-        mlflow.log_metrics({
-            "tool_calls_count": len(tool_calls),
-            "successful_tools": sum(1 for tool in tool_calls if tool.success),
-            "avg_tool_duration": sum(tool.duration for tool in tool_calls) / len(tool_calls),
-        })
+        mlflow.log_metrics(
+            {
+                "tool_calls_count": len(tool_calls),
+                "successful_tools": sum(1 for tool in tool_calls if tool.success),
+                "avg_tool_duration": sum(tool.duration for tool in tool_calls)
+                / len(tool_calls),
+            }
+        )
 
     def _log_raw_output(self, raw_output: str) -> None:
         """Log raw LLM output."""
         mlflow.log_text(raw_output, "raw_output.txt")
 
         # Log output metrics
-        mlflow.log_metrics({
-            "raw_output_length": len(raw_output),
-            "raw_output_tokens": len(raw_output.split()),
-        })
+        mlflow.log_metrics(
+            {
+                "raw_output_length": len(raw_output),
+                "raw_output_tokens": len(raw_output.split()),
+            }
+        )
 
     def _log_postprocessed_output(self, postprocessed_output: str) -> None:
         """Log post-processed output."""
         mlflow.log_text(postprocessed_output, "postprocessed_output.txt")
 
         # Log processing metrics
-        mlflow.log_metrics({
-            "postprocessed_output_length": len(postprocessed_output),
-            "postprocessed_output_tokens": len(postprocessed_output.split()),
-        })
+        mlflow.log_metrics(
+            {
+                "postprocessed_output_length": len(postprocessed_output),
+                "postprocessed_output_tokens": len(postprocessed_output.split()),
+            }
+        )
 
     def _log_policy_verdicts(self, policy_verdicts: dict[str, Any]) -> None:
         """Log policy validation results."""
-        mlflow.log_text(
-            json.dumps(policy_verdicts, indent=2),
-            "policy_verdicts.json"
-        )
+        mlflow.log_text(json.dumps(policy_verdicts, indent=2), "policy_verdicts.json")
 
         # Log policy metrics
         if "overall_passed" in policy_verdicts:
-            mlflow.log_metric("policy_overall_passed", int(policy_verdicts["overall_passed"]))
+            mlflow.log_metric(
+                "policy_overall_passed", int(policy_verdicts["overall_passed"])
+            )
         if "overall_score" in policy_verdicts:
             mlflow.log_metric("policy_overall_score", policy_verdicts["overall_score"])
         if "total_violations" in policy_verdicts:
@@ -246,23 +245,32 @@ class ProvenanceLogger:
         }
 
         if retrieval_docs:
-            metrics.update({
-                "retrieval_count": len(retrieval_docs),
-                "avg_retrieval_score": sum(doc.score for doc in retrieval_docs) / len(retrieval_docs),
-            })
+            metrics.update(
+                {
+                    "retrieval_count": len(retrieval_docs),
+                    "avg_retrieval_score": sum(doc.score for doc in retrieval_docs)
+                    / len(retrieval_docs),
+                }
+            )
 
         if tool_calls:
-            metrics.update({
-                "tool_calls_count": len(tool_calls),
-                "successful_tools": sum(1 for tool in tool_calls if tool.success),
-            })
+            metrics.update(
+                {
+                    "tool_calls_count": len(tool_calls),
+                    "successful_tools": sum(1 for tool in tool_calls if tool.success),
+                }
+            )
 
         if policy_verdicts:
-            metrics.update({
-                "policy_overall_passed": int(policy_verdicts.get("overall_passed", False)),
-                "policy_overall_score": policy_verdicts.get("overall_score", 0.0),
-                "policy_violations": policy_verdicts.get("total_violations", 0),
-            })
+            metrics.update(
+                {
+                    "policy_overall_passed": int(
+                        policy_verdicts.get("overall_passed", False)
+                    ),
+                    "policy_overall_score": policy_verdicts.get("overall_score", 0.0),
+                    "policy_violations": policy_verdicts.get("total_violations", 0),
+                }
+            )
 
         mlflow.log_metrics(metrics)
 
@@ -292,14 +300,13 @@ class ProvenanceLogger:
 
             # Log to MLflow
             with mlflow.start_run(run_id=run_id):
-                mlflow.log_text(
-                    json.dumps(feedback_data, indent=2),
-                    "feedback.json"
+                mlflow.log_text(json.dumps(feedback_data, indent=2), "feedback.json")
+                mlflow.log_metrics(
+                    {
+                        "user_rating": rating,
+                        "feedback_reasons_count": len(reasons),
+                    }
                 )
-                mlflow.log_metrics({
-                    "user_rating": rating,
-                    "feedback_reasons_count": len(reasons),
-                })
                 mlflow.set_tag("has_feedback", "true")
 
             # Append to feedback log

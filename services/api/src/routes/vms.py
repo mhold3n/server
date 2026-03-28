@@ -26,38 +26,49 @@ async def list_vms() -> dict[str, list[dict[str, Any]]]:
     If Proxmox credentials are missing, returns an informative error.
     """
     if not settings.proxmox_token_id or not settings.proxmox_token_secret:
-        raise HTTPException(status_code=501, detail="Proxmox credentials not configured")
+        raise HTTPException(
+            status_code=501, detail="Proxmox credentials not configured"
+        )
 
     async with _pmx_client() as client:
         try:
             vms = await client.list_vms()
             return {"items": vms}
         except Exception as e:  # pragma: no cover - I/O wrapper
-            raise HTTPException(status_code=502, detail=f"Failed to list VMs: {e}") from e
+            raise HTTPException(
+                status_code=502, detail=f"Failed to list VMs: {e}"
+            ) from e
 
 
 @router.post("/{vmid}/start")
 async def start_vm(vmid: int) -> dict[str, Any]:
     if not settings.proxmox_token_id or not settings.proxmox_token_secret:
-        raise HTTPException(status_code=501, detail="Proxmox credentials not configured")
+        raise HTTPException(
+            status_code=501, detail="Proxmox credentials not configured"
+        )
     async with _pmx_client() as client:
         try:
             return await client.start_vm(vmid)
         except ValueError as e:
             raise HTTPException(status_code=404, detail=str(e)) from e
         except Exception as e:  # pragma: no cover - I/O wrapper
-            raise HTTPException(status_code=502, detail=f"Failed to start VM: {e}") from e
+            raise HTTPException(
+                status_code=502, detail=f"Failed to start VM: {e}"
+            ) from e
 
 
 @router.post("/{vmid}/stop")
 async def stop_vm(vmid: int) -> dict[str, Any]:
     if not settings.proxmox_token_id or not settings.proxmox_token_secret:
-        raise HTTPException(status_code=501, detail="Proxmox credentials not configured")
+        raise HTTPException(
+            status_code=501, detail="Proxmox credentials not configured"
+        )
     async with _pmx_client() as client:
         try:
             return await client.stop_vm(vmid)
         except ValueError as e:
             raise HTTPException(status_code=404, detail=str(e)) from e
         except Exception as e:  # pragma: no cover - I/O wrapper
-            raise HTTPException(status_code=502, detail=f"Failed to stop VM: {e}") from e
-
+            raise HTTPException(
+                status_code=502, detail=f"Failed to stop VM: {e}"
+            ) from e

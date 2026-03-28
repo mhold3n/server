@@ -56,7 +56,9 @@ async def get_policy_registry() -> dict[str, Any]:
 
     except Exception as e:
         logger.error("Failed to get policy registry", error=str(e))
-        raise HTTPException(status_code=500, detail="Failed to get policy registry") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to get policy registry"
+        ) from e
 
 
 @router.get("/registry/{policy_name}")
@@ -74,14 +76,18 @@ async def get_policy_info(policy_name: str) -> dict[str, Any]:
     """
     try:
         if policy_name not in policy_registry.policies:
-            raise HTTPException(status_code=404, detail=f"Policy '{policy_name}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Policy '{policy_name}' not found"
+            )
 
         # Get policy info
         policies = policy_registry.get_available_policies()
         policy_info = next((p for p in policies if p["name"] == policy_name), None)
 
         if not policy_info:
-            raise HTTPException(status_code=404, detail=f"Policy '{policy_name}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Policy '{policy_name}' not found"
+            )
 
         # Get schema
         schema = policy_registry.get_policy_schema(policy_name)
@@ -115,7 +121,9 @@ async def get_policy_schema(policy_name: str) -> dict[str, Any]:
         schema = policy_registry.get_policy_schema(policy_name)
 
         if not schema:
-            raise HTTPException(status_code=404, detail=f"Schema for policy '{policy_name}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Schema for policy '{policy_name}' not found"
+            )
 
         return schema
 
@@ -123,7 +131,9 @@ async def get_policy_schema(policy_name: str) -> dict[str, Any]:
         raise
     except Exception as e:
         logger.error("Failed to get policy schema", policy=policy_name, error=str(e))
-        raise HTTPException(status_code=500, detail="Failed to get policy schema") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to get policy schema"
+        ) from e
 
 
 @router.post("/validate")
@@ -162,8 +172,12 @@ async def validate_content(
             # Apply custom config if provided
             if request.config and policy_name in request.config:
                 # Update policy config temporarily
-                original_config = policy_registry.policy_configs[policy_name].config.copy()
-                policy_registry.update_policy_config(policy_name, request.config[policy_name])
+                original_config = policy_registry.policy_configs[
+                    policy_name
+                ].config.copy()
+                policy_registry.update_policy_config(
+                    policy_name, request.config[policy_name]
+                )
 
                 # Get updated policy instance
                 policy = policy_registry.get_policy(policy_name)
@@ -191,7 +205,9 @@ async def validate_content(
                 scores.append(result.score)
 
             except Exception as e:
-                logger.error("Policy validation failed", policy=policy_name, error=str(e))
+                logger.error(
+                    "Policy validation failed", policy=policy_name, error=str(e)
+                )
                 policy_results[policy_name] = {
                     "passed": False,
                     "score": 0.0,
@@ -204,9 +220,7 @@ async def validate_content(
         overall_score = sum(scores) / len(scores) if scores else 0.0
 
         # Determine if all policies passed
-        all_passed = all(
-            result["passed"] for result in policy_results.values()
-        )
+        all_passed = all(result["passed"] for result in policy_results.values())
 
         logger.info(
             "Policy validation completed",
@@ -248,17 +262,23 @@ async def update_policy_config(
     """
     try:
         if policy_name not in policy_registry.policies:
-            raise HTTPException(status_code=404, detail=f"Policy '{policy_name}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Policy '{policy_name}' not found"
+            )
 
         # Update config
         success = policy_registry.update_policy_config(policy_name, config)
 
         if not success:
-            raise HTTPException(status_code=500, detail="Failed to update policy config")
+            raise HTTPException(
+                status_code=500, detail="Failed to update policy config"
+            )
 
         # Get updated policy info
         policy_info = policy_registry.get_available_policies()
-        updated_policy = next((p for p in policy_info if p["name"] == policy_name), None)
+        updated_policy = next(
+            (p for p in policy_info if p["name"] == policy_name), None
+        )
 
         logger.info("Updated policy config", policy=policy_name, config=config)
 
@@ -271,7 +291,9 @@ async def update_policy_config(
         raise
     except Exception as e:
         logger.error("Failed to update policy config", policy=policy_name, error=str(e))
-        raise HTTPException(status_code=500, detail="Failed to update policy config") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to update policy config"
+        ) from e
 
 
 @router.post("/registry/{policy_name}/enable")
@@ -291,7 +313,9 @@ async def enable_policy(policy_name: str) -> dict[str, Any]:
         success = policy_registry.enable_policy(policy_name)
 
         if not success:
-            raise HTTPException(status_code=404, detail=f"Policy '{policy_name}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Policy '{policy_name}' not found"
+            )
 
         logger.info("Enabled policy", policy=policy_name)
 
@@ -323,7 +347,9 @@ async def disable_policy(policy_name: str) -> dict[str, Any]:
         success = policy_registry.disable_policy(policy_name)
 
         if not success:
-            raise HTTPException(status_code=404, detail=f"Policy '{policy_name}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Policy '{policy_name}' not found"
+            )
 
         logger.info("Disabled policy", policy=policy_name)
 
@@ -361,14 +387,3 @@ async def middleware_health() -> dict[str, Any]:
             "service": "policy-middleware",
             "error": str(e),
         }
-
-
-
-
-
-
-
-
-
-
-

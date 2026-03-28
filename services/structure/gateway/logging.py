@@ -22,7 +22,9 @@ class AuditRecord(BaseModel):
     action: str = Field(..., description="Action performed (e.g., 'submit_workflow')")
     resource_id: Optional[str] = Field(None, description="Target resource ID")
     status: str = Field(..., description="Outcome (SUCCESS, FAILURE, BLOCKED)")
-    details: dict[str, Any] = Field(default_factory=dict, description="Contextual details")
+    details: dict[str, Any] = Field(
+        default_factory=dict, description="Contextual details"
+    )
 
     # Compliance fields
     gates_passed: List[str] = Field(default_factory=list)
@@ -45,13 +47,23 @@ class StructuredLogger:
     def log_request(self, request_id: str, endpoint: str, payload: dict) -> None:
         """Log an incoming request."""
         self._emit(
-            {"event": "request", "request_id": request_id, "endpoint": endpoint, "payload": payload}
+            {
+                "event": "request",
+                "request_id": request_id,
+                "endpoint": endpoint,
+                "payload": payload,
+            }
         )
 
     def log_response(self, request_id: str, status: str, result: Any) -> None:
         """Log an outgoing response."""
         self._emit(
-            {"event": "response", "request_id": request_id, "status": status, "result": result}
+            {
+                "event": "response",
+                "request_id": request_id,
+                "status": status,
+                "result": result,
+            }
         )
 
     def log_event(self, request_id: str, event_type: str, data: Any) -> None:

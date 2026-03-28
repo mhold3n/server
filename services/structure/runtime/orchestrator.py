@@ -81,7 +81,9 @@ class Orchestrator:
                     resource_id=step.step_id,
                     status="BLOCKED",
                     details={"reason": "Gate Failure", "gates": reasons},
-                    gates_passed=[g.gate_id for g in gate_decisions if not g.is_blocking()],
+                    gates_passed=[
+                        g.gate_id for g in gate_decisions if not g.is_blocking()
+                    ],
                 )
                 logger_struct.log_audit(audit)
 
@@ -158,12 +160,19 @@ class Orchestrator:
                 # Audit Log
                 audit = AuditRecord(
                     event_id=str(uuid.uuid4()),
-                    actor_id=session.user_id if hasattr(session, "user_id") else "unknown",
+                    actor_id=(
+                        session.user_id if hasattr(session, "user_id") else "unknown"
+                    ),
                     action="step_execution",
                     resource_id=step.step_id,
                     status="SUCCESS",
-                    details={"kernel": kernel_id, "workflow_id": session.active_workflow_id},
-                    gates_passed=[g.gate_id for g in gate_decisions] if gate_decisions else [],
+                    details={
+                        "kernel": kernel_id,
+                        "workflow_id": session.active_workflow_id,
+                    },
+                    gates_passed=(
+                        [g.gate_id for g in gate_decisions] if gate_decisions else []
+                    ),
                 )
                 logger_struct.log_audit(audit)
 
@@ -175,7 +184,9 @@ class Orchestrator:
             else:
                 step.status = WorkflowStatus.FAILED
                 step.output = {"error": output.error}
-                session.add_history("step_failed", {"step_id": step.step_id, "error": output.error})
+                session.add_history(
+                    "step_failed", {"step_id": step.step_id, "error": output.error}
+                )
 
         except Exception as e:
             logger.error(f"Step execution failed: {e}")
@@ -210,7 +221,9 @@ class Orchestrator:
                 else:
                     # Steps pending but not ready -> Blocked?
                     # Or maybe waiting for dependencies that failed?
-                    failed = [s for s in workflow.steps if s.status == WorkflowStatus.FAILED]
+                    failed = [
+                        s for s in workflow.steps if s.status == WorkflowStatus.FAILED
+                    ]
                     if failed:
                         workflow.status = WorkflowStatus.FAILED
                     else:

@@ -66,8 +66,12 @@ class EvidencePolicy:
 
         # Check minimum citations
         if citation_count < self.min_citations:
-            violations.append(f"Insufficient citations: {citation_count}/{self.min_citations}")
-            suggestions.append(f"Add at least {self.min_citations - citation_count} more citations")
+            violations.append(
+                f"Insufficient citations: {citation_count}/{self.min_citations}"
+            )
+            suggestions.append(
+                f"Add at least {self.min_citations - citation_count} more citations"
+            )
 
         # Analyze source diversity
         if retrieval_set:
@@ -76,11 +80,15 @@ class EvidencePolicy:
 
             diversity_score = source_analysis["diversity_score"]
             if diversity_score < self.min_source_diversity:
-                violations.append(f"Low source diversity: {diversity_score:.2f}/{self.min_source_diversity}")
+                violations.append(
+                    f"Low source diversity: {diversity_score:.2f}/{self.min_source_diversity}"
+                )
                 suggestions.append("Include more diverse source types")
 
             # Check source quotas
-            quota_violations = self._check_source_quotas(source_analysis["source_types"])
+            quota_violations = self._check_source_quotas(
+                source_analysis["source_types"]
+            )
             violations.extend(quota_violations)
 
         # Check for unsupported claims
@@ -91,7 +99,9 @@ class EvidencePolicy:
             metadata["unsupported_claims"] = unsupported_claims
 
         # Calculate overall score
-        score = self._calculate_score(citation_count, len(violations), len(retrieval_set))
+        score = self._calculate_score(
+            citation_count, len(violations), len(retrieval_set)
+        )
 
         return PolicyResult(
             passed=len(violations) == 0,
@@ -112,11 +122,11 @@ class EvidencePolicy:
         """
         # Common citation patterns
         patterns = [
-            r'\[(\d+)\]',  # [1], [2], etc.
-            r'\([^)]*\d{4}[^)]*\)',  # (Author, 2023)
-            r'\[([^\]]*)\]',  # [Author, 2023]
-            r'\([^)]*et al\.[^)]*\)',  # (Smith et al., 2023)
-            r'\([^)]*\d{4}[^)]*\)',  # (2023)
+            r"\[(\d+)\]",  # [1], [2], etc.
+            r"\([^)]*\d{4}[^)]*\)",  # (Author, 2023)
+            r"\[([^\]]*)\]",  # [Author, 2023]
+            r"\([^)]*et al\.[^)]*\)",  # (Smith et al., 2023)
+            r"\([^)]*\d{4}[^)]*\)",  # (2023)
         ]
 
         total_citations = 0
@@ -186,7 +196,9 @@ class EvidencePolicy:
 
         return violations
 
-    def _find_unsupported_claims(self, text: str, retrieval_set: list[dict[str, Any]]) -> list[str]:
+    def _find_unsupported_claims(
+        self, text: str, retrieval_set: list[dict[str, Any]]
+    ) -> list[str]:
         """Find claims that may not be supported by retrieval set.
 
         Args:
@@ -197,7 +209,7 @@ class EvidencePolicy:
             List of potentially unsupported claims
         """
         # Simple heuristic: look for factual statements without nearby citations
-        sentences = re.split(r'[.!?]+', text)
+        sentences = re.split(r"[.!?]+", text)
         unsupported_claims = []
 
         for sentence in sentences:
@@ -207,21 +219,29 @@ class EvidencePolicy:
 
             # Check if sentence contains factual indicators
             factual_indicators = [
-                r'\b(is|are|was|were|has|have|had)\b',
-                r'\b(according to|studies show|research indicates)\b',
-                r'\b(typically|usually|generally|commonly)\b',
-                r'\b\d+%',  # Percentages
-                r'\b\d+\s*(mm|cm|m|kg|g|N|Pa|MPa|GPa)\b',  # Measurements
+                r"\b(is|are|was|were|has|have|had)\b",
+                r"\b(according to|studies show|research indicates)\b",
+                r"\b(typically|usually|generally|commonly)\b",
+                r"\b\d+%",  # Percentages
+                r"\b\d+\s*(mm|cm|m|kg|g|N|Pa|MPa|GPa)\b",  # Measurements
             ]
 
-            has_factual_content = any(re.search(pattern, sentence, re.IGNORECASE) for pattern in factual_indicators)
+            has_factual_content = any(
+                re.search(pattern, sentence, re.IGNORECASE)
+                for pattern in factual_indicators
+            )
 
             if has_factual_content:
                 # Check if sentence has nearby citation
-                has_citation = any(pattern in sentence for pattern in ['[', '(', 'et al', '2023', '2024'])
+                has_citation = any(
+                    pattern in sentence
+                    for pattern in ["[", "(", "et al", "2023", "2024"]
+                )
 
                 if not has_citation:
-                    unsupported_claims.append(sentence[:100] + "..." if len(sentence) > 100 else sentence)
+                    unsupported_claims.append(
+                        sentence[:100] + "..." if len(sentence) > 100 else sentence
+                    )
 
         return unsupported_claims
 
@@ -252,14 +272,3 @@ class EvidencePolicy:
 
         score = citation_score - violation_penalty + retrieval_bonus
         return max(0.0, min(1.0, score))
-
-
-
-
-
-
-
-
-
-
-

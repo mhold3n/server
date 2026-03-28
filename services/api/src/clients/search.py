@@ -21,7 +21,9 @@ async def meili_search(
         # Meili supports X-Meili-API-Key header; Authorization: Bearer also works
         headers["X-Meili-API-Key"] = api_key
     async with httpx.AsyncClient(timeout=10.0) as client:
-        resp = await client.post(url, json={"q": query, "limit": limit}, headers=headers)
+        resp = await client.post(
+            url, json={"q": query, "limit": limit}, headers=headers
+        )
         resp.raise_for_status()
         data = resp.json()
         hits = data.get("hits", [])
@@ -65,4 +67,3 @@ async def searx_search(
                 }
             )
         return results
-

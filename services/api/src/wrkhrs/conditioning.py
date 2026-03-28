@@ -28,7 +28,6 @@ class NonGenerativeConditioning:
             "mm": ("m", 0.001),
             "cm": ("m", 0.01),
             "km": ("m", 1000),
-
             # Mass
             "lb": ("kg", 0.453592),
             "lbs": ("kg", 0.453592),
@@ -40,14 +39,12 @@ class NonGenerativeConditioning:
             "ton": ("kg", 907.185),
             "tons": ("kg", 907.185),
             "g": ("kg", 0.001),
-
             # Force
             "lbf": ("N", 4.44822),
             "pound-force": ("N", 4.44822),
             "pounds-force": ("N", 4.44822),
             "kip": ("N", 4448.22),
             "kips": ("N", 4448.22),
-
             # Pressure
             "psi": ("Pa", 6894.76),
             "psia": ("Pa", 6894.76),
@@ -58,15 +55,13 @@ class NonGenerativeConditioning:
             "torr": ("Pa", 133.322),
             "mmHg": ("Pa", 133.322),
             "inHg": ("Pa", 3386.39),
-
             # Temperature
-            "°F": ("K", lambda f: (f - 32) * 5/9 + 273.15),
-            "F": ("K", lambda f: (f - 32) * 5/9 + 273.15),
-            "fahrenheit": ("K", lambda f: (f - 32) * 5/9 + 273.15),
+            "°F": ("K", lambda f: (f - 32) * 5 / 9 + 273.15),
+            "F": ("K", lambda f: (f - 32) * 5 / 9 + 273.15),
+            "fahrenheit": ("K", lambda f: (f - 32) * 5 / 9 + 273.15),
             "°C": ("K", lambda c: c + 273.15),
             "C": ("K", lambda c: c + 273.15),
             "celsius": ("K", lambda c: c + 273.15),
-
             # Energy
             "BTU": ("J", 1055.06),
             "btu": ("J", 1055.06),
@@ -74,7 +69,6 @@ class NonGenerativeConditioning:
             "kcal": ("J", 4184),
             "Wh": ("J", 3600),
             "kWh": ("J", 3600000),
-
             # Power
             "hp": ("W", 745.7),
             "horsepower": ("W", 745.7),
@@ -157,18 +151,22 @@ Please provide a comprehensive, technically accurate response that draws from th
                 else:
                     si_value = value * _conversion
 
-                unit_conversions.append({
-                    "original": f"{value} {_unit}",
-                    "converted": f"{si_value:.3f} {_si_unit}",
-                    "value": value,
-                    "si_value": si_value,
-                    "unit": _unit,
-                    "si_unit": _si_unit,
-                })
+                unit_conversions.append(
+                    {
+                        "original": f"{value} {_unit}",
+                        "converted": f"{si_value:.3f} {_si_unit}",
+                        "value": value,
+                        "si_value": si_value,
+                        "unit": _unit,
+                        "si_unit": _si_unit,
+                    }
+                )
 
                 return f"{si_value:.3f} {_si_unit}"
 
-            normalized_text = re.sub(pattern, replace_unit, normalized_text, flags=re.IGNORECASE)
+            normalized_text = re.sub(
+                pattern, replace_unit, normalized_text, flags=re.IGNORECASE
+            )
 
         return {
             "original_text": text,
@@ -190,27 +188,54 @@ Please provide a comprehensive, technically accurate response that draws from th
             Dictionary with detected constraints
         """
         safety_keywords = [
-            "safety", "safe", "hazard", "danger", "risk", "caution", "warning",
-            "flammable", "toxic", "corrosive", "explosive", "pressure", "temperature",
-            "limit", "maximum", "minimum", "critical", "failure", "breakdown",
+            "safety",
+            "safe",
+            "hazard",
+            "danger",
+            "risk",
+            "caution",
+            "warning",
+            "flammable",
+            "toxic",
+            "corrosive",
+            "explosive",
+            "pressure",
+            "temperature",
+            "limit",
+            "maximum",
+            "minimum",
+            "critical",
+            "failure",
+            "breakdown",
         ]
 
         operational_keywords = [
-            "operating", "operation", "maintenance", "inspection", "service",
-            "lifecycle", "durability", "reliability", "efficiency", "performance",
-            "cost", "budget", "schedule", "timeline", "deadline", "delivery",
+            "operating",
+            "operation",
+            "maintenance",
+            "inspection",
+            "service",
+            "lifecycle",
+            "durability",
+            "reliability",
+            "efficiency",
+            "performance",
+            "cost",
+            "budget",
+            "schedule",
+            "timeline",
+            "deadline",
+            "delivery",
         ]
 
         text_lower = text.lower()
 
         safety_constraints = [
-            keyword for keyword in safety_keywords
-            if keyword in text_lower
+            keyword for keyword in safety_keywords if keyword in text_lower
         ]
 
         operational_constraints = [
-            keyword for keyword in operational_keywords
-            if keyword in text_lower
+            keyword for keyword in operational_keywords if keyword in text_lower
         ]
 
         return {
@@ -250,7 +275,7 @@ Please provide a comprehensive, technically accurate response that draws from th
         for i, source in enumerate(evidence_sources, 1):
             evidence_context += f"{i}. {source.get('title', 'Unknown')} "
             evidence_context += f"(Score: {source.get('score', 0):.3f})\n"
-            if source.get('snippet'):
+            if source.get("snippet"):
                 evidence_context += f"   {source['snippet'][:100]}...\n"
 
         return {
@@ -265,9 +290,7 @@ Please provide a comprehensive, technically accurate response that draws from th
     def _build_domain_context(self, domain_weights: dict[str, float]) -> str:
         """Build domain context string from weights."""
         sorted_domains = sorted(
-            domain_weights.items(),
-            key=lambda x: x[1],
-            reverse=True
+            domain_weights.items(), key=lambda x: x[1], reverse=True
         )
 
         context_parts = []
@@ -294,27 +317,18 @@ Please provide a comprehensive, technically accurate response that draws from th
 
             for match in matches:
                 value = float(match.group(1))
-                detected_units.append({
-                    "value": value,
-                    "unit": unit,
-                    "si_unit": si_unit,
-                    "position": match.span(),
-                    "text": match.group(0),
-                })
+                detected_units.append(
+                    {
+                        "value": value,
+                        "unit": unit,
+                        "si_unit": si_unit,
+                        "position": match.span(),
+                        "text": match.group(0),
+                    }
+                )
 
         return {
             "original_text": text,
             "detected_units": detected_units,
             "has_units": len(detected_units) > 0,
         }
-
-
-
-
-
-
-
-
-
-
-

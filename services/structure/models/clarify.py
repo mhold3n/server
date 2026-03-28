@@ -65,12 +65,16 @@ class ClarifyAnswer(BaseModel):
     """
 
     request_id: str = Field(..., description="Original request ID")
-    clarify_request_id: Optional[str] = Field(None, description="ID of ClarifyRequest answered")
+    clarify_request_id: Optional[str] = Field(
+        None, description="ID of ClarifyRequest answered"
+    )
     selected_option_id: Optional[str] = Field(None, description="Selected option ID")
     provided_values: dict[str, str] = Field(
         default_factory=dict, description="Values for required_fields"
     )
-    freeform_response: Optional[str] = Field(None, description="Freeform text if no options")
+    freeform_response: Optional[str] = Field(
+        None, description="Freeform text if no options"
+    )
 
 
 class ClarifyChain(BaseModel):
@@ -81,7 +85,9 @@ class ClarifyChain(BaseModel):
     """
 
     request_id: str
-    clarifications: list[tuple[ClarifyRequest, ClarifyAnswer]] = Field(default_factory=list)
+    clarifications: list[tuple[ClarifyRequest, ClarifyAnswer]] = Field(
+        default_factory=list
+    )
     resolved: bool = Field(default=False)
 
     def add_exchange(self, request: ClarifyRequest, answer: ClarifyAnswer) -> None:

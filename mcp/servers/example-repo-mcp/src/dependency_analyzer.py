@@ -41,7 +41,7 @@ class DependencyAnalyzer:
             "graph": self._graph_to_dict(),
             "vulnerabilities": vulnerabilities,
             "outdated": outdated,
-            "stats": self._get_dependency_stats()
+            "stats": self._get_dependency_stats(),
         }
 
     def _detect_project_type(self, path: Path) -> str:
@@ -81,7 +81,8 @@ class DependencyAnalyzer:
         if pyproject_path.exists():
             try:
                 import tomllib
-                with open(pyproject_path, 'rb') as f:
+
+                with open(pyproject_path, "rb") as f:
                     data = tomllib.load(f)
 
                 # Extract dependencies
@@ -90,16 +91,19 @@ class DependencyAnalyzer:
                     if name != "python":
                         dependencies[name] = {
                             "version": str(version),
-                            "type": "runtime"
+                            "type": "runtime",
                         }
 
                 # Extract dev dependencies
-                dev_deps = data.get("tool", {}).get("poetry", {}).get("group", {}).get("dev", {}).get("dependencies", {})
+                dev_deps = (
+                    data.get("tool", {})
+                    .get("poetry", {})
+                    .get("group", {})
+                    .get("dev", {})
+                    .get("dependencies", {})
+                )
                 for name, version in dev_deps.items():
-                    dependencies[name] = {
-                        "version": str(version),
-                        "type": "dev"
-                    }
+                    dependencies[name] = {"version": str(version), "type": "dev"}
 
             except Exception as e:
                 logger.warning(f"Failed to parse pyproject.toml: {e}")
@@ -112,19 +116,19 @@ class DependencyAnalyzer:
                     with open(req_path) as f:
                         for line in f:
                             line = line.strip()
-                            if line and not line.startswith('#'):
+                            if line and not line.startswith("#"):
                                 # Parse requirement line
-                                if '==' in line:
-                                    name, version = line.split('==', 1)
+                                if "==" in line:
+                                    name, version = line.split("==", 1)
                                     dependencies[name.strip()] = {
                                         "version": version.strip(),
-                                        "type": "runtime"
+                                        "type": "runtime",
                                     }
-                                elif '>=' in line:
-                                    name, version = line.split('>=', 1)
+                                elif ">=" in line:
+                                    name, version = line.split(">=", 1)
                                     dependencies[name.strip()] = {
                                         "version": f">={version.strip()}",
-                                        "type": "runtime"
+                                        "type": "runtime",
                                     }
                 except Exception as e:
                     logger.warning(f"Failed to parse requirements.txt: {e}")
@@ -144,18 +148,12 @@ class DependencyAnalyzer:
                 # Extract dependencies
                 deps = data.get("dependencies", {})
                 for name, version in deps.items():
-                    dependencies[name] = {
-                        "version": version,
-                        "type": "runtime"
-                    }
+                    dependencies[name] = {"version": version, "type": "runtime"}
 
                 # Extract dev dependencies
                 dev_deps = data.get("devDependencies", {})
                 for name, version in dev_deps.items():
-                    dependencies[name] = {
-                        "version": version,
-                        "type": "dev"
-                    }
+                    dependencies[name] = {"version": version, "type": "dev"}
 
             except Exception as e:
                 logger.warning(f"Failed to parse package.json: {e}")
@@ -170,21 +168,19 @@ class DependencyAnalyzer:
         if cargo_path.exists():
             try:
                 import tomllib
-                with open(cargo_path, 'rb') as f:
+
+                with open(cargo_path, "rb") as f:
                     data = tomllib.load(f)
 
                 # Extract dependencies
                 deps = data.get("dependencies", {})
                 for name, version in deps.items():
                     if isinstance(version, str):
-                        dependencies[name] = {
-                            "version": version,
-                            "type": "runtime"
-                        }
+                        dependencies[name] = {"version": version, "type": "runtime"}
                     elif isinstance(version, dict):
                         dependencies[name] = {
                             "version": version.get("version", "*"),
-                            "type": "runtime"
+                            "type": "runtime",
                         }
 
             except Exception as e:
@@ -217,10 +213,7 @@ class DependencyAnalyzer:
                         if len(parts) >= 2:
                             name = parts[0]
                             version = parts[1]
-                            dependencies[name] = {
-                                "version": version,
-                                "type": "runtime"
-                            }
+                            dependencies[name] = {"version": version, "type": "runtime"}
 
             except Exception as e:
                 logger.warning(f"Failed to parse go.mod: {e}")
@@ -248,10 +241,12 @@ class DependencyAnalyzer:
         return {
             "nodes": list(self.dependency_graph.nodes()),
             "edges": list(self.dependency_graph.edges()),
-            "node_data": dict(self.dependency_graph.nodes(data=True))
+            "node_data": dict(self.dependency_graph.nodes(data=True)),
         }
 
-    async def _check_vulnerabilities(self, dependencies: dict[str, Any]) -> list[dict[str, Any]]:
+    async def _check_vulnerabilities(
+        self, dependencies: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Check for known vulnerabilities in dependencies."""
         # This is a placeholder - in a real implementation, you'd integrate
         # with vulnerability databases like OSV, Snyk, or GitHub Security Advisories
@@ -260,16 +255,20 @@ class DependencyAnalyzer:
         # Example vulnerability check (placeholder)
         for name, info in dependencies.items():
             if name in self.vulnerability_db:
-                vulnerabilities.append({
-                    "package": name,
-                    "version": info["version"],
-                    "vulnerability": self.vulnerability_db[name],
-                    "severity": "high"
-                })
+                vulnerabilities.append(
+                    {
+                        "package": name,
+                        "version": info["version"],
+                        "vulnerability": self.vulnerability_db[name],
+                        "severity": "high",
+                    }
+                )
 
         return vulnerabilities
 
-    async def _check_outdated(self, dependencies: dict[str, Any]) -> list[dict[str, Any]]:
+    async def _check_outdated(
+        self, dependencies: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Check for outdated dependencies."""
         # This is a placeholder - in a real implementation, you'd check
         # against package registries (PyPI, npm, crates.io, etc.)
@@ -279,29 +278,37 @@ class DependencyAnalyzer:
         for name, info in dependencies.items():
             # Simulate checking for newer versions
             if "old" in name.lower() or "legacy" in name.lower():
-                outdated.append({
-                    "package": name,
-                    "current_version": info["version"],
-                    "latest_version": "2.0.0",
-                    "type": info["type"]
-                })
+                outdated.append(
+                    {
+                        "package": name,
+                        "current_version": info["version"],
+                        "latest_version": "2.0.0",
+                        "type": info["type"],
+                    }
+                )
 
         return outdated
 
     def _get_dependency_stats(self) -> dict[str, Any]:
         """Get dependency statistics."""
         total_deps = len(self.dependency_graph.nodes())
-        runtime_deps = sum(1 for node in self.dependency_graph.nodes(data=True)
-                          if node[1].get("type") == "runtime")
-        dev_deps = sum(1 for node in self.dependency_graph.nodes(data=True)
-                      if node[1].get("type") == "dev")
+        runtime_deps = sum(
+            1
+            for node in self.dependency_graph.nodes(data=True)
+            if node[1].get("type") == "runtime"
+        )
+        dev_deps = sum(
+            1
+            for node in self.dependency_graph.nodes(data=True)
+            if node[1].get("type") == "dev"
+        )
 
         return {
             "total_dependencies": total_deps,
             "runtime_dependencies": runtime_deps,
             "dev_dependencies": dev_deps,
             "graph_nodes": self.dependency_graph.number_of_nodes(),
-            "graph_edges": self.dependency_graph.number_of_edges()
+            "graph_edges": self.dependency_graph.number_of_edges(),
         }
 
     async def get_stats(self) -> dict[str, Any]:
@@ -309,5 +316,5 @@ class DependencyAnalyzer:
         return {
             "analyzed_projects": 1,  # Placeholder
             "total_dependencies": len(self.dependency_graph.nodes()),
-            "vulnerability_checks": len(self.vulnerability_db)
+            "vulnerability_checks": len(self.vulnerability_db),
         }

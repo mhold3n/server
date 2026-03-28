@@ -74,7 +74,9 @@ def test_file_write_gate_blocks_secrets():
 
 def test_file_write_gate_allows_safe():
     """Test allowing safe writes."""
-    spec = TaskSpec(request_id="6", user_input="Save the results to output.txt", domain=Domain.CODE)
+    spec = TaskSpec(
+        request_id="6", user_input="Save the results to output.txt", domain=Domain.CODE
+    )
     decision = file_write_gate(spec)
     assert decision.decision == Decision.ACCEPT
 
@@ -96,7 +98,10 @@ async def test_orchestrator_enforces_gates():
     )
 
     step = WorkflowStep(
-        step_id="step_block", description="Write secret", spec=spec, status=WorkflowStatus.PENDING
+        step_id="step_block",
+        description="Write secret",
+        spec=spec,
+        status=WorkflowStatus.PENDING,
     )
 
     # Run step

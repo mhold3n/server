@@ -71,16 +71,12 @@ class TestWrkHrsIntegration:
     def test_request_conditioning(self, conditioner):
         """Test request conditioning."""
         # Test RAG conditioning
-        rag_payload = {
-            "messages": [{"role": "user", "content": "Search for ML info"}]
-        }
+        rag_payload = {"messages": [{"role": "user", "content": "Search for ML info"}]}
         conditioned = conditioner.condition_request("rag", rag_payload)
         assert "Always cite your sources" in conditioned["messages"][0]["content"]
 
         # Test tool use conditioning
-        tool_payload = {
-            "messages": [{"role": "user", "content": "Use tools to help"}]
-        }
+        tool_payload = {"messages": [{"role": "user", "content": "Use tools to help"}]}
         conditioned = conditioner.condition_request("tool_use", tool_payload)
         assert "Use tools to fulfill" in conditioned["messages"][0]["content"]
 
@@ -88,15 +84,11 @@ class TestWrkHrsIntegration:
     async def test_gateway_client_chat_completion(self, gateway_client):
         """Test gateway client chat completion."""
         # Mock response
-        mock_response = {
-            "choices": [{"message": {"content": "Test response"}}]
-        }
+        mock_response = {"choices": [{"message": {"content": "Test response"}}]}
         gateway_client.chat_completion.return_value = mock_response
 
         # Test chat completion
-        payload = {
-            "messages": [{"role": "user", "content": "Hello"}]
-        }
+        payload = {"messages": [{"role": "user", "content": "Hello"}]}
         response = await gateway_client.chat_completion(payload)
 
         assert response == mock_response
@@ -109,7 +101,7 @@ class TestWrkHrsIntegration:
         mock_response = {
             "tools": [
                 {"name": "github", "description": "GitHub operations"},
-                {"name": "filesystem", "description": "File operations"}
+                {"name": "filesystem", "description": "File operations"},
             ]
         }
         gateway_client.get_tool_registry.return_value = mock_response
@@ -124,10 +116,7 @@ class TestWrkHrsIntegration:
     async def test_gateway_client_asr_transcription(self, gateway_client):
         """Test gateway client ASR transcription."""
         # Mock response
-        mock_response = {
-            "transcription": "Hello world",
-            "confidence": 0.95
-        }
+        mock_response = {"transcription": "Hello world", "confidence": 0.95}
         gateway_client.get_asr_transcription.return_value = mock_response
 
         # Test ASR transcription
@@ -143,25 +132,21 @@ class TestWrkHrsIntegration:
             "content": "This is a fact [1] and another fact [2].",
             "citations": [
                 {"url": "https://example.com", "text": "Source 1"},
-                {"url": "https://example2.com", "text": "Source 2"}
-            ]
+                {"url": "https://example2.com", "text": "Source 2"},
+            ],
         }
         violations = evidence_policy.validate_response(
-            response_with_citations,
-            require_evidence=True,
-            min_citations=2
+            response_with_citations, require_evidence=True, min_citations=2
         )
         assert len(violations) == 0
 
         # Test response without citations
         response_without_citations = {
             "content": "This is a fact without citations.",
-            "citations": []
+            "citations": [],
         }
         violations = evidence_policy.validate_response(
-            response_without_citations,
-            require_evidence=True,
-            min_citations=1
+            response_without_citations, require_evidence=True, min_citations=1
         )
         assert len(violations) > 0
         assert "requires evidence/citations" in violations[0]
@@ -171,22 +156,21 @@ class TestWrkHrsIntegration:
         # Test response with inline citations
         response_with_inline = {
             "content": "This is a fact [1] and another fact (Source 2).",
-            "citations": []
+            "citations": [],
         }
         violations = evidence_policy.validate_response(
-            response_with_inline,
-            require_evidence=True,
-            min_citations=1
+            response_with_inline, require_evidence=True, min_citations=1
         )
         assert len(violations) == 0
 
     @pytest.mark.asyncio
     async def test_mlflow_logging(self, mlflow_logger):
         """Test MLflow logging."""
-        with patch('mlflow.start_run') as mock_start_run, \
-             patch('mlflow.end_run') as mock_end_run, \
-             patch('mlflow.log_params') as mock_log_params, \
-             patch('mlflow.log_metrics') as mock_log_metrics:
+        with patch("mlflow.start_run") as mock_start_run, patch(
+            "mlflow.end_run"
+        ) as mock_end_run, patch("mlflow.log_params") as mock_log_params, patch(
+            "mlflow.log_metrics"
+        ) as mock_log_metrics:
 
             # Mock active run
             mock_run = AsyncMock()
@@ -219,13 +203,17 @@ class TestWrkHrsIntegration:
     @pytest.mark.asyncio
     async def test_full_workflow_integration(self, client, gateway_client):
         """Test full workflow integration."""
-        with patch('src.wrkhrs.gateway_client.WrkHrsGatewayClient') as mock_client_class:
+        with patch(
+            "src.wrkhrs.gateway_client.WrkHrsGatewayClient"
+        ) as mock_client_class:
             # Mock client instance
             mock_client_class.return_value = gateway_client
 
             # Mock gateway response
             mock_response = {
-                "choices": [{"message": {"content": "Test response with citations [1]"}}]
+                "choices": [
+                    {"message": {"content": "Test response with citations [1]"}}
+                ]
             }
             gateway_client.chat_completion.return_value = mock_response
 
@@ -233,9 +221,11 @@ class TestWrkHrsIntegration:
             response = client.post(
                 "/v1/chat/completions",
                 json={
-                    "messages": [{"role": "user", "content": "Search for ML information"}],
-                    "domain": "rag"
-                }
+                    "messages": [
+                        {"role": "user", "content": "Search for ML information"}
+                    ],
+                    "domain": "rag",
+                },
             )
 
             assert response.status_code == 200
@@ -259,7 +249,7 @@ class TestWrkHrsIntegration:
             "run_id": "test-run-id",
             "rating": 5,
             "reason": "Excellent response",
-            "suggestions": "None"
+            "suggestions": "None",
         }
 
         response = client.post("/v1/feedback", json=feedback_data)
@@ -290,14 +280,3 @@ class TestWrkHrsIntegration:
         # Test metrics endpoint
         response = client.get("/metrics")
         assert response.status_code == 200
-
-
-
-
-
-
-
-
-
-
-

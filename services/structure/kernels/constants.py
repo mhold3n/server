@@ -10,7 +10,6 @@ from datetime import datetime
 from models.kernel_io import KernelInput, KernelOutput, Provenance
 from .base import KernelInterface, register_kernel
 
-
 # Authoritative physical constants with provenance
 PHYSICAL_CONSTANTS = {
     "speed_of_light": {
@@ -166,11 +165,15 @@ class ConstantsKernel(KernelInterface):
             matches = []
             for cid, cdata in PHYSICAL_CONSTANTS.items():
                 aliases = cdata.get("aliases", [])
-                if search_term in cid.lower() or any(search_term in a.lower() for a in aliases):
+                if search_term in cid.lower() or any(
+                    search_term in a.lower() for a in aliases
+                ):
                     matches.append({"constant_id": cid, **cdata})
 
             if len(matches) == 1:
-                return self._make_output(request_id=request_id, success=True, result=matches[0])
+                return self._make_output(
+                    request_id=request_id, success=True, result=matches[0]
+                )
             elif len(matches) > 1:
                 return self._make_output(
                     request_id=request_id,

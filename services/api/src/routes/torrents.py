@@ -39,7 +39,9 @@ async def list_torrents() -> dict[str, Any]:
             items = await qb.list_torrents()
             return {"items": items}
     except Exception as e:  # pragma: no cover - I/O wrapper
-        raise HTTPException(status_code=502, detail=f"Failed to list torrents: {e}") from e
+        raise HTTPException(
+            status_code=502, detail=f"Failed to list torrents: {e}"
+        ) from e
 
 
 @router.post("/add")
@@ -51,7 +53,9 @@ async def add_torrents(req: AddTorrentRequest) -> dict[str, Any]:
             res = await qb.add(req.urls)
             return res
     except Exception as e:  # pragma: no cover - I/O wrapper
-        raise HTTPException(status_code=502, detail=f"Failed to add torrent(s): {e}") from e
+        raise HTTPException(
+            status_code=502, detail=f"Failed to add torrent(s): {e}"
+        ) from e
 
 
 @router.post("/pause")
@@ -60,7 +64,9 @@ async def pause_torrents(req: TorrentHashesRequest) -> dict[str, Any]:
         async with _qb_client() as qb:
             return await qb.pause(req.hashes or [])
     except Exception as e:  # pragma: no cover - I/O wrapper
-        raise HTTPException(status_code=502, detail=f"Failed to pause torrents: {e}") from e
+        raise HTTPException(
+            status_code=502, detail=f"Failed to pause torrents: {e}"
+        ) from e
 
 
 @router.post("/resume")
@@ -69,5 +75,6 @@ async def resume_torrents(req: TorrentHashesRequest) -> dict[str, Any]:
         async with _qb_client() as qb:
             return await qb.resume(req.hashes or [])
     except Exception as e:  # pragma: no cover - I/O wrapper
-        raise HTTPException(status_code=502, detail=f"Failed to resume torrents: {e}") from e
-
+        raise HTTPException(
+            status_code=502, detail=f"Failed to resume torrents: {e}"
+        ) from e

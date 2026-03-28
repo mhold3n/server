@@ -211,6 +211,7 @@ def load_golden_sets() -> dict[str, list[dict[str, Any]]]:
         if os.path.exists(file_path):
             try:
                 import json
+
                 with open(file_path) as f:
                     file_tests = json.load(f)
                     golden_sets[set_name].extend(file_tests)
@@ -274,14 +275,3 @@ def get_all_test_ids() -> list[str]:
             test_ids.append(test["id"])
 
     return test_ids
-
-
-
-
-
-
-
-
-
-
-

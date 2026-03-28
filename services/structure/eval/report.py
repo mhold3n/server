@@ -28,17 +28,23 @@ def run_regression_suite():
                 kernel_cls = get_kernel(kernel_id)
                 if not kernel_cls:
                     print(f"ERROR: Kernel {kernel_id} not found")
-                    results.append({"id": case["id"], "status": "ERROR", "msg": "Kernel not found"})
+                    results.append(
+                        {"id": case["id"], "status": "ERROR", "msg": "Kernel not found"}
+                    )
                     continue
 
                 kernel = kernel_cls()
                 output = kernel.execute(
-                    KernelInput(kernel_id=kernel_id, request_id="eval", args=case["args"])
+                    KernelInput(
+                        kernel_id=kernel_id, request_id="eval", args=case["args"]
+                    )
                 )
 
                 # Check Result
                 if not output.success:
-                    results.append({"id": case["id"], "status": "FAIL", "msg": output.error})
+                    results.append(
+                        {"id": case["id"], "status": "FAIL", "msg": output.error}
+                    )
                     continue
 
                 # Simple subset match for now

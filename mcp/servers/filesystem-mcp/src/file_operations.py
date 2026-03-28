@@ -52,7 +52,9 @@ class FileOperations:
             logger.error("Failed to read file", path=path, error=str(e))
             raise
 
-    async def write_file(self, path: str, content: str, encoding: str = "utf-8") -> dict[str, Any]:
+    async def write_file(
+        self, path: str, content: str, encoding: str = "utf-8"
+    ) -> dict[str, Any]:
         """Write content to a file."""
         try:
             file_path = self._resolve_path(path)
@@ -75,10 +77,7 @@ class FileOperations:
             raise
 
     async def list_directory(
-        self,
-        path: str,
-        recursive: bool = False,
-        include_hidden: bool = False
+        self, path: str, recursive: bool = False, include_hidden: bool = False
     ) -> dict[str, Any]:
         """List contents of a directory."""
         try:
@@ -98,30 +97,44 @@ class FileOperations:
                         continue
 
                     relative_path = item_path.relative_to(dir_path)
-                    items.append({
-                        "name": item_path.name,
-                        "path": str(relative_path),
-                        "type": "directory" if item_path.is_dir() else "file",
-                        "size": item_path.stat().st_size if item_path.is_file() else None,
-                        "modified": item_path.stat().st_mtime,
-                    })
+                    items.append(
+                        {
+                            "name": item_path.name,
+                            "path": str(relative_path),
+                            "type": "directory" if item_path.is_dir() else "file",
+                            "size": (
+                                item_path.stat().st_size
+                                if item_path.is_file()
+                                else None
+                            ),
+                            "modified": item_path.stat().st_mtime,
+                        }
+                    )
             else:
                 for item_path in dir_path.iterdir():
                     if not include_hidden and item_path.name.startswith("."):
                         continue
 
-                    items.append({
-                        "name": item_path.name,
-                        "path": item_path.name,
-                        "type": "directory" if item_path.is_dir() else "file",
-                        "size": item_path.stat().st_size if item_path.is_file() else None,
-                        "modified": item_path.stat().st_mtime,
-                    })
+                    items.append(
+                        {
+                            "name": item_path.name,
+                            "path": item_path.name,
+                            "type": "directory" if item_path.is_dir() else "file",
+                            "size": (
+                                item_path.stat().st_size
+                                if item_path.is_file()
+                                else None
+                            ),
+                            "modified": item_path.stat().st_mtime,
+                        }
+                    )
 
             # Sort items: directories first, then files, both alphabetically
             items.sort(key=lambda x: (x["type"] != "directory", x["name"].lower()))
 
-            logger.info("Listed directory", path=path, count=len(items), recursive=recursive)
+            logger.info(
+                "Listed directory", path=path, count=len(items), recursive=recursive
+            )
             return {
                 "path": str(dir_path),
                 "items": items,
@@ -133,10 +146,7 @@ class FileOperations:
             raise
 
     async def search_files(
-        self,
-        pattern: str,
-        root_path: str = ".",
-        include_hidden: bool = False
+        self, pattern: str, root_path: str = ".", include_hidden: bool = False
     ) -> dict[str, Any]:
         """Search for files matching a pattern."""
         try:
@@ -156,12 +166,14 @@ class FileOperations:
 
                 if file_path.is_file() and fnmatch.fnmatch(file_path.name, pattern):
                     relative_path = file_path.relative_to(search_path)
-                    matches.append({
-                        "name": file_path.name,
-                        "path": str(relative_path),
-                        "size": file_path.stat().st_size,
-                        "modified": file_path.stat().st_mtime,
-                    })
+                    matches.append(
+                        {
+                            "name": file_path.name,
+                            "path": str(relative_path),
+                            "size": file_path.stat().st_size,
+                            "modified": file_path.stat().st_mtime,
+                        }
+                    )
 
             # Sort by path
             matches.sort(key=lambda x: x["path"])
@@ -223,7 +235,9 @@ class FileOperations:
 
                 try:
                     # Read file content
-                    async with aiofiles.open(file_path, encoding="utf-8", errors="ignore") as f:
+                    async with aiofiles.open(
+                        file_path, encoding="utf-8", errors="ignore"
+                    ) as f:
                         content = await f.read()
 
                     # Search for matches
@@ -235,25 +249,33 @@ class FileOperations:
                         context = content[start:end]
 
                         # Find line number
-                        line_num = content[:match.start()].count("\n") + 1
+                        line_num = content[: match.start()].count("\n") + 1
 
-                        file_matches.append({
-                            "line": line_num,
-                            "column": match.start() - content.rfind("\n", 0, match.start()) - 1,
-                            "match": match.group(),
-                            "context": context.strip(),
-                        })
+                        file_matches.append(
+                            {
+                                "line": line_num,
+                                "column": match.start()
+                                - content.rfind("\n", 0, match.start())
+                                - 1,
+                                "match": match.group(),
+                                "context": context.strip(),
+                            }
+                        )
 
                     if file_matches:
                         relative_path = file_path.relative_to(search_path)
-                        matches.append({
-                            "file": str(relative_path),
-                            "matches": file_matches,
-                            "count": len(file_matches),
-                        })
+                        matches.append(
+                            {
+                                "file": str(relative_path),
+                                "matches": file_matches,
+                                "count": len(file_matches),
+                            }
+                        )
 
                 except Exception as e:
-                    logger.warning("Failed to search in file", file=str(file_path), error=str(e))
+                    logger.warning(
+                        "Failed to search in file", file=str(file_path), error=str(e)
+                    )
                     continue
 
             # Sort by file path

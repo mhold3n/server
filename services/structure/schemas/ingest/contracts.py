@@ -26,14 +26,18 @@ class Provenance(BaseModel):
     Tracks the origin and lineage of a data artifact.
     """
 
-    source_name: str = Field(..., description="Name of the data source (e.g., 'OpenStax_Physics')")
+    source_name: str = Field(
+        ..., description="Name of the data source (e.g., 'OpenStax_Physics')"
+    )
     source_uri: str = Field(..., description="URI or path to the original source")
     author: Optional[str] = Field(None, description="Original author or creator")
     date_acquired: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         description="UTC timestamp when data was acquired",
     )
-    license: License = Field(default=License.UNKNOWN, description="License of the source data")
+    license: License = Field(
+        default=License.UNKNOWN, description="License of the source data"
+    )
     ingestion_id: str = Field(..., description="ID of the ingestion event/run")
 
 
@@ -42,12 +46,16 @@ class BaseArtifact(BaseModel):
     Base class for all ingested artifacts.
     """
 
-    id: str = Field(default_factory=lambda: str(uuid4()), description="Unique artifact ID")
+    id: str = Field(
+        default_factory=lambda: str(uuid4()), description="Unique artifact ID"
+    )
     partition: Partition = Field(
         default=Partition.UNASSIGNED, description="Assigned data partition"
     )
     provenance: Provenance
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Arbitrary metadata")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Arbitrary metadata"
+    )
 
 
 class Document(BaseArtifact):
@@ -56,7 +64,9 @@ class Document(BaseArtifact):
     """
 
     content: str = Field(..., description="Full text content of the document")
-    content_hash: str = Field(..., description="MD5 hash of the content for exact dedup")
+    content_hash: str = Field(
+        ..., description="MD5 hash of the content for exact dedup"
+    )
 
     @field_validator("content")
     def content_not_empty(cls, v):
@@ -95,6 +105,8 @@ class Asset(BaseArtifact):
     doc_id: str = Field(..., description="ID of the parent Document")
     asset_type: AssetType
     caption: Optional[str] = None
-    content_uri: Optional[str] = Field(None, description="Path to valid asset file (e.g. image)")
+    content_uri: Optional[str] = Field(
+        None, description="Path to valid asset file (e.g. image)"
+    )
     bbox: Optional[List[int]] = Field(None, description="[x1, y1, x2, y2] bounding box")
     phash: Optional[str] = Field(None, description="Perceptual hash for deduplication")

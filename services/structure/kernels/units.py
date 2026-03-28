@@ -10,7 +10,6 @@ from datetime import datetime
 from models.kernel_io import KernelInput, KernelOutput, Provenance, UnitMetadata
 from .base import KernelInterface, register_kernel
 
-
 # Simplified UCUM conversion factors to SI base units
 UNIT_CONVERSIONS = {
     # Mass (to kg)

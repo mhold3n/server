@@ -14,7 +14,9 @@ class StatisticsKernel(KernelInterface):
     kernel_id = "statistics_v1"
     version = "1.0.0"
     determinism_level = "D1"
-    description = "Performs basic descriptive statistics and hypothesis testing (t-test)."
+    description = (
+        "Performs basic descriptive statistics and hypothesis testing (t-test)."
+    )
 
     def validate_args(self, args: dict) -> tuple[bool, list[str]]:
         errors = []
@@ -31,7 +33,9 @@ class StatisticsKernel(KernelInterface):
             if method == "sample_size":
                 pass  # sample_size might not need data if just calculating n
             else:
-                errors.append("Missing 'data' argument (or flat args like group1/group2, x/y)")
+                errors.append(
+                    "Missing 'data' argument (or flat args like group1/group2, x/y)"
+                )
 
         if has_data:
             data = args["data"]
@@ -45,7 +49,9 @@ class StatisticsKernel(KernelInterface):
         valid, errors = self.validate_args(args)
         if not valid:
             return self._make_output(
-                input.request_id, success=False, error="Invalid arguments: " + "; ".join(errors)
+                input.request_id,
+                success=False,
+                error="Invalid arguments: " + "; ".join(errors),
             )
 
         method = args.get("method") or args.get("operation")
@@ -66,7 +72,9 @@ class StatisticsKernel(KernelInterface):
             if method == "descriptive":
                 if data is None:
                     return self._make_output(
-                        input.request_id, success=False, error="Missing data for descriptive stats"
+                        input.request_id,
+                        success=False,
+                        error="Missing data for descriptive stats",
                     )
                 return self._make_output(
                     input.request_id, success=True, result=self._descriptive(data)
@@ -82,7 +90,9 @@ class StatisticsKernel(KernelInterface):
             elif method == "regression":
                 if data is None:
                     return self._make_output(
-                        input.request_id, success=False, error="Missing data for regression"
+                        input.request_id,
+                        success=False,
+                        error="Missing data for regression",
                     )
                 return self._make_output(
                     input.request_id, success=True, result=self._regression(data)
@@ -93,12 +103,16 @@ class StatisticsKernel(KernelInterface):
                 )
             else:
                 return self._make_output(
-                    input.request_id, success=False, error=f"Unknown operation '{method}'"
+                    input.request_id,
+                    success=False,
+                    error=f"Unknown operation '{method}'",
                 )
         except Exception as e:
             return self._make_output(input.request_id, success=False, error=str(e))
 
-    def _descriptive(self, data: Union[List[float], Dict[str, List[float]]]) -> Dict[str, Any]:
+    def _descriptive(
+        self, data: Union[List[float], Dict[str, List[float]]]
+    ) -> Dict[str, Any]:
         # data can be a list or a dict of lists
         if isinstance(data, list):
             series = {"default": data}
@@ -196,7 +210,9 @@ class StatisticsKernel(KernelInterface):
             "slope": slope,
             "intercept": intercept,
             "r_squared": r_squared,
-            "correlation": math.sqrt(r_squared) if slope >= 0 else -math.sqrt(r_squared),
+            "correlation": (
+                math.sqrt(r_squared) if slope >= 0 else -math.sqrt(r_squared)
+            ),
         }
 
     def _sample_size(self, args: Dict[str, Any]) -> Dict[str, Any]:

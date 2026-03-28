@@ -19,10 +19,29 @@ class GitHubWorkflow:
         """
         self.mcp_client = mcp_client
         self.code_indicators = [
-            "code", "function", "class", "method", "bug", "fix", "feature",
-            "implementation", "refactor", "optimize", "debug", "test",
-            "repository", "pull request", "issue", "commit", "branch",
-            "merge", "review", "deploy", "build", "ci", "cd"
+            "code",
+            "function",
+            "class",
+            "method",
+            "bug",
+            "fix",
+            "feature",
+            "implementation",
+            "refactor",
+            "optimize",
+            "debug",
+            "test",
+            "repository",
+            "pull request",
+            "issue",
+            "commit",
+            "branch",
+            "merge",
+            "review",
+            "deploy",
+            "build",
+            "ci",
+            "cd",
         ]
 
     async def process_prompt(
@@ -89,12 +108,12 @@ class GitHubWorkflow:
 
         # Check for code patterns
         code_patterns = [
-            r'\b(def|class|function|method|import|from)\b',
-            r'\b(bug|error|exception|traceback)\b',
-            r'\b(feature|enhancement|improvement)\b',
-            r'\b(review|refactor|optimize|debug)\b',
-            r'\b(test|spec|assert|expect)\b',
-            r'\b(commit|push|pull|merge|branch)\b',
+            r"\b(def|class|function|method|import|from)\b",
+            r"\b(bug|error|exception|traceback)\b",
+            r"\b(feature|enhancement|improvement)\b",
+            r"\b(review|refactor|optimize|debug)\b",
+            r"\b(test|spec|assert|expect)\b",
+            r"\b(commit|push|pull|merge|branch)\b",
         ]
 
         for pattern in code_patterns:
@@ -103,6 +122,7 @@ class GitHubWorkflow:
 
         return False
 
+
 class CodeDetector:
     """Detects code-related prompts and classifies them."""
 
@@ -110,20 +130,49 @@ class CodeDetector:
         """Initialize code detector."""
         self.classifiers = {
             "bug_report": [
-                "bug", "error", "exception", "traceback", "crash", "fail",
-                "broken", "not working", "issue", "problem", "fix"
+                "bug",
+                "error",
+                "exception",
+                "traceback",
+                "crash",
+                "fail",
+                "broken",
+                "not working",
+                "issue",
+                "problem",
+                "fix",
             ],
             "feature_request": [
-                "feature", "enhancement", "improvement", "add", "new",
-                "implement", "create", "build", "develop"
+                "feature",
+                "enhancement",
+                "improvement",
+                "add",
+                "new",
+                "implement",
+                "create",
+                "build",
+                "develop",
             ],
             "code_review": [
-                "review", "check", "look at", "examine", "analyze",
-                "evaluate", "assess", "inspect"
+                "review",
+                "check",
+                "look at",
+                "examine",
+                "analyze",
+                "evaluate",
+                "assess",
+                "inspect",
             ],
             "implementation": [
-                "implement", "code", "write", "create", "build",
-                "develop", "program", "script", "function"
+                "implement",
+                "code",
+                "write",
+                "create",
+                "build",
+                "develop",
+                "program",
+                "script",
+                "function",
             ],
         }
 
@@ -196,7 +245,7 @@ class CodeDetector:
                         "environment": bug_info["environment"],
                     },
                     "labels": ["bug", "needs-triage"],
-                }
+                },
             )
 
             # Add to project if specified
@@ -208,7 +257,7 @@ class CodeDetector:
                         "issue_id": issue_result["number"],
                         "field_id": "status",
                         "value": "New",
-                    }
+                    },
                 )
 
             return {
@@ -260,7 +309,7 @@ class CodeDetector:
                         "alternatives": feature_info["alternatives"],
                     },
                     "labels": ["enhancement", "needs-discussion"],
-                }
+                },
             )
 
             # Add to project if specified
@@ -272,7 +321,7 @@ class CodeDetector:
                         "issue_id": issue_result["number"],
                         "field_id": "status",
                         "value": "Under Consideration",
-                    }
+                    },
                 )
 
             return {
@@ -320,7 +369,7 @@ class CodeDetector:
                     "base": review_info["base_branch"],
                     "body": review_info["description"],
                     "draft": True,  # Create as draft for review
-                }
+                },
             )
 
             # Link to issue if specified
@@ -332,7 +381,7 @@ class CodeDetector:
                         "repo": context.get("repo", "server"),
                         "pull_number": pr_result["number"],
                         "issue_number": review_info["issue_number"],
-                    }
+                    },
                 )
 
             return {
@@ -384,7 +433,7 @@ class CodeDetector:
                         "testing": impl_info["testing"],
                     },
                     "labels": ["implementation", "needs-assignment"],
-                }
+                },
             )
 
             # Create branch for implementation
@@ -399,7 +448,7 @@ class CodeDetector:
                         "issue_id": issue_result["number"],
                         "field_id": "status",
                         "value": "In Progress",
-                    }
+                    },
                 )
 
             return {
@@ -443,7 +492,7 @@ class CodeDetector:
                     "title": f"Code request: {prompt[:50]}...",
                     "body": prompt,
                     "labels": ["code", "needs-triage"],
-                }
+                },
             )
 
             return {
@@ -528,14 +577,3 @@ class CodeDetector:
             "specs": "Technical specifications",
             "testing": "Testing requirements",
         }
-
-
-
-
-
-
-
-
-
-
-

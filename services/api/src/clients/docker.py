@@ -30,7 +30,9 @@ def _client():
 def list_service_containers(service: str) -> list[dict[str, Any]]:
     client = _client()
     try:
-        containers = client.containers.list(all=True, filters={"label": f"com.docker.compose.service={service}"})
+        containers = client.containers.list(
+            all=True, filters={"label": f"com.docker.compose.service={service}"}
+        )
         items: list[dict[str, Any]] = []
         for c in containers:
             items.append(
@@ -53,7 +55,9 @@ def restart_service(service: str, timeout: int = 10) -> dict[str, Any]:
     client = _client()
     restarted = []
     try:
-        containers = client.containers.list(all=True, filters={"label": f"com.docker.compose.service={service}"})
+        containers = client.containers.list(
+            all=True, filters={"label": f"com.docker.compose.service={service}"}
+        )
         for c in containers:
             c.restart(timeout=timeout)
             restarted.append(c.name)
@@ -63,4 +67,3 @@ def restart_service(service: str, timeout: int = 10) -> dict[str, Any]:
             client.close()
         except Exception:
             pass
-

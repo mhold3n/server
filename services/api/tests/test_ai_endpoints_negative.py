@@ -36,4 +36,3 @@ def test_simulations_ai_stack_500_propagates():
         )
         resp = client.post("/api/ai/simulations/analyze", json={"payload": {}})
         assert resp.status_code == 500
-

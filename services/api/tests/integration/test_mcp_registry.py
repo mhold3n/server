@@ -28,18 +28,12 @@ class TestMCPRegistryIntegration:
                     "description": "A test tool",
                     "schema": {
                         "type": "object",
-                        "properties": {
-                            "input": {"type": "string"}
-                        }
-                    }
+                        "properties": {"input": {"type": "string"}},
+                    },
                 }
             ],
             "resources": [],
-            "metadata": {
-                "env": {
-                    "TEST_VAR": "test_value"
-                }
-            }
+            "metadata": {"env": {"TEST_VAR": "test_value"}},
         }
 
     @pytest.mark.asyncio
@@ -48,8 +42,7 @@ class TestMCPRegistryIntegration:
         async with httpx.AsyncClient() as client:
             # Register server
             response = await client.post(
-                f"{mcp_registry_url}/mcp/registry/register",
-                json=sample_mcp_server
+                f"{mcp_registry_url}/mcp/registry/register", json=sample_mcp_server
             )
 
             assert response.status_code == 200
@@ -64,8 +57,7 @@ class TestMCPRegistryIntegration:
         async with httpx.AsyncClient() as client:
             # Register server first
             await client.post(
-                f"{mcp_registry_url}/mcp/registry/register",
-                json=sample_mcp_server
+                f"{mcp_registry_url}/mcp/registry/register", json=sample_mcp_server
             )
 
             # Get all servers
@@ -77,8 +69,7 @@ class TestMCPRegistryIntegration:
 
             # Find our test server
             test_server = next(
-                (s for s in servers if s["name"] == sample_mcp_server["name"]),
-                None
+                (s for s in servers if s["name"] == sample_mcp_server["name"]), None
             )
             assert test_server is not None
             assert test_server["type"] == "tool"
@@ -90,8 +81,7 @@ class TestMCPRegistryIntegration:
         async with httpx.AsyncClient() as client:
             # Register server first
             await client.post(
-                f"{mcp_registry_url}/mcp/registry/register",
-                json=sample_mcp_server
+                f"{mcp_registry_url}/mcp/registry/register", json=sample_mcp_server
             )
 
             # Get specific server
@@ -117,8 +107,7 @@ class TestMCPRegistryIntegration:
         async with httpx.AsyncClient() as client:
             # Register server first
             await client.post(
-                f"{mcp_registry_url}/mcp/registry/register",
-                json=sample_mcp_server
+                f"{mcp_registry_url}/mcp/registry/register", json=sample_mcp_server
             )
 
             # Get all tools
@@ -129,10 +118,7 @@ class TestMCPRegistryIntegration:
             assert len(tools) > 0
 
             # Find our test tool
-            test_tool = next(
-                (t for t in tools if t["name"] == "test_tool"),
-                None
-            )
+            test_tool = next((t for t in tools if t["name"] == "test_tool"), None)
             assert test_tool is not None
             assert test_tool["server"] == sample_mcp_server["name"]
             assert test_tool["server_type"] == "tool"
@@ -145,15 +131,14 @@ class TestMCPRegistryIntegration:
             {
                 "name": "test_resource",
                 "description": "A test resource",
-                "mime_type": "text/plain"
+                "mime_type": "text/plain",
             }
         ]
 
         async with httpx.AsyncClient() as client:
             # Register server first
             await client.post(
-                f"{mcp_registry_url}/mcp/registry/register",
-                json=sample_mcp_server
+                f"{mcp_registry_url}/mcp/registry/register", json=sample_mcp_server
             )
 
             # Get all resources
@@ -165,8 +150,7 @@ class TestMCPRegistryIntegration:
 
             # Find our test resource
             test_resource = next(
-                (r for r in resources if r["name"] == "test_resource"),
-                None
+                (r for r in resources if r["name"] == "test_resource"), None
             )
             assert test_resource is not None
             assert test_resource["server"] == sample_mcp_server["name"]
@@ -177,8 +161,7 @@ class TestMCPRegistryIntegration:
         async with httpx.AsyncClient() as client:
             # Register server first
             await client.post(
-                f"{mcp_registry_url}/mcp/registry/register",
-                json=sample_mcp_server
+                f"{mcp_registry_url}/mcp/registry/register", json=sample_mcp_server
             )
 
             # Get server schema
@@ -196,14 +179,12 @@ class TestMCPRegistryIntegration:
         async with httpx.AsyncClient() as client:
             # Register server first
             await client.post(
-                f"{mcp_registry_url}/mcp/registry/register",
-                json=sample_mcp_server
+                f"{mcp_registry_url}/mcp/registry/register", json=sample_mcp_server
             )
 
             # Search for tools
             response = await client.get(
-                f"{mcp_registry_url}/mcp/registry/search/tools",
-                params={"q": "test"}
+                f"{mcp_registry_url}/mcp/registry/search/tools", params={"q": "test"}
             )
             assert response.status_code == 200
 
@@ -219,21 +200,20 @@ class TestMCPRegistryIntegration:
             {
                 "name": "test_resource",
                 "description": "A test resource for searching",
-                "mime_type": "text/plain"
+                "mime_type": "text/plain",
             }
         ]
 
         async with httpx.AsyncClient() as client:
             # Register server first
             await client.post(
-                f"{mcp_registry_url}/mcp/registry/register",
-                json=sample_mcp_server
+                f"{mcp_registry_url}/mcp/registry/register", json=sample_mcp_server
             )
 
             # Search for resources
             response = await client.get(
                 f"{mcp_registry_url}/mcp/registry/search/resources",
-                params={"q": "test"}
+                params={"q": "test"},
             )
             assert response.status_code == 200
 
@@ -247,8 +227,7 @@ class TestMCPRegistryIntegration:
         async with httpx.AsyncClient() as client:
             # Register server first
             await client.post(
-                f"{mcp_registry_url}/mcp/registry/register",
-                json=sample_mcp_server
+                f"{mcp_registry_url}/mcp/registry/register", json=sample_mcp_server
             )
 
             # Get registry stats
@@ -276,13 +255,14 @@ class TestMCPRegistryIntegration:
             assert "servers_count" in health
 
     @pytest.mark.asyncio
-    async def test_duplicate_server_registration(self, mcp_registry_url, sample_mcp_server):
+    async def test_duplicate_server_registration(
+        self, mcp_registry_url, sample_mcp_server
+    ):
         """Test registering duplicate server (should update)."""
         async with httpx.AsyncClient() as client:
             # Register server first time
             response1 = await client.post(
-                f"{mcp_registry_url}/mcp/registry/register",
-                json=sample_mcp_server
+                f"{mcp_registry_url}/mcp/registry/register", json=sample_mcp_server
             )
             assert response1.status_code == 200
 
@@ -292,8 +272,7 @@ class TestMCPRegistryIntegration:
 
             # Register server second time (should update)
             response2 = await client.post(
-                f"{mcp_registry_url}/mcp/registry/register",
-                json=updated_server
+                f"{mcp_registry_url}/mcp/registry/register", json=updated_server
             )
             assert response2.status_code == 200
 
@@ -317,8 +296,7 @@ class TestMCPRegistryIntegration:
             }
 
             response = await client.post(
-                f"{mcp_registry_url}/mcp/registry/register",
-                json=invalid_server
+                f"{mcp_registry_url}/mcp/registry/register", json=invalid_server
             )
             assert response.status_code == 422  # Validation error
 
@@ -333,7 +311,7 @@ class TestMCPRegistryIntegration:
             "version": "1.0.0",
             "url": "http://tool-server:7000",
             "tools": [],
-            "resources": []
+            "resources": [],
         }
 
         # Register resource server
@@ -344,18 +322,21 @@ class TestMCPRegistryIntegration:
             "version": "1.0.0",
             "url": "http://resource-server:7000",
             "tools": [],
-            "resources": []
+            "resources": [],
         }
 
         async with httpx.AsyncClient() as client:
             # Register both servers
-            await client.post(f"{mcp_registry_url}/mcp/registry/register", json=tool_server)
-            await client.post(f"{mcp_registry_url}/mcp/registry/register", json=resource_server)
+            await client.post(
+                f"{mcp_registry_url}/mcp/registry/register", json=tool_server
+            )
+            await client.post(
+                f"{mcp_registry_url}/mcp/registry/register", json=resource_server
+            )
 
             # Filter by tool type
             response = await client.get(
-                f"{mcp_registry_url}/mcp/registry",
-                params={"type": "tool"}
+                f"{mcp_registry_url}/mcp/registry", params={"type": "tool"}
             )
             assert response.status_code == 200
 
@@ -365,8 +346,7 @@ class TestMCPRegistryIntegration:
 
             # Filter by resource type
             response = await client.get(
-                f"{mcp_registry_url}/mcp/registry",
-                params={"type": "resource"}
+                f"{mcp_registry_url}/mcp/registry", params={"type": "resource"}
             )
             assert response.status_code == 200
 

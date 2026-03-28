@@ -70,7 +70,11 @@ class LabAmbiguityGate(Gate):
             "clarify": "What type of sample are you referring to?",
         },
         "power": {
-            "meanings": ["statistical power", "electrical power", "computational power"],
+            "meanings": [
+                "statistical power",
+                "electrical power",
+                "computational power",
+            ],
             "clarify": "Are you referring to statistical power or another type?",
         },
         "response rate": {
@@ -102,7 +106,11 @@ class LabAmbiguityGate(Gate):
             "clarify": "What rate are you measuring?",
         },
         "distribution": {
-            "meanings": ["probability distribution", "data distribution", "resource distribution"],
+            "meanings": [
+                "probability distribution",
+                "data distribution",
+                "resource distribution",
+            ],
             "clarify": "Are you asking about statistical distribution or resource allocation?",
         },
     }
@@ -253,7 +261,9 @@ class ExperimentSafetyGate(Gate):
 
         if has_human_subjects and not has_ethics:
             issues.append("human_subjects_no_ethics")
-            questions.append("This involves human subjects. Has IRB approval been obtained?")
+            questions.append(
+                "This involves human subjects. Has IRB approval been obtained?"
+            )
 
         if has_risk:
             issues.append("high_risk_indicators")
@@ -264,11 +274,14 @@ class ExperimentSafetyGate(Gate):
         # Check for control group in experiments
         if domain == "experiment":
             has_control = any(
-                kw in text for kw in ["control group", "control condition", "placebo", "baseline"]
+                kw in text
+                for kw in ["control group", "control condition", "placebo", "baseline"]
             )
             if not has_control:
                 issues.append("no_control_group")
-                questions.append("No control group mentioned. Is this a controlled experiment?")
+                questions.append(
+                    "No control group mentioned. Is this a controlled experiment?"
+                )
 
         if issues:
             # High-risk studies should block, others clarify
@@ -356,13 +369,16 @@ class DataQualityGate(Gate):
 
         # Check for data source specification
         has_source = any(
-            kw in text for kw in ["from", "source", "file", "path", "query", "fetch", "load"]
+            kw in text
+            for kw in ["from", "source", "file", "path", "query", "fetch", "load"]
         )
         if not has_source:
             questions.append("Where is the data coming from?")
 
         # Check for format specification
-        has_format = any(kw in text for kw in ["csv", "json", "excel", "parquet", "sql", "format"])
+        has_format = any(
+            kw in text for kw in ["csv", "json", "excel", "parquet", "sql", "format"]
+        )
         if not has_format:
             questions.append("What format is the data in?")
 

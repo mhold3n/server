@@ -79,7 +79,10 @@ def test_session_endpoints(mock_orchestrator):
         name="Test Workflow",
         steps=[
             WorkflowStep(
-                step_id="s1", description="Test step", status=WorkflowStatus.BLOCKED, spec=spec
+                step_id="s1",
+                description="Test step",
+                status=WorkflowStatus.BLOCKED,
+                spec=spec,
             )
         ],
     )
@@ -98,7 +101,10 @@ def test_session_endpoints(mock_orchestrator):
         name="Test Workflow",
         steps=[
             WorkflowStep(
-                step_id="s1", description="Test step", status=WorkflowStatus.COMPLETED, spec=spec
+                step_id="s1",
+                description="Test step",
+                status=WorkflowStatus.COMPLETED,
+                spec=spec,
             )
         ],
         status=WorkflowStatus.COMPLETED,

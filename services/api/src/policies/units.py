@@ -49,7 +49,6 @@ class SIUnitPolicy:
             "mm": ("m", 0.001),
             "cm": ("m", 0.01),
             "km": ("m", 1000),
-
             # Mass
             "lb": ("kg", 0.453592),
             "lbs": ("kg", 0.453592),
@@ -61,14 +60,12 @@ class SIUnitPolicy:
             "ton": ("kg", 907.185),
             "tons": ("kg", 907.185),
             "g": ("kg", 0.001),
-
             # Force
             "lbf": ("N", 4.44822),
             "pound-force": ("N", 4.44822),
             "pounds-force": ("N", 4.44822),
             "kip": ("N", 4448.22),
             "kips": ("N", 4448.22),
-
             # Pressure
             "psi": ("Pa", 6894.76),
             "psia": ("Pa", 6894.76),
@@ -79,7 +76,6 @@ class SIUnitPolicy:
             "torr": ("Pa", 133.322),
             "mmHg": ("Pa", 133.322),
             "inHg": ("Pa", 3386.39),
-
             # Energy
             "BTU": ("J", 1055.06),
             "btu": ("J", 1055.06),
@@ -87,7 +83,6 @@ class SIUnitPolicy:
             "kcal": ("J", 4184),
             "Wh": ("J", 3600),
             "kWh": ("J", 3600000),
-
             # Power
             "hp": ("W", 745.7),
             "horsepower": ("W", 745.7),
@@ -97,13 +92,24 @@ class SIUnitPolicy:
 
         # Common units that are allowed
         self.allowed_units = {
-            "°C", "°F", "K",  # Temperature
-            "%", "percent", "percentage",  # Percentages
-            "°", "degrees", "deg",  # Angles
-            "rad", "radians",  # Radians
-            "mol", "mole", "moles",  # Moles
-            "Hz", "hertz",  # Frequency
-            "rpm", "rev/min",  # Rotational speed
+            "°C",
+            "°F",
+            "K",  # Temperature
+            "%",
+            "percent",
+            "percentage",  # Percentages
+            "°",
+            "degrees",
+            "deg",  # Angles
+            "rad",
+            "radians",  # Radians
+            "mol",
+            "mole",
+            "moles",  # Moles
+            "Hz",
+            "hertz",  # Frequency
+            "rpm",
+            "rev/min",  # Rotational speed
         }
 
     async def validate(
@@ -132,8 +138,12 @@ class SIUnitPolicy:
         if self.enforce_si_units:
             non_si_units = self._find_non_si_units(unit_analysis)
             if non_si_units:
-                violations.append(f"Non-SI units detected: {len(non_si_units)} instances")
-                suggestions.append("Convert all units to SI system (meters, kilograms, seconds, etc.)")
+                violations.append(
+                    f"Non-SI units detected: {len(non_si_units)} instances"
+                )
+                suggestions.append(
+                    "Convert all units to SI system (meters, kilograms, seconds, etc.)"
+                )
                 metadata["non_si_units"] = non_si_units
 
         # Check unit consistency
@@ -179,7 +189,7 @@ class SIUnitPolicy:
             Unit analysis results
         """
         # Pattern to find numbers with units
-        unit_pattern = r'\b(\d+(?:\.\d+)?)\s*([a-zA-Z°%]+(?:\s*[a-zA-Z°%]+)*)\b'
+        unit_pattern = r"\b(\d+(?:\.\d+)?)\s*([a-zA-Z°%]+(?:\s*[a-zA-Z°%]+)*)\b"
 
         unit_instances = []
         unit_types = {}
@@ -193,13 +203,15 @@ class SIUnitPolicy:
             # Normalize unit
             unit_normalized = self._normalize_unit(unit)
 
-            unit_instances.append({
-                "value": value,
-                "unit": unit,
-                "unit_normalized": unit_normalized,
-                "position": match.start(),
-                "text": match.group(0),
-            })
+            unit_instances.append(
+                {
+                    "value": value,
+                    "unit": unit,
+                    "unit_normalized": unit_normalized,
+                    "position": match.start(),
+                    "text": match.group(0),
+                }
+            )
 
             # Count unit types
             unit_types[unit_normalized] = unit_types.get(unit_normalized, 0) + 1
@@ -221,7 +233,7 @@ class SIUnitPolicy:
             Normalized unit string
         """
         # Convert to lowercase and remove extra spaces
-        normalized = re.sub(r'\s+', ' ', unit.lower().strip())
+        normalized = re.sub(r"\s+", " ", unit.lower().strip())
 
         # Handle common variations
         variations = {
@@ -255,11 +267,13 @@ class SIUnitPolicy:
 
             # Check if unit is non-SI
             if self._is_non_si_unit(unit):
-                non_si_units.append({
-                    "instance": instance,
-                    "si_equivalent": self._get_si_equivalent(unit),
-                    "conversion_factor": self._get_conversion_factor(unit),
-                })
+                non_si_units.append(
+                    {
+                        "instance": instance,
+                        "si_equivalent": self._get_si_equivalent(unit),
+                        "conversion_factor": self._get_conversion_factor(unit),
+                    }
+                )
 
         return non_si_units
 
@@ -274,9 +288,35 @@ class SIUnitPolicy:
         """
         # SI base units and derived units
         si_units = {
-            "m", "kg", "s", "A", "K", "mol", "cd",  # Base units
-            "N", "Pa", "J", "W", "V", "F", "Ω", "S", "Wb", "T", "H", "lm", "lx", "Bq", "Gy", "Sv", "kat",  # Derived units
-            "Hz", "rad", "sr", "°C", "°F",  # Special units
+            "m",
+            "kg",
+            "s",
+            "A",
+            "K",
+            "mol",
+            "cd",  # Base units
+            "N",
+            "Pa",
+            "J",
+            "W",
+            "V",
+            "F",
+            "Ω",
+            "S",
+            "Wb",
+            "T",
+            "H",
+            "lm",
+            "lx",
+            "Bq",
+            "Gy",
+            "Sv",
+            "kat",  # Derived units
+            "Hz",
+            "rad",
+            "sr",
+            "°C",
+            "°F",  # Special units
         }
 
         # Check if unit is in conversion table (non-SI)
@@ -292,7 +332,24 @@ class SIUnitPolicy:
             return False
 
         # Check for SI prefixes
-        si_prefixes = ["k", "M", "G", "T", "P", "E", "Z", "Y", "m", "μ", "n", "p", "f", "a", "z", "y"]
+        si_prefixes = [
+            "k",
+            "M",
+            "G",
+            "T",
+            "P",
+            "E",
+            "Z",
+            "Y",
+            "m",
+            "μ",
+            "n",
+            "p",
+            "f",
+            "a",
+            "z",
+            "y",
+        ]
         for prefix in si_prefixes:
             if unit.startswith(prefix) and unit[1:] in si_units:
                 return False
@@ -348,12 +405,14 @@ class SIUnitPolicy:
                 unit_types = {instance["unit_normalized"] for instance in instances}
 
                 if len(unit_types) > 1:
-                    consistency_issues.append({
-                        "quantity": quantity,
-                        "instances": instances,
-                        "unit_types": list(unit_types),
-                        "issue": "Mixed units for same physical quantity",
-                    })
+                    consistency_issues.append(
+                        {
+                            "quantity": quantity,
+                            "instances": instances,
+                            "unit_types": list(unit_types),
+                            "issue": "Mixed units for same physical quantity",
+                        }
+                    )
 
         return consistency_issues
 
@@ -391,33 +450,68 @@ class SIUnitPolicy:
             Physical quantity name
         """
         # Length units
-        length_units = ["m", "mm", "cm", "km", "in", "inch", "ft", "feet", "yard", "mile"]
-        if any(unit.startswith(prefix) or unit == base for prefix in ["k", "M", "G", "m", "μ", "n"] for base in length_units):
+        length_units = [
+            "m",
+            "mm",
+            "cm",
+            "km",
+            "in",
+            "inch",
+            "ft",
+            "feet",
+            "yard",
+            "mile",
+        ]
+        if any(
+            unit.startswith(prefix) or unit == base
+            for prefix in ["k", "M", "G", "m", "μ", "n"]
+            for base in length_units
+        ):
             return "length"
 
         # Mass units
         mass_units = ["kg", "g", "lb", "pound", "oz", "ounce", "ton"]
-        if any(unit.startswith(prefix) or unit == base for prefix in ["k", "M", "G", "m", "μ", "n"] for base in mass_units):
+        if any(
+            unit.startswith(prefix) or unit == base
+            for prefix in ["k", "M", "G", "m", "μ", "n"]
+            for base in mass_units
+        ):
             return "mass"
 
         # Force units
         force_units = ["N", "lbf", "pound-force", "kip"]
-        if any(unit.startswith(prefix) or unit == base for prefix in ["k", "M", "G", "m", "μ", "n"] for base in force_units):
+        if any(
+            unit.startswith(prefix) or unit == base
+            for prefix in ["k", "M", "G", "m", "μ", "n"]
+            for base in force_units
+        ):
             return "force"
 
         # Pressure units
         pressure_units = ["Pa", "psi", "atm", "bar", "torr", "mmHg"]
-        if any(unit.startswith(prefix) or unit == base for prefix in ["k", "M", "G", "m", "μ", "n"] for base in pressure_units):
+        if any(
+            unit.startswith(prefix) or unit == base
+            for prefix in ["k", "M", "G", "m", "μ", "n"]
+            for base in pressure_units
+        ):
             return "pressure"
 
         # Energy units
         energy_units = ["J", "BTU", "cal", "Wh"]
-        if any(unit.startswith(prefix) or unit == base for prefix in ["k", "M", "G", "m", "μ", "n"] for base in energy_units):
+        if any(
+            unit.startswith(prefix) or unit == base
+            for prefix in ["k", "M", "G", "m", "μ", "n"]
+            for base in energy_units
+        ):
             return "energy"
 
         # Power units
         power_units = ["W", "hp", "horsepower"]
-        if any(unit.startswith(prefix) or unit == base for prefix in ["k", "M", "G", "m", "μ", "n"] for base in power_units):
+        if any(
+            unit.startswith(prefix) or unit == base
+            for prefix in ["k", "M", "G", "m", "μ", "n"]
+            for base in power_units
+        ):
             return "power"
 
         # Temperature units
@@ -452,13 +546,15 @@ class SIUnitPolicy:
 
                 # Check for unreasonable conversions
                 if self._is_unreasonable_conversion(value, si_value, unit):
-                    conversion_errors.append({
-                        "instance": instance,
-                        "original_value": value,
-                        "si_value": si_value,
-                        "conversion_factor": conversion_factor,
-                        "issue": "Unreasonable conversion result",
-                    })
+                    conversion_errors.append(
+                        {
+                            "instance": instance,
+                            "original_value": value,
+                            "si_value": si_value,
+                            "conversion_factor": conversion_factor,
+                            "issue": "Unreasonable conversion result",
+                        }
+                    )
 
         return conversion_errors
 
@@ -506,7 +602,7 @@ class SIUnitPolicy:
         missing_units = []
 
         # Pattern for numbers that should have units
-        number_pattern = r'\b(\d+(?:\.\d+)?)\s*([a-zA-Z°%]+(?:\s*[a-zA-Z°%]+)*)?\b'
+        number_pattern = r"\b(\d+(?:\.\d+)?)\s*([a-zA-Z°%]+(?:\s*[a-zA-Z°%]+)*)?\b"
 
         matches = re.finditer(number_pattern, text)
 
@@ -516,12 +612,14 @@ class SIUnitPolicy:
 
             # Check if this number should have a unit
             if self._should_have_unit(value, unit, match.start(), text):
-                missing_units.append({
-                    "value": value,
-                    "position": match.start(),
-                    "text": match.group(0),
-                    "context": text[max(0, match.start() - 50):match.end() + 50],
-                })
+                missing_units.append(
+                    {
+                        "value": value,
+                        "position": match.start(),
+                        "text": match.group(0),
+                        "context": text[max(0, match.start() - 50) : match.end() + 50],
+                    }
+                )
 
         return missing_units
 
@@ -556,14 +654,29 @@ class SIUnitPolicy:
             return False
 
         # Check context for unit indicators
-        context = text[max(0, position - 100):position + 100].lower()
+        context = text[max(0, position - 100) : position + 100].lower()
 
         # If context suggests units are expected
         unit_indicators = [
-            "length", "width", "height", "diameter", "radius",
-            "mass", "weight", "force", "pressure", "stress",
-            "temperature", "energy", "power", "voltage", "current",
-            "speed", "velocity", "acceleration", "frequency",
+            "length",
+            "width",
+            "height",
+            "diameter",
+            "radius",
+            "mass",
+            "weight",
+            "force",
+            "pressure",
+            "stress",
+            "temperature",
+            "energy",
+            "power",
+            "voltage",
+            "current",
+            "speed",
+            "velocity",
+            "acceleration",
+            "frequency",
         ]
 
         if any(indicator in context for indicator in unit_indicators):
@@ -601,14 +714,3 @@ class SIUnitPolicy:
         base_score = 1.0 - violation_penalty + diversity_bonus
 
         return max(0.0, min(1.0, base_score))
-
-
-
-
-
-
-
-
-
-
-

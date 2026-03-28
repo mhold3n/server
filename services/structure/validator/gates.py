@@ -14,7 +14,6 @@ from models.task_spec import TaskSpec
 from models.gate_decision import GateDecision, Decision
 from .loader import load_quantities, load_policy
 
-
 # --- Gate Implementations ---
 
 
@@ -72,7 +71,9 @@ def unit_consistency_gate(spec: TaskSpec) -> GateDecision:
             clarifying_questions=questions,
         )
 
-    return GateDecision(gate_id="unit_consistency_gate", decision=Decision.ACCEPT, reasons=[])
+    return GateDecision(
+        gate_id="unit_consistency_gate", decision=Decision.ACCEPT, reasons=[]
+    )
 
 
 def ambiguity_gate(spec: TaskSpec) -> GateDecision:
@@ -101,7 +102,9 @@ def ambiguity_gate(spec: TaskSpec) -> GateDecision:
             reasons.append("DISALLOWED_TERM")
             field_name = term.replace(" ", "_").lower()
             required_fields.append(f"{field_name}_clarification")
-            questions.append(f"The term '{term}' is ambiguous. Please clarify what you mean.")
+            questions.append(
+                f"The term '{term}' is ambiguous. Please clarify what you mean."
+            )
 
     # Check for term collisions
     for qty in quantities_list:
@@ -197,7 +200,9 @@ def experiment_safety_gate(spec: TaskSpec) -> GateDecision:
             clarifying_questions=questions,
         )
 
-    return GateDecision(gate_id="experiment_safety_gate", decision=Decision.ACCEPT, reasons=[])
+    return GateDecision(
+        gate_id="experiment_safety_gate", decision=Decision.ACCEPT, reasons=[]
+    )
 
 
 def file_write_gate(spec: TaskSpec) -> GateDecision:
@@ -212,7 +217,9 @@ def file_write_gate(spec: TaskSpec) -> GateDecision:
     # If operation involves writing (checking keywords for now)
     write_keywords = ["save", "write", "export", "dump", "log to"]
     if not any(k in spec.user_input.lower() for k in write_keywords):
-        return GateDecision(gate_id="file_write_gate", decision=Decision.ACCEPT, reasons=[])
+        return GateDecision(
+            gate_id="file_write_gate", decision=Decision.ACCEPT, reasons=[]
+        )
 
     # Check for restricted patterns in input
     reasons = []

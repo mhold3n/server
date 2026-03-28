@@ -27,10 +27,16 @@ class QueryRequest(BaseModel):
     model: str = Field(default=DEFAULT_LLM_MODEL)
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int | None = Field(default=None, gt=0)
-    tools: list[str] | None = Field(default=None, description="MCP tools to use via router (server:tool)")
-    tool_args: dict[str, dict[str, Any]] | None = Field(default=None, description="Per-tool argument overrides (key: server:tool)")
+    tools: list[str] | None = Field(
+        default=None, description="MCP tools to use via router (server:tool)"
+    )
+    tool_args: dict[str, dict[str, Any]] | None = Field(
+        default=None, description="Per-tool argument overrides (key: server:tool)"
+    )
     context: dict[str, Any] | None = Field(default=None)
-    use_router: bool = Field(default=True, description="Route via agent router with MCP integration")
+    use_router: bool = Field(
+        default=True, description="Route via agent router with MCP integration"
+    )
     system: str = Field(default="You are a helpful AI assistant.")
 
 
@@ -41,7 +47,8 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
 
     if req.use_router:
         payload = {
-            "prompt": req.prompt or (req.messages[-1]["content"] if req.messages else ""),
+            "prompt": req.prompt
+            or (req.messages[-1]["content"] if req.messages else ""),
             "system": req.system,
             "model": req.model,
             "tools": req.tools,
@@ -55,22 +62,34 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
             try:
                 resp.raise_for_status()
             except httpx.HTTPError:
-                raise HTTPException(status_code=resp.status_code, detail=resp.text) from None
+                raise HTTPException(
+                    status_code=resp.status_code, detail=resp.text
+                ) from None
             return resp.json()
     else:
         # Simple LLM call via AI stack
-        payload = {"prompt": req.prompt or (req.messages[-1]["content"] if req.messages else ""), "model": req.model}
+        payload = {
+            "prompt": req.prompt
+            or (req.messages[-1]["content"] if req.messages else ""),
+            "model": req.model,
+        }
         async with httpx.AsyncClient(timeout=180.0) as client:
-            resp = await client.post(f"{settings.ai_stack_url}/llm/prompt", json=payload)
+            resp = await client.post(
+                f"{settings.ai_stack_url}/llm/prompt", json=payload
+            )
             try:
                 resp.raise_for_status()
             except httpx.HTTPError:
-                raise HTTPException(status_code=resp.status_code, detail=resp.text) from None
+                raise HTTPException(
+                    status_code=resp.status_code, detail=resp.text
+                ) from None
             return resp.json()
 
 
 class WorkflowRunRequest(BaseModel):
-    name: str = Field(description="Workflow name (e.g., code-rag, media-fixups, sysadmin-ops)")
+    name: str = Field(
+        description="Workflow name (e.g., code-rag, media-fixups, sysadmin-ops)"
+    )
     input: dict[str, Any] = Field(default_factory=dict)
     model: str = Field(default=DEFAULT_LLM_MODEL)
     temperature: float = Field(default=0.2)
@@ -105,7 +124,9 @@ async def run_workflow(req: WorkflowRunRequest) -> dict[str, Any]:
         "prompt": prompt,
         "system": card.system_prompt,
         "model": req.model or DEFAULT_LLM_MODEL,
-        "temperature": req.temperature if req.temperature is not None else card.temperature,
+        "temperature": (
+            req.temperature if req.temperature is not None else card.temperature
+        ),
         "max_tokens": req.max_tokens if req.max_tokens is not None else card.max_tokens,
     }
     if card.required_tools:
@@ -117,7 +138,9 @@ async def run_workflow(req: WorkflowRunRequest) -> dict[str, Any]:
         try:
             resp.raise_for_status()
         except httpx.HTTPError:
-            raise HTTPException(status_code=resp.status_code, detail=resp.text) from None
+            raise HTTPException(
+                status_code=resp.status_code, detail=resp.text
+            ) from None
         result = resp.json()
         if isinstance(result, dict):
             result["task_card_id"] = name
@@ -153,7 +176,9 @@ async def simulations_analyze(req: SimulationAnalyzeRequest) -> dict[str, Any]:
         try:
             resp.raise_for_status()
         except httpx.HTTPError:
-            raise HTTPException(status_code=resp.status_code, detail=resp.text) from None
+            raise HTTPException(
+                status_code=resp.status_code, detail=resp.text
+            ) from None
         return resp.json()
 
 
@@ -166,7 +191,15 @@ def _health_url(path: str, base: str | None) -> str | None:
 @router.get("/status")
 async def ai_status() -> dict[str, Any]:
     """Aggregate health/status for AI components: API (worker), Qwen, Router, AI Stack, RAG, ASR, MCPs."""
-    status: dict[str, Any] = {"api": {}, "router": {}, "ai_stack": {}, "worker": {}, "qwen": {}, "rag": {}, "asr": {}}
+    status: dict[str, Any] = {
+        "api": {},
+        "router": {},
+        "ai_stack": {},
+        "worker": {},
+        "qwen": {},
+        "rag": {},
+        "asr": {},
+    }
 
     # API/Worker (OpenAI-compatible client; typically Qwen)
     qwen_reachable = False
@@ -174,6 +207,7 @@ async def ai_status() -> dict[str, Any]:
     qwen_model_name: str | None = None
     try:
         from ..app import openai_client  # lazy import to reuse initialized client
+
         if openai_client:
             try:
                 t0 = time.perf_counter()
@@ -182,10 +216,15 @@ async def ai_status() -> dict[str, Any]:
                 qwen_reachable = True
                 if models.data:
                     first = models.data[0]
-                    qwen_model_name = getattr(first, "id", None) if first is not None else None
+                    qwen_model_name = (
+                        getattr(first, "id", None) if first is not None else None
+                    )
                 if not qwen_model_name:
                     qwen_model_name = DEFAULT_LLM_MODEL
-                status["worker"] = {"status": "healthy", "model_count": len(models.data)}
+                status["worker"] = {
+                    "status": "healthy",
+                    "model_count": len(models.data),
+                }
                 status["api"]["openai"] = "healthy"
             except Exception as e:  # pragma: no cover - I/O
                 status["worker"] = {"status": "unhealthy", "error": str(e)}
@@ -200,7 +239,9 @@ async def ai_status() -> dict[str, Any]:
     status["qwen"] = {
         "reachable": qwen_reachable,
         "model_name": qwen_model_name or DEFAULT_LLM_MODEL,
-        "latency_ms": round(qwen_latency_ms, 2) if qwen_latency_ms is not None else None,
+        "latency_ms": (
+            round(qwen_latency_ms, 2) if qwen_latency_ms is not None else None
+        ),
     }
 
     # Router health (+ MCP servers)
@@ -274,6 +315,7 @@ async def ai_status() -> dict[str, Any]:
     # Profile + worker wiring (for dashboard / debugging)
     try:
         from ..config import WorkerProfile  # type: ignore
+
         profile_value: str = str(getattr(settings, "orch_profile", WorkerProfile.GPU))
     except Exception:
         profile_value = str(getattr(settings, "orch_profile", "gpu"))
@@ -282,8 +324,16 @@ async def ai_status() -> dict[str, Any]:
     status["worker_base_url"] = getattr(settings, "openai_base_url", "")
 
     # Overall status (worker, router, ai_stack are required; qwen/rag/asr inform but don't fail overall)
-    components = [status.get("worker", {}), status.get("router", {}), status.get("ai_stack", {})]
-    overall = "healthy" if all(c.get("status") == "healthy" for c in components) else "degraded"
+    components = [
+        status.get("worker", {}),
+        status.get("router", {}),
+        status.get("ai_stack", {}),
+    ]
+    overall = (
+        "healthy"
+        if all(c.get("status") == "healthy" for c in components)
+        else "degraded"
+    )
     status["status"] = overall
     return status
 
@@ -306,6 +356,7 @@ class MCPCallRequest(BaseModel):
 async def _get_disabled_servers() -> list[str]:
     try:
         from ..app import redis_client  # type: ignore
+
         if redis_client:
             disabled = await redis_client.smembers("mcp:disabled")
             return list(disabled or [])
@@ -317,6 +368,7 @@ async def _get_disabled_servers() -> list[str]:
 async def _set_server_enabled(name: str, enabled: bool) -> None:
     try:
         from ..app import redis_client  # type: ignore
+
         if not redis_client:
             return
         if enabled:
@@ -364,7 +416,9 @@ async def mcp_server_tools(name: str) -> dict[str, Any]:
 async def mcp_call(req: MCPCallRequest) -> dict[str, Any]:
     disabled = await _get_disabled_servers()
     if req.server in disabled:
-        raise HTTPException(status_code=403, detail=f"Server '{req.server}' is disabled")
+        raise HTTPException(
+            status_code=403, detail=f"Server '{req.server}' is disabled"
+        )
     async with httpx.AsyncClient(timeout=180.0) as client:
         # Router expects tool_name and arguments; send as JSON body
         r = await client.post(

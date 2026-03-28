@@ -160,7 +160,9 @@ async def submit_task(input: TaskRequestInput) -> TaskResponse:
                     resource_id=request_id,
                     status="BLOCKED",
                     details={"reason": f"Blocked by {first_block.gate_id}"},
-                    gates_passed=[g.gate_id for g in gate_results if not g.is_blocking()],
+                    gates_passed=[
+                        g.gate_id for g in gate_results if not g.is_blocking()
+                    ],
                     policy_violations=[g.gate_id for g in blocking],
                 )
             )
@@ -310,9 +312,8 @@ async def submit_workflow(input: TaskRequestInput) -> Workflow:
     except Exception as e:
         logger.log_error(request_id, str(e))
         # Return workflow in failed state if possible, else raise
-        workflow.status = (
-            "failed"  # Should be WorkflowStatus.FAILED but utilizing string for simplicity/safety
-        )
+        # Should be WorkflowStatus.FAILED but use string for simplicity/safety
+        workflow.status = "failed"
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -353,7 +354,9 @@ class ClarificationAnswer(BaseModel):
 
 
 @app.post("/session/{session_id}/answer", response_model=Workflow)
-async def answer_clarification(session_id: str, answers: list[ClarificationAnswer]) -> Workflow:
+async def answer_clarification(
+    session_id: str, answers: list[ClarificationAnswer]
+) -> Workflow:
     """
     Submit answers to clarifying questions for a blocked step/workflow.
 
@@ -378,7 +381,9 @@ async def answer_clarification(session_id: str, answers: list[ClarificationAnswe
 
     # 2. Resume Workflow
     if not session.active_workflow_id:
-        raise HTTPException(status_code=400, detail="No active workflow in this session")
+        raise HTTPException(
+            status_code=400, detail="No active workflow in this session"
+        )
 
     # In a real app we'd load workflow from DB. Here we don't have global workflow storage
     # except explicitly returned, but `orchestrator.run_workflow` takes a workflow object.
@@ -392,7 +397,9 @@ async def answer_clarification(session_id: str, answers: list[ClarificationAnswe
 
     workflow = active_workflows.get(session.active_workflow_id)
     if not workflow:
-        raise HTTPException(status_code=404, detail="Active workflow not found (memory reset?)")
+        raise HTTPException(
+            status_code=404, detail="Active workflow not found (memory reset?)"
+        )
 
     # Update workflow context too
     workflow.context.update(session.context)

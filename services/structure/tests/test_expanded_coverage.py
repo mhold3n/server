@@ -30,7 +30,8 @@ class TestDisambiguatedRequests:
     def test_density_with_explicit_units_passes(self):
         """Explicit request with no ambiguous terms should pass."""
         request = TaskRequest(
-            request_id="disambig-1", user_input="What is the value of standard gravity in m/s²?"
+            request_id="disambig-1",
+            user_input="What is the value of standard gravity in m/s²?",
         )
         spec = classify_task(request)
         gate_results = run_gates(spec)
@@ -41,7 +42,9 @@ class TestDisambiguatedRequests:
 
     def test_explicit_lbm_passes(self):
         """Explicit 'lbm' (pound-mass) should not trigger CLARIFY."""
-        request = TaskRequest(request_id="disambig-2", user_input="Convert 10 lbm to kg")
+        request = TaskRequest(
+            request_id="disambig-2", user_input="Convert 10 lbm to kg"
+        )
         spec = classify_task(request)
 
         # Check it's not in ambiguous terms
@@ -50,7 +53,9 @@ class TestDisambiguatedRequests:
 
     def test_explicit_lbf_passes(self):
         """Explicit 'lbf' (pound-force) should not trigger CLARIFY."""
-        request = TaskRequest(request_id="disambig-3", user_input="A force of 100 lbf is applied")
+        request = TaskRequest(
+            request_id="disambig-3", user_input="A force of 100 lbf is applied"
+        )
         spec = classify_task(request)
 
         # Force is unambiguous
@@ -59,7 +64,8 @@ class TestDisambiguatedRequests:
     def test_density_not_specific_weight(self):
         """'density' alone should not trigger specific weight disambiguation."""
         request = TaskRequest(
-            request_id="disambig-4", user_input="What is the density of aluminum in kg/m³?"
+            request_id="disambig-4",
+            user_input="What is the density of aluminum in kg/m³?",
         )
         spec = classify_task(request)
         decision = ambiguity_gate(spec)
@@ -74,14 +80,18 @@ class TestUnitConversionEdgeCases:
     def test_kg_to_lb_mass(self):
         """Standard mass conversion."""
         kernel = UnitsKernel()
-        result = kernel.execute_legacy({"value": 10.0, "from_unit": "kg", "to_unit": "[lb_av]"})
+        result = kernel.execute_legacy(
+            {"value": 10.0, "from_unit": "kg", "to_unit": "[lb_av]"}
+        )
         assert result.success
         assert abs(result.result["converted_value"] - 22.046) < 0.01
 
     def test_psi_to_pa(self):
         """Pressure conversion."""
         kernel = UnitsKernel()
-        result = kernel.execute_legacy({"value": 14.7, "from_unit": "psi", "to_unit": "Pa"})
+        result = kernel.execute_legacy(
+            {"value": 14.7, "from_unit": "psi", "to_unit": "Pa"}
+        )
         assert result.success
         # 14.7 psi ≈ 101325 Pa (1 atm)
         assert abs(result.result["converted_value"] - 101352.6) < 10
@@ -103,9 +113,14 @@ class TestUnitConversionEdgeCases:
     def test_unknown_unit_returns_error(self):
         """Unknown unit should return error, not crash."""
         kernel = UnitsKernel()
-        result = kernel.execute_legacy({"value": 10.0, "from_unit": "foobar", "to_unit": "kg"})
+        result = kernel.execute_legacy(
+            {"value": 10.0, "from_unit": "foobar", "to_unit": "kg"}
+        )
         assert not result.success
-        assert "unknown" in result.error.lower() or "unknown" in str(result.warnings).lower()
+        assert (
+            "unknown" in result.error.lower()
+            or "unknown" in str(result.warnings).lower()
+        )
 
     def test_temperature_kelvin_to_celsius(self):
         """Temperature conversion (special case)."""
@@ -119,7 +134,8 @@ class TestDomainRouting:
 
     def test_fluids_keywords(self):
         request = TaskRequest(
-            request_id="domain-1", user_input="Calculate the hydrostatic pressure at 10m depth"
+            request_id="domain-1",
+            user_input="Calculate the hydrostatic pressure at 10m depth",
         )
         spec = classify_task(request)
         assert spec.domain == Domain.PHYSICS
@@ -145,14 +161,16 @@ class TestDomainRouting:
 
     def test_chemistry_keywords(self):
         request = TaskRequest(
-            request_id="domain-4", user_input="Calculate the equilibrium constant for this reaction"
+            request_id="domain-4",
+            user_input="Calculate the equilibrium constant for this reaction",
         )
         spec = classify_task(request)
         assert spec.domain == Domain.CHEMISTRY
 
     def test_math_keywords(self):
         request = TaskRequest(
-            request_id="domain-5", user_input="Calculate the integral of sin(x) from 0 to pi"
+            request_id="domain-5",
+            user_input="Calculate the integral of sin(x) from 0 to pi",
         )
         spec = classify_task(request)
         assert spec.domain == Domain.MATH
@@ -160,7 +178,9 @@ class TestDomainRouting:
     def test_domain_hint_override(self):
         """Domain hint should override keyword-based classification."""
         request = TaskRequest(
-            request_id="domain-6", user_input="Calculate something", domain_hint="chemistry"
+            request_id="domain-6",
+            user_input="Calculate something",
+            domain_hint="chemistry",
         )
         spec = classify_task(request)
         assert spec.domain == Domain.CHEMISTRY
@@ -172,7 +192,8 @@ class TestMultipleAmbiguities:
     def test_multiple_ambiguous_terms_high_risk(self):
         """Multiple ambiguous terms should result in HIGH risk."""
         request = TaskRequest(
-            request_id="multi-1", user_input="Calculate specific weight using 10 lb and gamma"
+            request_id="multi-1",
+            user_input="Calculate specific weight using 10 lb and gamma",
         )
         spec = classify_task(request)
 
@@ -203,7 +224,9 @@ class TestGateOrdering:
 
     def test_schema_gate_always_included(self):
         """Schema gate should always be in required_gates."""
-        request = TaskRequest(request_id="order-1", user_input="Simple math question: 2+2")
+        request = TaskRequest(
+            request_id="order-1", user_input="Simple math question: 2+2"
+        )
         spec = classify_task(request)
         assert "schema_gate" in spec.required_gates
 
@@ -215,7 +238,9 @@ class TestGateOrdering:
 
     def test_ambiguity_gate_when_terms_detected(self):
         """Ambiguity gate should be included for ambiguous terms."""
-        request = TaskRequest(request_id="order-3", user_input="What is the specific weight?")
+        request = TaskRequest(
+            request_id="order-3", user_input="What is the specific weight?"
+        )
         spec = classify_task(request)
         assert "ambiguity_gate" in spec.required_gates
 

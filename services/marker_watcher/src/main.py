@@ -128,7 +128,9 @@ class PDFHandler(FileSystemEventHandler):
                 return
             # Wait for file to finish writing
             time.sleep(2)
-            rel = path.relative_to(INPUT_DIR) if INPUT_DIR in path.parents else path.name
+            rel = (
+                path.relative_to(INPUT_DIR) if INPUT_DIR in path.parents else path.name
+            )
             out_dir = OUTPUT_DIR / (rel.parent if isinstance(rel, Path) else "")
             process_pdf(path, out_dir)
         except Exception as e:
@@ -163,4 +165,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

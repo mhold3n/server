@@ -56,7 +56,11 @@ def mock_openai_client() -> AsyncMock:
             "finish_reason": "stop",
         }
     ]
-    mock_response.usage = {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}
+    mock_response.usage = {
+        "prompt_tokens": 10,
+        "completion_tokens": 5,
+        "total_tokens": 15,
+    }
 
     mock.chat.completions.create.return_value = mock_response
 
@@ -90,9 +94,7 @@ def sample_chat_request() -> dict:
     """Sample chat request payload."""
     return {
         "model": "test-model",
-        "messages": [
-            {"role": "user", "content": "Hello, world!"}
-        ],
+        "messages": [{"role": "user", "content": "Hello, world!"}],
         "temperature": 0.7,
         "max_tokens": 100,
     }

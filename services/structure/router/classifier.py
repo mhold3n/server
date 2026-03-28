@@ -10,7 +10,6 @@ from typing import Optional
 
 from models.task_spec import TaskSpec, TaskRequest, Domain, RiskLevel
 
-
 # --- Feature Extraction (Deterministic) ---
 
 # Unit patterns (common physics/engineering units)

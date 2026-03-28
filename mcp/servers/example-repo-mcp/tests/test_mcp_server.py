@@ -19,24 +19,24 @@ def client():
 @pytest.fixture
 def mock_code_indexer():
     """Mock code indexer."""
-    with patch('src.mcp_server.code_indexer') as mock:
+    with patch("src.mcp_server.code_indexer") as mock:
         mock.index_codebase.return_value = {
             "files_count": 10,
             "languages": ["python", "javascript"],
-            "index_size": 1024
+            "index_size": 1024,
         }
         mock.search.return_value = [
             {
                 "file": "test.py",
                 "language": "python",
                 "matches": [{"line_number": 1, "content": "def test_function():"}],
-                "score": 1
+                "score": 1,
             }
         ]
         mock.get_stats.return_value = {
             "total_files": 10,
             "total_size": 1024,
-            "languages": {"python": 5, "javascript": 5}
+            "languages": {"python": 5, "javascript": 5},
         }
         yield mock
 
@@ -44,25 +44,22 @@ def mock_code_indexer():
 @pytest.fixture
 def mock_dependency_analyzer():
     """Mock dependency analyzer."""
-    with patch('src.mcp_server.dependency_analyzer') as mock:
+    with patch("src.mcp_server.dependency_analyzer") as mock:
         mock.analyze_dependencies.return_value = {
             "project_type": "python",
             "dependencies": {"fastapi": {"version": "0.104.1", "type": "runtime"}},
             "graph": {"nodes": ["fastapi"], "edges": []},
             "vulnerabilities": [],
-            "outdated": []
+            "outdated": [],
         }
-        mock.get_stats.return_value = {
-            "analyzed_projects": 1,
-            "total_dependencies": 1
-        }
+        mock.get_stats.return_value = {"analyzed_projects": 1, "total_dependencies": 1}
         yield mock
 
 
 @pytest.fixture
 def mock_project_analyzer():
     """Mock project analyzer."""
-    with patch('src.mcp_server.project_analyzer') as mock:
+    with patch("src.mcp_server.project_analyzer") as mock:
         mock.analyze_project.return_value = {
             "name": "test-project",
             "type": "python",
@@ -72,12 +69,9 @@ def mock_project_analyzer():
             "configuration": {"pyproject.toml": {"type": "python"}},
             "documentation": {"files": ["README.md"], "total_files": 1},
             "testing": {"files": ["test_main.py"], "total_files": 1},
-            "ci_cd": {"files": [".github/workflows/ci.yml"], "total_files": 1}
+            "ci_cd": {"files": [".github/workflows/ci.yml"], "total_files": 1},
         }
-        mock.get_stats.return_value = {
-            "analyzed_projects": 1,
-            "cache_size": 1
-        }
+        mock.get_stats.return_value = {"analyzed_projects": 1, "cache_size": 1}
         yield mock
 
 
@@ -88,10 +82,7 @@ class TestHealthCheck:
         """Test health check endpoint."""
         response = client.get("/health")
         assert response.status_code == 200
-        assert response.json() == {
-            "status": "healthy",
-            "service": "example-repo-mcp"
-        }
+        assert response.json() == {"status": "healthy", "service": "example-repo-mcp"}
 
 
 class TestIndexCodebase:
@@ -102,10 +93,10 @@ class TestIndexCodebase:
         request_data = {
             "path": "/test/path",
             "languages": ["python", "javascript"],
-            "include_tests": True
+            "include_tests": True,
         }
 
-        with patch('pathlib.Path.exists', return_value=True):
+        with patch("pathlib.Path.exists", return_value=True):
             response = client.post("/index", json=request_data)
 
         assert response.status_code == 200
@@ -120,10 +111,10 @@ class TestIndexCodebase:
         request_data = {
             "path": "/nonexistent/path",
             "languages": ["python"],
-            "include_tests": True
+            "include_tests": True,
         }
 
-        with patch('pathlib.Path.exists', return_value=False):
+        with patch("pathlib.Path.exists", return_value=False):
             response = client.post("/index", json=request_data)
 
         assert response.status_code == 404
@@ -134,11 +125,11 @@ class TestIndexCodebase:
         request_data = {
             "path": "/test/path",
             "languages": ["python"],
-            "include_tests": True
+            "include_tests": True,
         }
 
-        with patch('src.mcp_server.code_indexer', None):
-            with patch('pathlib.Path.exists', return_value=True):
+        with patch("src.mcp_server.code_indexer", None):
+            with patch("pathlib.Path.exists", return_value=True):
                 response = client.post("/index", json=request_data)
 
         assert response.status_code == 500
@@ -153,7 +144,7 @@ class TestSearchCodebase:
         request_data = {
             "query": "test_function",
             "file_types": ["python"],
-            "max_results": 5
+            "max_results": 5,
         }
 
         response = client.post("/search", json=request_data)
@@ -171,10 +162,10 @@ class TestSearchCodebase:
         request_data = {
             "query": "test_function",
             "file_types": ["python"],
-            "max_results": 5
+            "max_results": 5,
         }
 
-        with patch('src.mcp_server.code_indexer', None):
+        with patch("src.mcp_server.code_indexer", None):
             response = client.post("/search", json=request_data)
 
         assert response.status_code == 500
@@ -186,11 +177,9 @@ class TestAnalyzeDependencies:
 
     def test_analyze_dependencies_success(self, client, mock_dependency_analyzer):
         """Test successful dependency analysis."""
-        request_data = {
-            "path": "/test/path"
-        }
+        request_data = {"path": "/test/path"}
 
-        with patch('pathlib.Path.exists', return_value=True):
+        with patch("pathlib.Path.exists", return_value=True):
             response = client.post("/analyze-dependencies", json=request_data)
 
         assert response.status_code == 200
@@ -201,13 +190,13 @@ class TestAnalyzeDependencies:
         assert data["vulnerabilities"] == []
         assert data["outdated"] == []
 
-    def test_analyze_dependencies_path_not_found(self, client, mock_dependency_analyzer):
+    def test_analyze_dependencies_path_not_found(
+        self, client, mock_dependency_analyzer
+    ):
         """Test dependency analysis with non-existent path."""
-        request_data = {
-            "path": "/nonexistent/path"
-        }
+        request_data = {"path": "/nonexistent/path"}
 
-        with patch('pathlib.Path.exists', return_value=False):
+        with patch("pathlib.Path.exists", return_value=False):
             response = client.post("/analyze-dependencies", json=request_data)
 
         assert response.status_code == 404
@@ -215,12 +204,10 @@ class TestAnalyzeDependencies:
 
     def test_analyze_dependencies_analyzer_not_initialized(self, client):
         """Test dependency analysis when analyzer is not initialized."""
-        request_data = {
-            "path": "/test/path"
-        }
+        request_data = {"path": "/test/path"}
 
-        with patch('src.mcp_server.dependency_analyzer', None):
-            with patch('pathlib.Path.exists', return_value=True):
+        with patch("src.mcp_server.dependency_analyzer", None):
+            with patch("pathlib.Path.exists", return_value=True):
                 response = client.post("/analyze-dependencies", json=request_data)
 
         assert response.status_code == 500
@@ -232,11 +219,9 @@ class TestProjectInfo:
 
     def test_project_info_success(self, client, mock_project_analyzer):
         """Test successful project info retrieval."""
-        request_data = {
-            "path": "/test/path"
-        }
+        request_data = {"path": "/test/path"}
 
-        with patch('pathlib.Path.exists', return_value=True):
+        with patch("pathlib.Path.exists", return_value=True):
             response = client.post("/project-info", json=request_data)
 
         assert response.status_code == 200
@@ -249,11 +234,9 @@ class TestProjectInfo:
 
     def test_project_info_path_not_found(self, client, mock_project_analyzer):
         """Test project info with non-existent path."""
-        request_data = {
-            "path": "/nonexistent/path"
-        }
+        request_data = {"path": "/nonexistent/path"}
 
-        with patch('pathlib.Path.exists', return_value=False):
+        with patch("pathlib.Path.exists", return_value=False):
             response = client.post("/project-info", json=request_data)
 
         assert response.status_code == 404
@@ -261,12 +244,10 @@ class TestProjectInfo:
 
     def test_project_info_analyzer_not_initialized(self, client):
         """Test project info when analyzer is not initialized."""
-        request_data = {
-            "path": "/test/path"
-        }
+        request_data = {"path": "/test/path"}
 
-        with patch('src.mcp_server.project_analyzer', None):
-            with patch('pathlib.Path.exists', return_value=True):
+        with patch("src.mcp_server.project_analyzer", None):
+            with patch("pathlib.Path.exists", return_value=True):
                 response = client.post("/project-info", json=request_data)
 
         assert response.status_code == 500
@@ -276,7 +257,9 @@ class TestProjectInfo:
 class TestStats:
     """Test stats endpoint."""
 
-    def test_stats_success(self, client, mock_code_indexer, mock_dependency_analyzer, mock_project_analyzer):
+    def test_stats_success(
+        self, client, mock_code_indexer, mock_dependency_analyzer, mock_project_analyzer
+    ):
         """Test successful stats retrieval."""
         response = client.get("/stats")
 
@@ -291,7 +274,9 @@ class TestStats:
 
     def test_stats_error(self, client):
         """Test stats endpoint with error."""
-        with patch('src.mcp_server.code_indexer.get_stats', side_effect=Exception("Test error")):
+        with patch(
+            "src.mcp_server.code_indexer.get_stats", side_effect=Exception("Test error")
+        ):
             response = client.get("/stats")
 
         assert response.status_code == 500

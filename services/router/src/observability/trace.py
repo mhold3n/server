@@ -42,11 +42,13 @@ class TraceContext:
         """Setup OpenTelemetry tracing."""
         try:
             # Create resource
-            resource = Resource.create({
-                "service.name": self.service_name,
-                "service.version": self.service_version,
-                "service.instance.id": os.getenv("HOSTNAME", "unknown"),
-            })
+            resource = Resource.create(
+                {
+                    "service.name": self.service_name,
+                    "service.version": self.service_version,
+                    "service.instance.id": os.getenv("HOSTNAME", "unknown"),
+                }
+            )
 
             # Create tracer provider
             tracer_provider = TracerProvider(resource=resource)
@@ -83,7 +85,9 @@ class TraceContext:
             app: FastAPI application instance
         """
         try:
-            FastAPIInstrumentor.instrument_app(app, tracer_provider=trace.get_tracer_provider())
+            FastAPIInstrumentor.instrument_app(
+                app, tracer_provider=trace.get_tracer_provider()
+            )
             logger.info("FastAPI instrumented with OpenTelemetry")
         except Exception as e:
             logger.error("Failed to instrument FastAPI", error=str(e))
@@ -238,7 +242,7 @@ def add_span_event(
     span,
     name: str,
     attributes: dict[str, Any] | None = None,
-    ) -> None:
+) -> None:
     """Add event to span.
 
     Args:
@@ -262,14 +266,3 @@ def set_span_status(
         description: Optional status description
     """
     trace_context.set_span_status(span, status_code, description)
-
-
-
-
-
-
-
-
-
-
-

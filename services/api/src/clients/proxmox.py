@@ -48,7 +48,9 @@ class ProxmoxClient:
         """Return a simplified list of VMs/LXCs from cluster resources."""
         assert self._client is not None, "Client not started"
         url = f"{self.base_url}/api2/json/cluster/resources"
-        resp = await self._client.get(url, params={"type": "vm"}, headers=self._headers())
+        resp = await self._client.get(
+            url, params={"type": "vm"}, headers=self._headers()
+        )
         resp.raise_for_status()
         payload = resp.json()
         items: list[dict[str, Any]] = payload.get("data", [])
@@ -99,4 +101,3 @@ class ProxmoxClient:
         resp = await self._client.post(url, headers=self._headers())
         resp.raise_for_status()
         return {"status": "stopped", "vmid": vmid, "node": node, "type": vm_type}
-

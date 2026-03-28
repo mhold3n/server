@@ -41,7 +41,9 @@ class ToolRequest(BaseModel):
     """Tool request model."""
 
     tool: str = Field(..., description="Tool name")
-    arguments: dict[str, Any] = Field(default_factory=dict, description="Tool arguments")
+    arguments: dict[str, Any] = Field(
+        default_factory=dict, description="Tool arguments"
+    )
 
 
 class ToolResponse(BaseModel):
@@ -105,8 +107,14 @@ async def list_tools():
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "pattern": {"type": "string", "description": "File pattern (glob)"},
-                        "root_path": {"type": "string", "description": "Root directory to search"},
+                        "pattern": {
+                            "type": "string",
+                            "description": "File pattern (glob)",
+                        },
+                        "root_path": {
+                            "type": "string",
+                            "description": "Root directory to search",
+                        },
                         "include_hidden": {"type": "boolean", "default": False},
                     },
                     "required": ["pattern"],
@@ -118,10 +126,22 @@ async def list_tools():
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "query": {"type": "string", "description": "Search query (regex)"},
-                        "root_path": {"type": "string", "description": "Root directory to search"},
-                        "file_pattern": {"type": "string", "description": "File pattern to include"},
-                        "exclude_pattern": {"type": "string", "description": "File pattern to exclude"},
+                        "query": {
+                            "type": "string",
+                            "description": "Search query (regex)",
+                        },
+                        "root_path": {
+                            "type": "string",
+                            "description": "Root directory to search",
+                        },
+                        "file_pattern": {
+                            "type": "string",
+                            "description": "File pattern to include",
+                        },
+                        "exclude_pattern": {
+                            "type": "string",
+                            "description": "File pattern to exclude",
+                        },
                         "case_sensitive": {"type": "boolean", "default": False},
                     },
                     "required": ["query"],
@@ -133,8 +153,14 @@ async def list_tools():
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "path": {"type": "string", "description": "File or directory path"},
-                        "language": {"type": "string", "description": "Programming language"},
+                        "path": {
+                            "type": "string",
+                            "description": "File or directory path",
+                        },
+                        "language": {
+                            "type": "string",
+                            "description": "Programming language",
+                        },
                         "include_ast": {"type": "boolean", "default": False},
                     },
                     "required": ["path"],
@@ -147,7 +173,10 @@ async def list_tools():
                     "type": "object",
                     "properties": {
                         "path": {"type": "string", "description": "Project root path"},
-                        "language": {"type": "string", "description": "Programming language"},
+                        "language": {
+                            "type": "string",
+                            "description": "Programming language",
+                        },
                     },
                     "required": ["path"],
                 },

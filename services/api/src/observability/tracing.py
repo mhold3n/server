@@ -24,7 +24,9 @@ logger = structlog.get_logger()
 class TracingContext:
     """OpenTelemetry tracing context manager."""
 
-    def __init__(self, service_name: str = "birtha-api", service_version: str = "1.0.0"):
+    def __init__(
+        self, service_name: str = "birtha-api", service_version: str = "1.0.0"
+    ):
         """Initialize tracing context."""
         self.service_name = service_name
         self.service_version = service_version
@@ -35,11 +37,13 @@ class TracingContext:
         """Setup OpenTelemetry tracing."""
         try:
             # Create resource
-            resource = Resource.create({
-                ResourceAttributes.SERVICE_NAME: self.service_name,
-                ResourceAttributes.SERVICE_VERSION: self.service_version,
-                ResourceAttributes.DEPLOYMENT_ENVIRONMENT: "production",
-            })
+            resource = Resource.create(
+                {
+                    ResourceAttributes.SERVICE_NAME: self.service_name,
+                    ResourceAttributes.SERVICE_VERSION: self.service_version,
+                    ResourceAttributes.DEPLOYMENT_ENVIRONMENT: "production",
+                }
+            )
 
             # Create tracer provider
             trace.set_tracer_provider(TracerProvider(resource=resource))
@@ -90,7 +94,9 @@ class TracingContext:
             logger.error("Failed to instrument FastAPI", error=str(e))
 
     @asynccontextmanager
-    async def trace_request(self, operation_name: str, attributes: dict[str, Any] | None = None):
+    async def trace_request(
+        self, operation_name: str, attributes: dict[str, Any] | None = None
+    ):
         """Context manager for tracing requests."""
         span = self.tracer.start_span(operation_name)
 
@@ -163,7 +169,9 @@ class TracePropagator:
         return trace_context
 
     @staticmethod
-    def inject_trace_context(headers: dict[str, str], trace_context: dict[str, str]) -> dict[str, str]:
+    def inject_trace_context(
+        headers: dict[str, str], trace_context: dict[str, str]
+    ) -> dict[str, str]:
         """Inject trace context into headers."""
         for key, value in trace_context.items():
             headers[key] = value
@@ -216,7 +224,9 @@ class GoldenTraceValidator:
                 }
 
             # Validate spans
-            span_names = [span.get("operationName", "") for span in trace_data.get("spans", [])]
+            span_names = [
+                span.get("operationName", "") for span in trace_data.get("spans", [])
+            ]
             missing_spans = set(expected_spans) - set(span_names)
             extra_spans = set(span_names) - set(expected_spans)
 
@@ -260,7 +270,11 @@ class GoldenTraceValidator:
                 if response.status_code == 200:
                     return response.json()
                 else:
-                    logger.warning("Trace not found in Tempo", trace_id=trace_id, status=response.status_code)
+                    logger.warning(
+                        "Trace not found in Tempo",
+                        trace_id=trace_id,
+                        status=response.status_code,
+                    )
                     return None
 
         except Exception as e:
