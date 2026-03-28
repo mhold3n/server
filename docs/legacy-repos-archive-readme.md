@@ -27,3 +27,7 @@ Clone: `git clone https://github.com/mhold3n/server.git`
 See [mbmh-training-archive-readme.md](mbmh-training-archive-readme.md).
 
 Then for each repo: **Settings → General → Archive this repository**.
+
+## GitHub Actions secrets
+
+If the old **Birtha_bigger_n_badder** repo had **Actions secrets** or **environments**, copy them into **Settings → Secrets and variables → Actions** on [`mhold3n/server`](https://github.com/mhold3n/server). Archived repos cannot receive new workflow runs, but CI on `server` may need the same credentials.
