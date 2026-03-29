@@ -78,13 +78,13 @@ jobs:
       # Run tests
       - name: Run tests
         run: |
-          pytest services/api/tests/ -v --cov=services/api/src --cov-report=xml
-          pytest services/router/tests/ -v --cov=services/router/src --cov-report=xml
-          pytest services/worker_client/tests/ -v --cov=services/worker_client/src --cov-report=xml
-          pytest mcp/servers/filesystem-mcp/tests/ -v --cov=mcp/servers/filesystem-mcp/src --cov-report=xml
-          pytest mcp/servers/secrets-mcp/tests/ -v --cov=mcp/servers/secrets-mcp/src --cov-report=xml
-          pytest mcp/servers/vector-db-mcp/tests/ -v --cov=mcp/servers/vector-db-mcp/src --cov-report=xml
-          pytest mbmh/tests/ -v
+          (cd services/api && pytest tests/ -v --cov=src --cov-report=xml)
+          (cd services/router && pytest tests/ -v --cov=src --cov-report=xml)
+          (cd services/worker_client && pytest tests/ -v --cov=src --cov-report=xml)
+          (cd mcp/servers/filesystem-mcp && pytest tests/ -v --cov=src --cov-report=xml)
+          (cd mcp/servers/secrets-mcp && pytest tests/ -v --cov=src --cov-report=xml)
+          (cd mcp/servers/vector-db-mcp && pytest tests/ -v --cov=src --cov-report=xml)
+          (cd mbmh && pytest tests/ -v)
 
       # Node.js for GitHub MCP server
       - uses: actions/setup-node@v4
