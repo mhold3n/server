@@ -27,7 +27,7 @@ dependencies = [
     "fastapi",
     "uvicorn[standard]",
     "httpx",
-    "urllib3<2"
+    "urllib3>=2"
 ]
 
 [project.optional-dependencies]
