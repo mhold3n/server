@@ -385,10 +385,16 @@ class WorkerClient:
                 return model
         return None
 
-    async def estimate_tokens(self, text: str, _model: str | None = None) -> int:
-        """Estimate the number of tokens in text (rough approximation)."""
+    async def estimate_tokens(self, text: str, model: str | None = None) -> int:
+        """Estimate the number of tokens in text (rough approximation).
+
+        Args:
+            text: Input text.
+            model: Reserved for future per-model tokenizers.
+        """
         # This is a rough approximation - in production, you'd want to use
         # the actual tokenizer for the model
+        _ = model
         return int(len(text.split()) * 1.3)
 
 
