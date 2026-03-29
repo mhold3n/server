@@ -62,7 +62,7 @@ jobs:
         run: |
           ruff check services/ mcp/servers/
           black --check services/ mcp/servers/ --extend-exclude '/services/wrkhrs/'
-          (cd mbmh && make lint)
+          (cd mbmh && python -m ruff check src/ scripts/ tests/)
       
       - name: Run type checking
         run: |
