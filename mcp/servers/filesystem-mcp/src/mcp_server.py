@@ -1,5 +1,6 @@
 """File system operations and code analysis MCP server."""
 
+import json
 from typing import Any
 
 import structlog
@@ -53,13 +54,13 @@ class ToolResponse(BaseModel):
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> dict[str, str]:
     """Health check endpoint."""
     return {"status": "healthy", "service": "filesystem-mcp"}
 
 
 @app.get("/tools")
-async def list_tools():
+async def list_tools() -> dict[str, Any]:
     """List available tools."""
     return {
         "tools": [
@@ -186,7 +187,7 @@ async def list_tools():
 
 
 @app.post("/call", response_model=ToolResponse)
-async def call_tool(request: ToolRequest):
+async def call_tool(request: ToolRequest) -> ToolResponse:
     """Call a tool with the given arguments."""
     try:
         logger.info(
@@ -195,6 +196,7 @@ async def call_tool(request: ToolRequest):
             arguments=request.arguments,
         )
 
+        result: Any
         if request.tool == "read_file":
             result = await file_ops.read_file(
                 request.arguments["path"],
@@ -240,7 +242,8 @@ async def call_tool(request: ToolRequest):
         else:
             raise HTTPException(status_code=400, detail=f"Unknown tool: {request.tool}")
 
-        return ToolResponse(content=[{"type": "text", "text": result}])
+        text = result if isinstance(result, str) else json.dumps(result)
+        return ToolResponse(content=[{"type": "text", "text": text}])
 
     except Exception as e:
         logger.error(

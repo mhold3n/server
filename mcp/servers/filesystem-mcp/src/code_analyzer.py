@@ -13,7 +13,7 @@ logger = structlog.get_logger()
 class CodeAnalyzer:
     """Code analysis utilities."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize code analyzer."""
         self.supported_languages = {
             ".py": "python",
@@ -103,7 +103,7 @@ class CodeAnalyzer:
         try:
             tree = ast.parse(content)
 
-            analysis = {
+            analysis: dict[str, Any] = {
                 "imports": [],
                 "functions": [],
                 "classes": [],
@@ -183,7 +183,7 @@ class CodeAnalyzer:
         """Analyze JavaScript/TypeScript code (basic analysis)."""
         import re
 
-        analysis = {
+        analysis: dict[str, Any] = {
             "imports": [],
             "functions": [],
             "classes": [],
@@ -262,7 +262,7 @@ class CodeAnalyzer:
         self, dir_path: Path, language: str | None = None, include_ast: bool = False
     ) -> dict[str, Any]:
         """Analyze all files in a directory."""
-        analysis = {
+        analysis: dict[str, Any] = {
             "path": str(dir_path),
             "type": "directory",
             "files": [],
@@ -331,7 +331,7 @@ class CodeAnalyzer:
             if not project_path.is_dir():
                 raise ValueError(f"Project path is not a directory: {path}")
 
-            dependencies = {
+            dependencies: dict[str, Any] = {
                 "path": str(project_path),
                 "language": language,
                 "dependencies": [],
@@ -375,7 +375,7 @@ class CodeAnalyzer:
 
     async def _get_python_dependencies(self, project_path: Path) -> dict[str, Any]:
         """Get Python dependencies."""
-        dependencies = {
+        dependencies: dict[str, Any] = {
             "dependencies": [],
             "dev_dependencies": [],
             "files_found": [],
@@ -413,7 +413,7 @@ class CodeAnalyzer:
 
     async def _get_node_dependencies(self, project_path: Path) -> dict[str, Any]:
         """Get Node.js dependencies."""
-        dependencies = {
+        dependencies: dict[str, Any] = {
             "dependencies": [],
             "dev_dependencies": [],
             "files_found": [],
@@ -440,7 +440,7 @@ class CodeAnalyzer:
 
     async def _get_go_dependencies(self, project_path: Path) -> dict[str, Any]:
         """Get Go dependencies."""
-        dependencies = {
+        dependencies: dict[str, Any] = {
             "dependencies": [],
             "files_found": [],
         }
@@ -472,7 +472,7 @@ class CodeAnalyzer:
 
     async def _get_rust_dependencies(self, project_path: Path) -> dict[str, Any]:
         """Get Rust dependencies."""
-        dependencies = {
+        dependencies: dict[str, Any] = {
             "dependencies": [],
             "dev_dependencies": [],
             "files_found": [],

@@ -3,7 +3,7 @@
 import fnmatch
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import aiofiles
 import structlog
@@ -89,7 +89,7 @@ class FileOperations:
             if not dir_path.is_dir():
                 raise ValueError(f"Path is not a directory: {path}")
 
-            items = []
+            items: list[dict[str, Any]] = []
 
             if recursive:
                 for item_path in dir_path.rglob("*"):
@@ -130,7 +130,12 @@ class FileOperations:
                     )
 
             # Sort items: directories first, then files, both alphabetically
-            items.sort(key=lambda x: (x["type"] != "directory", x["name"].lower()))
+            items.sort(
+                key=lambda x: (
+                    cast(str, x["type"]) != "directory",
+                    cast(str, x["name"]).lower(),
+                )
+            )
 
             logger.info(
                 "Listed directory", path=path, count=len(items), recursive=recursive
@@ -158,7 +163,7 @@ class FileOperations:
             if not search_path.is_dir():
                 raise ValueError(f"Search path is not a directory: {root_path}")
 
-            matches = []
+            matches: list[dict[str, Any]] = []
 
             for file_path in search_path.rglob("*"):
                 if not include_hidden and file_path.name.startswith("."):
@@ -176,7 +181,7 @@ class FileOperations:
                     )
 
             # Sort by path
-            matches.sort(key=lambda x: x["path"])
+            matches.sort(key=lambda x: cast(str, x["path"]))
 
             logger.info("Searched files", pattern=pattern, matches=len(matches))
             return {
@@ -215,7 +220,7 @@ class FileOperations:
             except re.error as e:
                 raise ValueError(f"Invalid regex pattern: {e}") from e
 
-            matches = []
+            matches: list[dict[str, Any]] = []
 
             for file_path in search_path.rglob("*"):
                 if not file_path.is_file():
@@ -279,9 +284,9 @@ class FileOperations:
                     continue
 
             # Sort by file path
-            matches.sort(key=lambda x: x["file"])
+            matches.sort(key=lambda x: cast(str, x["file"]))
 
-            total_matches = sum(match["count"] for match in matches)
+            total_matches = sum(cast(int, match["count"]) for match in matches)
 
             logger.info(
                 "Searched content",
