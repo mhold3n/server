@@ -4,7 +4,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import structlog
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -17,6 +17,9 @@ from opentelemetry import trace
 from prometheus_client import Counter, Histogram, generate_latest
 from pydantic import BaseModel, Field
 from redis.asyncio import Redis
+
+if TYPE_CHECKING:
+    from redis.asyncio import Redis as RedisGeneric
 from starlette.responses import Response as StarletteResponse
 
 from .config import get_worker_settings, settings
@@ -134,7 +137,11 @@ CHAT_DURATION = Histogram(
 )
 
 # Global clients (decode_responses=True → str values in redis-py)
-redis_client: Redis[str] | None = None
+# Keep runtime annotations non-parameterized for older redis-py, but still give mypy a type arg.
+if TYPE_CHECKING:
+    redis_client: "RedisGeneric[str]" | None = None
+else:
+    redis_client: Redis | None = None
 openai_client: AsyncOpenAI | None = None
 mlflow_logger: MLflowLogger | None = None
 provenance_logger: ProvenanceLogger | None = None
