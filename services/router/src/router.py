@@ -36,7 +36,7 @@ structlog.configure(
 logger = structlog.get_logger()
 
 # Global clients
-redis_client: Redis | None = None
+redis_client: Redis[str] | None = None
 api_client: AsyncClient | None = None
 
 app = FastAPI(
@@ -103,7 +103,7 @@ class HealthResponse(BaseModel):
 
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     """Initialize clients on startup."""
     global redis_client, api_client
 
@@ -131,7 +131,7 @@ async def startup_event():
 
 
 @app.on_event("shutdown")
-async def shutdown_event():
+async def shutdown_event() -> None:
     """Cleanup on shutdown."""
     global redis_client, api_client
 
@@ -145,7 +145,7 @@ async def shutdown_event():
 
 
 @app.get("/health", response_model=HealthResponse)
-async def health_check():
+async def health_check() -> HealthResponse:
     """Health check endpoint."""
     services = {}
 
@@ -186,7 +186,7 @@ async def health_check():
 
 
 @app.get("/")
-async def root():
+async def root() -> dict[str, str]:
     """Root endpoint with router information."""
     return {
         "name": "Agent Router",
@@ -198,7 +198,7 @@ async def root():
 
 
 @app.get("/mcp/servers")
-async def list_mcp_servers():
+async def list_mcp_servers() -> dict[str, Any]:
     """List all configured MCP servers."""
     async with MCPClient() as mcp:
         servers = await mcp.list_servers()
@@ -216,7 +216,7 @@ async def list_mcp_servers():
 
 
 @app.get("/mcp/servers/{server_name}/tools")
-async def get_server_tools(server_name: str):
+async def get_server_tools(server_name: str) -> dict[str, Any]:
     """Get available tools from an MCP server."""
     try:
         async with MCPClient() as mcp:
@@ -240,7 +240,7 @@ async def call_mcp_tool(
     server_name: str,
     tool_name: str,
     arguments: dict[str, Any] | None = None,
-):
+) -> dict[str, Any]:
     """Call a tool on an MCP server."""
     try:
         async with MCPClient() as mcp:
@@ -266,7 +266,7 @@ async def call_mcp_tool(
 
 
 @app.post("/route", response_model=TaskResponse)
-async def route_task(request: TaskRequest):
+async def route_task(request: TaskRequest) -> TaskResponse:
     """Route a task through the agent system with MCP tool integration."""
     if not api_client:
         raise HTTPException(

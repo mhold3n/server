@@ -13,16 +13,16 @@ logger = structlog.get_logger()
 class WorkflowEngine:
     """Workflow engine for orchestrating LangChain chains and LangGraph workflows."""
 
-    def __init__(self, orchestrator_client=None):
+    def __init__(self, orchestrator_client: Any | None = None) -> None:
         """Initialize workflow engine.
 
         Args:
             orchestrator_client: WrkHrsOrchestratorClient instance
         """
         self.orchestrator_client = orchestrator_client
-        self.workflows = {}
-        self.chains = {}
-        self.tools = {}
+        self.workflows: dict[str, Any] = {}
+        self.chains: dict[str, Any] = {}
+        self.tools: dict[str, Any] = {}
 
     def register_workflow(
         self,

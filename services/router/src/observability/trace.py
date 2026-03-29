@@ -24,7 +24,7 @@ class TraceContext:
         service_name: str = "birtha-router",
         service_version: str = "0.1.0",
         tempo_endpoint: str = "http://tempo:4317",
-    ):
+    ) -> None:
         """Initialize trace context.
 
         Args:
@@ -35,7 +35,7 @@ class TraceContext:
         self.service_name = service_name
         self.service_version = service_version
         self.tempo_endpoint = tempo_endpoint
-        self.tracer = None
+        self.tracer: Any = None
         self._setup_tracing()
 
     def _setup_tracing(self) -> None:
@@ -78,7 +78,7 @@ class TraceContext:
             # Create a no-op tracer
             self.tracer = trace.NoOpTracer()
 
-    def instrument_fastapi(self, app) -> None:
+    def instrument_fastapi(self, app: Any) -> None:
         """Instrument FastAPI application.
 
         Args:
@@ -108,7 +108,7 @@ class TraceContext:
         except Exception as e:
             logger.error("Failed to instrument requests", error=str(e))
 
-    def get_tracer(self):
+    def get_tracer(self) -> Any:
         """Get tracer instance.
 
         Returns:
@@ -120,7 +120,7 @@ class TraceContext:
         self,
         name: str,
         attributes: dict[str, Any] | None = None,
-    ):
+    ) -> Any:
         """Create a new span.
 
         Args:
@@ -134,7 +134,7 @@ class TraceContext:
 
     def add_span_attributes(
         self,
-        span,
+        span: Any,
         attributes: dict[str, Any],
     ) -> None:
         """Add attributes to span.
@@ -149,7 +149,7 @@ class TraceContext:
 
     def add_span_event(
         self,
-        span,
+        span: Any,
         name: str,
         attributes: dict[str, Any] | None = None,
     ) -> None:
@@ -165,7 +165,7 @@ class TraceContext:
 
     def set_span_status(
         self,
-        span,
+        span: Any,
         status_code: str,
         description: str | None = None,
     ) -> None:
@@ -200,7 +200,7 @@ def get_trace_context() -> TraceContext:
     return trace_context
 
 
-def get_tracer():
+def get_tracer() -> Any:
     """Get tracer instance.
 
     Returns:
@@ -212,7 +212,7 @@ def get_tracer():
 def create_span(
     name: str,
     attributes: dict[str, Any] | None = None,
-):
+) -> Any:
     """Create a new span.
 
     Args:
@@ -226,7 +226,7 @@ def create_span(
 
 
 def add_span_attributes(
-    span,
+    span: Any,
     attributes: dict[str, Any],
 ) -> None:
     """Add attributes to span.
@@ -239,7 +239,7 @@ def add_span_attributes(
 
 
 def add_span_event(
-    span,
+    span: Any,
     name: str,
     attributes: dict[str, Any] | None = None,
 ) -> None:
@@ -254,7 +254,7 @@ def add_span_event(
 
 
 def set_span_status(
-    span,
+    span: Any,
     status_code: str,
     description: str | None = None,
 ) -> None:

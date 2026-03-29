@@ -1,9 +1,10 @@
 """Client for WrkHrs Orchestrator with LangChain/LangGraph integration."""
 
-from typing import Any
+from types import TracebackType
+from typing import Any, cast
 
 import structlog
-from httpx import AsyncClient, HTTPError
+from httpx import AsyncClient, HTTPError, HTTPStatusError
 
 logger = structlog.get_logger()
 
@@ -15,7 +16,7 @@ class WrkHrsOrchestratorClient:
         self,
         base_url: str = "http://wrkhrs-orchestrator:8000",
         timeout: float = 120.0,
-    ):
+    ) -> None:
         """Initialize WrkHrs Orchestrator client.
 
         Args:
@@ -26,7 +27,7 @@ class WrkHrsOrchestratorClient:
         self.timeout = timeout
         self._client: AsyncClient | None = None
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "WrkHrsOrchestratorClient":
         """Async context manager entry."""
         self._client = AsyncClient(
             base_url=self.base_url,
@@ -34,7 +35,12 @@ class WrkHrsOrchestratorClient:
         )
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Async context manager exit."""
         if self._client:
             await self._client.aclose()
@@ -51,7 +57,7 @@ class WrkHrsOrchestratorClient:
         try:
             response = await self._client.get("/health")
             response.raise_for_status()
-            return response.json()
+            return cast(dict[str, Any], response.json())
         except HTTPError as e:
             logger.error("Orchestrator health check failed", error=str(e))
             raise
@@ -96,7 +102,7 @@ class WrkHrsOrchestratorClient:
             )
             response.raise_for_status()
 
-            result = response.json()
+            result = cast(dict[str, Any], response.json())
 
             logger.info(
                 "Workflow execution completed",
@@ -108,11 +114,16 @@ class WrkHrsOrchestratorClient:
             return result
 
         except HTTPError as e:
+            response_text = (
+                e.response.text
+                if isinstance(e, HTTPStatusError) and e.response is not None
+                else None
+            )
             logger.error(
                 "Workflow execution failed",
                 workflow=workflow_name,
                 error=str(e),
-                response_text=e.response.text if e.response else None,
+                response_text=response_text,
             )
             raise
 
@@ -128,7 +139,7 @@ class WrkHrsOrchestratorClient:
         try:
             response = await self._client.get("/v1/workflows")
             response.raise_for_status()
-            return response.json()
+            return cast(dict[str, Any], response.json())
         except HTTPError as e:
             logger.error("Failed to get workflows", error=str(e))
             raise
@@ -151,7 +162,7 @@ class WrkHrsOrchestratorClient:
         try:
             response = await self._client.get(f"/v1/workflows/{workflow_name}/schema")
             response.raise_for_status()
-            return response.json()
+            return cast(dict[str, Any], response.json())
         except HTTPError as e:
             logger.error(
                 "Failed to get workflow schema",
@@ -205,7 +216,7 @@ class WrkHrsOrchestratorClient:
         Returns:
             Tool workflow result
         """
-        input_data = {
+        input_data: dict[str, Any] = {
             "task": task,
             "tools": tools,
         }
@@ -259,7 +270,7 @@ class WrkHrsOrchestratorClient:
         Returns:
             Policy validation result
         """
-        input_data = {
+        input_data: dict[str, Any] = {
             "content": content,
             "policies": policies,
         }
@@ -287,7 +298,7 @@ class WrkHrsOrchestratorClient:
         try:
             response = await self._client.get(f"/v1/workflows/{workflow_id}/status")
             response.raise_for_status()
-            return response.json()
+            return cast(dict[str, Any], response.json())
         except HTTPError as e:
             logger.error(
                 "Failed to get workflow status",
@@ -314,7 +325,7 @@ class WrkHrsOrchestratorClient:
         try:
             response = await self._client.post(f"/v1/workflows/{workflow_id}/cancel")
             response.raise_for_status()
-            return response.json()
+            return cast(dict[str, Any], response.json())
         except HTTPError as e:
             logger.error(
                 "Failed to cancel workflow",

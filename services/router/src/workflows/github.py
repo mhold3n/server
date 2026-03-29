@@ -18,6 +18,7 @@ class GitHubWorkflow:
             mcp_client: MCP client for GitHub operations
         """
         self.mcp_client = mcp_client
+        self._code_detector = CodeDetector()
         self.code_indicators = [
             "code",
             "function",
@@ -47,7 +48,7 @@ class GitHubWorkflow:
     async def process_prompt(
         self,
         prompt: str,
-        context: dict[str, Any] = None,
+        context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Process a code-related prompt through GitHub workflow.
 
@@ -58,6 +59,7 @@ class GitHubWorkflow:
         Returns:
             Workflow result
         """
+        ctx = context or {}
         try:
             # Detect if prompt is code-related
             if not self._is_code_related(prompt):
@@ -72,15 +74,15 @@ class GitHubWorkflow:
 
             # Execute appropriate workflow
             if request_type == "bug_report":
-                return await self._handle_bug_report(prompt, context)
+                return await self._handle_bug_report(prompt, ctx)
             elif request_type == "feature_request":
-                return await self._handle_feature_request(prompt, context)
+                return await self._handle_feature_request(prompt, ctx)
             elif request_type == "code_review":
-                return await self._handle_code_review(prompt, context)
+                return await self._handle_code_review(prompt, ctx)
             elif request_type == "implementation":
-                return await self._handle_implementation(prompt, context)
+                return await self._handle_implementation(prompt, ctx)
             else:
-                return await self._handle_general_code_request(prompt, context)
+                return await self._handle_general_code_request(prompt, ctx)
 
         except Exception as e:
             logger.error("GitHub workflow failed", error=str(e))
@@ -122,94 +124,9 @@ class GitHubWorkflow:
 
         return False
 
-
-class CodeDetector:
-    """Detects code-related prompts and classifies them."""
-
-    def __init__(self):
-        """Initialize code detector."""
-        self.classifiers = {
-            "bug_report": [
-                "bug",
-                "error",
-                "exception",
-                "traceback",
-                "crash",
-                "fail",
-                "broken",
-                "not working",
-                "issue",
-                "problem",
-                "fix",
-            ],
-            "feature_request": [
-                "feature",
-                "enhancement",
-                "improvement",
-                "add",
-                "new",
-                "implement",
-                "create",
-                "build",
-                "develop",
-            ],
-            "code_review": [
-                "review",
-                "check",
-                "look at",
-                "examine",
-                "analyze",
-                "evaluate",
-                "assess",
-                "inspect",
-            ],
-            "implementation": [
-                "implement",
-                "code",
-                "write",
-                "create",
-                "build",
-                "develop",
-                "program",
-                "script",
-                "function",
-            ],
-        }
-
-    def classify_request(self, prompt: str) -> str:
-        """Classify the type of code request.
-
-        Args:
-            prompt: User prompt
-
-        Returns:
-            Request type
-        """
-        prompt_lower = prompt.lower()
-
-        # Score each category
-        scores = {}
-        for category, keywords in self.classifiers.items():
-            score = sum(1 for keyword in keywords if keyword in prompt_lower)
-            scores[category] = score
-
-        # Return highest scoring category
-        if not any(scores.values()):
-            return "general"
-
-        return max(scores, key=scores.get)
-
     def _classify_request(self, prompt: str) -> str:
-        """Classify the type of code request.
-
-        Args:
-            prompt: User prompt
-
-        Returns:
-            Request type
-        """
-        detector = CodeDetector()
-        return detector.classify_request(prompt)
+        """Delegate to shared classifier."""
+        return self._code_detector.classify_request(prompt)
 
     async def _handle_bug_report(
         self,
@@ -577,3 +494,81 @@ class CodeDetector:
             "specs": "Technical specifications",
             "testing": "Testing requirements",
         }
+
+
+class CodeDetector:
+    """Detects code-related prompts and classifies them."""
+
+    def __init__(self) -> None:
+        """Initialize code detector."""
+        self.classifiers = {
+            "bug_report": [
+                "bug",
+                "error",
+                "exception",
+                "traceback",
+                "crash",
+                "fail",
+                "broken",
+                "not working",
+                "issue",
+                "problem",
+                "fix",
+            ],
+            "feature_request": [
+                "feature",
+                "enhancement",
+                "improvement",
+                "add",
+                "new",
+                "implement",
+                "create",
+                "build",
+                "develop",
+            ],
+            "code_review": [
+                "review",
+                "check",
+                "look at",
+                "examine",
+                "analyze",
+                "evaluate",
+                "assess",
+                "inspect",
+            ],
+            "implementation": [
+                "implement",
+                "code",
+                "write",
+                "create",
+                "build",
+                "develop",
+                "program",
+                "script",
+                "function",
+            ],
+        }
+
+    def classify_request(self, prompt: str) -> str:
+        """Classify the type of code request.
+
+        Args:
+            prompt: User prompt
+
+        Returns:
+            Request type
+        """
+        prompt_lower = prompt.lower()
+
+        # Score each category
+        scores = {}
+        for category, keywords in self.classifiers.items():
+            score = sum(1 for keyword in keywords if keyword in prompt_lower)
+            scores[category] = score
+
+        # Return highest scoring category
+        if not any(scores.values()):
+            return "general"
+
+        return max(scores, key=lambda k: scores[k])
+

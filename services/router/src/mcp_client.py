@@ -1,11 +1,12 @@
 """MCP client for communicating with MCP servers."""
 
 import asyncio
-from typing import Any
+from types import TracebackType
+from typing import Any, cast
 
 import structlog
 import yaml
-from httpx import AsyncClient, HTTPError, Timeout
+from httpx import AsyncClient, HTTPError, HTTPStatusError, Timeout
 
 from .config import settings
 
@@ -21,8 +22,8 @@ class MCPServer:
         url: str,
         server_type: str | None = None,
         type: str | None = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         # Accept either 'server_type' or legacy 'type' key from config
         resolved_type = server_type or type
         if not resolved_type:
@@ -41,10 +42,18 @@ class MCPServer:
 class MCPClient:
     """Client for communicating with MCP servers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.servers: dict[str, MCPServer] = {}
         self.http_client: AsyncClient | None = None
         self._load_servers()
+
+    def _require_http(self) -> AsyncClient:
+        if self.http_client is None:
+            raise RuntimeError(
+                "MCPClient must be used as an async context manager "
+                "(async with MCPClient() as client: ...)"
+            )
+        return self.http_client
 
     def _load_servers(self) -> None:
         """Load MCP servers from configuration file."""
@@ -69,7 +78,7 @@ class MCPClient:
                 config_path=settings.mcp_servers_config,
             )
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "MCPClient":
         """Async context manager entry."""
         self.http_client = AsyncClient(
             timeout=Timeout(
@@ -81,7 +90,12 @@ class MCPClient:
         )
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Async context manager exit."""
         if self.http_client:
             await self.http_client.aclose()
@@ -96,11 +110,12 @@ class MCPClient:
             raise ValueError(f"Server '{server_name}' not found")
 
         server = self.servers[server_name]
+        http = self._require_http()
 
         try:
-            response = await self.http_client.get(f"{server.url}/tools")
+            response = await http.get(f"{server.url}/tools")
             response.raise_for_status()
-            return response.json()
+            return cast(list[dict[str, Any]], response.json())
         except HTTPError as e:
             logger.error(
                 "Failed to get tools from MCP server",
@@ -127,6 +142,7 @@ class MCPClient:
             raise ValueError(f"Server '{server_name}' not found")
 
         server = self.servers[server_name]
+        http = self._require_http()
 
         payload = {
             "tool": tool_name,
@@ -141,13 +157,13 @@ class MCPClient:
                 arguments=arguments,
             )
 
-            response = await self.http_client.post(
+            response = await http.post(
                 f"{server.url}/call",
                 json=payload,
             )
             response.raise_for_status()
 
-            result = response.json()
+            result = cast(dict[str, Any], response.json())
 
             logger.info(
                 "MCP tool call successful",
@@ -159,12 +175,17 @@ class MCPClient:
             return result
 
         except HTTPError as e:
+            status_code = (
+                e.response.status_code
+                if isinstance(e, HTTPStatusError) and e.response is not None
+                else None
+            )
             logger.error(
                 "Failed to call MCP tool",
                 server=server_name,
                 tool=tool_name,
                 error=str(e),
-                status_code=e.response.status_code if e.response else None,
+                status_code=status_code,
             )
             raise
         except Exception as e:
@@ -182,9 +203,10 @@ class MCPClient:
             return False
 
         server = self.servers[server_name]
+        http = self._require_http()
 
         try:
-            response = await self.http_client.get(f"{server.url}/health")
+            response = await http.get(f"{server.url}/health")
             return response.status_code == 200
         except Exception:
             return False
@@ -207,7 +229,7 @@ class MCPClient:
                     error=str(result),
                 )
             else:
-                health_status[server_name] = result
+                health_status[server_name] = bool(result)
 
         return health_status
 

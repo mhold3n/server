@@ -80,6 +80,12 @@ strict_equality = true
 module = [
     "redis.*",
     "mcp.*",
+    "opentelemetry",
+    "opentelemetry.*",
+    "langchain",
+    "langchain.*",
+    "langgraph",
+    "langgraph.*",
 ]
 ignore_missing_imports = true
 
