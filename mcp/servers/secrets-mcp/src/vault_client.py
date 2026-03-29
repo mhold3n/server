@@ -13,14 +13,14 @@ logger = structlog.get_logger()
 class VaultClient:
     """HashiCorp Vault client wrapper."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Vault client."""
         self.vault_url = os.getenv("VAULT_ADDR", "http://vault:8200")
         self.vault_token = os.getenv("VAULT_TOKEN", "root")
-        self.client = None
+        self.client: hvac.Client | None = None
         self._connect()
 
-    def _connect(self):
+    def _connect(self) -> None:
         """Connect to Vault."""
         try:
             self.client = hvac.Client(url=self.vault_url, token=self.vault_token)
@@ -42,8 +42,8 @@ class VaultClient:
             return False
 
         try:
-            health = self.client.sys.read_health_status()
-            return health.get("initialized", False)
+            health: dict[str, Any] = self.client.sys.read_health_status()
+            return bool(health.get("initialized", False))
         except Exception as e:
             logger.error("Vault health check failed", error=str(e))
             return False

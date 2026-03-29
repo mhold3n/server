@@ -53,7 +53,7 @@ class ToolResponse(BaseModel):
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> dict[str, Any]:
     """Health check endpoint."""
     try:
         vault_status = await vault_client.health_check()
@@ -71,7 +71,7 @@ async def health_check():
 
 
 @app.get("/tools")
-async def list_tools():
+async def list_tools() -> dict[str, Any]:
     """List available tools."""
     return {
         "tools": [
@@ -154,7 +154,7 @@ async def list_tools():
 
 
 @app.post("/call", response_model=ToolResponse)
-async def call_tool(request: ToolRequest):
+async def call_tool(request: ToolRequest) -> ToolResponse:
     """Call a tool with the given arguments."""
     try:
         logger.info(
@@ -163,6 +163,7 @@ async def call_tool(request: ToolRequest):
             arguments=request.arguments,
         )
 
+        result: Any
         if request.tool == "get_secret":
             result = await vault_client.get_secret(
                 request.arguments["path"],
@@ -184,7 +185,7 @@ async def call_tool(request: ToolRequest):
         else:
             raise HTTPException(status_code=400, detail=f"Unknown tool: {request.tool}")
 
-        return ToolResponse(content=[{"type": "text", "text": result}])
+        return ToolResponse(content=[{"type": "text", "text": str(result)}])
 
     except Exception as e:
         logger.error(
