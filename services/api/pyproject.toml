@@ -26,6 +26,12 @@ dependencies = [
     "structlog>=23.2.0",
     "docker>=6.1.0",
     "mlflow",
+    "opentelemetry-api>=1.0.0",
+    "opentelemetry-sdk>=1.0.0",
+    "opentelemetry-exporter-otlp>=1.0.0",
+    "opentelemetry-instrumentation-fastapi>=0.45b0",
+    "opentelemetry-instrumentation-httpx>=0.45b0",
+    "opentelemetry-instrumentation-requests>=0.45b0",
 ]
 
 [project.optional-dependencies]
