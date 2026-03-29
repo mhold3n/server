@@ -4,11 +4,7 @@ import asyncio
 
 import numpy as np
 import structlog
-
-try:
-    from sentence_transformers import SentenceTransformer  # type: ignore
-except Exception:  # pragma: no cover - optional dependency
-    SentenceTransformer = None  # type: ignore
+from sentence_transformers import SentenceTransformer
 
 logger = structlog.get_logger()
 
@@ -22,17 +18,11 @@ class EmbeddingService:
         self.model: SentenceTransformer | None = None
         self._load_model()
 
-    def _load_model(self):
+    def _load_model(self) -> None:
         """Load the embedding model."""
         try:
-            if SentenceTransformer is not None:
-                self.model = SentenceTransformer(self.model_name)
-                logger.info("Embedding model loaded", model=self.model_name)
-            else:
-                logger.warning(
-                    "sentence-transformers not installed; using fallback hasher embeddings"
-                )
-                self.model = None
+            self.model = SentenceTransformer(self.model_name)
+            logger.info("Embedding model loaded", model=self.model_name)
         except Exception as e:
             logger.error(
                 "Failed to load embedding model", model=self.model_name, error=str(e)
@@ -50,7 +40,7 @@ class EmbeddingService:
             # Repeat hash to fill dim, convert bytes to floats in [0,1]
             vals = list(h) * ((dim + len(h) - 1) // len(h))
             arr = np.array(vals[:dim], dtype=np.float32) / 255.0
-            return arr.tolist()
+            return list(arr.tolist())
 
         try:
             # Run embedding in thread pool to avoid blocking
@@ -58,7 +48,7 @@ class EmbeddingService:
             embedding = await loop.run_in_executor(None, self.model.encode, text)
 
             # Convert numpy array to list
-            return embedding.tolist()
+            return list(embedding.tolist())
 
         except Exception as e:
             logger.error("Failed to generate embedding", text=text[:100], error=str(e))

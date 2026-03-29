@@ -2,7 +2,8 @@
 
 import json
 import os
-from typing import Any
+from typing import Any, cast
+from uuid import UUID
 
 import structlog
 from fastapi import FastAPI, HTTPException
@@ -37,7 +38,7 @@ app = FastAPI(title="Vector DB MCP Server", version="0.1.0")
 
 # Global services
 embedding_service = EmbeddingService()
-qdrant_client = None
+qdrant_client: QdrantClient | None = None
 
 
 class ToolRequest(BaseModel):
@@ -56,7 +57,7 @@ class ToolResponse(BaseModel):
 
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     """Initialize services on startup."""
     global qdrant_client
 
@@ -78,13 +79,13 @@ async def startup_event():
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> dict[str, Any]:
     """Health check endpoint."""
     try:
         qdrant_healthy = qdrant_client is not None
         if qdrant_healthy:
             try:
-                qdrant_client.get_collections()
+                cast(QdrantClient, qdrant_client).get_collections()
             except Exception:
                 qdrant_healthy = False
 
@@ -102,7 +103,7 @@ async def health_check():
 
 
 @app.get("/tools")
-async def list_tools():
+async def list_tools() -> dict[str, Any]:
     """List available tools."""
     return {
         "tools": [
@@ -235,7 +236,7 @@ async def list_tools():
 
 
 @app.post("/call", response_model=ToolResponse)
-async def call_tool(request: ToolRequest):
+async def call_tool(request: ToolRequest) -> ToolResponse:
     """Call a tool with the given arguments."""
     if not qdrant_client:
         raise HTTPException(status_code=503, detail="Qdrant client not connected")
@@ -300,6 +301,9 @@ async def create_collection(
 ) -> str:
     """Create a new collection."""
     try:
+        if qdrant_client is None:
+            raise ValueError("Qdrant client not connected")
+
         # Map distance string to Qdrant distance
         distance_map = {
             "Cosine": models.Distance.COSINE,
@@ -339,6 +343,9 @@ async def create_collection(
 async def list_collections() -> str:
     """List all collections."""
     try:
+        if qdrant_client is None:
+            raise ValueError("Qdrant client not connected")
+
         collections = qdrant_client.get_collections()
 
         collection_info = []
@@ -347,10 +354,10 @@ async def list_collections() -> str:
             collection_info.append(
                 {
                     "name": collection.name,
-                    "vectors_count": info.vectors_count,
-                    "indexed_vectors_count": info.indexed_vectors_count,
-                    "points_count": info.points_count,
-                    "status": info.status,
+                    "vectors_count": cast(Any, info).vectors_count,
+                    "indexed_vectors_count": cast(Any, info).indexed_vectors_count,
+                    "points_count": cast(Any, info).points_count,
+                    "status": cast(Any, info).status,
                 }
             )
 
@@ -369,6 +376,9 @@ async def list_collections() -> str:
 async def upsert_vectors(collection: str, points: list[dict[str, Any]]) -> str:
     """Upsert vectors to a collection."""
     try:
+        if qdrant_client is None:
+            raise ValueError("Qdrant client not connected")
+
         # Convert points to Qdrant format
         qdrant_points = []
         for point in points:
@@ -408,8 +418,11 @@ async def search_vectors(
 ) -> str:
     """Search for similar vectors."""
     try:
+        if qdrant_client is None:
+            raise ValueError("Qdrant client not connected")
+
         # Build search parameters
-        search_params = {
+        search_params: dict[str, Any] = {
             "collection_name": collection,
             "query_vector": query_vector,
             "limit": limit,
@@ -419,7 +432,7 @@ async def search_vectors(
             search_params["score_threshold"] = score_threshold
 
         # Search
-        results = qdrant_client.search(**search_params)
+        results = cast(Any, qdrant_client).search(**search_params)
 
         # Format results
         formatted_results = []
@@ -473,10 +486,16 @@ async def search_by_text(
 async def delete_vectors(collection: str, ids: list[str | int]) -> str:
     """Delete vectors from a collection."""
     try:
+        if qdrant_client is None:
+            raise ValueError("Qdrant client not connected")
+
+        points: list[int | str | UUID] = [
+            int(i) if isinstance(i, str) and i.isdigit() else i for i in ids
+        ]
         # Delete points
         qdrant_client.delete(
             collection_name=collection,
-            points_selector=models.PointIdsList(points=ids),
+            points_selector=models.PointIdsList(points=points),
         )
 
         logger.info("Vectors deleted", collection=collection, count=len(ids))
@@ -498,18 +517,29 @@ async def delete_vectors(collection: str, ids: list[str | int]) -> str:
 async def get_collection_info(collection: str) -> str:
     """Get information about a collection."""
     try:
+        if qdrant_client is None:
+            raise ValueError("Qdrant client not connected")
+
         info = qdrant_client.get_collection(collection)
+        vectors_config = cast(Any, info).config.params.vectors
+        if isinstance(vectors_config, dict):
+            first = next(iter(vectors_config.values()))
+            vector_size = cast(Any, first).size
+            distance = cast(Any, first).distance
+        else:
+            vector_size = cast(Any, vectors_config).size
+            distance = cast(Any, vectors_config).distance
 
         return json.dumps(
             {
                 "name": collection,
-                "vectors_count": info.vectors_count,
-                "indexed_vectors_count": info.indexed_vectors_count,
-                "points_count": info.points_count,
-                "status": info.status,
+                "vectors_count": cast(Any, info).vectors_count,
+                "indexed_vectors_count": cast(Any, info).indexed_vectors_count,
+                "points_count": cast(Any, info).points_count,
+                "status": cast(Any, info).status,
                 "config": {
-                    "vector_size": info.config.params.vectors.size,
-                    "distance": info.config.params.vectors.distance,
+                    "vector_size": vector_size,
+                    "distance": distance,
                 },
             }
         )
