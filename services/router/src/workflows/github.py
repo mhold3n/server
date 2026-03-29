@@ -571,4 +571,3 @@ class CodeDetector:
             return "general"
 
         return max(scores, key=lambda k: scores[k])
-
