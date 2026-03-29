@@ -426,16 +426,7 @@ class TestGoldenTraceE2E:
     async def test_golden_trace_streaming_bypass(
         self, mock_openai_client, api_url, golden_trace_id, golden_run_id
     ):
-        """Test that streaming requests bypass policy enforcement."""
-        # Mock OpenAI response
-        mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "This might be correct."
-        mock_response.usage = Mock()
-        mock_response.usage.dict.return_value = {"total_tokens": 100}
-
-        mock_openai_client.chat.completions.create.return_value = mock_response
-
+        """Streaming completions return 501 until implemented."""
         chat_request = {
             "model": "mistralai/Mistral-7B-Instruct-v0.3",
             "messages": [
@@ -457,13 +448,6 @@ class TestGoldenTraceE2E:
                 },
             )
 
-            assert response.status_code == 200
-
-            # Verify headers are still returned
-            assert response.headers["x-trace-id"] == golden_trace_id
-            assert response.headers["x-run-id"] == golden_run_id
-            assert response.headers["x-policy-set"] == "golden-policy"
-
-            # But policy verdict headers should not be present
-            assert "x-policy-verdict" not in response.headers
-            assert "x-policy-score" not in response.headers
+            assert response.status_code == 501
+            assert "not supported" in response.text.lower()
+            mock_openai_client.chat.completions.create.assert_not_called()

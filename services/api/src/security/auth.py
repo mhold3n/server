@@ -1,6 +1,7 @@
 """Authentication and authorization middleware."""
 
 import time
+from collections.abc import Callable
 from typing import Any
 
 import structlog
@@ -84,7 +85,7 @@ class APIKeyAuth:
                 detail="Authentication error",
             ) from e
 
-    async def _check_rate_limit(self, api_key: str, key_info: dict[str, Any]):
+    async def _check_rate_limit(self, api_key: str, key_info: dict[str, Any]) -> None:
         """Check rate limits for API key.
 
         Args:
@@ -124,7 +125,7 @@ class MCPAllowlist:
         """
         return server_name in self.allowed_servers
 
-    def add_server(self, server_name: str):
+    def add_server(self, server_name: str) -> None:
         """Add server to allowlist.
 
         Args:
@@ -133,7 +134,7 @@ class MCPAllowlist:
         self.allowed_servers.add(server_name)
         logger.info("MCP server added to allowlist", server_name=server_name)
 
-    def remove_server(self, server_name: str):
+    def remove_server(self, server_name: str) -> None:
         """Remove server from allowlist.
 
         Args:
@@ -150,7 +151,7 @@ class CircuitBreaker:
         self,
         failure_threshold: int = 5,
         recovery_timeout: int = 60,
-        expected_exception: type = Exception,
+        expected_exception: type[BaseException] = Exception,
     ):
         """Initialize circuit breaker.
 
@@ -164,10 +165,10 @@ class CircuitBreaker:
         self.expected_exception = expected_exception
 
         self.failure_count = 0
-        self.last_failure_time = None
+        self.last_failure_time: float | None = None
         self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
 
-    def call(self, func, *args, **kwargs):
+    def call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """Call function with circuit breaker protection.
 
         Args:
@@ -188,9 +189,11 @@ class CircuitBreaker:
             result = func(*args, **kwargs)
             self._on_success()
             return result
-        except self.expected_exception as e:
+        except BaseException as e:
+            if not isinstance(e, self.expected_exception):
+                raise
             self._on_failure()
-            raise e
+            raise
 
     def _should_attempt_reset(self) -> bool:
         """Check if should attempt reset."""
@@ -199,12 +202,12 @@ class CircuitBreaker:
 
         return time.time() - self.last_failure_time >= self.recovery_timeout
 
-    def _on_success(self):
+    def _on_success(self) -> None:
         """Handle successful call."""
         self.failure_count = 0
         self.state = "CLOSED"
 
-    def _on_failure(self):
+    def _on_failure(self) -> None:
         """Handle failed call."""
         self.failure_count += 1
         self.last_failure_time = time.time()
@@ -217,7 +220,7 @@ class CircuitBreaker:
 class RateLimiter:
     """Rate limiting for API endpoints."""
 
-    def __init__(self, redis_client=None):
+    def __init__(self, redis_client: Any | None = None) -> None:
         """Initialize rate limiter.
 
         Args:

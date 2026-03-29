@@ -338,16 +338,7 @@ class TestPolicyEnforcementIntegration:
     @pytest.mark.asyncio
     @patch("src.app.openai_client")
     async def test_streaming_request_policy_bypass(self, mock_openai_client, api_url):
-        """Test that streaming requests bypass policy enforcement."""
-        # Mock OpenAI response
-        mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "This might be correct."
-        mock_response.usage = Mock()
-        mock_response.usage.dict.return_value = {"total_tokens": 50}
-
-        mock_openai_client.chat.completions.create.return_value = mock_response
-
+        """Streaming completions are rejected until supported (policy skipped)."""
         chat_request = {
             "model": "mistralai/Mistral-7B-Instruct-v0.3",
             "messages": [
@@ -369,11 +360,10 @@ class TestPolicyEnforcementIntegration:
                 },
             )
 
-            assert response.status_code == 200
+            assert response.status_code == 501
+            assert "not supported" in response.text.lower()
 
-            # Streaming requests should not have policy verdict headers
-            assert "x-policy-verdict" not in response.headers
-            assert "x-policy-score" not in response.headers
+            mock_openai_client.chat.completions.create.assert_not_called()
 
     @pytest.mark.asyncio
     @patch("src.app.openai_client")

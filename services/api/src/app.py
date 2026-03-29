@@ -1,19 +1,23 @@
 """FastAPI control plane for agent orchestration."""
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import structlog
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 from opentelemetry import trace
 from prometheus_client import Counter, Histogram, generate_latest
 from pydantic import BaseModel, Field
 from redis.asyncio import Redis
+from starlette.responses import Response as StarletteResponse
 
 from .config import get_worker_settings, settings
 from .observability.context import RequestContextMiddleware, get_request_context
@@ -57,6 +61,53 @@ structlog.configure(
 
 logger = structlog.get_logger()
 
+
+def _usage_for_log(usage: Any) -> dict[str, Any] | None:
+    if usage is None:
+        return None
+    if isinstance(usage, dict):
+        return usage
+    md = getattr(usage, "model_dump", None)
+    if callable(md):
+        out = md()
+        if isinstance(out, dict):
+            return out
+    dfn = getattr(usage, "dict", None)
+    if callable(dfn):
+        out = dfn()
+        if isinstance(out, dict):
+            return out
+    return None
+
+
+def _completion_response_body(completion: Any) -> dict[str, Any]:
+    """Build JSON body for /v1/chat/completions (real SDK model or test doubles)."""
+    if isinstance(completion, ChatCompletion):
+        return completion.model_dump()
+    md = getattr(completion, "model_dump", None)
+    if callable(md):
+        out = md()
+        if isinstance(out, dict):
+            return out
+    dfn = getattr(completion, "dict", None)
+    if callable(dfn):
+        out = dfn()
+        if isinstance(out, dict):
+            return out
+    if all(
+        hasattr(completion, a) for a in ("id", "object", "created", "model", "choices")
+    ):
+        return {
+            "id": completion.id,
+            "object": completion.object,
+            "created": completion.created,
+            "model": completion.model,
+            "choices": completion.choices,
+            "usage": _usage_for_log(getattr(completion, "usage", None)),
+        }
+    raise TypeError("Unsupported chat completion response type")
+
+
 # Prometheus metrics
 REQUEST_COUNT = Counter(
     "api_requests_total",
@@ -82,8 +133,8 @@ CHAT_DURATION = Histogram(
     ["model"],
 )
 
-# Global clients
-redis_client: Redis | None = None
+# Global clients (decode_responses=True → str values in redis-py)
+redis_client: Redis[str] | None = None
 openai_client: AsyncOpenAI | None = None
 mlflow_logger: MLflowLogger | None = None
 provenance_logger: ProvenanceLogger | None = None
@@ -109,16 +160,16 @@ app.add_middleware(
 app.add_middleware(RequestContextMiddleware)
 
 # Mount routers if import succeeded
-if vms_router:
-    app.include_router(vms_router.router)  # type: ignore[attr-defined]
-if torrents_router:
-    app.include_router(torrents_router.router)  # type: ignore[attr-defined]
-if search_router:
-    app.include_router(search_router.router)  # type: ignore[attr-defined]
-if apps_router:
-    app.include_router(apps_router.router)  # type: ignore[attr-defined]
-if ai_router:
-    app.include_router(ai_router.router)  # type: ignore[attr-defined]
+if vms_router is not None:
+    app.include_router(vms_router.router)
+if torrents_router is not None:
+    app.include_router(torrents_router.router)
+if search_router is not None:
+    app.include_router(search_router.router)
+if apps_router is not None:
+    app.include_router(apps_router.router)
+if ai_router is not None:
+    app.include_router(ai_router.router)
 
 # Static UI (small SPA panels)
 _static_dir = Path(__file__).resolve().parent / "static"
@@ -167,7 +218,10 @@ class HealthResponse(BaseModel):
 
 
 @app.middleware("http")
-async def metrics_middleware(request: Request, call_next):
+async def metrics_middleware(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[StarletteResponse]],
+) -> StarletteResponse:
     """Middleware to collect Prometheus metrics."""
     start_time = asyncio.get_event_loop().time()
 
@@ -190,7 +244,7 @@ async def metrics_middleware(request: Request, call_next):
 
 
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     """Initialize clients on startup."""
     global redis_client, openai_client, mlflow_logger, provenance_logger
 
@@ -254,7 +308,7 @@ async def startup_event():
 
 
 @app.on_event("shutdown")
-async def shutdown_event():
+async def shutdown_event() -> None:
     """Cleanup on shutdown."""
     global redis_client
 
@@ -264,7 +318,7 @@ async def shutdown_event():
 
 
 @app.get("/health", response_model=HealthResponse)
-async def health_check():
+async def health_check() -> HealthResponse:
     """Health check endpoint."""
     services = {}
 
@@ -300,7 +354,7 @@ async def health_check():
 
 
 @app.get("/metrics")
-async def metrics():
+async def metrics() -> Response:
     """Prometheus metrics endpoint."""
     if not settings.enable_metrics:
         raise HTTPException(status_code=404, detail="Metrics disabled")
@@ -311,8 +365,8 @@ async def metrics():
     )
 
 
-@app.post("/v1/chat/completions", response_model=ChatResponse)
-async def chat_completions(request: ChatRequest, http_request: Request):
+@app.post("/v1/chat/completions")
+async def chat_completions(request: ChatRequest, http_request: Request) -> JSONResponse:
     """OpenAI-compatible chat completions endpoint with policy enforcement."""
     if not openai_client:
         raise HTTPException(
@@ -323,6 +377,12 @@ async def chat_completions(request: ChatRequest, http_request: Request):
     if not request.messages:
         raise HTTPException(
             status_code=422, detail="'messages' must contain at least one item"
+        )
+
+    if request.stream:
+        raise HTTPException(
+            status_code=501,
+            detail="Streaming chat completions are not supported yet",
         )
 
     start_time = asyncio.get_event_loop().time()
@@ -344,30 +404,34 @@ async def chat_completions(request: ChatRequest, http_request: Request):
             policy_set=policy_set,
         )
 
-        # Convert to OpenAI format
-        openai_messages = [
-            {"role": msg.role, "content": msg.content} for msg in request.messages
-        ]
+        # Convert to OpenAI SDK message params (typed for mypy / OpenAI 1.x)
+        openai_messages = cast(
+            list[ChatCompletionMessageParam],
+            [
+                {"role": msg.role, "content": msg.content or ""}
+                for msg in request.messages
+            ],
+        )
 
-        # Make request to worker
-        response = await openai_client.chat.completions.create(
+        # Make request to worker (non-streaming only)
+        completion = await openai_client.chat.completions.create(
             model=request.model,
             messages=openai_messages,
             temperature=request.temperature,
             max_tokens=request.max_tokens,
-            stream=request.stream,
+            stream=False,
         )
 
         duration = asyncio.get_event_loop().time() - start_time
 
         # Extract output for policy enforcement
         output_text = ""
-        if response.choices and len(response.choices) > 0:
-            output_text = response.choices[0].message.content or ""
+        if completion.choices and len(completion.choices) > 0:
+            output_text = completion.choices[0].message.content or ""
 
         # Run policy enforcement
         policy_verdict = None
-        if output_text and not request.stream:
+        if output_text:
             try:
                 policy_verdict = await policy_enforcer.validate(
                     output=output_text,
@@ -444,17 +508,21 @@ async def chat_completions(request: ChatRequest, http_request: Request):
             "Chat request completed",
             model=request.model,
             duration=duration,
-            usage=response.usage.dict() if response.usage else None,
-            policy_verdict=policy_verdict.dict() if policy_verdict else None,
+            usage=_usage_for_log(getattr(completion, "usage", None)),
+            policy_verdict=(
+                policy_verdict.model_dump() if policy_verdict is not None else None
+            ),
         )
 
-        # Add policy verdicts to response if available
-        if policy_verdict:
-            # Add to response headers or metadata
-            response.headers["x-policy-verdict"] = str(policy_verdict.overall_passed)
-            response.headers["x-policy-score"] = str(policy_verdict.overall_score)
+        body = _completion_response_body(completion)
+        http_response = JSONResponse(content=body)
+        if policy_verdict is not None:
+            http_response.headers["x-policy-verdict"] = str(
+                policy_verdict.overall_passed
+            )
+            http_response.headers["x-policy-score"] = str(policy_verdict.overall_score)
 
-        return response
+        return http_response
 
     except Exception as e:
         duration = asyncio.get_event_loop().time() - start_time
@@ -486,7 +554,7 @@ class FeedbackRequest(BaseModel):
 
 
 @app.post("/v1/feedback")
-async def submit_feedback(feedback: FeedbackRequest):
+async def submit_feedback(feedback: FeedbackRequest) -> dict[str, Any]:
     """Submit feedback for a run.
 
     Args:
@@ -531,7 +599,7 @@ async def submit_feedback(feedback: FeedbackRequest):
 
 
 @app.get("/")
-async def root():
+async def root() -> dict[str, Any]:
     """Root endpoint with API information."""
     return {
         "name": "Agent Orchestrator API",

@@ -1,11 +1,14 @@
 """Request context middleware for provenance tracking."""
 
 import uuid
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 import structlog
 from fastapi import Request
 from opentelemetry import trace
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
 
 logger = structlog.get_logger()
 
@@ -13,7 +16,11 @@ logger = structlog.get_logger()
 class RequestContextMiddleware(BaseHTTPMiddleware):
     """Middleware to propagate trace/run/policy headers through OTel + MLflow."""
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> Response:
         """Process request and add context headers."""
         # Extract or generate context headers
         trace_id = request.headers.get("x-trace-id", str(uuid.uuid4()))
@@ -51,7 +58,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         return response
 
 
-def get_request_context(request: Request) -> dict:
+def get_request_context(request: Request) -> dict[str, Any]:
     """Get request context from state.
 
     Args:
