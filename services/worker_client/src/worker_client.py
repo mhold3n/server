@@ -1,6 +1,7 @@
 """Typed client for vLLM/TGI worker communication."""
 
 from collections.abc import AsyncGenerator
+from types import TracebackType
 from typing import Any
 
 import structlog
@@ -119,7 +120,7 @@ class WorkerClient:
         api_key: str | None = None,
         timeout: int | None = None,
         max_retries: int | None = None,
-    ):
+    ) -> None:
         """Initialize the worker client."""
         self.base_url = base_url or settings.worker_base_url
         self.api_key = api_key or settings.worker_api_key
@@ -135,12 +136,17 @@ class WorkerClient:
             max_retries=self.max_retries,
         )
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "WorkerClient":
         """Async context manager entry."""
         await self._ensure_client()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Async context manager exit."""
         if self._client:
             await self._client.close()
@@ -158,6 +164,8 @@ class WorkerClient:
         """Check if the worker is healthy."""
         try:
             await self._ensure_client()
+            if not self._client:
+                return False
             await self._client.models.list()
             return True
         except Exception as e:
@@ -169,6 +177,8 @@ class WorkerClient:
         await self._ensure_client()
 
         try:
+            if not self._client:
+                raise RuntimeError("OpenAI client not initialized")
             response = await self._client.models.list()
             models = []
 
@@ -204,7 +214,7 @@ class WorkerClient:
         ]
 
         # Prepare request parameters
-        request_params = {
+        request_params: dict[str, Any] = {
             "model": request.model,
             "messages": openai_messages,
             "temperature": request.temperature,
@@ -240,6 +250,8 @@ class WorkerClient:
                         attempt=attempt.retry_state.attempt_number,
                     )
 
+                    if not self._client:
+                        raise RuntimeError("OpenAI client not initialized")
                     response = await self._client.chat.completions.create(
                         **request_params
                     )
@@ -289,6 +301,7 @@ class WorkerClient:
                 error=str(e),
             )
             raise
+        raise RuntimeError("Chat completion exhausted retries without result")
 
     async def chat_completion_stream(
         self,
@@ -306,7 +319,7 @@ class WorkerClient:
         ]
 
         # Prepare request parameters
-        request_params = {
+        request_params: dict[str, Any] = {
             "model": request.model,
             "messages": openai_messages,
             "temperature": request.temperature,
@@ -329,6 +342,8 @@ class WorkerClient:
                 message_count=len(request.messages),
             )
 
+            if not self._client:
+                raise RuntimeError("OpenAI client not initialized")
             stream = await self._client.chat.completions.create(**request_params)
 
             async for chunk in stream:
@@ -370,20 +385,20 @@ class WorkerClient:
                 return model
         return None
 
-    async def estimate_tokens(self, text: str, model: str = None) -> int:
+    async def estimate_tokens(self, text: str, _model: str | None = None) -> int:
         """Estimate the number of tokens in text (rough approximation)."""
         # This is a rough approximation - in production, you'd want to use
         # the actual tokenizer for the model
-        return len(text.split()) * 1.3  # Rough approximation
+        return int(len(text.split()) * 1.3)
 
 
 # Convenience functions
 async def create_chat_completion(
     messages: list[ChatMessage],
-    model: str = None,
-    temperature: float = None,
-    max_tokens: int = None,
-    **kwargs
+    model: str | None = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+    **kwargs: Any,
 ) -> ChatResponse:
     """Convenience function to create a chat completion."""
     request = ChatRequest(
@@ -391,7 +406,7 @@ async def create_chat_completion(
         model=model or settings.default_model,
         temperature=temperature or settings.default_temperature,
         max_tokens=max_tokens or settings.default_max_tokens,
-        **kwargs
+        **kwargs,
     )
 
     async with WorkerClient() as client:
@@ -400,10 +415,10 @@ async def create_chat_completion(
 
 async def create_chat_completion_stream(
     messages: list[ChatMessage],
-    model: str = None,
-    temperature: float = None,
-    max_tokens: int = None,
-    **kwargs
+    model: str | None = None,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+    **kwargs: Any,
 ) -> AsyncGenerator[dict[str, Any], None]:
     """Convenience function to create a streaming chat completion."""
     request = ChatRequest(
@@ -412,7 +427,7 @@ async def create_chat_completion_stream(
         temperature=temperature or settings.default_temperature,
         max_tokens=max_tokens or settings.default_max_tokens,
         stream=True,
-        **kwargs
+        **kwargs,
     )
 
     async with WorkerClient() as client:
