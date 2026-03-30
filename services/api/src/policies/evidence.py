@@ -1,5 +1,6 @@
 """Evidence policy for requiring citations and source diversity."""
 
+import math
 import re
 from typing import Any
 
@@ -153,13 +154,16 @@ class EvidencePolicy:
             source_type = metadata.get("source_type", "unknown")
             source_types[source_type] = source_types.get(source_type, 0) + 1
 
-        # Calculate diversity score (Shannon entropy normalized)
-        if total_sources > 1:
-            entropy = 0
+        # Diversity score: normalized Shannon entropy in [0, 1]
+        if total_sources > 1 and source_types:
+            entropy = 0.0
             for count in source_types.values():
                 p = count / total_sources
-                entropy -= p * (p.bit_length() - 1) if p > 0 else 0
-            diversity_score = entropy / (total_sources.bit_length() - 1)
+                if p > 0:
+                    entropy -= p * math.log2(p)
+            k = len(source_types)
+            max_entropy = math.log2(k) if k > 1 else 1.0
+            diversity_score = entropy / max_entropy if max_entropy > 0 else 0.0
         else:
             diversity_score = 0.0
 
