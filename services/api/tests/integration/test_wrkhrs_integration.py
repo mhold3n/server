@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
-from src.main import app
 
+from src.main import app
 from src.observability.mlflow_logger import MLflowLogger
 from src.policies.evidence import EvidencePolicy
 from src.wrkhrs.conditioning import RequestConditioner
