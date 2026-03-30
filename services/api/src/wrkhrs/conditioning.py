@@ -332,3 +332,7 @@ Please provide a comprehensive, technically accurate response that draws from th
             "detected_units": detected_units,
             "has_units": len(detected_units) > 0,
         }
+
+
+# Stable public name used by integration/e2e tests and callers
+RequestConditioner = NonGenerativeConditioning
