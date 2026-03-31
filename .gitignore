@@ -266,3 +266,28 @@ mbmh/logs/
 Thumbs.db
 .DS_Store
 *.lnk
+
+# -----------------------------------------------------------------------------
+# Monorepo-local artifacts (do not commit)
+# -----------------------------------------------------------------------------
+.ci-local-venv/
+.venv-hf/
+.venv-qwen/
+
+# Local model/data caches (users manage locally)
+/models/
+/data/
+
+# Coverage artifacts
+.coverage
+coverage.xml
+services/**/.coverage
+
+# Local-only folders in this workspace root
+/Birtha_bigger_n_badder/
+/Compute_Node_Birtha/
+/WrkHrs/
+/structure/
+/llama.cpp/
+/transcript_miner/
+/2c679151f2c240975f56fccbec3a79f3966a56fd08878e024ca4d5b63c8509d0-2026-03-16-19-30-36-f92e214ac68e4903ab045ccc182de582/
