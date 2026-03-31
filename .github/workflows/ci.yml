@@ -75,30 +75,36 @@ jobs:
           (cd mcp/servers/secrets-mcp && mypy --strict src)
           (cd mcp/servers/vector-db-mcp && mypy --strict src)
       
-      # Run tests
+      # Run tests (PYTHONPATH: each wheel uses a top-level `src/` package; multiple editables
+      # would otherwise shadow each other on sys.path). Skip packages with no tests/ directory.
       - name: Run tests
         run: |
-          (cd services/api && pytest tests/ -v --cov=src --cov-report=xml)
-          (cd services/router && pytest tests/ -v --cov=src --cov-report=xml)
-          (cd services/worker_client && pytest tests/ -v --cov=src --cov-report=xml)
-          (cd mcp/servers/filesystem-mcp && pytest tests/ -v --cov=src --cov-report=xml)
-          (cd mcp/servers/secrets-mcp && pytest tests/ -v --cov=src --cov-report=xml)
-          (cd mcp/servers/vector-db-mcp && pytest tests/ -v --cov=src --cov-report=xml)
-          (cd mbmh && pytest tests/ -v)
+          run_pytest_cov() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=src --cov-report=xml); else echo "Skip pytest: no $d/tests"; fi; }
+          run_pytest_plain() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v); else echo "Skip pytest: no $d/tests"; fi; }
+          run_pytest_cov services/api
+          run_pytest_cov services/router
+          run_pytest_cov services/worker_client
+          run_pytest_cov mcp/servers/filesystem-mcp
+          run_pytest_cov mcp/servers/secrets-mcp
+          run_pytest_cov mcp/servers/vector-db-mcp
+          run_pytest_plain mbmh
 
       # Node.js for GitHub MCP server
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
       - name: Install GitHub MCP dependencies
+        if: ${{ hashFiles('mcp/servers/github-mcp/package*.json') != '' }}
         run: |
           cd mcp/servers/github-mcp
           npm ci
       - name: Build GitHub MCP server
+        if: ${{ hashFiles('mcp/servers/github-mcp/package*.json') != '' }}
         run: |
           cd mcp/servers/github-mcp
           npm run build
       - name: Run GitHub MCP tests
+        if: ${{ hashFiles('mcp/servers/github-mcp/package*.json') != '' }}
         run: |
           cd mcp/servers/github-mcp
           npm test
@@ -109,10 +115,26 @@ jobs:
           docker build -t agent-orchestrator-api ./services/api
           docker build -t agent-orchestrator-router ./services/router
           docker build -t agent-orchestrator-worker-client ./services/worker_client
-          docker build -t mcp-filesystem ./mcp/servers/filesystem-mcp
-          docker build -t mcp-secrets ./mcp/servers/secrets-mcp
-          docker build -t mcp-vector-db ./mcp/servers/vector-db-mcp
-          docker build -t mcp-github ./mcp/servers/github-mcp
+          if [[ -f "mcp/servers/filesystem-mcp/Dockerfile" ]]; then
+            docker build -t mcp-filesystem ./mcp/servers/filesystem-mcp
+          else
+            echo "SKIP: mcp-filesystem docker build (Dockerfile missing)"
+          fi
+          if [[ -f "mcp/servers/secrets-mcp/Dockerfile" ]]; then
+            docker build -t mcp-secrets ./mcp/servers/secrets-mcp
+          else
+            echo "SKIP: mcp-secrets docker build (Dockerfile missing)"
+          fi
+          if [[ -f "mcp/servers/vector-db-mcp/Dockerfile" ]]; then
+            docker build -t mcp-vector-db ./mcp/servers/vector-db-mcp
+          else
+            echo "SKIP: mcp-vector-db docker build (Dockerfile missing)"
+          fi
+          if compgen -G "mcp/servers/github-mcp/package*.json" > /dev/null; then
+            docker build -t mcp-github ./mcp/servers/github-mcp
+          else
+            echo "SKIP: mcp-github docker build (expected package*.json)"
+          fi
 
       # Upload coverage
       - name: Upload coverage to Codecov

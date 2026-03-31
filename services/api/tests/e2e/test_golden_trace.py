@@ -1,11 +1,17 @@
 """End-to-end tests for golden trace validation in Tempo + MLflow run linkage."""
 
 import asyncio
+import os
 import time
 from unittest.mock import Mock, patch
 
 import httpx
 import pytest
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("RUN_LIVE_STACK_TESTS") != "1",
+    reason="E2E tests require a running API and observability stack; set RUN_LIVE_STACK_TESTS=1.",
+)
 
 
 class TestGoldenTraceE2E:

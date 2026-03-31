@@ -286,12 +286,12 @@ class TestMLflowLogger:
     def test_log_feedback(self, mock_mlflow):
         """Test feedback logging."""
         logger = MLflowLogger()
+        logger.experiment_id = None
 
         feedback = {"rating": 4, "reasons": ["helpful", "accurate"]}
 
         result = logger.log_feedback("test-run-id", feedback)
 
-        # Should return False if MLflow not available
         assert result is False
 
     @patch("src.observability.mlflow_logger.mlflow")

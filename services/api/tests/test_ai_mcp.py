@@ -11,8 +11,11 @@ from src.app import app
 def test_mcp_servers_list_uses_toggle(setup_clients):
     client = TestClient(app)
     # Startup may overwrite redis_client; ensure we set it to a mock now
-    app_mod.redis_client = AsyncMock()
-    app_mod.redis_client.smembers.return_value = {"filesystem-mcp"}
+    redis = AsyncMock()
+    redis.smembers = AsyncMock(return_value={"filesystem-mcp"})
+    redis.sadd = AsyncMock()
+    redis.srem = AsyncMock()
+    app_mod.redis_client = redis
 
     with respx.mock(assert_all_called=True) as mock:
         mock.get("http://router:8000/mcp/servers").mock(
@@ -58,8 +61,8 @@ def test_mcp_toggle_enable_disable(setup_clients):
 def test_mcp_tools_and_call_respects_toggle(setup_clients):
     client = TestClient(app)
     assert isinstance(app_mod.redis_client, AsyncMock)
-    # Disable filesystem-mcp
-    app_mod.redis_client.smembers.return_value = {"filesystem-mcp"}
+    # Disable filesystem-mcp (async smembers used by _get_disabled_servers)
+    app_mod.redis_client.smembers = AsyncMock(return_value={"filesystem-mcp"})
 
     # Tools pass-through
     with respx.mock() as mock:
@@ -82,7 +85,7 @@ def test_mcp_tools_and_call_respects_toggle(setup_clients):
     assert resp.status_code == 403
 
     # Call allowed for enabled server
-    app_mod.redis_client.smembers.return_value = set()
+    app_mod.redis_client.smembers = AsyncMock(return_value=set())
     with respx.mock(assert_all_called=True) as mock:
         mock.post("http://router:8000/mcp/servers/github-mcp/call").mock(
             return_value=httpx.Response(200, json={"ok": True})

@@ -1,7 +1,7 @@
 """Shared test fixtures for router service."""
 
 import asyncio
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import Generator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -93,23 +93,20 @@ def mock_mcp_client() -> AsyncMock:
 
 
 @pytest.fixture
-async def setup_clients(
+def setup_clients(
     mock_redis: AsyncMock, mock_api_client: AsyncMock, test_client: TestClient
-) -> AsyncGenerator[None, None]:
-    """Setup mock clients for testing."""
+) -> Generator[None, None, None]:
+    """Setup mock clients for testing (sync for pytest 9+)."""
     import src.router
 
-    # Store original clients
     original_redis = src.router.redis_client
     original_api = src.router.api_client
 
-    # Set mock clients
     src.router.redis_client = mock_redis
     src.router.api_client = mock_api_client
 
     yield
 
-    # Restore original clients
     src.router.redis_client = original_redis
     src.router.api_client = original_api
 

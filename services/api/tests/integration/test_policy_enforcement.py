@@ -1,9 +1,15 @@
 """Integration tests for policy enforcement in chat flow."""
 
+import os
 from unittest.mock import Mock, patch
 
 import httpx
 import pytest
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("RUN_LIVE_STACK_TESTS") != "1",
+    reason="Requires API on localhost; set RUN_LIVE_STACK_TESTS=1.",
+)
 
 
 class TestPolicyEnforcementIntegration:

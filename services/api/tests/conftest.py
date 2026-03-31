@@ -1,7 +1,7 @@
 """Shared test fixtures for API service."""
 
 import asyncio
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import Generator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -30,6 +30,9 @@ def mock_redis() -> AsyncMock:
     """Mock Redis client."""
     mock = AsyncMock(spec=Redis)
     mock.ping.return_value = True
+    mock.sadd = AsyncMock()
+    mock.srem = AsyncMock()
+    mock.smembers = AsyncMock(return_value=set())
     return mock
 
 
@@ -68,23 +71,20 @@ def mock_openai_client() -> AsyncMock:
 
 
 @pytest.fixture
-async def setup_clients(
+def setup_clients(
     mock_redis: AsyncMock, mock_openai_client: AsyncMock, test_client: TestClient
-) -> AsyncGenerator[None, None]:
-    """Setup mock clients for testing."""
+) -> Generator[None, None, None]:
+    """Setup mock clients for testing (sync so sync tests can use it on pytest 9+)."""
     import src.app
 
-    # Store original clients
     original_redis = src.app.redis_client
     original_openai = src.app.openai_client
 
-    # Set mock clients (after TestClient startup ran)
     src.app.redis_client = mock_redis
     src.app.openai_client = mock_openai_client
 
     yield
 
-    # Restore original clients
     src.app.redis_client = original_redis
     src.app.openai_client = original_openai
 

@@ -1,5 +1,7 @@
 """Agent router with MCP client integration."""
 
+from __future__ import annotations
+
 import asyncio
 from typing import Any
 
@@ -36,7 +38,7 @@ structlog.configure(
 logger = structlog.get_logger()
 
 # Global clients
-redis_client: Redis[str] | None = None
+redis_client: Redis[Any] | None = None
 api_client: AsyncClient | None = None
 
 app = FastAPI(

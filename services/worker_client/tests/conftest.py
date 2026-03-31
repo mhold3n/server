@@ -2,12 +2,23 @@
 
 import asyncio
 from collections.abc import Generator
+from dataclasses import dataclass, field
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from openai import AsyncOpenAI
 
 from src.worker_client import ChatMessage, ChatRequest, ChatResponse, ModelInfo
+
+
+@dataclass
+class _MockOpenAIModel:
+    id: str = "test-model"
+    created: int = 1234567890
+    owned_by: str = "vllm"
+    permission: list = field(default_factory=list)
+    root: str | None = None
+    parent: str | None = None
 
 
 @pytest.fixture(scope="session")
@@ -25,17 +36,8 @@ def mock_openai_client() -> AsyncMock:
 
     # Mock models.list response
     mock_models = MagicMock()
-    mock_models.data = [
-        MagicMock(
-            id="test-model",
-            created=1234567890,
-            owned_by="vllm",
-            permission=[],
-            root=None,
-            parent=None,
-        )
-    ]
-    mock.models.list.return_value = mock_models
+    mock_models.data = [_MockOpenAIModel()]
+    mock.models.list = AsyncMock(return_value=mock_models)
 
     # Mock chat completions response
     mock_response = MagicMock()
@@ -57,7 +59,7 @@ def mock_openai_client() -> AsyncMock:
         "total_tokens": 15,
     }
 
-    mock.chat.completions.create.return_value = mock_response
+    mock.chat.completions.create = AsyncMock(return_value=mock_response)
 
     return mock
 

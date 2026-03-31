@@ -1,7 +1,14 @@
 """Integration tests for MCP registry auto-registration."""
 
+import os
+
 import httpx
 import pytest
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("RUN_LIVE_STACK_TESTS") != "1",
+    reason="Requires MCP registry on localhost; set RUN_LIVE_STACK_TESTS=1.",
+)
 
 
 class TestMCPRegistryIntegration:

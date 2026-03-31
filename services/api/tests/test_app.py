@@ -3,6 +3,9 @@
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
+from openai.types.chat import ChatCompletion
+from openai.types.chat.chat_completion import Choice
+from openai.types.chat.chat_completion_message import ChatCompletionMessage
 
 
 class TestHealthEndpoint:
@@ -73,23 +76,27 @@ class TestChatCompletions:
         """Test successful chat completion."""
         import src.app
 
-        # Mock the OpenAI response
-        class UsageDict(dict):
-            def dict(self):
-                return self
+        completion = ChatCompletion(
+            id=sample_chat_response["id"],
+            object=sample_chat_response["object"],
+            created=sample_chat_response["created"],
+            model=sample_chat_response["model"],
+            choices=[
+                Choice(
+                    index=0,
+                    finish_reason="stop",
+                    message=ChatCompletionMessage(
+                        role="assistant", content="Test response"
+                    ),
+                )
+            ],
+        )
 
-        mock_response = AsyncMock()
-        mock_response.id = sample_chat_response["id"]
-        mock_response.object = sample_chat_response["object"]
-        mock_response.created = sample_chat_response["created"]
-        mock_response.model = sample_chat_response["model"]
-        mock_response.choices = sample_chat_response["choices"]
-        mock_response.usage = UsageDict(**sample_chat_response["usage"])
-
-        # Ensure client exists (TestClient startup may set it to None on failure)
         if src.app.openai_client is None:
             src.app.openai_client = AsyncMock()
-        src.app.openai_client.chat.completions.create.return_value = mock_response
+        src.app.openai_client.chat.completions.create = AsyncMock(
+            return_value=completion
+        )
 
         response = test_client.post("/v1/chat/completions", json=sample_chat_request)
 
@@ -154,21 +161,25 @@ class TestChatCompletions:
         """Test chat completion with custom temperature."""
         import src.app
 
-        class UsageDict(dict):
-            def dict(self):
-                return self
+        completion = ChatCompletion(
+            id=sample_chat_response["id"],
+            object=sample_chat_response["object"],
+            created=sample_chat_response["created"],
+            model=sample_chat_response["model"],
+            choices=[
+                Choice(
+                    index=0,
+                    finish_reason="stop",
+                    message=ChatCompletionMessage(
+                        role="assistant", content="Test response"
+                    ),
+                )
+            ],
+        )
 
-        mock_response = AsyncMock()
-        mock_response.id = sample_chat_response["id"]
-        mock_response.object = sample_chat_response["object"]
-        mock_response.created = sample_chat_response["created"]
-        mock_response.model = sample_chat_response["model"]
-        mock_response.choices = sample_chat_response["choices"]
-        mock_response.usage = UsageDict(**sample_chat_response["usage"])
-
-        # Ensure no leftover side effects from other tests
-        src.app.openai_client.chat.completions.create.side_effect = None
-        src.app.openai_client.chat.completions.create.return_value = mock_response
+        src.app.openai_client.chat.completions.create = AsyncMock(
+            return_value=completion
+        )
 
         request = {
             "model": "test-model",

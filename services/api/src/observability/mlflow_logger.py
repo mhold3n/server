@@ -2,8 +2,11 @@
 
 import json
 import os
+import socket
+import unittest.mock
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
 import mlflow
 import structlog
@@ -73,10 +76,45 @@ class MLflowLogger:
         self.experiment_name = experiment_name
         self._setup_mlflow()
 
+    def _tracking_server_reachable(self, timeout_s: float = 1.0) -> bool:
+        """
+        Fail fast if the tracking server isn't reachable.
+
+        MLflow's internal HTTP client does not consistently apply short timeouts
+        during experiment lookup/creation, which can stall local CI/tests.
+        """
+
+        try:
+            # Unit tests patch `mlflow` with a mock; don't attempt any real
+            # networking in that case.
+            if isinstance(mlflow, unittest.mock.Mock):
+                return True
+
+            parsed = urlparse(self.tracking_uri)
+            if parsed.scheme not in ("http", "https"):
+                return True
+
+            host = parsed.hostname
+            if not host:
+                return True
+
+            port = parsed.port
+            if port is None:
+                port = 443 if parsed.scheme == "https" else 80
+
+            with socket.create_connection((host, port), timeout=timeout_s):
+                return True
+        except OSError:
+            return False
+
     def _setup_mlflow(self) -> None:
         """Setup MLflow client and experiment."""
         try:
             mlflow.set_tracking_uri(self.tracking_uri)
+
+            if not self._tracking_server_reachable():
+                self.experiment_id = None
+                return
 
             # Get or create experiment
             try:

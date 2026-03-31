@@ -1,5 +1,7 @@
 """End-to-end tests for WrkHrs integration."""
 
+import os
+
 import pytest
 
 from src.observability.mlflow_logger import MLflowLogger
@@ -7,6 +9,11 @@ from src.policies.evidence import EvidencePolicy
 from src.wrkhrs.conditioning import RequestConditioner
 from src.wrkhrs.domain_classifier import DomainClassifier
 from src.wrkhrs.gateway_client import WrkHrsGatewayClient
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("RUN_LIVE_STACK_TESTS") != "1",
+    reason="E2E tests require a running API and observability stack; set RUN_LIVE_STACK_TESTS=1.",
+)
 
 
 class TestWrkHrsE2E:

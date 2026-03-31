@@ -1,7 +1,8 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
 
+import src.router as router_mod
 from src.router import app
 
 
@@ -44,6 +45,16 @@ def test_health_includes_mcp_and_api(monkeypatch):
 
 def test_mcp_tool_call_forwards_tool_args(monkeypatch):
     client = TestClient(app)
+
+    fake_http = MagicMock()
+    fake_http.status_code = 200
+    fake_http.json.return_value = {
+        "choices": [{"message": {"content": "assistant reply"}}],
+    }
+    fake_http.raise_for_status = MagicMock()
+    fake_api = AsyncMock()
+    fake_api.post = AsyncMock(return_value=fake_http)
+    monkeypatch.setattr(router_mod, "api_client", fake_api)
 
     class FakeMCP:
         async def __aenter__(self):
