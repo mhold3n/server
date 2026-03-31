@@ -1,7 +1,7 @@
 # AI Stack Makefile
 # Provides common targets for development and production deployment
 
-.PHONY: help build build-dev build-prod up up-dev up-prod down logs clean test health status pull-models setup-dev setup-prod push-images
+.PHONY: help build build-dev build-prod build-mobile up up-dev up-prod up-mobile down logs clean test test-mobile health health-mobile status pull-models setup-dev setup-prod push-images
 
 # Default target
 .DEFAULT_GOAL := help
@@ -10,6 +10,7 @@
 COMPOSE_BASE = -f compose/docker-compose.base.yml
 COMPOSE_DEV = $(COMPOSE_BASE) -f compose/docker-compose.dev.yml
 COMPOSE_PROD = $(COMPOSE_BASE) -f compose/docker-compose.prod.yml
+COMPOSE_MOBILE = $(COMPOSE_BASE) -f compose/docker-compose.mobile.yml
 ENV_FILE = .env
 
 # Colors for output
@@ -58,6 +59,10 @@ build-prod: setup ## Build all services for production
 	@echo "$(BLUE)Building production services...$(NC)"
 	docker compose $(COMPOSE_PROD) build
 
+build-mobile: setup ## Build mobile offline profile with deterministic surrogates
+	@echo "$(BLUE)Building mobile surrogate profile...$(NC)"
+	docker compose $(COMPOSE_MOBILE) build
+
 build-service: setup ## Build specific service (usage: make build-service SERVICE=gateway-api)
 	@if [ -z "$(SERVICE)" ]; then \
 		echo "$(RED)Error: SERVICE parameter required$(NC)"; \
@@ -87,9 +92,18 @@ up-prod: setup build-prod ## Start all services in production mode
 	@echo "$(YELLOW)Gateway API:$(NC) http://localhost:8080"
 	@echo "$(YELLOW)vLLM API:$(NC) http://localhost:8001"
 
+up-mobile: setup build-mobile ## Start mobile profile with surrogate APIs (offline backend simulation)
+	@echo "$(BLUE)Starting mobile surrogate environment...$(NC)"
+	docker compose $(COMPOSE_MOBILE) up -d
+	@echo "$(GREEN)✓ Mobile surrogate environment started$(NC)"
+	@echo "$(YELLOW)Gateway API:$(NC) http://localhost:8080"
+	@echo "$(YELLOW)Surrogate profile:$(NC) $${SURROGATE_PROFILE:-nominal}"
+	@echo "$(YELLOW)Use header X-Surrogate-Profile to override per request.$(NC)"
+
 down: ## Stop all services
 	@echo "$(BLUE)Stopping all services...$(NC)"
 	docker compose $(COMPOSE_DEV) down 2>/dev/null || true
+	docker compose $(COMPOSE_MOBILE) down 2>/dev/null || true
 	docker compose $(COMPOSE_PROD) down 2>/dev/null || true
 	@echo "$(GREEN)✓ All services stopped$(NC)"
 
@@ -142,6 +156,22 @@ health: ## Check health of all services
 		echo "$(YELLOW)? ollama$(NC) - not ready (check if running)"; \
 	fi
 
+health-mobile: ## Check health for mobile surrogate profile
+	@echo "$(BLUE)Checking mobile surrogate services...$(NC)"
+	@services="gateway-api orchestrator tool-registry mcp rag-api asr-api"; \
+	for service in $$services; do \
+		port=$$(docker compose $(COMPOSE_MOBILE) port $$service 8000 2>/dev/null | cut -d: -f2); \
+		if [ -n "$$port" ]; then \
+			if curl -s -f http://localhost:$$port/health > /dev/null 2>&1; then \
+				echo "$(GREEN)✓ $$service$(NC) - healthy"; \
+			else \
+				echo "$(RED)✗ $$service$(NC) - unhealthy"; \
+			fi; \
+		else \
+			echo "$(YELLOW)? $$service$(NC) - not running"; \
+		fi; \
+	done
+
 status: ## Show status of all containers
 	@echo "$(BLUE)Container status:$(NC)"
 	docker compose $(COMPOSE_DEV) ps
@@ -193,6 +223,20 @@ test-chat: ## Test chat endpoint
 	curl -X POST http://localhost:8080/v1/chat/completions \
 		-H "Content-Type: application/json" \
 		-d '{"messages":[{"role":"user","content":"What is the strength of steel?"}],"model":"test","temperature":0.7}' \
+		| jq .
+
+test-mobile: ## Test mobile surrogate path through gateway
+	@echo "$(BLUE)Testing mobile surrogate chat path...$(NC)"
+	@api_key=$$(grep '^API_KEY_SECRET=' $(ENV_FILE) | cut -d'=' -f2-); \
+	if [ -z "$$api_key" ]; then \
+		echo "$(RED)API_KEY_SECRET not found in $(ENV_FILE)$(NC)"; \
+		exit 1; \
+	fi; \
+	curl -X POST http://localhost:8080/v1/chat/completions \
+		-H "Content-Type: application/json" \
+		-H "X-API-Key: $$api_key" \
+		-H "X-Surrogate-Profile: nominal" \
+		-d '{"messages":[{"role":"user","content":"Calculate beam stress at 1000 N load and include SI units."}],"model":"mobile-proof","temperature":0.2}' \
 		| jq .
 
 test-llm: ## Test LLM backend integration (Ollama/vLLM)
@@ -286,6 +330,7 @@ backup-data: ## Backup persistent data
 clean: down ## Clean up containers, networks, and volumes
 	@echo "$(BLUE)Cleaning up containers and networks...$(NC)"
 	docker compose $(COMPOSE_DEV) down -v --remove-orphans
+	docker compose $(COMPOSE_MOBILE) down -v --remove-orphans
 	docker compose $(COMPOSE_PROD) down -v --remove-orphans
 	@echo "$(GREEN)✓ Cleanup completed$(NC)"
 

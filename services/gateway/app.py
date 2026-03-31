@@ -458,7 +458,25 @@ def extract_constraints(text: str) -> List[str]:
     
     return list(set(constraints))
 
-async def get_weighted_evidence(prompt: str, weights: DomainWeights) -> str:
+def extract_surrogate_headers(request: Request) -> Dict[str, str]:
+    """Forward surrogate control headers to downstream services when present."""
+    forwarded = {}
+    for header_name in [
+        "x-surrogate-profile",
+        "x-surrogate-fault",
+        "x-surrogate-latency-ms",
+    ]:
+        value = request.headers.get(header_name)
+        if value:
+            forwarded[header_name] = value
+    return forwarded
+
+
+async def get_weighted_evidence(
+    prompt: str,
+    weights: DomainWeights,
+    surrogate_headers: Optional[Dict[str, str]] = None,
+) -> str:
     """Get weighted evidence from RAG system"""
     try:
         rag_url = f"http://rag-api:8000/search"
@@ -468,7 +486,12 @@ async def get_weighted_evidence(prompt: str, weights: DomainWeights) -> str:
             "k": 5
         }
         
-        response = requests.post(rag_url, json=payload, timeout=10)
+        response = requests.post(
+            rag_url,
+            json=payload,
+            timeout=10,
+            headers=surrogate_headers or None,
+        )
         if response.status_code == 200:
             evidence = response.json().get("evidence", "")
             return evidence
@@ -534,7 +557,8 @@ async def health_check():
 
 @api.post("/v1/chat/completions", response_model=ChatResponse)
 async def chat_completions(
-    request: ChatRequest, 
+    request: ChatRequest,
+    http_request: Request,
     current_user: dict = Depends(get_current_user)
 ):
     """OpenAI-compatible chat completions endpoint with non-generative conditioning"""
@@ -550,7 +574,8 @@ async def chat_completions(
             raise HTTPException(status_code=400, detail="No user message found")
         
         # Process prompt with non-generative conditioning
-        processed = await process_prompt(user_message)
+        surrogate_headers = extract_surrogate_headers(http_request)
+        processed = await process_prompt(user_message, surrogate_headers)
         
         # Forward to orchestrator with enhanced context
         enhanced_messages = request.messages.copy()
@@ -576,7 +601,12 @@ Please respond with SI units and consider the safety constraints mentioned.
             "max_tokens": request.max_tokens
         }
         
-        response = ORCH_SESSION.post(orchestrator_url, json=orchestrator_payload, timeout=REQUEST_TIMEOUT)
+        response = ORCH_SESSION.post(
+            orchestrator_url,
+            json=orchestrator_payload,
+            timeout=REQUEST_TIMEOUT,
+            headers=surrogate_headers or None,
+        )
         
         if response.status_code == 200:
             result = response.json()
@@ -626,7 +656,10 @@ Please respond with SI units and consider the safety constraints mentioned.
         logger.error(f"Error in chat_completions: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-async def process_prompt(prompt: str) -> ProcessedPrompt:
+async def process_prompt(
+    prompt: str,
+    surrogate_headers: Optional[Dict[str, str]] = None,
+) -> ProcessedPrompt:
     """Process prompt with non-generative conditioning"""
     # Extract domain weights
     domain_weights = extract_domain_weights(prompt)
@@ -636,7 +669,7 @@ async def process_prompt(prompt: str) -> ProcessedPrompt:
     constraints = extract_constraints(prompt)
     
     # Get weighted evidence from RAG
-    evidence = await get_weighted_evidence(prompt, domain_weights)
+    evidence = await get_weighted_evidence(prompt, domain_weights, surrogate_headers)
     
     return ProcessedPrompt(
         original_prompt=prompt,

@@ -4,7 +4,7 @@ import logging
 from typing import Dict, List, Optional, Any, Annotated
 from datetime import datetime
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 import requests
 from langgraph.graph import StateGraph, END
@@ -55,10 +55,29 @@ class WorkflowState(BaseModel):
     asr_results: Optional[str] = None
     tool_results: Dict[str, Any] = {}
     final_response: Optional[str] = None
+    surrogate_headers: Dict[str, str] = {}
+
+
+def extract_surrogate_headers(request: Request) -> Dict[str, str]:
+    """Forward surrogate control headers to downstream services when present."""
+    forwarded = {}
+    for header_name in [
+        "x-surrogate-profile",
+        "x-surrogate-fault",
+        "x-surrogate-latency-ms",
+    ]:
+        value = request.headers.get(header_name)
+        if value:
+            forwarded[header_name] = value
+    return forwarded
 
 # Tool definitions
 @tool
-def search_knowledge_base(query: str, domain_weights: Dict[str, float] = None) -> str:
+def search_knowledge_base(
+    query: str,
+    domain_weights: Dict[str, float] = None,
+    surrogate_headers: Dict[str, str] = None,
+) -> str:
     """Search the RAG knowledge base with optional domain weighting."""
     try:
         rag_url = "http://rag-api:8000/search"
@@ -68,7 +87,12 @@ def search_knowledge_base(query: str, domain_weights: Dict[str, float] = None) -
             "k": 5
         }
         
-        response = requests.post(rag_url, json=payload, timeout=15)
+        response = requests.post(
+            rag_url,
+            json=payload,
+            timeout=15,
+            headers=surrogate_headers or None,
+        )
         if response.status_code == 200:
             return response.json().get("evidence", "No evidence found")
         else:
@@ -78,13 +102,18 @@ def search_knowledge_base(query: str, domain_weights: Dict[str, float] = None) -
         return f"Error searching knowledge base: {str(e)}"
 
 @tool
-def transcribe_audio(audio_data: str) -> str:
+def transcribe_audio(audio_data: str, surrogate_headers: Dict[str, str] = None) -> str:
     """Transcribe audio/video content using ASR service."""
     try:
         asr_url = "http://asr-api:8000/transcribe"
         payload = {"audio_data": audio_data}
         
-        response = requests.post(asr_url, json=payload, timeout=30)
+        response = requests.post(
+            asr_url,
+            json=payload,
+            timeout=30,
+            headers=surrogate_headers or None,
+        )
         if response.status_code == 200:
             return response.json().get("transcript", "No transcript generated")
         else:
@@ -93,14 +122,23 @@ def transcribe_audio(audio_data: str) -> str:
         logger.error(f"Error in transcribe_audio: {e}")
         return f"Error transcribing audio: {str(e)}"
 
-@tool  
-def get_domain_data(domain: str, query: str) -> str:
+@tool
+def get_domain_data(
+    domain: str,
+    query: str,
+    surrogate_headers: Dict[str, str] = None,
+) -> str:
     """Get domain-specific data from MCP servers."""
     try:
         mcp_url = f"http://mcp:8000/{domain}/query"
         payload = {"query": query}
         
-        response = requests.post(mcp_url, json=payload, timeout=15)
+        response = requests.post(
+            mcp_url,
+            json=payload,
+            timeout=15,
+            headers=surrogate_headers or None,
+        )
         if response.status_code == 200:
             return response.json().get("data", "No domain data found")
         else:
@@ -110,12 +148,16 @@ def get_domain_data(domain: str, query: str) -> str:
         return f"Error getting domain data: {str(e)}"
 
 @tool
-def get_available_tools() -> List[Dict[str, Any]]:
+def get_available_tools(surrogate_headers: Dict[str, str] = None) -> List[Dict[str, Any]]:
     """Get list of available tools from tool registry."""
     try:
         tools_url = "http://tool-registry:8000/tools"
         
-        response = requests.get(tools_url, timeout=10)
+        response = requests.get(
+            tools_url,
+            timeout=10,
+            headers=surrogate_headers or None,
+        )
         if response.status_code == 200:
             return response.json().get("tools", [])
         else:
@@ -192,19 +234,26 @@ def gather_context(state: WorkflowState) -> WorkflowState:
     for tool_name in state.tools_needed:
         try:
             if tool_name == "rag_search":
-                result = search_knowledge_base(user_message, domain_weights)
+                result = search_knowledge_base(
+                    user_message,
+                    domain_weights,
+                    state.surrogate_headers,
+                )
                 state.rag_results = result
                 state.tool_results["rag"] = result
                 
             elif tool_name == "asr":
-                # For demo purposes, assume audio data is passed somehow
-                result = "Audio processing not implemented in demo"
+                result = transcribe_audio(user_message, state.surrogate_headers)
                 state.asr_results = result
                 state.tool_results["asr"] = result
                 
             elif tool_name.startswith("mcp_"):
                 domain = tool_name.split("_")[1]
-                result = get_domain_data(domain, user_message)
+                result = get_domain_data(
+                    domain,
+                    user_message,
+                    state.surrogate_headers,
+                )
                 state.tool_results[f"mcp_{domain}"] = result
                 
         except Exception as e:
@@ -339,11 +388,14 @@ async def health_check():
         }
 
 @api.post("/chat")
-async def chat_endpoint(request: ChatRequest):
+async def chat_endpoint(request: ChatRequest, http_request: Request):
     """Main chat endpoint that processes requests through the workflow."""
     try:
         # Initialize workflow state
-        initial_state = WorkflowState(messages=request.messages)
+        initial_state = WorkflowState(
+            messages=request.messages,
+            surrogate_headers=extract_surrogate_headers(http_request),
+        )
         
         # Run the workflow
         result = workflow_app.invoke(initial_state)
