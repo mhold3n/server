@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/deterministic-stack-governance/output-contract.schema.json",
+  "title": "Deterministic Stack Governance Output Contract",
+  "type": "object",
+  "required": [
+    "source_policy",
+    "quality_policy",
+    "relevance_policy",
+    "structure_policy",
+    "resource_allocation",
+    "permission_policy",
+    "communication_policy",
+    "enforcement_sequence"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "source_policy": {
+      "type": "object",
+      "required": ["mode", "citation_required"],
+      "additionalProperties": true,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "strict_internal_only",
+            "internal_only",
+            "internal_plus_approved_external"
+          ]
+        },
+        "citation_required": { "type": "boolean" }
+      }
+    },
+    "quality_policy": {
+      "type": "object",
+      "required": ["require_schema_validation", "required_gates", "determinism_level"],
+      "additionalProperties": true,
+      "properties": {
+        "require_schema_validation": { "type": "boolean" },
+        "required_gates": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "determinism_level": {
+          "type": "string",
+          "enum": ["D1", "D2", "NONE"]
+        }
+      }
+    },
+    "relevance_policy": {
+      "type": "object",
+      "required": ["require_goal_traceability", "ambiguity_action"],
+      "additionalProperties": true,
+      "properties": {
+        "require_goal_traceability": { "type": "boolean" },
+        "ambiguity_action": { "type": "string", "enum": ["clarify", "block"] }
+      }
+    },
+    "structure_policy": {
+      "type": "object",
+      "required": ["format", "sorted_keys", "required_sections"],
+      "additionalProperties": true,
+      "properties": {
+        "format": { "type": "string", "enum": ["json"] },
+        "sorted_keys": { "type": "boolean" },
+        "required_sections": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 8
+        }
+      }
+    },
+    "resource_allocation": {
+      "type": "object",
+      "required": [
+        "max_kernel_execution_time_ms",
+        "max_llm_tokens_per_request",
+        "max_llm_calls_per_session",
+        "max_retries_per_stage",
+        "llm_mode"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "max_kernel_execution_time_ms": { "type": "integer", "minimum": 1 },
+        "max_llm_tokens_per_request": { "type": "integer", "minimum": 1 },
+        "max_llm_calls_per_session": { "type": "integer", "minimum": 1 },
+        "max_retries_per_stage": { "type": "integer", "minimum": 0 },
+        "llm_mode": { "type": "string", "enum": ["local", "openrouter"] }
+      }
+    },
+    "permission_policy": {
+      "type": "object",
+      "required": ["mode", "allowed_directories", "denied_patterns", "escalation_required"],
+      "additionalProperties": true,
+      "properties": {
+        "mode": { "type": "string", "enum": ["read_only", "patch_only", "restricted"] },
+        "allowed_directories": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "denied_patterns": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "escalation_required": { "type": "boolean" }
+      }
+    },
+    "communication_policy": {
+      "type": "object",
+      "required": ["clarify_on_ambiguity", "block_conditions", "escalation_target"],
+      "additionalProperties": true,
+      "properties": {
+        "clarify_on_ambiguity": { "type": "boolean" },
+        "block_conditions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "escalation_target": { "type": "string" }
+      }
+    },
+    "enforcement_sequence": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    }
+  }
+}

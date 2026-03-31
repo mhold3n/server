@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deterministic Stack Governance"
+  short_description: "Deterministic policy-driven stack control"
+  default_prompt: "Use $deterministic-stack-governance to allocate resources, permissions, and communication controls with a deterministic output contract."
