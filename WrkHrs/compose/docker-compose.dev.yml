@@ -1,0 +1,15 @@
+services:
+  llm-runner:
+    image: busybox:latest
+    command: ["sh", "-c", "echo 'Mock LLM runner (disabled on this hardware)'; sleep 3600"]
+    # Expose no ports; orchestrator in mock mode
+
+  rag-api:
+    environment:
+      - QDRANT_URL=${QDRANT_URL}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+
+  asr-api:
+    environment:
+      - ASR_MODEL=${ASR_MODEL}
+      - ASR_DEVICE=cpu
