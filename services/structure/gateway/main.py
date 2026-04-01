@@ -210,9 +210,7 @@ async def submit_task(input: TaskRequestInput) -> TaskResponse:
 
 
 @app.post("/kernel/{kernel_id}")
-async def invoke_kernel(
-    kernel_id: str, input: KernelRequestInput
-) -> dict[str, str]:
+async def invoke_kernel(kernel_id: str, input: KernelRequestInput) -> dict[str, str]:
     """
     Directly invoke a registered kernel.
 
