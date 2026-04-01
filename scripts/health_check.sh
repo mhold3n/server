@@ -74,7 +74,7 @@ echo
 echo -e "${YELLOW}WrkHrs AI Services:${NC}"
 check_docker_service "structure-gateway"
 check_docker_service "wrkhrs-gateway"
-check_docker_service "wrkhrs-orchestrator"
+check_docker_service "wrkhrs-agent-platform"
 check_docker_service "wrkhrs-rag"
 check_docker_service "wrkhrs-asr"
 check_docker_service "wrkhrs-tool-registry"
@@ -131,7 +131,7 @@ for service in "API" "Router" "queue" "prometheus" "grafana" "qdrant"; do
 done
 
 # AI services
-for service in "structure-gateway" "wrkhrs-gateway" "wrkhrs-orchestrator" "wrkhrs-rag" "wrkhrs-asr" "wrkhrs-tool-registry" "wrkhrs-mcp"; do
+for service in "structure-gateway" "wrkhrs-gateway" "wrkhrs-agent-platform" "wrkhrs-rag" "wrkhrs-asr" "wrkhrs-tool-registry" "wrkhrs-mcp"; do
     total_services=$((total_services + 1))
     if check_docker_service "$service" > /dev/null 2>&1; then
         healthy_services=$((healthy_services + 1))

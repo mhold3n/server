@@ -12,9 +12,14 @@ import time
 from typing import Dict, List, Any
 from datetime import datetime
 
-# Add parent directory to path to import llm_backends
+# Archived Python orchestrator (LLM backend module used only by this script)
 sys.path.append(
-    os.path.join(os.path.dirname(__file__), "..", "services", "orchestrator")
+    os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "_archive",
+        "python-orchestrator",
+    )
 )
 
 try:
@@ -326,8 +331,10 @@ class LLMTester:
 
         # Test different orchestrator URLs
         urls_to_try = [
-            "http://orchestrator:8000",  # Docker compose
-            "http://localhost:8081",  # Local development
+            "http://wrkhrs-agent-platform:8000",  # TS orchestrator (docker-compose.ai)
+            "http://agent-platform:8000",  # Base compose stack
+            "http://localhost:8087",  # Published WRKHRS_AGENT_PLATFORM_PORT
+            "http://localhost:8081",  # Legacy Python port if profile enabled
         ]
 
         for base_url in urls_to_try:

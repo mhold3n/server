@@ -77,11 +77,9 @@ jobs:
           (cd mbmh && python -m ruff check src/ scripts/ tests/)
           (cd services/wrkhrs && ruff check \
             services/gateway/app.py \
-            services/orchestrator/app.py \
-            services/orchestrator/llm_backends.py \
             tests/_module_loader.py \
             tests/test_gateway.py \
-            tests/test_orchestrator.py)
+            scripts/test-llm-backends.py)
       
       - name: Run type checking
         run: |
@@ -172,6 +170,14 @@ jobs:
           cd mcp/servers/github-mcp
           npm test
 
+      - name: Agent platform (TypeScript orchestrator)
+        run: |
+          cd services/agent-platform
+          npm ci
+          npm run build -w @server/open-multi-agent
+          npm run build -w @server/agent-platform-server
+          LLM_BACKEND=mock npm run test -w @server/agent-platform-server
+
       # Build Docker images
       - name: Build Docker images
         run: |
@@ -198,6 +204,7 @@ jobs:
           else
             echo "SKIP: mcp-github docker build (expected package*.json)"
           fi
+          docker build -t wrkhrs-agent-platform ./services/agent-platform
 
       # Upload coverage
       - name: Upload coverage to Codecov

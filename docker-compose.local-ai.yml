@@ -21,11 +21,14 @@ services:
     platform: linux/amd64
     environment:
       - LLM_BACKEND=mock
+      - ORCHESTRATOR_URL=http://wrkhrs-agent-platform:8000
     volumes:
       - ./data/gateway_state:/state
       - ./logs:/logs
 
   wrkhrs-orchestrator:
+    profiles:
+      - legacy-python-orchestrator
     platform: linux/amd64
     environment:
       - LLM_BACKEND=mock

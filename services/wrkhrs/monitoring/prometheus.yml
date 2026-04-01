@@ -11,10 +11,15 @@ scrape_configs:
     static_configs:
       - targets: ['gateway-api:8000']
 
-  - job_name: 'orchestrator'
+  - job_name: 'agent-platform-base'
     metrics_path: /health
     static_configs:
-      - targets: ['orchestrator:8000']
+      - targets: ['agent-platform:8000']
+
+  - job_name: 'agent-platform-wrkhrs'
+    metrics_path: /health
+    static_configs:
+      - targets: ['wrkhrs-agent-platform:8000']
 
   - job_name: 'rag-api'
     metrics_path: /health

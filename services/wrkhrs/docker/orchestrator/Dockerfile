@@ -18,8 +18,8 @@ RUN pip install --no-cache-dir \
     requests \
     httpx
 
-# Copy application code
-COPY services/orchestrator/ ./
+# Legacy Python orchestrator (archived). Build context: services/wrkhrs
+COPY _archive/python-orchestrator/ ./
 
 EXPOSE 8000
 

@@ -2,12 +2,14 @@
 
 Below is a **concise, high-detail roadmap** you can execute end-to-end. It lets you **develop on a laptop** (CPU-only OK) and **deploy on a desktop** (with GPUs) without breaking your IDE (e.g., Cursor). It includes **middleware + model + orchestration + MCP + RAG + multimodal + plugin auto-discovery**.
 
+**Current repo:** orchestration in production defaults to **TypeScript** [`services/agent-platform`](../../../agent-platform) (`wrkhrs-agent-platform` / `agent-platform` in compose). The Python LangGraph app lives under [`_archive/python-orchestrator`](../_archive/python-orchestrator) for optional rollback.
+
 ---
 
 ## 1) Target Architecture (at a glance)
 
 ```
-[Cursor/IDE] → [gateway-api] → [orchestrator] → (routes to)
+[Cursor/IDE] → [gateway-api] → [agent-platform] → (routes to)
                            ├─► [tool-registry] (Pluggy)
                            ├─► [mcp-chem/mech/...]
                            ├─► [rag-api] ↔ [qdrant] (vector DB)
@@ -18,7 +20,7 @@ Below is a **concise, high-detail roadmap** you can execute end-to-end. It lets 
 ```
 
 * **gateway-api**: FastAPI service; non-generative conditioning (weights/constraints/units), auth, rate limits.
-* **orchestrator**: LangGraph graph; decides which tools to call, in what order.
+* **agent-platform** (TS): LangGraph JS graph + Open Multi-Agent for multi-agent/task flows; calls tool-registry, RAG, ASR, MCP over HTTP.
 * **tool-registry**: Pluggy-based dynamic tool discovery (CLI/SDK tools auto-register).
 * **mcp-\***: Multi-Context Protocol servers per domain (chem, mech, materials).
 * **rag-api**: Haystack pipeline front-end; **qdrant** as vector store.
@@ -33,14 +35,14 @@ Below is a **concise, high-detail roadmap** you can execute end-to-end. It lets 
 ai-stack/
   docker/
     gateway/Dockerfile
-    orchestrator/Dockerfile
+    orchestrator/Dockerfile   # legacy Python image; copies _archive/python-orchestrator
     mcp/Dockerfile
     rag/Dockerfile
     asr/Dockerfile
     tool-registry/Dockerfile
   services/
     gateway/app.py                  # FastAPI; domain-weighting, constraints, SI units
-    orchestrator/app.py             # LangGraph graph definition
+    _archive/python-orchestrator/   # retired LangGraph (Python)
     mcp/                            # MCP servers (config-driven: chem/mech/materials)
     rag/app.py                      # Haystack REST; connects to Qdrant
     asr/app.py                      # faster-whisper/ffmpeg wrapper
@@ -119,16 +121,16 @@ services:
     env_file: [ ../.env ]
     networks: [ llm_net ]
     ports: [ "${GATEWAY_PORT}:8000" ]
-    depends_on: [ orchestrator ]
+    depends_on: [ agent-platform ]
     volumes: [ "gateway_state:/state", "logs:/logs" ]
     healthcheck: { test: ["CMD","curl","-f","http://localhost:8000/health"], interval: 10s, timeout: 3s, retries: 10 }
 
-  orchestrator:
-    build: { context: .., dockerfile: docker/orchestrator/Dockerfile }
+  agent-platform:
+    build: { context: ../../.., dockerfile: services/agent-platform/Dockerfile }
     env_file: [ ../.env ]
     networks: [ llm_net ]
     ports: [ "${ORCH_PORT}:8000" ]
-    depends_on: [ tool-registry, rag-api, asr-api, llm-runner ]
+    depends_on: [ tool-registry, rag-api, asr-api, mcp, llm-runner ]
     healthcheck: { test: ["CMD","curl","-f","http://localhost:8000/health"], interval: 10s, timeout: 3s, retries: 10 }
 
   tool-registry:
@@ -323,16 +325,18 @@ EXPOSE 8000
 CMD ["uvicorn", "app:api", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-**`docker/orchestrator/Dockerfile`**
+**`docker/orchestrator/Dockerfile`** (legacy; `--profile legacy-python-orchestrator` only)
 
 ```dockerfile
 FROM python:3.11-slim
 WORKDIR /app
 RUN pip install --no-cache-dir langgraph langchain pydantic requests
-COPY services/orchestrator/ ./
+COPY _archive/python-orchestrator/ ./
 EXPOSE 8000
 CMD ["uvicorn", "app:api", "--host","0.0.0.0","--port","8000"]
 ```
+
+**Primary orchestrator image:** build from monorepo [`services/agent-platform/Dockerfile`](../../../agent-platform/Dockerfile).
 
 **`docker/tool-registry/Dockerfile`**
 
@@ -393,7 +397,7 @@ CMD ["uvicorn","app:api","--host","0.0.0.0","--port","8000"]
 
     * **RAG retrieval** parameters (k, rerank emphasis).
     * **Prompt frame order** (constraints/units first).
-  * Forward a **text-identical** prompt + **weighted evidence** to orchestrator.
+  * Forward a **text-identical** prompt + **weighted evidence** to agent-platform (`/chat`).
 
 This keeps the **text unchanged**, but **changes what evidence** and **what structure** the LLM sees.
 
@@ -402,7 +406,7 @@ This keeps the **text unchanged**, but **changes what evidence** and **what stru
 ## 10) Tool Auto-Discovery (Pluggy)
 
 * **tool-registry** scans `/plugins` for Python entry points or YAML tool manifests.
-* Expose a **/tools** endpoint (JSON schema) consumed by the orchestrator.
+* Expose a **/tools** endpoint (JSON schema) consumed by agent-platform and gateway tooling.
 * Drop new tools (CLI wrappers, calculators, unit converters) into `services/plugins/` → **no IDE changes, no manual updates**.
 
 ---

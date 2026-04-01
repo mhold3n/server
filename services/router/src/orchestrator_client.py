@@ -1,5 +1,6 @@
 """Client for WrkHrs Orchestrator with LangChain/LangGraph integration."""
 
+import os
 from types import TracebackType
 from typing import Any, cast
 
@@ -14,7 +15,7 @@ class WrkHrsOrchestratorClient:
 
     def __init__(
         self,
-        base_url: str = "http://wrkhrs-orchestrator:8000",
+        base_url: str | None = None,
         timeout: float = 120.0,
     ) -> None:
         """Initialize WrkHrs Orchestrator client.
@@ -23,7 +24,10 @@ class WrkHrsOrchestratorClient:
             base_url: Base URL for WrkHrs Orchestrator API
             timeout: Request timeout in seconds
         """
-        self.base_url = base_url.rstrip("/")
+        resolved = base_url or os.environ.get(
+            "WRKHRS_ORCHESTRATOR_URL", "http://wrkhrs-agent-platform:8000"
+        )
+        self.base_url = resolved.rstrip("/")
         self.timeout = timeout
         self._client: AsyncClient | None = None
 

@@ -7,7 +7,7 @@ This runbook covers operational procedures for the WrkHrs AI stack services runn
 
 ### Core AI Services
 - **wrkhrs-gateway**: Main API gateway for AI requests
-- **wrkhrs-orchestrator**: Task orchestration and workflow management
+- **wrkhrs-agent-platform**: TypeScript orchestration (Open Multi-Agent + LangGraph JS); default replacement for the retired Python orchestrator
 - **wrkhrs-rag**: Retrieval-augmented generation service
 - **wrkhrs-asr**: Automatic speech recognition service
 - **wrkhrs-tool-registry**: Tool discovery and registration
@@ -45,8 +45,9 @@ docker compose -f docker-compose.yml -f docker-compose.ai.yml up -d wrkhrs-asr
 ## Health Monitoring
 
 ### Health Check Endpoints
-- **Gateway**: `http://localhost:8080/health`
-- **Orchestrator**: `http://localhost:8081/health`
+- **Gateway**: `http://localhost:8091/health` (see `WRKHRS_GATEWAY_PORT`)
+- **Agent platform (TS orchestrator)**: `http://localhost:8087/health` (see `WRKHRS_AGENT_PLATFORM_PORT`)
+- **Legacy Python orchestrator** (opt-in profile `legacy-python-orchestrator`): `http://localhost:8081/health`
 - **RAG**: `http://localhost:8082/health`
 - **ASR**: `http://localhost:8084/health`
 - **Tool Registry**: `http://localhost:8086/health`
@@ -86,8 +87,15 @@ docker compose -f docker-compose.yml -f docker-compose.ai.yml logs wrkhrs-gatewa
 ```
 **Resolution**:
 - Restart service: `docker compose -f docker-compose.yml -f docker-compose.ai.yml restart wrkhrs-gateway`
-- Check dependencies: Ensure orchestrator, RAG, ASR services are running
-- Verify environment variables
+- Check dependencies: Ensure **wrkhrs-agent-platform**, RAG, ASR services are running
+- Verify `ORCHESTRATOR_URL` (default `http://wrkhrs-agent-platform:8000`)
+
+### Agent platform (orchestration) configuration
+
+- **Gateway → orchestrator**: `ORCHESTRATOR_URL` on `wrkhrs-gateway` must point at the TS service (default above).
+- **LLM**: Set `LLM_BACKEND` (`mock`, `ollama`, `vllm`) and `LLM_RUNNER_URL` consistently with your worker (Ollama uses `/api/chat` on `LLM_RUNNER_URL`).
+- **Open Multi-Agent team/agent HTTP routes** (`/v1/teams/run`, `/v1/agents/run`): set `ANTHROPIC_API_KEY` and/or `OPENAI_API_KEY`, plus `OMA_DEFAULT_MODEL` and `OMA_DEFAULT_PROVIDER` as needed.
+- **`POST /llm/switch`**: The TS service does not hot-reload backends; change `LLM_BACKEND` / `LLM_RUNNER_URL` and restart the container (legacy Python supported runtime switch).
 
 #### 2. RAG Service Performance Issues
 **Symptoms**: Slow responses, high memory usage

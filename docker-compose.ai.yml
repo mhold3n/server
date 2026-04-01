@@ -37,7 +37,7 @@ services:
       - "${WRKHRS_GATEWAY_PORT:-8091}:8000"
     environment:
       - GATEWAY_PORT=8000
-      - ORCHESTRATOR_URL=http://wrkhrs-orchestrator:8000
+      - ORCHESTRATOR_URL=${ORCHESTRATOR_URL:-http://wrkhrs-agent-platform:8000}
       - RAG_URL=http://wrkhrs-rag:8000
       - ASR_URL=http://wrkhrs-asr:8000
       - LLM_RUNNER_URL=${LLM_RUNNER_URL:-http://llm-runner:8000}
@@ -45,7 +45,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
       - MLFLOW_TRACKING_URI=http://mlflow:5000
     depends_on:
-      wrkhrs-orchestrator:
+      wrkhrs-agent-platform:
         condition: service_healthy
     volumes:
       - gateway_state:/state
@@ -58,8 +58,47 @@ services:
       retries: 10
       start_period: 30s
 
-  # WrkHrs Orchestrator - LangChain/LangGraph workflow engine
+  # TypeScript agent-platform (Open Multi-Agent + LangGraph JS) — default orchestrator
+  wrkhrs-agent-platform:
+    build:
+      context: ./services/agent-platform
+      dockerfile: Dockerfile
+    ports:
+      - "${WRKHRS_AGENT_PLATFORM_PORT:-8087}:8000"
+    environment:
+      - AGENT_PLATFORM_PORT=8000
+      - LLM_BACKEND=${LLM_BACKEND:-mock}
+      - LLM_RUNNER_URL=${LLM_RUNNER_URL:-http://llm-runner:11434}
+      - TOOL_REGISTRY_URL=http://wrkhrs-tool-registry:8000
+      - RAG_URL=http://wrkhrs-rag:8000
+      - ASR_URL=http://wrkhrs-asr:8000
+      - MCP_URL=http://wrkhrs-mcp:8000
+      - OMA_DEFAULT_MODEL=${OMA_DEFAULT_MODEL:-gpt-4o-mini}
+      - OMA_DEFAULT_PROVIDER=${OMA_DEFAULT_PROVIDER:-openai}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      wrkhrs-tool-registry:
+        condition: service_healthy
+      wrkhrs-rag:
+        condition: service_healthy
+      wrkhrs-asr:
+        condition: service_healthy
+      wrkhrs-mcp:
+        condition: service_healthy
+    volumes:
+      - logs:/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 25s
+
+  # Legacy Python orchestrator — opt-in: --profile legacy-python-orchestrator
   wrkhrs-orchestrator:
+    profiles:
+      - legacy-python-orchestrator
     build:
       context: ./services/wrkhrs
       dockerfile: docker/orchestrator/Dockerfile

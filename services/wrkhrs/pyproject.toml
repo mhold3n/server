@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "wrkhrs"
 version = "0.1.0"
-description = "WrkHrs services (gateway + orchestrator) for the server monorepo"
+description = "WrkHrs services (gateway + legacy scripts) for the server monorepo"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

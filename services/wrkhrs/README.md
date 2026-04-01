@@ -5,7 +5,7 @@ A comprehensive AI stack with microservices architecture designed for **developm
 ## 🏗️ Architecture Overview
 
 ```
-[Cursor/IDE] → [gateway-api] → [orchestrator] → (routes to)
+[Cursor/IDE] → [gateway-api] → [agent-platform (TS)] → (routes to)
                            ├─► [tool-registry] (Pluggy)
                            ├─► [mcp-chem/mech/materials]
                            ├─► [rag-api] ↔ [qdrant] (vector DB)
@@ -18,7 +18,7 @@ A comprehensive AI stack with microservices architecture designed for **developm
 ### Core Services
 
 - **Gateway API**: FastAPI with non-generative conditioning, domain weighting, SI unit normalization
-- **Orchestrator**: LangGraph-based workflow engine coordinating all services
+- **Agent platform**: TypeScript orchestration (Open Multi-Agent + LangGraph JS); Python orchestrator archived under `_archive/python-orchestrator`
 - **Tool Registry**: Pluggy-based auto-discovery for Python/YAML/CLI tools
 - **RAG API**: Haystack + Qdrant for domain-weighted document retrieval
 - **ASR API**: Whisper-based speech recognition with technical segment extraction
@@ -382,7 +382,7 @@ make restart         # Restart all services
 # Service management
 make restart-service SERVICE=gateway-api
 make shell SERVICE=gateway-api
-make logs-service SERVICE=orchestrator
+make logs-service SERVICE=wrkhrs-agent-platform
 
 # Testing
 make test            # Basic API tests

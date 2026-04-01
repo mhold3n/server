@@ -99,6 +99,11 @@ REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "60"))
 REQUESTS_POOL_CONNECTIONS = int(os.getenv("REQUESTS_POOL_CONNECTIONS", "10"))
 REQUESTS_POOL_MAXSIZE = int(os.getenv("REQUESTS_POOL_MAXSIZE", "50"))
 
+# TypeScript agent-platform is the default orchestrator (Python retired from default deploy).
+ORCHESTRATOR_BASE_URL = os.getenv(
+    "ORCHESTRATOR_URL", "http://wrkhrs-agent-platform:8000"
+).rstrip("/")
+
 # Shared HTTP session to the orchestrator for connection pooling and retries
 ORCH_SESSION = requests.Session()
 _retry = Retry(total=2, backoff_factor=0.3, status_forcelist=(502, 503, 504))
@@ -589,8 +594,8 @@ Please respond with SI units and consider the safety constraints mentioned.
 """
             enhanced_messages.insert(0, {"role": "system", "content": system_context})
 
-        # Forward to orchestrator
-        orchestrator_url = "http://orchestrator:8000/chat"
+        # Forward to orchestrator (Python or TS agent-platform)
+        orchestrator_url = f"{ORCHESTRATOR_BASE_URL}/chat"
         orchestrator_payload = {
             "messages": enhanced_messages,
             "model": request.model,

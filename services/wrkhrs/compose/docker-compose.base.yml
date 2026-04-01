@@ -66,7 +66,7 @@ services:
           - api-gateway
     ports: [ "${GATEWAY_PORT}:8000" ]
     depends_on:
-      orchestrator:
+      agent-platform:
         condition: service_healthy
     volumes:
       - "gateway_state:/state"
@@ -79,22 +79,32 @@ services:
       retries: 10
       start_period: 30s
 
-  orchestrator:
+  agent-platform:
     build:
-      context: ..
-      dockerfile: docker/orchestrator/Dockerfile
+      context: ../../..
+      dockerfile: services/agent-platform/Dockerfile
     env_file: [ "../.env" ]
     networks:
       llm_net:
         aliases:
           - orchestrator-service
-    ports: [ "${ORCH_PORT}:8000" ]
+    ports: [ "${ORCH_PORT:-8087}:8000" ]
+    environment:
+      - AGENT_PLATFORM_PORT=8000
+      - LLM_BACKEND=${LLM_BACKEND:-mock}
+      - LLM_RUNNER_URL=http://llm-runner:11434
+      - TOOL_REGISTRY_URL=http://tool-registry:8000
+      - RAG_URL=http://rag-api:8000
+      - ASR_URL=http://asr-api:8000
+      - MCP_URL=http://mcp:8000
     depends_on:
       tool-registry:
         condition: service_healthy
       rag-api:
         condition: service_healthy
       asr-api:
+        condition: service_healthy
+      mcp:
         condition: service_healthy
       llm-runner:
         condition: service_healthy

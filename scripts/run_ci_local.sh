@@ -40,11 +40,9 @@ black --check services/ mcp/servers/
 (cd mbmh && python -m ruff check src/ scripts/ tests/)
 (cd services/wrkhrs && ruff check \
   services/gateway/app.py \
-  services/orchestrator/app.py \
-  services/orchestrator/llm_backends.py \
   tests/_module_loader.py \
   tests/test_gateway.py \
-  tests/test_orchestrator.py)
+  scripts/test-llm-backends.py)
 
 echo "==> Mypy (per package)"
 (cd services/api && mypy --strict src)
