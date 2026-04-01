@@ -58,9 +58,7 @@ def test_ai_status_rag_asr_and_router_degraded(setup_clients, monkeypatch):
             return_value=httpx.Response(503, text="router down")
         )
         mock.get(f"{settings.ai_stack_url}/health").mock(
-            return_value=httpx.Response(
-                200, json={"status": "healthy", "detail": "ok"}
-            )
+            return_value=httpx.Response(200, json={"status": "healthy", "detail": "ok"})
         )
         mock.get("http://rag-status.test:8000/health").mock(
             return_value=httpx.Response(

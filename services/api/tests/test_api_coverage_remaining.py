@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import httpx
@@ -74,7 +73,9 @@ def test_docker_list_and_restart(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.asyncio
-async def test_mlflow_logger_log_run_happy_path(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_mlflow_logger_log_run_happy_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     mock_mlflow = MagicMock()
     active_run = Mock()
     active_run.info.run_id = "run-abc"
@@ -180,7 +181,9 @@ def test_mlflow_logger_log_dict_and_params_swallow_errors(
     logger.log_metrics({"m": 1})
 
 
-def test_mlflow_logger_log_feedback_success(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_mlflow_logger_log_feedback_success(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     mock_mlflow = MagicMock()
     ctx = MagicMock()
     ctx.__enter__.return_value = None
@@ -191,9 +194,7 @@ def test_mlflow_logger_log_feedback_success(tmp_path, monkeypatch: pytest.Monkey
     logger = MLflowLogger()
     logger.experiment_id = "e1"
     assert (
-        logger.log_feedback(
-            "r1", {"rating": 5, "reasons": ["ok"], "notes": "n"}
-        )
+        logger.log_feedback("r1", {"rating": 5, "reasons": ["ok"], "notes": "n"})
         is True
     )
 
@@ -207,7 +208,9 @@ def test_mlflow_logger_search_runs_exception(monkeypatch: pytest.MonkeyPatch) ->
     assert logger.search_runs() == []
 
 
-def test_provenance_logger_log_request_provenance(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_provenance_logger_log_request_provenance(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     mock_mlflow = MagicMock()
     ctx = MagicMock()
     ctx.__enter__.return_value = None
@@ -363,9 +366,7 @@ def test_trace_propagator_and_module_getters() -> None:
 @respx.mock
 async def test_golden_trace_validator_branches() -> None:
     v = GoldenTraceValidator(TracingContext())
-    respx.get("http://tempo:3200/api/traces/t1").mock(
-        return_value=httpx.Response(404)
-    )
+    respx.get("http://tempo:3200/api/traces/t1").mock(return_value=httpx.Response(404))
     out = await v.validate_golden_trace("t1", ["a"])
     assert out["valid"] is False
     assert "Tempo" in out.get("error", "")
@@ -424,7 +425,9 @@ def test_conditioning_request_conditioner_alias_and_paths() -> None:
 @respx.mock
 async def test_wrkhrs_gateway_client_success_paths() -> None:
     base = "http://gw.test"
-    respx.get(f"{base}/health").mock(return_value=httpx.Response(200, json={"ok": True}))
+    respx.get(f"{base}/health").mock(
+        return_value=httpx.Response(200, json={"ok": True})
+    )
     respx.post(f"{base}/v1/chat/completions").mock(
         return_value=httpx.Response(200, json={"usage": {}})
     )
