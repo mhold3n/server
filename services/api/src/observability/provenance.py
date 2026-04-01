@@ -108,9 +108,9 @@ class ProvenanceLogger:
             "model": run_spec.model,
             "temperature": run_spec.temperature,
             "max_tokens": run_spec.max_tokens,
-            "system": run_spec.system,
-            "tools": run_spec.tools,
-            "tool_args": run_spec.tool_args,
+            "system": getattr(run_spec, "system", None),
+            "tools": getattr(run_spec, "tools", None),
+            "tool_args": getattr(run_spec, "tool_args", None),
             "domain_weights": run_spec.domain_weights,
             "policies": run_spec.policies,
             "timestamp": datetime.utcnow().isoformat(),
@@ -126,8 +126,10 @@ class ProvenanceLogger:
             "model_version": environment.model_version,
             "config_hash": environment.config_hash,
             "dependencies": environment.dependencies,
-            "environment_variables": environment.environment_variables,
-            "system_info": environment.system_info,
+            "environment_variables": getattr(
+                environment, "environment_variables", None
+            ),
+            "system_info": getattr(environment, "system_info", None),
         }
 
         mlflow.log_text(json.dumps(env_data, indent=2), "environment.json")
@@ -138,14 +140,16 @@ class ProvenanceLogger:
 
         for doc in retrieval_docs:
             doc_info = {
-                "doc_id": doc.doc_id,
-                "source_uri": doc.source_uri,
-                "content_hash": doc.content_hash,
-                "score": doc.score,
-                "page_range": doc.page_range,
-                "index_version": doc.index_version,
-                "embedding_model": doc.embedding_model,
-                "metadata": doc.metadata,
+                "doc_id": getattr(doc, "doc_id", None),
+                "source": getattr(doc, "source", None),
+                "chunk_id": getattr(doc, "chunk_id", None),
+                "source_uri": getattr(doc, "source_uri", None),
+                "content_hash": getattr(doc, "content_hash", None),
+                "score": getattr(doc, "score", None),
+                "page_range": getattr(doc, "page_range", None),
+                "index_version": getattr(doc, "index_version", None),
+                "embedding_model": getattr(doc, "embedding_model", None),
+                "metadata": getattr(doc, "metadata", None),
                 "content_preview": (
                     doc.content[:200] + "..." if len(doc.content) > 200 else doc.content
                 ),
@@ -160,7 +164,15 @@ class ProvenanceLogger:
                 "retrieval_count": len(retrieval_docs),
                 "avg_retrieval_score": sum(doc.score for doc in retrieval_docs)
                 / len(retrieval_docs),
-                "unique_sources": len({doc.source_uri for doc in retrieval_docs}),
+                "unique_sources": len(
+                    {
+                        (
+                            getattr(doc, "source_uri", None)
+                            or getattr(doc, "source", None)
+                        )
+                        for doc in retrieval_docs
+                    }
+                ),
             }
         )
 
@@ -175,7 +187,7 @@ class ProvenanceLogger:
                 "result": tool.result,
                 "duration": tool.duration,
                 "success": tool.success,
-                "error": tool.error,
+                "error": getattr(tool, "error", None),
                 "timestamp": datetime.utcnow().isoformat(),
             }
             tool_data.append(tool_info)

@@ -8,21 +8,24 @@ import hashlib
 import time
 from collections import defaultdict
 
-import numpy as np
 from fastapi import FastAPI, HTTPException, Request, Depends, Header, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from sentence_transformers import SentenceTransformer
+from pydantic import BaseModel
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import jwt
 
+# Optional heavyweight dependency (model downloads). The gateway can run without embeddings.
+try:
+    from sentence_transformers import SentenceTransformer  # type: ignore
+except Exception:  # pragma: no cover
+    SentenceTransformer = None  # type: ignore[assignment]
+
 # Configure logging
 import logging.config
 import sys
-from datetime import datetime
 
 # JSON logging configuration
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
@@ -69,14 +72,20 @@ class JSONFormatter(logging.Formatter):
 handlers = []
 
 # File handler
-file_handler = logging.FileHandler('/logs/gateway.log', mode='a')
-if ENABLE_JSON_LOGGING:
-    file_handler.setFormatter(JSONFormatter())
-else:
-    file_handler.setFormatter(logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    ))
-handlers.append(file_handler)
+_log_dir = os.getenv("WRKHRS_LOG_DIR", "/logs")
+try:
+    os.makedirs(_log_dir, exist_ok=True)
+    file_handler = logging.FileHandler(os.path.join(_log_dir, "gateway.log"), mode="a")
+    if ENABLE_JSON_LOGGING:
+        file_handler.setFormatter(JSONFormatter())
+    else:
+        file_handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        )
+    handlers.append(file_handler)
+except Exception:
+    # In dev/test environments, the container log dir may not exist or be writable.
+    pass
 
 # Console handler
 console_handler = logging.StreamHandler(sys.stdout)
@@ -126,7 +135,8 @@ JWT_SECRET_KEY = get_secret("JWT_SECRET_KEY", "default-jwt-secret-change-in-prod
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
 RATE_LIMIT_RPM = int(os.getenv("RATE_LIMIT_REQUESTS_PER_MINUTE", "60"))
-ENABLE_AUTH = os.getenv("ENABLE_AUTHENTICATION", "true").lower() == "true"
+def auth_enabled() -> bool:
+    return os.getenv("ENABLE_AUTHENTICATION", "true").lower() == "true"
 
 # Rate limiting storage
 request_counts = defaultdict(list)
@@ -306,7 +316,7 @@ SI_UNIT_PATTERNS = [
 # Authentication functions
 def check_rate_limit(client_ip: str) -> bool:
     """Check if client has exceeded rate limit"""
-    if not ENABLE_AUTH:
+    if not auth_enabled():
         return True
     
     current_time = time.time()
@@ -327,9 +337,14 @@ def validate_api_key(api_key: str) -> bool:
     """Validate API key using simple hash comparison"""
     if not api_key:
         return False
+    secret = get_secret("API_KEY_SECRET", API_KEY_SECRET)
+
+    # Accept the raw secret (developer/demo mode).
+    if api_key == secret:
+        return True
     
     # Simple hash-based validation (in production, use proper key management)
-    expected_hash = hashlib.sha256(API_KEY_SECRET.encode()).hexdigest()
+    expected_hash = hashlib.sha256(secret.encode()).hexdigest()
     provided_hash = hashlib.sha256(api_key.encode()).hexdigest()
     return expected_hash == provided_hash
 
@@ -348,7 +363,7 @@ def verify_jwt_token(token: str) -> Optional[dict]:
     except jwt.ExpiredSignatureError:
         logger.warning("JWT token has expired")
         return None
-    except jwt.JWTError:
+    except Exception:
         logger.warning("Invalid JWT token")
         return None
 
@@ -358,7 +373,7 @@ async def get_current_user(
     x_api_key: Optional[str] = Header(None)
 ):
     """Authentication dependency"""
-    if not ENABLE_AUTH:
+    if not auth_enabled():
         return {"authenticated": True, "method": "disabled"}
     
     client_ip = request.client.host
@@ -411,6 +426,14 @@ async def get_current_user(
 def load_models():
     """Load embedding model and initialize domain classifier"""
     global embedding_model, domain_classifier
+    if os.environ.get("WRKHRS_DISABLE_MODEL_LOAD") == "1":
+        logger.info("Skipping embedding model load (WRKHRS_DISABLE_MODEL_LOAD=1)")
+        embedding_model = None
+        return
+    if SentenceTransformer is None:
+        logger.warning("sentence-transformers not installed; embeddings disabled")
+        embedding_model = None
+        return
     try:
         embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
         logger.info("Embedding model loaded successfully")
@@ -479,7 +502,7 @@ async def get_weighted_evidence(
 ) -> str:
     """Get weighted evidence from RAG system"""
     try:
-        rag_url = f"http://rag-api:8000/search"
+        rag_url = "http://rag-api:8000/search"
         payload = {
             "query": prompt,
             "domain_weights": weights.dict(),
@@ -535,7 +558,8 @@ async def startup_event():
 async def login(request: LoginRequest):
     """Login endpoint to generate JWT token"""
     # Simple credential validation (in production, use proper user management)
-    if request.username == "admin" and request.password == API_KEY_SECRET:
+    secret = get_secret("API_KEY_SECRET", API_KEY_SECRET)
+    if request.username == "admin" and request.password == secret:
         token_data = {"sub": request.username, "username": request.username}
         access_token = create_jwt_token(token_data)
         return LoginResponse(
@@ -552,7 +576,7 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
         "embedding_model_loaded": embedding_model is not None,
-        "authentication_enabled": ENABLE_AUTH
+        "authentication_enabled": auth_enabled()
     }
 
 @api.post("/v1/chat/completions", response_model=ChatResponse)
@@ -593,7 +617,7 @@ Please respond with SI units and consider the safety constraints mentioned.
             enhanced_messages.insert(0, {"role": "system", "content": system_context})
         
         # Forward to orchestrator
-        orchestrator_url = f"http://orchestrator:8000/chat"
+        orchestrator_url = "http://orchestrator:8000/chat"
         orchestrator_payload = {
             "messages": enhanced_messages,
             "model": request.model,
@@ -632,7 +656,8 @@ Please respond with SI units and consider the safety constraints mentioned.
                         "content": "[Gateway] Orchestrator unavailable; returning fallback response."
                     },
                     "finish_reason": "stop"
-                }]
+                }],
+                "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
             }
             
     except requests.exceptions.RequestException as e:
@@ -650,7 +675,8 @@ Please respond with SI units and consider the safety constraints mentioned.
                     "content": "[Gateway] Orchestrator not reachable; returning fallback response."
                 },
                 "finish_reason": "stop"
-            }]
+            }],
+            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
         }
     except Exception as e:
         logger.error(f"Error in chat_completions: {e}")

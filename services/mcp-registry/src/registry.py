@@ -243,6 +243,38 @@ async def get_resources() -> list[dict[str, Any]]:
     return registry.get_resources()
 
 
+@app.get("/mcp/registry/stats")
+async def get_registry_stats() -> dict[str, Any]:
+    """Get registry statistics.
+
+    Returns:
+        Registry statistics
+    """
+    tools = registry.get_tools()
+    resources = registry.get_resources()
+
+    tool_servers = len([s for s in registry.servers.values() if s.type == "tool"])
+    resource_servers = len(
+        [s for s in registry.servers.values() if s.type == "resource"]
+    )
+
+    return {
+        "total_servers": len(registry.servers),
+        "tool_servers": tool_servers,
+        "resource_servers": resource_servers,
+        "total_tools": len(tools),
+        "total_resources": len(resources),
+        "servers": {
+            name: {
+                "type": server.type,
+                "tools_count": len(server.tools),
+                "resources_count": len(server.resources),
+            }
+            for name, server in registry.servers.items()
+        },
+    }
+
+
 @app.get("/mcp/registry/{name}", response_model=MCPServer)
 async def get_server(name: str) -> MCPServer:
     """Get specific MCP server by name.
@@ -276,7 +308,7 @@ async def get_server_schema(name: str) -> dict[str, Any]:
         HTTPException: If server not found
     """
     schema = registry.get_server_schema(name)
-    if not schema:
+    if schema is None:
         raise HTTPException(
             status_code=404, detail=f"Schema for server '{name}' not found"
         )
@@ -403,38 +435,6 @@ async def get_mcp_server_schema_for_ui(name: str) -> dict[str, Any]:
     }
 
     return schema
-
-
-@app.get("/mcp/registry/stats")
-async def get_registry_stats() -> dict[str, Any]:
-    """Get registry statistics.
-
-    Returns:
-        Registry statistics
-    """
-    tools = registry.get_tools()
-    resources = registry.get_resources()
-
-    tool_servers = len([s for s in registry.servers.values() if s.type == "tool"])
-    resource_servers = len(
-        [s for s in registry.servers.values() if s.type == "resource"]
-    )
-
-    return {
-        "total_servers": len(registry.servers),
-        "tool_servers": tool_servers,
-        "resource_servers": resource_servers,
-        "total_tools": len(tools),
-        "total_resources": len(resources),
-        "servers": {
-            name: {
-                "type": server.type,
-                "tools_count": len(server.tools),
-                "resources_count": len(server.resources),
-            }
-            for name, server in registry.servers.items()
-        },
-    }
 
 
 if __name__ == "__main__":

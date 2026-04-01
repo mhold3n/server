@@ -5,7 +5,18 @@ Tests for shadow prompts dataset integration and classification sanity.
 
 import os
 import json
-from prompt_middleware.classifier import classify_intent
+import pytest
+
+try:
+    import torch  # noqa: F401
+except Exception:
+    pytest.skip("WrkHrs shadow prompt integration requires torch (install wrkhrs[ml])", allow_module_level=True)
+
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parent.parent / "services"))
+from prompt_middleware.classifier import classify_intent  # noqa: E402
 
 
 def test_shadow_prompts_file_exists():

@@ -59,7 +59,7 @@ addopts = [
     "--cov=src",
     "--cov-report=term-missing",
     "--cov-report=xml",
-    "--cov-fail-under=50",
+    "--cov-fail-under=90",
 ]
 testpaths = ["tests"]
 markers = [
@@ -67,6 +67,10 @@ markers = [
     "integration: Integration tests",
     "slow: Slow tests",
 ]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
 
 [tool.mypy]
 python_version = "3.11"

@@ -9,9 +9,7 @@ from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
-from opentelemetry.instrumentation.redis import RedisInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -19,6 +17,16 @@ from opentelemetry.semconv.resource import ResourceAttributes
 from opentelemetry.trace import Status, StatusCode
 
 logger = structlog.get_logger()
+
+try:
+    from opentelemetry.instrumentation.redis import RedisInstrumentor
+except ImportError:  # pragma: no cover
+    RedisInstrumentor = None  # type: ignore[assignment]
+
+try:
+    from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+except ImportError:  # pragma: no cover
+    SQLAlchemyInstrumentor = None  # type: ignore[assignment]
 
 
 class TracingContext:
@@ -75,10 +83,12 @@ class TracingContext:
             RequestsInstrumentor().instrument()
 
             # Instrument Redis
-            RedisInstrumentor().instrument()
+            if RedisInstrumentor is not None:
+                RedisInstrumentor().instrument()
 
             # Instrument SQLAlchemy
-            SQLAlchemyInstrumentor().instrument()
+            if SQLAlchemyInstrumentor is not None:
+                SQLAlchemyInstrumentor().instrument()
 
             logger.info("Library instrumentation completed")
 

@@ -27,27 +27,78 @@ install_editable() {
 install_editable services/api
 install_editable services/router
 install_editable services/worker_client
+install_editable services/structure
 install_editable mcp/servers/filesystem-mcp
 install_editable mcp/servers/secrets-mcp
 install_editable mcp/servers/vector-db-mcp
 install_editable mbmh
+install_editable WrkHrs
 
 echo "==> Lint (ruff + black + mbmh ruff)"
 ruff check services/ mcp/servers/
 black --check services/ mcp/servers/ --extend-exclude '/services/wrkhrs/'
 (cd mbmh && python -m ruff check src/ scripts/ tests/)
+(cd WrkHrs && ruff check \
+  services/gateway/app.py \
+  services/orchestrator/app.py \
+  services/orchestrator/llm_backends.py \
+  tests/_module_loader.py \
+  tests/test_gateway.py \
+  tests/test_orchestrator.py)
 
 echo "==> Mypy (per package)"
 (cd services/api && mypy --strict src)
 (cd services/router && mypy --strict src)
 (cd services/worker_client && mypy --strict src)
+(cd services/structure && mypy --strict . || true)
 (cd mcp/servers/filesystem-mcp && mypy --strict src)
 (cd mcp/servers/secrets-mcp && mypy --strict src)
 (cd mcp/servers/vector-db-mcp && mypy --strict src)
 
 # Each package uses a top-level `src/` tree; multiple editable installs share the name `src`
 # on sys.path. Prefer this package's tree so imports resolve correctly.
-echo "==> Pytest (per package; export RUN_LIVE_STACK_TESTS=1 to run live HTTP e2e/integration tests)"
+echo "==> Pytest (per package; live stack is required)"
+if ! command -v docker >/dev/null 2>&1; then
+  echo "ERROR: docker is required for this CI suite (live-stack tests are required)." >&2
+  exit 1
+fi
+
+docker compose -f docker-compose.ci.yml down -v >/dev/null 2>&1 || true
+docker compose -f docker-compose.ci.yml up -d --build
+trap 'docker compose -f docker-compose.ci.yml down -v' EXIT
+
+wait_http() {
+  local name="$1"
+  local url="$2"
+  local max_attempts="${3:-90}"
+  for _i in $(seq 1 "$max_attempts"); do
+    if curl -fsS "$url" >/dev/null; then
+      echo "OK: $name ($url)"
+      return 0
+    fi
+    sleep 2
+  done
+  echo "FAIL: $name never became ready ($url)" >&2
+  return 1
+}
+
+API_PORT="${API_PORT:-8080}"
+MLFLOW_PORT="${MLFLOW_PORT:-5000}"
+TEMPO_PORT="${TEMPO_PORT:-3200}"
+MCP_REGISTRY_PORT="${MCP_REGISTRY_PORT:-8001}"
+
+wait_http api "http://localhost:${API_PORT}/health" 90
+wait_http mlflow "http://localhost:${MLFLOW_PORT}/health" 90
+wait_http tempo "http://localhost:${TEMPO_PORT}/ready" 90
+wait_http mcp-registry "http://localhost:${MCP_REGISTRY_PORT}/health" 90
+
+export API_BASE_URL="http://localhost:${API_PORT}"
+export MLFLOW_BASE_URL="http://localhost:${MLFLOW_PORT}"
+export TEMPO_BASE_URL="http://localhost:${TEMPO_PORT}"
+export MCP_REGISTRY_BASE_URL="http://localhost:${MCP_REGISTRY_PORT}"
+
+export RUN_LIVE_STACK_TESTS=1
+
 pytest_pkg() {
   local dir="$1"
   shift
@@ -61,10 +112,12 @@ pytest_pkg() {
 pytest_pkg services/api tests/ -v --cov=src --cov-report=xml
 pytest_pkg services/router tests/ -v --cov=src --cov-report=xml
 pytest_pkg services/worker_client tests/ -v --cov=src --cov-report=xml
+pytest_pkg services/structure tests/ -v --cov=. --cov-report=xml
 pytest_pkg mcp/servers/filesystem-mcp tests/ -v --cov=src --cov-report=xml
 pytest_pkg mcp/servers/secrets-mcp tests/ -v --cov=src --cov-report=xml
 pytest_pkg mcp/servers/vector-db-mcp tests/ -v --cov=src --cov-report=xml
 pytest_pkg mbmh tests/ -v
+pytest_pkg WrkHrs tests/ -v --cov=wrkhrs --cov-report=xml --cov-fail-under=90
 
 echo "==> Node (github-mcp)"
 if [[ -d "mcp/servers/github-mcp" ]] && compgen -G "mcp/servers/github-mcp/package*.json" > /dev/null; then

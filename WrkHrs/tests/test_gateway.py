@@ -1,16 +1,23 @@
 import pytest
-import json
 import hashlib
-import time
 from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
-from datetime import datetime, timedelta
 
-import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'services', 'gateway'))
+from pathlib import Path
 
-from app import api, validate_api_key, check_rate_limit, create_jwt_token, verify_jwt_token, extract_domain_weights
+from tests._module_loader import load_module
+
+gateway_app = load_module(
+    "wrkhrs_gateway_app",
+    Path(__file__).resolve().parent.parent / "services" / "gateway" / "app.py",
+)
+api = gateway_app.api
+validate_api_key = gateway_app.validate_api_key
+check_rate_limit = gateway_app.check_rate_limit
+create_jwt_token = gateway_app.create_jwt_token
+verify_jwt_token = gateway_app.verify_jwt_token
+extract_domain_weights = gateway_app.extract_domain_weights
 
 
 @pytest.fixture
@@ -39,17 +46,17 @@ class TestAuthentication:
         """Test successful API key validation"""
         with patch.dict(os.environ, {"API_KEY_SECRET": "test-secret"}):
             # The API key should be the secret itself, not the hash
-            assert validate_api_key("test-secret") == True
+            assert validate_api_key("test-secret")
 
     def test_validate_api_key_failure(self):
         """Test failed API key validation"""
         with patch.dict(os.environ, {"API_KEY_SECRET": "test-secret"}):
-            assert validate_api_key("wrong-key") == False
+            assert not validate_api_key("wrong-key")
 
     def test_validate_api_key_empty(self):
         """Test empty API key validation"""
-        assert validate_api_key("") == False
-        assert validate_api_key(None) == False
+        assert not validate_api_key("")
+        assert not validate_api_key(None)
 
     def test_jwt_token_creation_and_verification(self):
         """Test JWT token creation and verification"""
@@ -67,7 +74,7 @@ class TestAuthentication:
         payload = verify_jwt_token("invalid.token.here")
         assert payload is None
 
-    @patch('app.request_counts')
+    @patch("wrkhrs_gateway_app.request_counts")
     def test_rate_limiting(self, mock_request_counts):
         """Test rate limiting functionality"""
         client_ip = "192.168.1.1"
@@ -78,12 +85,12 @@ class TestAuthentication:
         
         # First request should pass
         with patch.dict(os.environ, {"RATE_LIMIT_REQUESTS_PER_MINUTE": "5"}):
-            assert check_rate_limit(client_ip) == True
+            assert check_rate_limit(client_ip)
 
     def test_rate_limiting_disabled_auth(self):
         """Test rate limiting when auth is disabled"""
         with patch.dict(os.environ, {"ENABLE_AUTHENTICATION": "false"}):
-            assert check_rate_limit("any_ip") == True
+            assert check_rate_limit("any_ip")
 
 
 class TestHealthEndpoint:
@@ -176,10 +183,23 @@ class TestChatCompletions:
     def test_chat_completions_without_auth(self, client):
         """Test chat completions when auth is disabled"""
         with patch.dict(os.environ, {"ENABLE_AUTHENTICATION": "false"}):
-            with patch('app.requests.post') as mock_post:
+            with patch("wrkhrs_gateway_app.ORCH_SESSION.post") as mock_post:
                 # Mock the orchestrator response
                 mock_response = Mock()
-                mock_response.json.return_value = {"response": "test response"}
+                mock_response.json.return_value = {
+                    "id": "test",
+                    "object": "chat.completion",
+                    "created": 0,
+                    "model": "test-model",
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": {"role": "assistant", "content": "test response"},
+                            "finish_reason": "stop",
+                        }
+                    ],
+                    "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+                }
                 mock_response.status_code = 200
                 mock_post.return_value = mock_response
                 
@@ -196,10 +216,23 @@ class TestChatCompletions:
             "ENABLE_AUTHENTICATION": "true",
             "API_KEY_SECRET": "test-secret"
         }):
-            with patch('app.requests.post') as mock_post:
+            with patch("wrkhrs_gateway_app.ORCH_SESSION.post") as mock_post:
                 # Mock the orchestrator response
                 mock_response = Mock()
-                mock_response.json.return_value = {"response": "test response"}
+                mock_response.json.return_value = {
+                    "id": "test",
+                    "object": "chat.completion",
+                    "created": 0,
+                    "model": "test-model",
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": {"role": "assistant", "content": "test response"},
+                            "finish_reason": "stop",
+                        }
+                    ],
+                    "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+                }
                 mock_response.status_code = 200
                 mock_post.return_value = mock_response
                 

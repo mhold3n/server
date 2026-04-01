@@ -9,25 +9,52 @@ import re
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel, Field
 import numpy as np
-from sentence_transformers import SentenceTransformer
-from qdrant_client import QdrantClient
-from qdrant_client.http import models
-from qdrant_client.http.models import Distance, VectorParams, PointStruct
+try:
+    from sentence_transformers import SentenceTransformer  # type: ignore
+except Exception:  # pragma: no cover
+    SentenceTransformer = None  # type: ignore[assignment]
+
+try:
+    from qdrant_client import QdrantClient  # type: ignore
+    from qdrant_client.http import models  # type: ignore
+    from qdrant_client.http.models import Distance, VectorParams, PointStruct  # type: ignore
+except Exception:  # pragma: no cover
+    QdrantClient = None  # type: ignore[assignment]
+    models = None  # type: ignore[assignment]
+    Distance = None  # type: ignore[assignment]
+    VectorParams = None  # type: ignore[assignment]
+    PointStruct = None  # type: ignore[assignment]
 import hashlib
-from rank_bm25 import BM25Okapi
-import nltk
-from sklearn.feature_extraction.text import TfidfVectorizer
+try:
+    from rank_bm25 import BM25Okapi  # type: ignore
+except Exception:  # pragma: no cover
+    BM25Okapi = None  # type: ignore[assignment]
+
+try:
+    import nltk  # type: ignore
+except Exception:  # pragma: no cover
+    nltk = None  # type: ignore[assignment]
+
+try:
+    from sklearn.feature_extraction.text import TfidfVectorizer  # type: ignore
+except Exception:  # pragma: no cover
+    TfidfVectorizer = None  # type: ignore[assignment]
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('/logs/rag.log', mode='a'),
-        logging.StreamHandler()
-    ]
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+_handlers: list[logging.Handler] = []
+_log_dir = os.getenv("WRKHRS_LOG_DIR", "/logs")
+try:
+    os.makedirs(_log_dir, exist_ok=True)
+    _handlers.append(logging.FileHandler(os.path.join(_log_dir, "rag.log"), mode="a"))
+except Exception:
+    pass
+_handlers.append(logging.StreamHandler())
+for _h in _handlers:
+    logger.addHandler(_h)
+logger.propagate = False
 
 # Initialize FastAPI app
 api = FastAPI(
@@ -90,16 +117,24 @@ class RAGService:
     
     async def initialize(self):
         """Initialize embedding model and Qdrant connection"""
+        if os.environ.get("WRKHRS_DISABLE_MODEL_LOAD") == "1":
+            logger.info("Skipping RAG initialize (WRKHRS_DISABLE_MODEL_LOAD=1)")
+            self.embedding_model = None
+            self.qdrant_client = None
+            return
         try:
             # Download NLTK data
             try:
-                nltk.download('punkt', quiet=True)
-                nltk.download('stopwords', quiet=True)
+                if nltk is not None:
+                    nltk.download("punkt", quiet=True)
+                    nltk.download("stopwords", quiet=True)
             except:
                 logger.warning("Could not download NLTK data, BM25 may be less effective")
             
             # Initialize embedding model
             logger.info("Loading embedding model...")
+            if SentenceTransformer is None:
+                raise RuntimeError("sentence-transformers not installed (install wrkhrs[ml])")
             self.embedding_model = SentenceTransformer(
                 os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
             )
@@ -109,6 +144,8 @@ class RAGService:
             # Initialize Qdrant client
             qdrant_url = os.getenv("QDRANT_URL", "http://qdrant:6333")
             logger.info(f"Connecting to Qdrant at {qdrant_url}")
+            if QdrantClient is None:
+                raise RuntimeError("qdrant-client not installed (install wrkhrs[ml])")
             self.qdrant_client = QdrantClient(url=qdrant_url)
             
             # Create collection if it doesn't exist

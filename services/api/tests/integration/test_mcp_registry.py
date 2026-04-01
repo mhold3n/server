@@ -17,7 +17,7 @@ class TestMCPRegistryIntegration:
     @pytest.fixture
     def mcp_registry_url(self):
         """Get MCP registry URL."""
-        return "http://localhost:8001"
+        return os.environ.get("MCP_REGISTRY_BASE_URL", "http://localhost:8001")
 
     @pytest.fixture
     def sample_mcp_server(self):

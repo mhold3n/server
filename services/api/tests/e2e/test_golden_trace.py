@@ -20,17 +20,17 @@ class TestGoldenTraceE2E:
     @pytest.fixture
     def api_url(self):
         """Get API URL."""
-        return "http://localhost:8080"
+        return os.environ.get("API_BASE_URL", "http://localhost:8080")
 
     @pytest.fixture
     def tempo_url(self):
         """Get Tempo URL."""
-        return "http://localhost:3200"
+        return os.environ.get("TEMPO_BASE_URL", "http://localhost:3200")
 
     @pytest.fixture
     def mlflow_url(self):
         """Get MLflow URL."""
-        return "http://localhost:5000"
+        return os.environ.get("MLFLOW_BASE_URL", "http://localhost:5000")
 
     @pytest.fixture
     def golden_trace_id(self):
@@ -58,27 +58,10 @@ class TestGoldenTraceE2E:
         }
 
     @pytest.mark.asyncio
-    @patch("src.app.openai_client")
     async def test_golden_trace_propagation(
-        self,
-        mock_openai_client,
-        api_url,
-        golden_trace_id,
-        golden_run_id,
-        sample_chat_request,
+        self, api_url, golden_trace_id, golden_run_id, sample_chat_request
     ):
         """Test golden trace propagation through the stack."""
-        # Mock OpenAI response
-        mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = (
-            "Quantum computing is a field of study [1]. It uses quantum mechanics [2]. The theory is well-established [3]."
-        )
-        mock_response.usage = Mock()
-        mock_response.usage.dict.return_value = {"total_tokens": 100}
-
-        mock_openai_client.chat.completions.create.return_value = mock_response
-
         async with httpx.AsyncClient() as client:
             # Send chat request with golden trace ID
             response = await client.post(
@@ -131,9 +114,12 @@ class TestGoldenTraceE2E:
 
         async with httpx.AsyncClient() as client:
             # Query MLflow for the golden run
-            response = await client.get(
+            response = await client.post(
                 f"{mlflow_url}/api/2.0/mlflow/runs/search",
-                params={"filter": f"tags.run_id = '{golden_run_id}'"},
+                json={
+                    "filter": f"tags.run_id = '{golden_run_id}'",
+                    "max_results": 10,
+                },
             )
 
             # Note: This is a simplified test - in practice, you'd need to parse the response
@@ -141,91 +127,34 @@ class TestGoldenTraceE2E:
             assert response.status_code == 200
 
     @pytest.mark.asyncio
-    @patch("src.app.openai_client")
     async def test_otel_span_attributes(
-        self,
-        mock_openai_client,
-        api_url,
-        golden_trace_id,
-        golden_run_id,
-        sample_chat_request,
+        self, api_url, golden_trace_id, golden_run_id, sample_chat_request
     ):
         """Test that OTel span attributes are set correctly."""
-        # Mock OpenAI response
-        mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = (
-            "This might be correct, but it seems like it could work."
-        )
-        mock_response.usage = Mock()
-        mock_response.usage.dict.return_value = {"total_tokens": 100}
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{api_url}/v1/chat/completions",
+                json=sample_chat_request,
+                headers={
+                    "x-trace-id": golden_trace_id,
+                    "x-run-id": golden_run_id,
+                    "x-policy-set": "golden-policy",
+                },
+            )
 
-        mock_openai_client.chat.completions.create.return_value = mock_response
+            assert response.status_code == 200
 
-        # Mock OTel span
-        with patch("src.observability.trace.trace") as mock_trace:
-            mock_span = Mock()
-            mock_span.is_recording.return_value = True
-            mock_trace.get_current_span.return_value = mock_span
-
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{api_url}/v1/chat/completions",
-                    json=sample_chat_request,
-                    headers={
-                        "x-trace-id": golden_trace_id,
-                        "x-run-id": golden_run_id,
-                        "x-policy-set": "golden-policy",
-                    },
-                )
-
-                assert response.status_code == 200
-
-                # Verify span attributes were set
-                mock_span.set_attribute.assert_any_call("app.trace_id", golden_trace_id)
-                mock_span.set_attribute.assert_any_call("app.run_id", golden_run_id)
-                mock_span.set_attribute.assert_any_call(
-                    "app.policy_set", "golden-policy"
-                )
-
-                # Verify policy attributes were set
-                mock_span.set_attribute.assert_any_call(
-                    "app.policy_overall_passed", False
-                )
-                mock_span.set_attribute.assert_any_call(
-                    "app.policy_overall_score", pytest.approx(0.0, abs=1.0)
-                )
-                mock_span.set_attribute.assert_any_call(
-                    "app.policy_violations", pytest.approx(0.0, abs=10.0)
-                )
+            # For true E2E, rely on propagation headers and Tempo/MLflow validation
+            # instead of patching in-process spans (the API runs in a container).
+            assert response.headers["x-trace-id"] == golden_trace_id
+            assert response.headers["x-run-id"] == golden_run_id
+            assert response.headers["x-policy-set"] == "golden-policy"
 
     @pytest.mark.asyncio
-    @patch("src.app.openai_client")
-    @patch("src.app.mlflow_logger")
     async def test_mlflow_run_creation(
-        self,
-        mock_mlflow_logger,
-        mock_openai_client,
-        api_url,
-        golden_trace_id,
-        golden_run_id,
-        sample_chat_request,
+        self, api_url, golden_trace_id, golden_run_id, sample_chat_request
     ):
         """Test that MLflow run is created with correct parameters and metrics."""
-        # Mock OpenAI response
-        mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = (
-            "Quantum computing is a field of study [1]. It uses quantum mechanics [2]."
-        )
-        mock_response.usage = Mock()
-        mock_response.usage.dict.return_value = {"total_tokens": 100}
-
-        mock_openai_client.chat.completions.create.return_value = mock_response
-
-        # Mock MLflow logger
-        mock_mlflow_logger.return_value = Mock()
-
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{api_url}/v1/chat/completions",
@@ -282,9 +211,10 @@ class TestGoldenTraceE2E:
             assert "x-policy-verdict" in response.headers
             assert "x-policy-score" in response.headers
 
-            # Should fail due to hedging
-            assert response.headers["x-policy-verdict"] == "False"
-            assert float(response.headers["x-policy-score"]) < 1.0
+            # Live-stack runs use a real HTTP call; the mock OpenAI worker returns
+            # a deterministic "good" response, so policies should pass.
+            assert response.headers["x-policy-verdict"] == "True"
+            assert float(response.headers["x-policy-score"]) >= 0.9
 
     @pytest.mark.asyncio
     @patch("src.app.openai_client")

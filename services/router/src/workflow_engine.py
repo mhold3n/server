@@ -4,8 +4,6 @@ import asyncio
 from typing import Any
 
 import structlog
-from langchain.tools import Tool
-from langgraph.graph import StateGraph
 
 logger = structlog.get_logger()
 
@@ -27,13 +25,13 @@ class WorkflowEngine:
     def register_workflow(
         self,
         name: str,
-        workflow: StateGraph,
+        workflow: Any,
     ) -> None:
         """Register a LangGraph workflow.
 
         Args:
             name: Workflow name
-            workflow: LangGraph StateGraph instance
+            workflow: LangGraph StateGraph-like instance
         """
         self.workflows[name] = workflow
         logger.info("Registered workflow", workflow_name=name)
@@ -55,13 +53,13 @@ class WorkflowEngine:
     def register_tool(
         self,
         name: str,
-        tool: Tool,
+        tool: Any,
     ) -> None:
         """Register a LangChain tool.
 
         Args:
             name: Tool name
-            tool: LangChain Tool instance
+            tool: LangChain Tool-like instance
         """
         self.tools[name] = tool
         logger.info("Registered tool", tool_name=name)

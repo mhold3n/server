@@ -38,6 +38,12 @@ jobs:
           cd services/worker_client
           pip install -e .
           pip install -e ".[dev]"
+
+      - name: Install Structure dependencies
+        run: |
+          cd services/structure
+          pip install -e .
+          pip install -e ".[dev]"
       
       - name: Install MCP server dependencies
         run: |
@@ -57,12 +63,25 @@ jobs:
           pip install -e .
           pip install -e ".[dev]"
 
+      - name: Install WrkHrs dependencies
+        run: |
+          cd WrkHrs
+          pip install -e .
+          pip install -e ".[dev]"
+
       # Run linting and type checking
       - name: Run linting
         run: |
           ruff check services/ mcp/servers/
           black --check services/ mcp/servers/ --extend-exclude '/services/wrkhrs/'
           (cd mbmh && python -m ruff check src/ scripts/ tests/)
+          (cd WrkHrs && ruff check \
+            services/gateway/app.py \
+            services/orchestrator/app.py \
+            services/orchestrator/llm_backends.py \
+            tests/_module_loader.py \
+            tests/test_gateway.py \
+            tests/test_orchestrator.py)
       
       - name: Run type checking
         run: |
@@ -71,23 +90,67 @@ jobs:
           (cd services/api && mypy --strict src)
           (cd services/router && mypy --strict src)
           (cd services/worker_client && mypy --strict src)
+          (cd services/structure && mypy --strict . || true)
           (cd mcp/servers/filesystem-mcp && mypy --strict src)
           (cd mcp/servers/secrets-mcp && mypy --strict src)
           (cd mcp/servers/vector-db-mcp && mypy --strict src)
       
       # Run tests (PYTHONPATH: each wheel uses a top-level `src/` package; multiple editables
       # would otherwise shadow each other on sys.path). Skip packages with no tests/ directory.
+      - name: Start live-stack dependencies (required)
+        run: |
+          docker compose -f docker-compose.ci.yml up -d --build
+
+          wait_http() {
+            local name="$1"
+            local url="$2"
+            local max_attempts="${3:-60}"
+            for i in $(seq 1 "$max_attempts"); do
+              if curl -fsS "$url" >/dev/null; then
+                echo "OK: $name ($url)"
+                return 0
+              fi
+              sleep 2
+            done
+            echo "FAIL: $name never became ready ($url)" >&2
+            return 1
+          }
+
+          API_PORT="${API_PORT:-8080}"
+          MLFLOW_PORT="${MLFLOW_PORT:-5000}"
+          TEMPO_PORT="${TEMPO_PORT:-3200}"
+          MCP_REGISTRY_PORT="${MCP_REGISTRY_PORT:-8001}"
+
+          wait_http api "http://localhost:${API_PORT}/health" 90
+          wait_http mlflow "http://localhost:${MLFLOW_PORT}/health" 90
+          wait_http tempo "http://localhost:${TEMPO_PORT}/ready" 90
+          wait_http mcp-registry "http://localhost:${MCP_REGISTRY_PORT}/health" 90
+
       - name: Run tests
+        env:
+          RUN_LIVE_STACK_TESTS: "1"
+          API_BASE_URL: "http://localhost:8080"
+          MLFLOW_BASE_URL: "http://localhost:5000"
+          TEMPO_BASE_URL: "http://localhost:3200"
+          MCP_REGISTRY_BASE_URL: "http://localhost:8001"
         run: |
           run_pytest_cov() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=src --cov-report=xml); else echo "Skip pytest: no $d/tests"; fi; }
+          run_pytest_cov_any() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=. --cov-report=xml); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_plain() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_cov services/api
           run_pytest_cov services/router
           run_pytest_cov services/worker_client
+          run_pytest_cov_any services/structure
           run_pytest_cov mcp/servers/filesystem-mcp
           run_pytest_cov mcp/servers/secrets-mcp
           run_pytest_cov mcp/servers/vector-db-mcp
           run_pytest_plain mbmh
+          (cd WrkHrs && PYTHONPATH="$(pwd)" WRKHRS_DISABLE_MODEL_LOAD=1 pytest tests/ -v --cov=wrkhrs --cov-report=xml --cov-fail-under=90)
+
+      - name: Stop live-stack dependencies
+        if: always()
+        run: |
+          docker compose -f docker-compose.ci.yml down -v
 
       # Node.js for GitHub MCP server
       - uses: actions/setup-node@v4
@@ -140,7 +203,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: ./services/api/coverage.xml,./services/router/coverage.xml,./services/worker_client/coverage.xml
+          files: ./services/api/coverage.xml,./services/router/coverage.xml,./services/worker_client/coverage.xml,./services/structure/coverage.xml,./WrkHrs/coverage.xml,./mcp/servers/filesystem-mcp/coverage.xml,./mcp/servers/secrets-mcp/coverage.xml,./mcp/servers/vector-db-mcp/coverage.xml
           fail_ci_if_error: false
 
   codeql:

@@ -4,6 +4,7 @@ import json
 import os
 import socket
 import unittest.mock
+from contextlib import nullcontext
 from datetime import datetime
 from typing import Any
 from urllib.parse import urlparse
@@ -139,6 +140,43 @@ class MLflowLogger:
         except Exception as e:
             logger.error("Failed to setup MLflow", error=str(e))
             self.experiment_id = None
+
+    def start_run(self, run_name: str | None = None):
+        """
+        Start an MLflow run if MLflow is available.
+
+        This is a small convenience wrapper used by the API E2E tests.
+        """
+        if not self.experiment_id:
+            return nullcontext()
+
+        if run_name:
+            return mlflow.start_run(experiment_id=self.experiment_id, run_name=run_name)
+        return mlflow.start_run(experiment_id=self.experiment_id)
+
+    def log_params(self, params: dict[str, Any]) -> None:
+        if not self.experiment_id:
+            return
+        try:
+            mlflow.log_params(params)
+        except Exception as e:
+            logger.warning("Failed to log params", error=str(e))
+
+    def log_metrics(self, metrics: dict[str, float | int]) -> None:
+        if not self.experiment_id:
+            return
+        try:
+            mlflow.log_metrics({k: float(v) for k, v in metrics.items()})
+        except Exception as e:
+            logger.warning("Failed to log metrics", error=str(e))
+
+    def log_dict(self, data: Any, artifact_file: str) -> None:
+        if not self.experiment_id:
+            return
+        try:
+            mlflow.log_dict(data, artifact_file)
+        except Exception as e:
+            logger.warning("Failed to log dict artifact", error=str(e))
 
     async def log_run(
         self,

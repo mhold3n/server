@@ -51,10 +51,12 @@ class PolicyEnforcer:
         total_suggestions = 0
         scores = []
 
+        safe_retrieval_docs: list[dict[str, Any]] = retrieval_docs or []
+
         logger.info(
             "Running policy validation",
             output_length=len(output),
-            retrieval_count=len(retrieval_docs) if retrieval_docs else 0,
+            retrieval_count=len(safe_retrieval_docs),
             enabled_policies=enabled_policies,
         )
 
@@ -67,7 +69,7 @@ class PolicyEnforcer:
                     continue
 
                 # Run policy validation
-                result = await policy.validate(output, retrieval_docs)
+                result = await policy.validate(output, safe_retrieval_docs)
                 policy_results[policy_name] = result
 
                 # Aggregate metrics

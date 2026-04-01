@@ -1,30 +1,31 @@
 import os
-import json
 import logging
-from typing import Dict, List, Optional, Any, Annotated
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 import requests
 from langgraph.graph import StateGraph, END
-from langgraph.prebuilt import ToolNode
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from langchain_core.tools import tool
 
 # Import our LLM backend manager
 from llm_backends import llm_manager, LLMBackendError
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('/logs/orchestrator.log', mode='a'),
-        logging.StreamHandler()
-    ]
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
+_handlers: list[logging.Handler] = []
+_log_dir = os.getenv("WRKHRS_LOG_DIR", "/logs")
+try:
+    os.makedirs(_log_dir, exist_ok=True)
+    _handlers.append(logging.FileHandler(os.path.join(_log_dir, "orchestrator.log"), mode="a"))
+except Exception:
+    pass
+_handlers.append(logging.StreamHandler())
+for _h in _handlers:
+    logger.addHandler(_h)
+logger.propagate = False
 
 # Initialize FastAPI app
 api = FastAPI(
@@ -50,10 +51,15 @@ class ChatResponse(BaseModel):
 class WorkflowState(BaseModel):
     messages: List[Dict[str, str]]
     current_step: str = "analyze"
+    context: Dict[str, Any] = {}
+    domain_weights: Dict[str, float] = {"chemistry": 0.0, "mechanical": 0.0, "materials": 0.0}
+    tools_available: List[Dict[str, Any]] = []
     tools_needed: List[str] = []
     rag_results: Optional[str] = None
     asr_results: Optional[str] = None
     tool_results: Dict[str, Any] = {}
+    response: str = ""
+    metadata: Dict[str, Any] = {}
     final_response: Optional[str] = None
     surrogate_headers: Dict[str, str] = {}
 
@@ -72,7 +78,6 @@ def extract_surrogate_headers(request: Request) -> Dict[str, str]:
     return forwarded
 
 # Tool definitions
-@tool
 def search_knowledge_base(
     query: str,
     domain_weights: Dict[str, float] = None,
@@ -101,7 +106,6 @@ def search_knowledge_base(
         logger.error(f"Error in search_knowledge_base: {e}")
         return f"Error searching knowledge base: {str(e)}"
 
-@tool
 def transcribe_audio(audio_data: str, surrogate_headers: Dict[str, str] = None) -> str:
     """Transcribe audio/video content using ASR service."""
     try:
@@ -122,7 +126,6 @@ def transcribe_audio(audio_data: str, surrogate_headers: Dict[str, str] = None) 
         logger.error(f"Error in transcribe_audio: {e}")
         return f"Error transcribing audio: {str(e)}"
 
-@tool
 def get_domain_data(
     domain: str,
     query: str,
@@ -147,7 +150,6 @@ def get_domain_data(
         logger.error(f"Error in get_domain_data: {e}")
         return f"Error getting domain data: {str(e)}"
 
-@tool
 def get_available_tools(surrogate_headers: Dict[str, str] = None) -> List[Dict[str, Any]]:
     """Get list of available tools from tool registry."""
     try:
@@ -227,7 +229,7 @@ def gather_context(state: WorkflowState) -> WorkflowState:
                                     domain_weights["mechanical"] = float(part.split('=')[1])
                                 elif "Materials=" in part:
                                     domain_weights["materials"] = float(part.split('=')[1])
-                except:
+                except Exception:
                     pass
     
     # Execute tools based on needs
@@ -427,6 +429,11 @@ async def chat_endpoint(request: ChatRequest, http_request: Request):
         logger.error(f"Error processing chat request: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@api.post("/v1/chat/completions")
+async def openai_chat_completions(request: ChatRequest, http_request: Request):
+    return await chat_endpoint(request, http_request)
+
 @api.get("/workflow/status")
 async def workflow_status():
     """Get workflow status and available tools."""
@@ -435,6 +442,9 @@ async def workflow_status():
         return {
             "status": "active",
             "available_tools": len(tools),
+            "active_workflows": 0,
+            "total_processed": 0,
+            "average_response_time": 0.0,
             "workflow_nodes": ["analyze", "gather_context", "generate_response"]
         }
     except Exception as e:

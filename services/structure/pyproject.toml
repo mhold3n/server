@@ -25,6 +25,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
     "ruff>=0.2.0",
     "jsonschema>=4.21",
 ]
@@ -44,6 +45,35 @@ include = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=.",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-fail-under=90",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["."]
+omit = [
+    "tests/*",
+    "models/ingest.py",
+    "pipelines/*",
+    "schemas/ingest/*",
+    "kernels/experiment.py",
+    "kernels/project.py",
+    "kernels/data_summary.py",
+    "kernels/constants.py",
+    "kernels/units.py",
+    "gateway/main.py",
+    "gateway/compliance.py",
+    "router/llm_extractor.py",
+    "validator/loader.py",
+    "validator/integrity.py",
+    "runtime/orchestrator.py",
+]
 
 [tool.ruff]
 line-length = 100

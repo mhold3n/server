@@ -119,11 +119,15 @@ class WrkHrsGatewayClient:
             return result
 
         except HTTPError as e:
+            response = getattr(e, "response", None)
+            response_text = (
+                getattr(response, "text", None) if response is not None else None
+            )
             logger.error(
                 "Chat completion failed",
                 model=model,
                 error=str(e),
-                response_text=e.response.text if e.response else None,
+                response_text=response_text,
             )
             raise
 

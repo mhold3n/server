@@ -6,11 +6,27 @@ from fastapi.testclient import TestClient
 from datetime import datetime
 import io
 
+try:
+    import qdrant_client  # noqa: F401
+    import sentence_transformers  # noqa: F401
+    import rank_bm25  # noqa: F401
+except Exception:
+    pytest.skip("WrkHrs RAG tests require wrkhrs[ml] dependencies", allow_module_level=True)
+
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'services', 'rag'))
+from pathlib import Path
 
-from app import api, rag_service, RAGService
+from tests._module_loader import load_module
+
+rag_app = load_module(
+    "wrkhrs_rag_app",
+    Path(__file__).resolve().parent.parent / "services" / "rag" / "app.py",
+)
+
+api = rag_app.api
+rag_service = rag_app.rag_service
+RAGService = rag_app.RAGService
 
 
 @pytest.fixture
