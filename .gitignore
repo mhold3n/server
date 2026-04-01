@@ -46,6 +46,9 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
+# Local-only scratch / exports (never commit)
+CLAUDE RIP/
+
 # Docker
 .dockerignore
 
