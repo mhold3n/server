@@ -118,11 +118,20 @@ services:
     volumes:
       - ./infra/observability/tempo/tempo.yml:/etc/tempo.yml:ro
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3200/ready"]
+      # grafana/tempo image ships wget, not curl
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://127.0.0.1:3200/ready",
+        ]
       interval: 5s
       timeout: 3s
       retries: 60
-      start_period: 10s
+      start_period: 15s
 
   mcp-registry:
     build: ./services/mcp-registry

@@ -77,23 +77,26 @@ wait_http() {
     sleep 2
   done
   echo "FAIL: $name never became ready ($url)" >&2
+  docker compose -f docker-compose.ci.yml ps
+  docker compose -f docker-compose.ci.yml logs --no-color --tail=80 tempo || true
   return 1
 }
 
+WAIT_HOST="${WAIT_HOST:-127.0.0.1}"
 API_PORT="${API_PORT:-8080}"
 MLFLOW_PORT="${MLFLOW_PORT:-5000}"
 TEMPO_PORT="${TEMPO_PORT:-3200}"
 MCP_REGISTRY_PORT="${MCP_REGISTRY_PORT:-8001}"
 
-wait_http api "http://localhost:${API_PORT}/health" 90
-wait_http mlflow "http://localhost:${MLFLOW_PORT}/health" 90
-wait_http tempo "http://localhost:${TEMPO_PORT}/ready" 90
-wait_http mcp-registry "http://localhost:${MCP_REGISTRY_PORT}/health" 90
+wait_http api "http://${WAIT_HOST}:${API_PORT}/health" 90
+wait_http mlflow "http://${WAIT_HOST}:${MLFLOW_PORT}/health" 90
+wait_http tempo "http://${WAIT_HOST}:${TEMPO_PORT}/ready" 120
+wait_http mcp-registry "http://${WAIT_HOST}:${MCP_REGISTRY_PORT}/health" 90
 
-export API_BASE_URL="http://localhost:${API_PORT}"
-export MLFLOW_BASE_URL="http://localhost:${MLFLOW_PORT}"
-export TEMPO_BASE_URL="http://localhost:${TEMPO_PORT}"
-export MCP_REGISTRY_BASE_URL="http://localhost:${MCP_REGISTRY_PORT}"
+export API_BASE_URL="http://${WAIT_HOST}:${API_PORT}"
+export MLFLOW_BASE_URL="http://${WAIT_HOST}:${MLFLOW_PORT}"
+export TEMPO_BASE_URL="http://${WAIT_HOST}:${TEMPO_PORT}"
+export MCP_REGISTRY_BASE_URL="http://${WAIT_HOST}:${MCP_REGISTRY_PORT}"
 
 export RUN_LIVE_STACK_TESTS=1
 
