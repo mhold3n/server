@@ -254,13 +254,13 @@ def test_mlflow_logger_tracking_server_reachable_branches(
     from src.observability.mlflow_logger import MLflowLogger
 
     # Non-http scheme returns True
-    l = MLflowLogger(tracking_uri="file:/tmp/x", experiment_name="e")
-    assert l._tracking_server_reachable() is True  # noqa: SLF001
+    logger = MLflowLogger(tracking_uri="file:/tmp/x", experiment_name="e")
+    assert logger._tracking_server_reachable() is True  # noqa: SLF001
 
     # http scheme + socket failure returns False
-    l2 = MLflowLogger(tracking_uri="http://127.0.0.1:1", experiment_name="e")
+    logger_http = MLflowLogger(tracking_uri="http://127.0.0.1:1", experiment_name="e")
     monkeypatch.setattr("socket.create_connection", lambda *_a, **_k: (_ for _ in ()).throw(OSError()))  # type: ignore[arg-type]
-    assert l2._tracking_server_reachable(timeout_s=0.01) is False  # noqa: SLF001
+    assert logger_http._tracking_server_reachable(timeout_s=0.01) is False  # noqa: SLF001
 
 
 @pytest.mark.asyncio

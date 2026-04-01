@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import contextlib
 import json
-import os
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
