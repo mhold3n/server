@@ -260,7 +260,9 @@ def test_mlflow_logger_tracking_server_reachable_branches(
     # http scheme + socket failure returns False
     logger_http = MLflowLogger(tracking_uri="http://127.0.0.1:1", experiment_name="e")
     monkeypatch.setattr("socket.create_connection", lambda *_a, **_k: (_ for _ in ()).throw(OSError()))  # type: ignore[arg-type]
-    assert logger_http._tracking_server_reachable(timeout_s=0.01) is False  # noqa: SLF001
+    assert (
+        logger_http._tracking_server_reachable(timeout_s=0.01) is False
+    )  # noqa: SLF001
 
 
 @pytest.mark.asyncio

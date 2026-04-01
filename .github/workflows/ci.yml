@@ -65,7 +65,7 @@ jobs:
 
       - name: Install WrkHrs dependencies
         run: |
-          cd WrkHrs
+          cd services/wrkhrs
           pip install -e .
           pip install -e ".[dev]"
 
@@ -73,9 +73,9 @@ jobs:
       - name: Run linting
         run: |
           ruff check services/ mcp/servers/
-          black --check services/ mcp/servers/ --extend-exclude '/services/wrkhrs/'
+          black --check services/ mcp/servers/
           (cd mbmh && python -m ruff check src/ scripts/ tests/)
-          (cd WrkHrs && ruff check \
+          (cd services/wrkhrs && ruff check \
             services/gateway/app.py \
             services/orchestrator/app.py \
             services/orchestrator/llm_backends.py \
@@ -145,7 +145,7 @@ jobs:
           run_pytest_cov mcp/servers/secrets-mcp
           run_pytest_cov mcp/servers/vector-db-mcp
           run_pytest_plain mbmh
-          (cd WrkHrs && PYTHONPATH="$(pwd)" WRKHRS_DISABLE_MODEL_LOAD=1 pytest tests/ -v --cov=wrkhrs --cov-report=xml --cov-fail-under=90)
+          (cd services/wrkhrs && PYTHONPATH="$(pwd)" WRKHRS_DISABLE_MODEL_LOAD=1 pytest tests/ -v --cov=wrkhrs --cov-report=xml --cov-fail-under=90)
 
       - name: Stop live-stack dependencies
         if: always()
@@ -203,7 +203,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: ./services/api/coverage.xml,./services/router/coverage.xml,./services/worker_client/coverage.xml,./services/structure/coverage.xml,./WrkHrs/coverage.xml,./mcp/servers/filesystem-mcp/coverage.xml,./mcp/servers/secrets-mcp/coverage.xml,./mcp/servers/vector-db-mcp/coverage.xml
+          files: ./services/api/coverage.xml,./services/router/coverage.xml,./services/worker_client/coverage.xml,./services/structure/coverage.xml,./services/wrkhrs/coverage.xml,./mcp/servers/filesystem-mcp/coverage.xml,./mcp/servers/secrets-mcp/coverage.xml,./mcp/servers/vector-db-mcp/coverage.xml
           fail_ci_if_error: false
 
   codeql:

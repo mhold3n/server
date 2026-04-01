@@ -1,8 +1,4 @@
-# Repo-wide Ruff settings. Vendored WrkHrs (`services/wrkhrs`) is third-party
-# code; lint it separately or fix incrementally — do not block CI on it here.
-extend-exclude = [
-    "services/wrkhrs",
-]
-
+# Repo-wide Ruff settings. WrkHrs AI stack lives under `services/wrkhrs`; targeted
+# ruff runs in CI still cover gateway/orchestrator and key tests (see ci.yml).
 line-length = 88
 target-version = "py311"

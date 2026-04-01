@@ -286,6 +286,7 @@ coverage.xml
 services/**/.coverage
 
 # Optional sibling checkouts at repo root (see docs/dev-environment.md)—not part of this repo
+/WrkHrs/
 /Birtha_bigger_n_badder/
 /Compute_Node_Birtha/
 /structure/

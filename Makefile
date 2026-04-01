@@ -124,7 +124,7 @@ test-combined: test-api test-router
 test: test-combined
 
 lint:
-	ruff check services mcp/servers --force-exclude && black --check services mcp/servers --extend-exclude '/services/wrkhrs/'
+	ruff check services mcp/servers --force-exclude && black --check services mcp/servers
 
 type:
 	set -e; \
@@ -136,7 +136,7 @@ type:
 	(cd mcp/servers/vector-db-mcp && mypy --strict src)
 
 fix:
-	ruff check --fix services mcp/servers --force-exclude && black services mcp/servers --extend-exclude '/services/wrkhrs/'
+	ruff check --fix services mcp/servers --force-exclude && black services mcp/servers
 
 # CI simulation
 ci: lint type test-combined

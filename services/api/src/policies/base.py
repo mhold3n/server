@@ -17,4 +17,3 @@ class BasePolicy(ABC):
         retrieval_docs: list[dict[str, Any]] | None = None,
     ) -> PolicyResult:
         raise NotImplementedError
-
