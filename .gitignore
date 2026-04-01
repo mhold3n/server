@@ -288,7 +288,9 @@ services/**/.coverage
 # Local-only folders in this workspace root
 /Birtha_bigger_n_badder/
 /Compute_Node_Birtha/
-/WrkHrs/
+# WrkHrs: ignore untracked tree noise but keep the package manifest for CI editable installs
+/WrkHrs/*
+!/WrkHrs/pyproject.toml
 /structure/
 /llama.cpp/
 /transcript_miner/
