@@ -9,48 +9,46 @@ import json
 import argparse
 from pathlib import Path
 
+
 def update_vllm_config(model_path, model_name="custom-coding-model"):
     """Update vLLM configuration for the trained model"""
     print(f"🔧 Updating vLLM configuration for {model_path}")
-    
+
     # Update .env file
     env_file = Path(".env")
     if env_file.exists():
-        with open(env_file, 'r') as f:
+        with open(env_file, "r") as f:
             content = f.read()
-        
+
         # Update VLLM_MODEL
         content = content.replace(
-            f"VLLM_MODEL={os.environ.get('VLLM_MODEL', '')}",
-            f"VLLM_MODEL={model_path}"
+            f"VLLM_MODEL={os.environ.get('VLLM_MODEL', '')}", f"VLLM_MODEL={model_path}"
         )
-        
-        with open(env_file, 'w') as f:
+
+        with open(env_file, "w") as f:
             f.write(content)
-        
+
         print(f"✅ Updated .env file with model path: {model_path}")
-    
+
     # Update docker-compose.prod.yml
     compose_file = Path("compose/docker-compose.prod.yml")
     if compose_file.exists():
-        with open(compose_file, 'r') as f:
+        with open(compose_file, "r") as f:
             content = f.read()
-        
+
         # Update model in command
-        content = content.replace(
-            '--model ${VLLM_MODEL}',
-            f'--model {model_path}'
-        )
-        
-        with open(compose_file, 'w') as f:
+        content = content.replace("--model ${VLLM_MODEL}", f"--model {model_path}")
+
+        with open(compose_file, "w") as f:
             f.write(content)
-        
+
         print(f"✅ Updated docker-compose.prod.yml with model path: {model_path}")
+
 
 def create_model_metadata(model_path, model_info):
     """Create model metadata file"""
     print("📝 Creating model metadata...")
-    
+
     metadata = {
         "model_name": model_info.get("name", "custom-coding-model"),
         "model_path": model_path,
@@ -61,20 +59,25 @@ def create_model_metadata(model_path, model_info):
         "performance_metrics": model_info.get("metrics", {}),
         "created_at": model_info.get("created_at", "unknown"),
         "description": model_info.get("description", "Fine-tuned coding model"),
-        "languages": model_info.get("languages", ["python", "javascript", "typescript"]),
-        "tasks": model_info.get("tasks", ["code_completion", "code_review", "documentation"])
+        "languages": model_info.get(
+            "languages", ["python", "javascript", "typescript"]
+        ),
+        "tasks": model_info.get(
+            "tasks", ["code_completion", "code_review", "documentation"]
+        ),
     }
-    
+
     metadata_file = Path(model_path) / "model_metadata.json"
-    with open(metadata_file, 'w') as f:
+    with open(metadata_file, "w") as f:
         json.dump(metadata, f, indent=2)
-    
+
     print(f"✅ Model metadata saved to {metadata_file}")
+
 
 def create_coding_plugin(model_path):
     """Create a coding-specific plugin for the tool registry"""
     print("🔌 Creating coding plugin...")
-    
+
     plugin_code = f'''#!/usr/bin/env python3
 """
 Coding Assistant Plugin
@@ -272,21 +275,22 @@ class CodingAssistantPlugin:
 # Plugin instance
 plugin = CodingAssistantPlugin()
 '''
-    
+
     # Save plugin to plugins directory
     plugins_dir = Path("plugins")
     plugins_dir.mkdir(exist_ok=True)
-    
+
     plugin_file = plugins_dir / "coding_assistant_plugin.py"
-    with open(plugin_file, 'w', encoding='utf-8') as f:
+    with open(plugin_file, "w", encoding="utf-8") as f:
         f.write(plugin_code)
-    
+
     print(f"✅ Coding plugin saved to {plugin_file}")
+
 
 def create_deployment_script(model_path):
     """Create deployment script for the trained model"""
     print("🚀 Creating deployment script...")
-    
+
     deploy_script = f'''#!/bin/bash
 """
 Deployment script for trained coding model
@@ -352,32 +356,51 @@ echo "📊 Model: $MODEL_NAME"
 echo "🔗 API: http://localhost:8080"
 echo "📈 Monitoring: http://localhost:8001"
 '''
-    
+
     deploy_file = Path("deploy_trained_model.sh")
-    with open(deploy_file, 'w', encoding='utf-8') as f:
+    with open(deploy_file, "w", encoding="utf-8") as f:
         f.write(deploy_script)
-    
+
     # Make executable
     os.chmod(deploy_file, 0o755)
-    
+
     print(f"✅ Deployment script saved to {deploy_file}")
 
+
 def main():
-    parser = argparse.ArgumentParser(description='Integrate trained model with AI stack')
-    parser.add_argument('--model_path', required=True, help='Path to trained model')
-    parser.add_argument('--model_name', default='custom-coding-model', help='Name for the model')
-    parser.add_argument('--base_model', default='unknown', help='Base model used for training')
-    parser.add_argument('--description', default='Fine-tuned coding model', help='Model description')
-    parser.add_argument('--languages', nargs='+', default=['python', 'javascript', 'typescript'], help='Supported languages')
-    parser.add_argument('--tasks', nargs='+', default=['code_completion', 'code_review', 'documentation'], help='Supported tasks')
-    
+    parser = argparse.ArgumentParser(
+        description="Integrate trained model with AI stack"
+    )
+    parser.add_argument("--model_path", required=True, help="Path to trained model")
+    parser.add_argument(
+        "--model_name", default="custom-coding-model", help="Name for the model"
+    )
+    parser.add_argument(
+        "--base_model", default="unknown", help="Base model used for training"
+    )
+    parser.add_argument(
+        "--description", default="Fine-tuned coding model", help="Model description"
+    )
+    parser.add_argument(
+        "--languages",
+        nargs="+",
+        default=["python", "javascript", "typescript"],
+        help="Supported languages",
+    )
+    parser.add_argument(
+        "--tasks",
+        nargs="+",
+        default=["code_completion", "code_review", "documentation"],
+        help="Supported tasks",
+    )
+
     args = parser.parse_args()
-    
+
     # Validate model path
     if not Path(args.model_path).exists():
         print(f"❌ Model path does not exist: {args.model_path}")
         return
-    
+
     # Create model info
     model_info = {
         "name": args.model_name,
@@ -392,36 +415,34 @@ def main():
             "learning_rate": 2e-4,
             "batch_size": 4,
             "epochs": 3,
-            "lora_rank": 16
+            "lora_rank": 16,
         },
-        "metrics": {
-            "perplexity": "unknown",
-            "bleu_score": "unknown"
-        }
+        "metrics": {"perplexity": "unknown", "bleu_score": "unknown"},
     }
-    
+
     # Update configurations
     update_vllm_config(args.model_path, args.model_name)
-    
+
     # Create metadata
     create_model_metadata(args.model_path, model_info)
-    
+
     # Create plugin
     create_coding_plugin(args.model_path)
-    
+
     # Create deployment script
     create_deployment_script(args.model_path)
-    
+
     print("\n🎉 Model integration complete!")
     print(f"📊 Model: {args.model_name}")
     print(f"📁 Path: {args.model_path}")
     print("🔌 Plugin: plugins/coding_assistant_plugin.py")
     print("🚀 Deploy: ./deploy_trained_model.sh")
-    
+
     print("\nNext steps:")
     print("1. Review the updated configuration files")
     print("2. Run: ./deploy_trained_model.sh")
     print("3. Test the deployed model with coding tasks")
+
 
 if __name__ == "__main__":
     main()

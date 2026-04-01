@@ -335,7 +335,7 @@ make ci              # Run full CI pipeline
 
 ## Project Structure
 
-Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/server)** (clone directory name may still be `Birtha_bigger_n_badder` locally).
+Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/server)** (clone directory name may still be `Birtha_bigger_n_badder` locally). Use a **single clone** for day-to-day work; optional legacy repos belong **outside** this tree—see [`docs/dev-environment.md`](docs/dev-environment.md). WrkHrs code is only under **`services/wrkhrs/`** ([`docs/migration-wrkhrs-path.md`](docs/migration-wrkhrs-path.md)).
 
 ```
 server/   # repository root (suggested clone folder name)

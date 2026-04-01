@@ -285,12 +285,9 @@ Thumbs.db
 coverage.xml
 services/**/.coverage
 
-# Local-only folders in this workspace root
+# Optional sibling checkouts at repo root (see docs/dev-environment.md)—not part of this repo
 /Birtha_bigger_n_badder/
 /Compute_Node_Birtha/
-# WrkHrs: ignore untracked tree noise but keep the package manifest for CI editable installs
-/WrkHrs/*
-!/WrkHrs/pyproject.toml
 /structure/
 /llama.cpp/
 /transcript_miner/

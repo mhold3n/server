@@ -9,7 +9,9 @@ from prompt_middleware.classifier import classify_intent
 
 
 def test_shadow_prompts_file_exists():
-    assert os.path.exists("data/prompts/ambiguous_coding.jsonl"), "Shadow prompts JSONL missing"
+    assert os.path.exists(
+        "data/prompts/ambiguous_coding.jsonl"
+    ), "Shadow prompts JSONL missing"
 
 
 def test_shadow_prompts_lengths_and_parse():
@@ -36,5 +38,3 @@ def test_classifier_has_signal_on_some_prompts():
             if intent != "unknown":
                 hits += 1
     assert hits >= 3, "Classifier should recognize some intents in the dataset"
-
-

@@ -8,6 +8,7 @@ import sys
 import subprocess
 import argparse
 
+
 def run_command(cmd, check=True):
     """Run a command and return the result"""
     print(f"Running: {cmd}")
@@ -17,24 +18,28 @@ def run_command(cmd, check=True):
         sys.exit(1)
     return result
 
+
 def check_gpu_memory():
     """Check available GPU memory for training"""
     try:
-        result = run_command("nvidia-smi --query-gpu=memory.total,memory.free --format=csv,noheader,nounits")
+        result = run_command(
+            "nvidia-smi --query-gpu=memory.total,memory.free --format=csv,noheader,nounits"
+        )
         gpus = []
-        for line in result.stdout.strip().split('\n'):
+        for line in result.stdout.strip().split("\n"):
             if line:
-                total, free = map(int, line.split(', '))
-                gpus.append({'total': total, 'free': free})
+                total, free = map(int, line.split(", "))
+                gpus.append({"total": total, "free": free})
         return gpus
     except Exception as e:
         print(f"Could not check GPU memory: {e}")
         return []
 
+
 def setup_training_environment():
     """Set up training environment with required packages"""
     print("🔧 Setting up training environment...")
-    
+
     # Install training packages
     packages = [
         "torch",
@@ -48,17 +53,18 @@ def setup_training_environment():
         "tensorboard",
         "scikit-learn",
         "pandas",
-        "numpy"
+        "numpy",
     ]
-    
+
     for package in packages:
         print(f"Installing {package}...")
         run_command(f"pip install {package}")
 
+
 def create_training_config():
     """Create training configuration files"""
     print("📝 Creating training configuration...")
-    
+
     # Training configuration
     config = {
         "model_name": "microsoft/CodeLlama-7b-Python-hf",
@@ -80,19 +86,21 @@ def create_training_config():
         "mixed_precision": "fp16",
         "gradient_checkpointing": True,
         "dataloader_num_workers": 4,
-        "remove_unused_columns": False
+        "remove_unused_columns": False,
     }
-    
+
     import json
+
     with open("training_config.json", "w") as f:
         json.dump(config, f, indent=2)
-    
+
     print("✅ Training configuration saved to training_config.json")
+
 
 def create_training_script():
     """Create the main training script"""
     print("📜 Creating training script...")
-    
+
     training_script = '''#!/usr/bin/env python3
 """
 Fine-tuning script for coding models
@@ -249,16 +257,17 @@ def main():
 if __name__ == "__main__":
     main()
 '''
-    
+
     with open("train_coding_model.py", "w", encoding="utf-8") as f:
         f.write(training_script)
-    
+
     print("✅ Training script saved to train_coding_model.py")
+
 
 def create_evaluation_script():
     """Create evaluation script for trained models"""
     print("📊 Creating evaluation script...")
-    
+
     eval_script = '''#!/usr/bin/env python3
 """
 Evaluation script for coding models
@@ -332,16 +341,17 @@ if __name__ == "__main__":
     model_path = sys.argv[1]
     evaluate_model(model_path)
 '''
-    
+
     with open("evaluate_model.py", "w", encoding="utf-8") as f:
         f.write(eval_script)
-    
+
     print("✅ Evaluation script saved to evaluate_model.py")
+
 
 def create_optimization_script():
     """Create model optimization script"""
     print("⚡ Creating optimization script...")
-    
+
     opt_script = '''#!/usr/bin/env python3
 """
 Model optimization script
@@ -421,49 +431,65 @@ if __name__ == "__main__":
     else:
         quantize_model(args.model_path, args.output_path, args.quantization)
 '''
-    
+
     with open("optimize_model.py", "w", encoding="utf-8") as f:
         f.write(opt_script)
-    
+
     print("✅ Optimization script saved to optimize_model.py")
 
+
 def main():
-    parser = argparse.ArgumentParser(description='Setup training infrastructure for coding models')
-    parser.add_argument('--install-packages', action='store_true', help='Install required packages')
-    parser.add_argument('--create-config', action='store_true', help='Create training configuration')
-    parser.add_argument('--create-scripts', action='store_true', help='Create training scripts')
-    parser.add_argument('--all', action='store_true', help='Do everything')
-    
+    parser = argparse.ArgumentParser(
+        description="Setup training infrastructure for coding models"
+    )
+    parser.add_argument(
+        "--install-packages", action="store_true", help="Install required packages"
+    )
+    parser.add_argument(
+        "--create-config", action="store_true", help="Create training configuration"
+    )
+    parser.add_argument(
+        "--create-scripts", action="store_true", help="Create training scripts"
+    )
+    parser.add_argument("--all", action="store_true", help="Do everything")
+
     args = parser.parse_args()
-    
+
     if args.all or args.install_packages:
         setup_training_environment()
-    
+
     if args.all or args.create_config:
         create_training_config()
-    
+
     if args.all or args.create_scripts:
         create_training_script()
         create_evaluation_script()
         create_optimization_script()
-    
-    if not any([args.install_packages, args.create_config, args.create_scripts, args.all]):
+
+    if not any(
+        [args.install_packages, args.create_config, args.create_scripts, args.all]
+    ):
         print("No action specified. Use --help for options.")
         return
-    
+
     # Check GPU setup
     gpus = check_gpu_memory()
     if gpus:
-        total_memory = sum(gpu['total'] for gpu in gpus)
-        print(f"🖥️  Detected {len(gpus)} GPU(s) with {total_memory/1024:.1f}GB total memory")
+        total_memory = sum(gpu["total"] for gpu in gpus)
+        print(
+            f"🖥️  Detected {len(gpus)} GPU(s) with {total_memory/1024:.1f}GB total memory"
+        )
         print("✅ Ready for training!")
-    
+
     print("\n🎉 Training infrastructure setup complete!")
     print("\nNext steps:")
     print("1. Prepare your coding dataset")
     print("2. Run: python train_coding_model.py")
     print("3. Evaluate: python evaluate_model.py <model_path>")
-    print("4. Optimize: python optimize_model.py --model_path <path> --output_path <output>")
+    print(
+        "4. Optimize: python optimize_model.py --model_path <path> --output_path <output>"
+    )
+
 
 if __name__ == "__main__":
     main()
