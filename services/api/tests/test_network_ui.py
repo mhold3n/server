@@ -20,3 +20,10 @@ def test_ui_vms_served():
         b"System Control \xc2\xb7 VMs" in resp.content
         or b"System Control" in resp.content
     )
+
+
+def test_ui_topology_served():
+    client = TestClient(app)
+    resp = client.get("/ui/topology/")
+    assert resp.status_code == 200
+    assert b"Topology viewer" in resp.content

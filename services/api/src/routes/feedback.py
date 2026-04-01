@@ -148,40 +148,6 @@ async def submit_feedback(
         raise HTTPException(status_code=500, detail="Feedback submission failed") from e
 
 
-@router.get("/v1/feedback/{run_id}")
-async def get_feedback_for_run(run_id: str) -> list[FeedbackResponse]:
-    """Get feedback for a specific run.
-
-    Args:
-        run_id: MLflow run ID
-
-    Returns:
-        List of feedback responses
-
-    Raises:
-        HTTPException: If retrieval fails
-    """
-    try:
-        feedback_list = await _get_feedback_for_run(run_id)
-
-        return [
-            FeedbackResponse(
-                feedback_id=fb["feedback_id"],
-                run_id=fb["run_id"],
-                rating=fb["rating"],
-                reasons=fb["reasons"],
-                notes=fb["notes"],
-                timestamp=fb["timestamp"],
-                status="submitted",
-            )
-            for fb in feedback_list
-        ]
-
-    except Exception as e:
-        logger.error("Failed to get feedback for run", run_id=run_id, error=str(e))
-        raise HTTPException(status_code=500, detail="Failed to get feedback") from e
-
-
 @router.get("/v1/feedback/summary", response_model=FeedbackSummary)
 async def get_feedback_summary(
     limit: int = 100,
@@ -269,7 +235,7 @@ async def get_feedback_summary(
 
 
 @router.get("/v1/feedback/reasons")
-async def get_feedback_reasons() -> dict[str, list[str]]:
+async def get_feedback_reasons() -> dict[str, Any]:
     """Get available feedback reasons.
 
     Returns:
@@ -303,6 +269,40 @@ async def get_feedback_reasons() -> dict[str, list[str]]:
             ],
         },
     }
+
+
+@router.get("/v1/feedback/{run_id}")
+async def get_feedback_for_run(run_id: str) -> list[FeedbackResponse]:
+    """Get feedback for a specific run.
+
+    Args:
+        run_id: MLflow run ID
+
+    Returns:
+        List of feedback responses
+
+    Raises:
+        HTTPException: If retrieval fails
+    """
+    try:
+        feedback_list = await _get_feedback_for_run(run_id)
+
+        return [
+            FeedbackResponse(
+                feedback_id=fb["feedback_id"],
+                run_id=fb["run_id"],
+                rating=fb["rating"],
+                reasons=fb["reasons"],
+                notes=fb["notes"],
+                timestamp=fb["timestamp"],
+                status="submitted",
+            )
+            for fb in feedback_list
+        ]
+
+    except Exception as e:
+        logger.error("Failed to get feedback for run", run_id=run_id, error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to get feedback") from e
 
 
 @router.delete("/v1/feedback/{feedback_id}")
@@ -355,11 +355,7 @@ async def _log_feedback_to_mlflow(request: FeedbackRequest, feedback_id: str) ->
         }
 
         # Log to MLflow
-        mlflow_logger.log_dict(
-            dictionary=feedback_artifact,
-            artifact_file="feedback.json",
-            artifact_path="feedback",
-        )
+        mlflow_logger.log_dict(feedback_artifact, "feedback.json")
 
         # Update run tags
         mlflow_logger.log_params(

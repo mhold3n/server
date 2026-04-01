@@ -22,6 +22,19 @@ def test_ai_query_router_500_propagates():
         assert resp.status_code == 500
 
 
+def test_ai_query_ai_stack_500_propagates_when_not_using_router():
+    client = TestClient(app)
+    with respx.mock(assert_all_called=True) as mock:
+        mock.post(f"{settings.ai_stack_url}/llm/prompt").mock(
+            return_value=httpx.Response(500, text="stack err")
+        )
+        resp = client.post(
+            "/api/ai/query",
+            json={"prompt": "fail", "use_router": False},
+        )
+        assert resp.status_code == 500
+
+
 def test_workflows_unknown_fails():
     client = TestClient(app)
     resp = client.post("/api/ai/workflows/run", json={"name": "unknown", "input": {}})

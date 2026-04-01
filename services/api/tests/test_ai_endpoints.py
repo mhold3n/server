@@ -91,3 +91,11 @@ def test_simulations_analyze_calls_ai_stack():
         )
         assert resp.status_code == 200
         assert resp.json()["output"] == "analysis"
+
+
+def test_workflow_prompt_fallback_uses_query_or_prompt_keys():
+    from src.routes.ai import _workflow_prompt_from_card
+
+    assert _workflow_prompt_from_card("other-workflow", {"prompt": "p"}) == "p"
+    assert _workflow_prompt_from_card("other-workflow", {"query": "q"}) == "q"
+    assert _workflow_prompt_from_card("other-workflow", {}) == ""

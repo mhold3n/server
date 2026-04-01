@@ -36,3 +36,51 @@ def test_ai_status_aggregates_ok(setup_clients):
             and "model_name" in data["qwen"]
             and "latency_ms" in data["qwen"]
         )
+
+
+def test_ai_status_rag_asr_and_router_degraded(setup_clients, monkeypatch):
+    """Exercise optional RAG/ASR URLs and non-200 health branches."""
+    monkeypatch.setattr(
+        settings,
+        "rag_health_url",
+        "http://rag-status.test:8000",
+        raising=False,
+    )
+    monkeypatch.setattr(
+        settings,
+        "asr_health_url",
+        "http://asr-status.test:8000",
+        raising=False,
+    )
+    client = TestClient(app)
+    with respx.mock(assert_all_called=False) as mock:
+        mock.get(f"{settings.router_url}/health").mock(
+            return_value=httpx.Response(503, text="router down")
+        )
+        mock.get(f"{settings.ai_stack_url}/health").mock(
+            return_value=httpx.Response(
+                200, json={"status": "healthy", "detail": "ok"}
+            )
+        )
+        mock.get("http://rag-status.test:8000/health").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "status": "ok",
+                    "embedding_model_loaded": True,
+                    "qdrant_status": "green",
+                },
+            )
+        )
+        mock.get("http://asr-status.test:8000/health").mock(
+            return_value=httpx.Response(502, text="bad gateway")
+        )
+
+        resp = client.get("/api/ai/status")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["router"]["status"] == "unhealthy"
+        assert body["router"]["code"] == 503
+        assert body["rag"]["status"] in ("ok", "healthy", "unknown")
+        assert body["asr"]["status"] == "unhealthy"
+        assert body["asr"]["code"] == 502

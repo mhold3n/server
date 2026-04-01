@@ -71,6 +71,11 @@ markers = [
 [tool.coverage.run]
 branch = true
 source = ["src"]
+omit = [
+    "src/main.py",
+    "src/policies/hedging_executable.py",
+    "src/policies/units_executable.py",
+]
 
 [tool.mypy]
 python_version = "3.11"
