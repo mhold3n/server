@@ -1,5 +1,5 @@
 # Models module - Canonical Pydantic models for validated specs
-from .task_spec import TaskSpec, TaskRequest, QuantityRef, Domain, RiskLevel
+from .task_spec import TaskSpec, TaskRequest, QuantityRef, Domain, RiskLevel, Partition
 from .kernel_io import KernelInput, KernelOutput, UnitMetadata, Provenance
 from .gate_decision import GateDecision, Decision
 from .clarify import (
@@ -19,6 +19,7 @@ __all__ = [
     "QuantityRef",
     "Domain",
     "RiskLevel",
+    "Partition",
     "KernelInput",
     "KernelOutput",
     "UnitMetadata",

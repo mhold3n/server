@@ -41,7 +41,9 @@ addopts = [
   "--strict-markers",
   "--strict-config",
   "--ignore=scripts",
-  "--cov=wrkhrs",
+  "--cov=services/gateway",
+  "--cov=services/prompt_middleware",
+  "--cov=services/rag",
   "--cov-report=term-missing",
   "--cov-report=xml",
   "--cov-fail-under=90",
@@ -54,4 +56,12 @@ target-version = "py311"
 [tool.black]
 line-length = 88
 target-version = ["py311"]
+
+[tool.coverage.run]
+branch = true
+omit = [
+    "tests/*",
+    "scripts/*",
+    "_archive/*",
+]
 

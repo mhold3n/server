@@ -17,8 +17,8 @@ KEYWORDS = [
 
 KERNELS = [ExperimentKernel]
 
-GATES = {}  # No custom gates defined in python yet (they are in gates.py)
+GATES: dict[str, object] = {}
 
-POLICIES = [
+POLICIES: list[object] = [
     # Path("policies/experiment_safety.yaml")
 ]

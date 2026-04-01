@@ -1,5 +1,6 @@
 import importlib
 import pkgutil
+from types import ModuleType
 from typing import List, Type, Dict, Any, Callable
 from pathlib import Path
 import logging
@@ -32,7 +33,7 @@ class PluginRegistry:
         self.policies: List[Path] = []
         self.keywords: Dict[str, List[str]] = {}
 
-    def discover_plugins(self):
+    def discover_plugins(self) -> None:
         """Scan the plugins directory and load all valid plugins."""
         # Ensure plugins dir exists
         if not Path(self.plugins_dir).exists():
@@ -49,7 +50,7 @@ class PluginRegistry:
             except Exception as e:
                 logger.error(f"Failed to load plugin {name}: {e}")
 
-    def _register_plugin(self, module):
+    def _register_plugin(self, module: ModuleType) -> None:
         """Extract components from a plugin module and register them."""
         # 1. Domain ID
         domain_id = getattr(module, "DOMAIN_ID", None)

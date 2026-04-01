@@ -16,13 +16,13 @@ class ComplianceChecker:
     Enforces compliance policies for AI Lab operations.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # In a real system, these would load from external config/DB
-        self.rate_limits = {
+        self.rate_limits: dict[str, int] = {
             "default": 100,  # requests per hour
             "admin": 1000,
         }
-        self.request_counts = {}  # In-memory mock
+        self.request_counts: dict[str, int] = {}
 
     def check_rate_limit(self, user_id: str, role: str = "default") -> bool:
         """

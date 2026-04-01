@@ -20,7 +20,7 @@ def get_tracer(name: str) -> Tracer:
     return trace.get_tracer(name)
 
 
-def _setup_tracer_provider():
+def _setup_tracer_provider() -> None:
     provider = TracerProvider()
 
     # Configure Exporter based on Env

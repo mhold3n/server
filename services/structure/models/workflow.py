@@ -43,18 +43,18 @@ class WorkflowStep(BaseModel):
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
 
-    def mark_active(self):
+    def mark_active(self) -> None:
         """Mark step as active."""
         self.status = WorkflowStatus.ACTIVE
         self.started_at = datetime.utcnow()
 
-    def mark_completed(self, output: Any):
+    def mark_completed(self, output: Any) -> None:
         """Mark step as completed with output."""
         self.status = WorkflowStatus.COMPLETED
         self.output = output
         self.completed_at = datetime.utcnow()
 
-    def mark_failed(self, error: str):
+    def mark_failed(self, error: str) -> None:
         """Mark step as failed."""
         self.status = WorkflowStatus.FAILED
         self.error = error
@@ -78,7 +78,7 @@ class Workflow(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    def add_step(self, step: WorkflowStep):
+    def add_step(self, step: WorkflowStep) -> None:
         """Add a step to the workflow."""
         if any(s.step_id == step.step_id for s in self.steps):
             raise ValueError(f"Step ID {step.step_id} already exists")

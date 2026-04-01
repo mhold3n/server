@@ -24,12 +24,12 @@ class Session(BaseModel):
     # History of interactions
     history: List[Dict[str, Any]] = Field(default_factory=list)
 
-    def update_context(self, new_context: Dict[str, Any]):
+    def update_context(self, new_context: Dict[str, Any]) -> None:
         """Update session context with new values."""
         self.context.update(new_context)
         self.updated_at = datetime.utcnow()
 
-    def add_history(self, event_type: str, data: Any):
+    def add_history(self, event_type: str, data: Any) -> None:
         """Add an event to history."""
         self.history.append(
             {

@@ -118,7 +118,7 @@ pytest_pkg mcp/servers/filesystem-mcp tests/ -v --cov=src --cov-report=xml
 pytest_pkg mcp/servers/secrets-mcp tests/ -v --cov=src --cov-report=xml
 pytest_pkg mcp/servers/vector-db-mcp tests/ -v --cov=src --cov-report=xml
 pytest_pkg mbmh tests/ -v
-WRKHRS_DISABLE_MODEL_LOAD=1 pytest_pkg services/wrkhrs tests/ -v --cov=wrkhrs --cov-report=xml --cov-fail-under=90
+WRKHRS_DISABLE_MODEL_LOAD=1 pytest_pkg services/wrkhrs tests/ -v --cov=services/gateway --cov=services/prompt_middleware --cov=services/rag --cov-report=xml --cov-fail-under=90
 
 echo "==> Node (github-mcp)"
 if [[ -d "mcp/servers/github-mcp" ]] && compgen -G "mcp/servers/github-mcp/package*.json" > /dev/null; then

@@ -28,6 +28,10 @@ dev = [
     "pytest-cov>=4.1.0",
     "ruff>=0.2.0",
     "jsonschema>=4.21",
+    "mypy>=1.8",
+    "types-PyYAML",
+    "types-requests",
+    "types-jsonschema",
 ]
 
 [tool.setuptools.packages.find]
@@ -74,6 +78,85 @@ omit = [
     "validator/integrity.py",
     "runtime/orchestrator.py",
 ]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+show_error_codes = true
+plugins = ["pydantic.mypy"]
+disallow_untyped_decorators = false
+
+exclude = [
+    "^eval/",
+    "^tests/",
+    "^scripts/",
+    "^services/bootstrap/",
+    "^pipelines/",
+    "^schemas/ingest/",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "httpx.*",
+    "opentelemetry.*",
+    "yaml.*",
+    "fastapi.*",
+    "starlette.*",
+    "uvicorn.*",
+]
+ignore_missing_imports = true
+
+# Legacy / generated kernels: typed incrementally
+[[tool.mypy.overrides]]
+module = "kernels.*"
+ignore_errors = true
+
+# Heuristic LLM helper — typed incrementally
+[[tool.mypy.overrides]]
+module = "router.llm_extractor"
+ignore_errors = true
+
+# Legacy routers / validators — tighten incrementally
+[[tool.mypy.overrides]]
+module = "router.gates"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "validator.normalizer"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "validator.loader"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "validator.integrity"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "validator.schema_validator"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "models.ingest"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "models.clarify"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "gateway.logging"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "router.classifier"
+ignore_errors = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = false
+init_typed = true
+warn_required_dynamic_aliases = true
 
 [tool.ruff]
 line-length = 100

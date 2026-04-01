@@ -25,7 +25,7 @@ class Orchestrator:
     Runtime engine for executing workflows.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.compliance = ComplianceChecker()
 
     async def run_step(self, step: WorkflowStep, session: Session) -> WorkflowStep:

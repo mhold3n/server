@@ -6,7 +6,7 @@ Kernels ONLY accept TaskSpec - no raw dicts allowed.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional, Literal
+from typing import Any, Optional
 from enum import Enum
 
 
@@ -73,7 +73,7 @@ class TaskRequest(BaseModel):
     partition: Partition = Field(
         default=Partition.TRAIN, description="Data partition to use"
     )
-    context: Optional[dict] = Field(default_factory=dict, description="Session context")
+    context: dict[str, Any] = Field(default_factory=dict, description="Session context")
 
 
 class TaskSpec(BaseModel):
@@ -112,7 +112,7 @@ class TaskSpec(BaseModel):
     required_gates: list[str] = Field(default_factory=list)
     selected_kernels: list[str] = Field(default_factory=list)
     # Generic arguments for kernels (e.g., alpha, parameters)
-    args: dict = Field(default_factory=dict)
+    args: dict[str, Any] = Field(default_factory=dict)
 
     # Original input (for reference only)
     user_input: str = Field(..., description="Original user input")

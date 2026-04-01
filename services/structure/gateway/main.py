@@ -12,13 +12,13 @@ import uuid
 from datetime import datetime
 
 from .logging import StructuredLogger, AuditRecord
-from models.task_spec import TaskSpec, TaskRequest
+from models.task_spec import TaskSpec, TaskRequest, Partition
 from models.gate_decision import GateDecision, Decision
 from models.clarify import ClarifyRequest  # noqa: F401 - available for future use
 from validator.loader import load_registry, load_schema, load_policy
 from validator.gates import run_gates, get_blocking_decisions
 from router.classifier import classify_task
-from models.workflow import Workflow
+from models.workflow import Workflow, WorkflowStatus
 from models.session import Session
 from runtime.orchestrator import Orchestrator
 from router.workflow_builder import build_workflow_from_request
@@ -47,15 +47,15 @@ class TaskRequestInput(BaseModel):
     user_input: str = Field(..., min_length=1)
     domain_hint: Optional[str] = None
     context: Optional[dict[str, Any]] = None
-    partition: str = "train"
+    partition: Partition = Partition.TRAIN
 
 
 class ClarifyPayload(BaseModel):
     """Structured clarification payload for CLARIFY responses."""
 
     reason_codes: list[str] = Field(default_factory=list)
-    questions: list[dict] = Field(default_factory=list)
-    context: dict = Field(default_factory=dict)
+    questions: list[dict[str, Any]] = Field(default_factory=list)
+    context: dict[str, Any] = Field(default_factory=dict)
     required_fields: list[str] = Field(default_factory=list)
 
 
@@ -64,9 +64,9 @@ class TaskResponse(BaseModel):
 
     request_id: str
     status: str  # "success" | "clarify" | "reject" | "error"
-    spec: Optional[dict] = None
+    spec: Optional[dict[str, Any]] = None
     result: Optional[Any] = None
-    gate_decisions: Optional[list[dict]] = None
+    gate_decisions: Optional[list[dict[str, Any]]] = None
     clarify: Optional[ClarifyPayload] = None  # Structured clarify payload
     message: Optional[str] = None
 
@@ -92,7 +92,7 @@ async def submit_task(input: TaskRequestInput) -> TaskResponse:
     request_id = str(uuid.uuid4())
 
     # Partition Enforcement
-    if input.partition == "test":
+    if input.partition == Partition.TEST:
         eval_mode = (input.context or {}).get("eval_mode", False)
         if not eval_mode:
             raise HTTPException(
@@ -210,7 +210,9 @@ async def submit_task(input: TaskRequestInput) -> TaskResponse:
 
 
 @app.post("/kernel/{kernel_id}")
-async def invoke_kernel(kernel_id: str, input: KernelRequestInput):
+async def invoke_kernel(
+    kernel_id: str, input: KernelRequestInput
+) -> dict[str, str]:
     """
     Directly invoke a registered kernel.
 
@@ -238,13 +240,13 @@ async def invoke_kernel(kernel_id: str, input: KernelRequestInput):
 
 
 @app.get("/registry")
-async def get_registry():
+async def get_registry() -> dict[str, Any]:
     """List all registered kernels and their metadata."""
     return load_registry()
 
 
 @app.get("/schemas/{schema_id}")
-async def get_schema(schema_id: str):
+async def get_schema(schema_id: str) -> dict[str, Any]:
     """Retrieve a specific schema by ID."""
     schema = load_schema(schema_id)
     if not schema:
@@ -253,7 +255,7 @@ async def get_schema(schema_id: str):
 
 
 @app.get("/policies/{policy_id}")
-async def get_policy(policy_id: str):
+async def get_policy(policy_id: str) -> dict[str, Any]:
     """Retrieve a specific policy by ID."""
     policy = load_policy(policy_id)
     if not policy:
@@ -311,9 +313,7 @@ async def submit_workflow(input: TaskRequestInput) -> Workflow:
 
     except Exception as e:
         logger.log_error(request_id, str(e))
-        # Return workflow in failed state if possible, else raise
-        # Should be WorkflowStatus.FAILED but use string for simplicity/safety
-        workflow.status = "failed"
+        workflow.status = WorkflowStatus.FAILED
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -406,8 +406,8 @@ async def answer_clarification(
 
     # Reset blocked steps to PENDING or ACTIVE to retry
     for step in workflow.steps:
-        if step.status == "blocked":  # WorkflowStatus.BLOCKED
-            step.status = "pending"  # WorkflowStatus.PENDING
+        if step.status == WorkflowStatus.BLOCKED:
+            step.status = WorkflowStatus.PENDING
 
     # Re-run
     try:
@@ -419,7 +419,7 @@ async def answer_clarification(
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> dict[str, str | int]:
     """Health check endpoint."""
     return {
         "status": "healthy",

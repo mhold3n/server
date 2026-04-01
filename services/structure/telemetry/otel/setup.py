@@ -1,4 +1,6 @@
 import os
+from typing import Any, Tuple
+
 from opentelemetry import trace, metrics
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
@@ -10,7 +12,7 @@ from opentelemetry.sdk.metrics.export import (
 from opentelemetry.sdk.resources import Resource
 
 
-def setup_telemetry(service_name: str, version: str = "0.1.0"):
+def setup_telemetry(service_name: str, version: str = "0.1.0") -> Tuple[Any, Any]:
     """
     Initialize OpenTelemetry SDK.
     """

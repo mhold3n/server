@@ -12,7 +12,6 @@ from fastapi import FastAPI, HTTPException, Request, Depends, Header, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sentence_transformers import SentenceTransformer
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -435,6 +434,8 @@ def load_models():
     """Load embedding model and initialize domain classifier"""
     global embedding_model, domain_classifier
     try:
+        from sentence_transformers import SentenceTransformer
+
         embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
         logger.info("Embedding model loaded successfully")
     except Exception as e:
@@ -506,6 +507,9 @@ async def get_weighted_evidence(prompt: str, weights: DomainWeights) -> str:
 @api.on_event("startup")
 async def startup_event():
     """Initialize models on startup"""
+    if os.getenv("WRKHRS_DISABLE_MODEL_LOAD", "").lower() in ("1", "true", "yes"):
+        logger.info("Skipping embedding load (WRKHRS_DISABLE_MODEL_LOAD)")
+        return
     load_models()
 
 
