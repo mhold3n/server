@@ -123,20 +123,31 @@ class VoiceAnalyzer:
             "neutral": 0.0,
         }
 
+        pitch_mean = features.get("pitch_mean")
+        energy_mean = features.get("energy_mean")
+        tempo = features.get("tempo")
+
         # High pitch + high energy = excitement/anger
-        if features.get("pitch_mean", 0) > 200 and features.get("energy_mean", 0) > 0.1:
+        if (
+            pitch_mean is not None
+            and energy_mean is not None
+            and pitch_mean > 200
+            and energy_mean > 0.1
+        ):
             emotional_scores["anger"] += 0.3
             emotional_scores["joy"] += 0.2
 
         # Low pitch + low energy = sadness
         if (
-            features.get("pitch_mean", 0) < 150
-            and features.get("energy_mean", 0) < 0.05
+            pitch_mean is not None
+            and energy_mean is not None
+            and pitch_mean < 150
+            and energy_mean < 0.05
         ):
             emotional_scores["sadness"] += 0.4
 
         # High tempo = excitement
-        if features.get("tempo", 0) > 120:
+        if tempo is not None and tempo > 120:
             emotional_scores["joy"] += 0.2
             emotional_scores["surprise"] += 0.1
 
@@ -280,11 +291,13 @@ class SemanticReprocessor:
     def build_semantic_graph(self, text: str, embeddings: np.ndarray) -> nx.Graph:
         """Build a graph of semantic relationships"""
         words = text.split()
+        self.word_graph = nx.Graph()
 
         # Add nodes with embedding vectors
         for i, word in enumerate(words):
             if i < len(embeddings):
-                self.word_graph.add_node(word, embedding=embeddings[i])
+                word_embedding = np.asarray(embeddings[i], dtype=float).reshape(-1)
+                self.word_graph.add_node(word, embedding=word_embedding)
 
         # Add edges based on semantic similarity
         for i, word1 in enumerate(words):
@@ -294,10 +307,15 @@ class SemanticReprocessor:
                     and word1 in self.word_graph.nodes
                     and word2 in self.word_graph.nodes
                 ):
-                    similarity = 1 - cosine(
-                        self.word_graph.nodes[word1]["embedding"],
-                        self.word_graph.nodes[word2]["embedding"],
-                    )
+                    embedding1 = self.word_graph.nodes[word1]["embedding"]
+                    embedding2 = self.word_graph.nodes[word2]["embedding"]
+                    if (
+                        np.linalg.norm(embedding1) == 0
+                        or np.linalg.norm(embedding2) == 0
+                    ):
+                        similarity = 0.0
+                    else:
+                        similarity = 1 - cosine(embedding1, embedding2)
                     if similarity > 0.3:  # Threshold for edge creation
                         self.word_graph.add_edge(word1, word2, weight=similarity)
 
@@ -583,7 +601,10 @@ class PromptMiddleware:
         if context.social_context:
             base_confidence += 0.1
 
-        return min(base_confidence, 1.0)
+        confidence = min(base_confidence, 1.0)
+        if abs(confidence - 1.0) < 1e-9:
+            return 1.0
+        return confidence
 
 
 # FastAPI integration
@@ -606,11 +627,14 @@ class PromptResponse(BaseModel):
     metadata: Dict[str, Any]
 
 
-middleware = PromptMiddleware()
+middleware = None
 
 
 @app.post("/transform", response_model=PromptResponse)
 async def transform_prompt(request: PromptRequest):
+    global middleware
+    if middleware is None:
+        middleware = PromptMiddleware()
     """Transform a prompt using the middleware suite"""
     try:
         # Convert string transformations to enum

@@ -25,7 +25,13 @@ import nltk
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("/logs/rag.log", mode="a"), logging.StreamHandler()],
+    handlers=[
+        logging.FileHandler(
+            "/logs/rag.log" if __import__("os").path.exists("/logs") else "rag.log",
+            mode="a",
+        ),
+        logging.StreamHandler(),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -338,15 +344,15 @@ class RAGService:
             # Try to break at word boundaries
             if end < len(text) and not text[end].isspace():
                 last_space = chunk.rfind(" ")
-                if last_space > start + chunk_size // 2:
+                if last_space > chunk_size // 2:
                     end = start + last_space
                     chunk = text[start:end]
 
             chunks.append(chunk.strip())
-            start = end - overlap
-
-            if start >= len(text):
+            if end >= len(text):
                 break
+
+            start = end - overlap
 
         return chunks
 

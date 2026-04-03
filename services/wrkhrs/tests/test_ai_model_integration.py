@@ -97,12 +97,26 @@ class TestAIModelIntegration:
         original_prompt = test_case["prompt"]
         voice_context = test_case["voice_context"]
 
+        # Safely extract numeric values, defaulting to neutral on invalid input
+        try:
+            pitch_mean = float(voice_context.get("pitch_mean", 0) or 0)
+        except (TypeError, ValueError):
+            pitch_mean = 0.0
+        try:
+            valence = float(voice_context.get("valence", 0) or 0)
+        except (TypeError, ValueError):
+            valence = 0.0
+        try:
+            arousal = float(voice_context.get("arousal", 0) or 0)
+        except (TypeError, ValueError):
+            arousal = 0.0
+
         # Apply voice-conditioned transformation
-        if voice_context["pitch_mean"] > 200:
+        if pitch_mean > 200:
             transformed = f"urgently {original_prompt}"
-        elif voice_context["valence"] < -0.3:
+        elif valence < -0.3:
             transformed = f"frustrated {original_prompt}"
-        elif voice_context["arousal"] > 0.7:
+        elif arousal > 0.7:
             transformed = f"impatiently {original_prompt}"
         else:
             transformed = original_prompt

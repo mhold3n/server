@@ -15,6 +15,31 @@ from dataclasses import dataclass
 logger = logging.getLogger(__name__)
 
 
+def _to_complex_representation(
+    embeddings: np.ndarray,
+) -> Tuple[np.ndarray, float | None]:
+    """Convert a real embedding vector into complex pairs, preserving an odd tail."""
+    pair_count = embeddings.shape[0] // 2
+    complex_embeddings = (
+        embeddings[:pair_count] + 1j * embeddings[pair_count : pair_count * 2]
+    )
+
+    if embeddings.shape[0] % 2 == 0:
+        return complex_embeddings, None
+
+    return complex_embeddings, float(embeddings[-1])
+
+
+def _from_complex_representation(
+    transformed: np.ndarray, remainder: float | None
+) -> np.ndarray:
+    """Restore a complex embedding representation back into a real vector."""
+    restored = np.concatenate([np.real(transformed), np.imag(transformed)])
+    if remainder is None:
+        return restored
+    return np.concatenate([restored, [remainder]])
+
+
 @dataclass
 class TransformationConfig:
     """Configuration for transformations"""
@@ -57,28 +82,14 @@ class HyperbolicTransformer:
         d: complex = 1 + 0j,
     ) -> np.ndarray:
         """Apply Möbius transformation (conformal mapping)"""
-        # Convert to complex representation
-        if embeddings.shape[0] % 2 == 0:
-            complex_embeddings = (
-                embeddings[: len(embeddings) // 2]
-                + 1j * embeddings[len(embeddings) // 2 :]
-            )
-        else:
-            complex_embeddings = embeddings[:-1] + 1j * embeddings[1:]
+        complex_embeddings, remainder = _to_complex_representation(embeddings)
 
         # Apply Möbius transformation: (a*z + b) / (c*z + d)
         transformed = (a * complex_embeddings + b) / (
             c * complex_embeddings + d + 1e-10
         )
 
-        # Convert back to real representation
-        real_part = np.real(transformed)
-        imag_part = np.imag(transformed)
-
-        if embeddings.shape[0] % 2 == 0:
-            return np.concatenate([real_part, imag_part])
-        else:
-            return np.concatenate([real_part, imag_part, [embeddings[-1]]])
+        return _from_complex_representation(transformed, remainder)
 
 
 class QuantumInspiredTransformer:
@@ -146,14 +157,7 @@ class FractalTransformer:
         self, embeddings: np.ndarray, max_iter: int = 100
     ) -> np.ndarray:
         """Apply Mandelbrot set transformation"""
-        # Convert embeddings to complex numbers
-        if embeddings.shape[0] % 2 == 0:
-            c = (
-                embeddings[: len(embeddings) // 2]
-                + 1j * embeddings[len(embeddings) // 2 :]
-            )
-        else:
-            c = embeddings[:-1] + 1j * embeddings[1:]
+        c, remainder = _to_complex_representation(embeddings)
 
         # Apply Mandelbrot iteration: z = z² + c
         z = np.zeros_like(c)
@@ -166,27 +170,13 @@ class FractalTransformer:
                     # Normalize diverged values to avoid NaNs while keeping phase information
                     z[diverged] = 2.0 * np.exp(1j * np.angle(z[diverged]))
 
-        # Convert back to real representation
-        real_part = np.real(z)
-        imag_part = np.imag(z)
-
-        if embeddings.shape[0] % 2 == 0:
-            return np.concatenate([real_part, imag_part])
-        else:
-            return np.concatenate([real_part, imag_part, [embeddings[-1]]])
+        return _from_complex_representation(z, remainder)
 
     def julia_transform(
         self, embeddings: np.ndarray, c: complex = -0.7 + 0.27015j, max_iter: int = 100
     ) -> np.ndarray:
         """Apply Julia set transformation"""
-        # Convert embeddings to complex numbers
-        if embeddings.shape[0] % 2 == 0:
-            z = (
-                embeddings[: len(embeddings) // 2]
-                + 1j * embeddings[len(embeddings) // 2 :]
-            )
-        else:
-            z = embeddings[:-1] + 1j * embeddings[1:]
+        z, remainder = _to_complex_representation(embeddings)
 
         # Apply Julia iteration: z = z² + c
         with np.errstate(over="ignore", invalid="ignore"):
@@ -196,14 +186,7 @@ class FractalTransformer:
                 if np.any(diverged):
                     z[diverged] = 2.0 * np.exp(1j * np.angle(z[diverged]))
 
-        # Convert back to real representation
-        real_part = np.real(z)
-        imag_part = np.imag(z)
-
-        if embeddings.shape[0] % 2 == 0:
-            return np.concatenate([real_part, imag_part])
-        else:
-            return np.concatenate([real_part, imag_part, [embeddings[-1]]])
+        return _from_complex_representation(z, remainder)
 
 
 class ManifoldTransformer:
@@ -277,7 +260,9 @@ class TemporalTransformer:
         """Apply temporal evolution to embeddings"""
         if evolution_type == "oscillatory":
             # Oscillatory evolution
-            time_factor = np.sin(np.linspace(0, 2 * np.pi, self.time_steps))
+            time_factor = np.sin(
+                np.linspace(0, 2 * np.pi, self.time_steps, endpoint=False)
+            )
             evolved = embeddings * (1 + 0.1 * time_factor[-1])
 
         elif evolution_type == "exponential":

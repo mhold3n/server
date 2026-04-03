@@ -68,7 +68,11 @@ class JSONFormatter(logging.Formatter):
 handlers = []
 
 # File handler
-file_handler = logging.FileHandler("/logs/gateway.log", mode="a")
+try:
+    file_handler = logging.FileHandler("/logs/gateway.log", mode="a")
+except (FileNotFoundError, PermissionError, OSError):
+    file_handler = logging.FileHandler("gateway.log", mode="a")
+
 if ENABLE_JSON_LOGGING:
     file_handler.setFormatter(JSONFormatter())
 else:
@@ -352,9 +356,9 @@ def verify_jwt_token(token: str) -> Optional[dict]:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
         return payload
     except jwt.ExpiredSignatureError:
-        logger.warning("JWT token has expired")
+        logger.warning("JWT token expired")
         return None
-    except jwt.JWTError:
+    except jwt.InvalidTokenError:
         logger.warning("Invalid JWT token")
         return None
 
@@ -642,6 +646,11 @@ Please respond with SI units and consider the safety constraints mentioned.
                         "finish_reason": "stop",
                     }
                 ],
+                "usage": {
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                    "total_tokens": 0,
+                },
             }
 
     except requests.exceptions.RequestException as e:
@@ -662,7 +671,10 @@ Please respond with SI units and consider the safety constraints mentioned.
                     "finish_reason": "stop",
                 }
             ],
+            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in chat_completions: {e}")
         raise HTTPException(status_code=500, detail=str(e))

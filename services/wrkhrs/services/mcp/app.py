@@ -14,7 +14,13 @@ from pydantic import BaseModel
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("/logs/mcp.log", mode="a"), logging.StreamHandler()],
+    handlers=[
+        logging.FileHandler(
+            "/logs/mcp.log" if __import__("os").path.exists("/logs") else "mcp.log",
+            mode="a",
+        ),
+        logging.StreamHandler(),
+    ],
 )
 logger = logging.getLogger(__name__)
 

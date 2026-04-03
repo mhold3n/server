@@ -13,7 +13,14 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("/logs/tool_registry.log", mode="a"),
+        logging.FileHandler(
+            (
+                "/logs/tool_registry.log"
+                if __import__("os").path.exists("/logs")
+                else "tool_registry.log"
+            ),
+            mode="a",
+        ),
         logging.StreamHandler(),
     ],
 )

@@ -10,5 +10,3 @@ soundfile==0.12.1
 networkx==3.2.1
 scipy==1.11.4
 matplotlib==3.8.2
-asyncio
-concurrent.futures

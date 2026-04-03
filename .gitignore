@@ -279,6 +279,7 @@ Thumbs.db
 # Monorepo-local artifacts (do not commit)
 # -----------------------------------------------------------------------------
 .ci-local-venv/
+.venv-ci/
 .venv-test/
 **/.venv-test/
 .venv-hf/

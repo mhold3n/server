@@ -42,13 +42,13 @@ class TestAuthentication:
 
     def test_validate_api_key_success(self):
         """Test successful API key validation"""
-        with patch.dict(os.environ, {"API_KEY_SECRET": "test-secret"}):
+        with patch("app.API_KEY_SECRET", "test-secret"):
             # The API key should be the secret itself, not the hash
             assert validate_api_key("test-secret")
 
     def test_validate_api_key_failure(self):
         """Test failed API key validation"""
-        with patch.dict(os.environ, {"API_KEY_SECRET": "test-secret"}):
+        with patch("app.API_KEY_SECRET", "test-secret"):
             assert not validate_api_key("wrong-key")
 
     def test_validate_api_key_empty(self):
@@ -82,12 +82,12 @@ class TestAuthentication:
         mock_request_counts.__setitem__ = Mock()
 
         # First request should pass
-        with patch.dict(os.environ, {"RATE_LIMIT_REQUESTS_PER_MINUTE": "5"}):
+        with patch("app.RATE_LIMIT_RPM", 5):
             assert check_rate_limit(client_ip)
 
     def test_rate_limiting_disabled_auth(self):
         """Test rate limiting when auth is disabled"""
-        with patch.dict(os.environ, {"ENABLE_AUTHENTICATION": "false"}):
+        with patch("app.ENABLE_AUTH", False):
             assert check_rate_limit("any_ip")
 
 
@@ -96,7 +96,7 @@ class TestHealthEndpoint:
 
     def test_health_check_success(self, client):
         """Test successful health check"""
-        with patch.dict(os.environ, {"ENABLE_AUTHENTICATION": "false"}):
+        with patch("app.ENABLE_AUTH", False):
             response = client.get("/health")
             assert response.status_code == 200
 
@@ -112,11 +112,10 @@ class TestLoginEndpoint:
 
     def test_login_success(self, client):
         """Test successful login"""
-        with patch.dict(os.environ, {"API_KEY_SECRET": "test-password"}):
+        with patch("app.API_KEY_SECRET", "test-password"):
             response = client.post(
                 "/auth/login", json={"username": "admin", "password": "test-password"}
             )
-
             assert response.status_code == 200
             data = response.json()
             assert "access_token" in data
@@ -178,11 +177,31 @@ class TestChatCompletions:
 
     def test_chat_completions_without_auth(self, client):
         """Test chat completions when auth is disabled"""
-        with patch.dict(os.environ, {"ENABLE_AUTHENTICATION": "false"}):
+        with patch("app.ENABLE_AUTH", False):
             with patch("app.requests.post") as mock_post:
                 # Mock the orchestrator response
                 mock_response = Mock()
-                mock_response.json.return_value = {"response": "test response"}
+                mock_response.json.return_value = {
+                    "id": "mock_id",
+                    "object": "chat.completion",
+                    "created": 1234567890,
+                    "model": "mock",
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": {
+                                "role": "assistant",
+                                "content": "test response",
+                            },
+                            "finish_reason": "stop",
+                        }
+                    ],
+                    "usage": {
+                        "prompt_tokens": 0,
+                        "completion_tokens": 0,
+                        "total_tokens": 0,
+                    },
+                }
                 mock_response.status_code = 200
                 mock_post.return_value = mock_response
 
@@ -198,14 +217,31 @@ class TestChatCompletions:
 
     def test_chat_completions_with_valid_api_key(self, client):
         """Test chat completions with valid API key"""
-        with patch.dict(
-            os.environ,
-            {"ENABLE_AUTHENTICATION": "true", "API_KEY_SECRET": "test-secret"},
-        ):
+        with patch("app.ENABLE_AUTH", True), patch("app.API_KEY_SECRET", "test-secret"):
             with patch("app.requests.post") as mock_post:
                 # Mock the orchestrator response
                 mock_response = Mock()
-                mock_response.json.return_value = {"response": "test response"}
+                mock_response.json.return_value = {
+                    "id": "mock_id",
+                    "object": "chat.completion",
+                    "created": 1234567890,
+                    "model": "mock",
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": {
+                                "role": "assistant",
+                                "content": "test response",
+                            },
+                            "finish_reason": "stop",
+                        }
+                    ],
+                    "usage": {
+                        "prompt_tokens": 0,
+                        "completion_tokens": 0,
+                        "total_tokens": 0,
+                    },
+                }
                 mock_response.status_code = 200
                 mock_post.return_value = mock_response
 
@@ -222,7 +258,7 @@ class TestChatCompletions:
 
     def test_chat_completions_unauthorized(self, client):
         """Test chat completions without authentication"""
-        with patch.dict(os.environ, {"ENABLE_AUTHENTICATION": "true"}):
+        with patch("app.ENABLE_AUTH", True):
             response = client.post(
                 "/v1/chat/completions",
                 json={
