@@ -238,6 +238,10 @@ docker-compose.local.yml
 !infra/observability/**/*.yaml
 # TypeScript/npm workspace for agent-platform (normally ignored by *.json above)
 !services/agent-platform/**/*.json
+# Structure schemas, registries, and policies are source files, not generated artifacts
+!services/structure/schemas/**/*.json
+!services/structure/registry/**/*.json
+!services/structure/policies/**/*.yaml
 
 # Cache and temporary files
 .cache/
