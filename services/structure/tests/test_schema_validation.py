@@ -27,7 +27,12 @@ class TestSchemaValidator:
 
     def test_validates_valid_task_request(self):
         validator = SchemaValidator()
-        valid_request = {"user_input": "What is the specific weight of water?"}
+        valid_request = {
+            "user_input": "Implement structured task intake for the control plane",
+            "project_id": "proj_example",
+            "repo_ref_hint": "src/control",
+            "risk_hints": ["writes_code"],
+        }
         is_valid, errors = validator.validate_task_request(valid_request)
         assert is_valid, f"Should be valid: {errors}"
 
@@ -40,8 +45,73 @@ class TestSchemaValidator:
 
     def test_validates_valid_task_plan(self):
         validator = SchemaValidator()
-        valid_plan = {"domain": "physics", "required_gates": ["schema_gate"]}
+        valid_plan = {
+            "domain": "code",
+            "project_id": "proj_example",
+            "objective": "Implement the requested code task",
+            "required_gates": ["schema_gate"],
+            "acceptance_criteria": ["Relevant tests pass"],
+            "delegation_hints": ["Lead executor may delegate targeted verification work"],
+            "work_items": ["Inspect workspace", "Implement change", "Verify"],
+            "implementation_outline": ["Update files", "Run tests"],
+            "verification_plan": ["pytest -q"],
+            "verification_blocks": [
+                {
+                    "name": "pytest",
+                    "command": "pytest -q",
+                    "required": True,
+                }
+            ],
+            "publish_intent": {"mode": "branch_pr_dossier", "push": True},
+        }
         is_valid, errors = validator.validate_task_plan(valid_plan)
+        assert is_valid, f"Should be valid: {errors}"
+
+    def test_validates_valid_task_dossier(self):
+        validator = SchemaValidator()
+        valid_dossier = {
+            "task_id": "8b7e2d0b-27c6-43d7-b75d-4913c2f6e0e1",
+            "project_id": "proj_example",
+            "state": "ready_to_publish",
+            "request": {
+                "user_input": "Implement control-plane dev tasks",
+                "project_id": "proj_example",
+            },
+            "plan": {
+                "domain": "code",
+                "required_gates": ["schema_gate"],
+                "objective": "Implement control-plane dev tasks",
+            },
+            "run_ids": ["03a8c4f4-3f6d-48d8-89af-a19be7a9d208"],
+            "workspace": {
+                "canonical_repo_path": "/tmp/example",
+                "worktree_path": "/tmp/example/.birtha/task-1",
+                "branch_name": "birtha/example",
+                "base_branch": "main",
+            },
+            "commands": [
+                {
+                    "command": "pytest -q",
+                    "cwd": "/tmp/example",
+                }
+            ],
+            "verification_results": [
+                {
+                    "name": "pytest",
+                    "status": "passed",
+                }
+            ],
+            "artifacts": [
+                {
+                    "name": "task-packet",
+                    "path": "/tmp/example/.birtha/task-packet.json",
+                    "kind": "task_packet",
+                }
+            ],
+            "created_at": "2026-04-03T12:00:00Z",
+            "updated_at": "2026-04-03T12:05:00Z",
+        }
+        is_valid, errors = validator.validate_task_dossier(valid_dossier)
         assert is_valid, f"Should be valid: {errors}"
 
     def test_rejects_invalid_domain(self):

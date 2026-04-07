@@ -15,9 +15,38 @@
             "minLength": 1,
             "description": "The user's natural language input"
         },
+        "project_id": {
+            "type": "string",
+            "description": "Optional registered development-plane project identifier"
+        },
         "domain_hint": {
             "type": "string",
             "description": "Optional domain hint to guide routing"
+        },
+        "repo_ref_hint": {
+            "type": "string",
+            "description": "Optional repository path, branch, or subsystem hint"
+        },
+        "risk_hints": {
+            "type": "array",
+            "description": "Optional operator-provided risk hints for the task",
+            "items": {
+                "type": "string"
+            }
+        },
+        "constraints": {
+            "type": "array",
+            "description": "Optional human-specified constraints for the task",
+            "items": {
+                "type": "string"
+            }
+        },
+        "acceptance_criteria": {
+            "type": "array",
+            "description": "Optional success criteria supplied at intake time",
+            "items": {
+                "type": "string"
+            }
         },
         "context": {
             "type": "object",

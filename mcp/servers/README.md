@@ -47,13 +47,13 @@ These servers run on the control plane and provide shared infrastructure capabil
 - **Purpose**: Secure secrets management and retrieval
 - **Port**: 7002
 - **Tools**:
-  - `get_secret`: Retrieve secrets from Vault
-  - `set_secret`: Store secrets in Vault
+  - `get_secret`: Retrieve secrets via Connect (`op://...` refs)
+  - `set_secret`: Store secrets via Connect
   - `list_secrets`: List available secrets
   - `delete_secret`: Delete secrets
   - `encrypt_data`: Encrypt data locally
   - `decrypt_data`: Decrypt data locally
-- **Backend**: HashiCorp Vault integration
+- **Backend**: 1Password Connect backend (resolves `op://<vault>/<item>/<field>` references)
 
 ### 4. Vector DB MCP Server (`vector-db-mcp/`)
 - **Purpose**: Vector database operations for embeddings and search
@@ -105,8 +105,8 @@ GITHUB_OWNER=your-org
 GITHUB_REPO=your-repo
 
 # Secrets MCP
-VAULT_ADDR=http://vault:8200
-VAULT_TOKEN=your-vault-token
+OP_CONNECT_HOST=http://connect-api:8080
+OP_CONNECT_TOKEN=your-connect-token
 ENCRYPTION_KEY=your-32-char-encryption-key
 
 # Vector DB MCP

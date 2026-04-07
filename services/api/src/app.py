@@ -33,6 +33,7 @@ from .policies.middleware import policy_enforcer
 try:
     from .routes import ai as ai_router
     from .routes import apps as apps_router
+    from .routes import devplane as devplane_router
     from .routes import search as search_router
     from .routes import torrents as torrents_router
     from .routes import vms as vms_router
@@ -42,6 +43,7 @@ except Exception:
     search_router = None  # type: ignore
     apps_router = None  # type: ignore
     ai_router = None  # type: ignore
+    devplane_router = None  # type: ignore
 
 # Configure structured logging
 structlog.configure(
@@ -177,6 +179,8 @@ if apps_router is not None:
     app.include_router(apps_router.router)
 if ai_router is not None:
     app.include_router(ai_router.router)
+if devplane_router is not None:
+    app.include_router(devplane_router.router)
 
 # Static UI (small SPA panels)
 _static_dir = Path(__file__).resolve().parent / "static"

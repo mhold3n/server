@@ -56,9 +56,13 @@ export class LLMManager {
       },
     }
     const base = this.cfg.llmRunnerUrl
+    const headers: Record<string, string> = { "Content-Type": "application/json" }
+    if (this.cfg.llmRunnerApiKey) {
+      headers.Authorization = `Bearer ${this.cfg.llmRunnerApiKey}`
+    }
     const res = await fetch(`${base}/api/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(120_000),
     })
@@ -107,9 +111,13 @@ export class LLMManager {
       max_tokens: maxTokens,
       stream: false,
     }
+    const headers: Record<string, string> = { "Content-Type": "application/json" }
+    if (this.cfg.llmRunnerApiKey) {
+      headers.Authorization = `Bearer ${this.cfg.llmRunnerApiKey}`
+    }
     const res = await fetch(`${base}/v1/chat/completions`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(120_000),
     })

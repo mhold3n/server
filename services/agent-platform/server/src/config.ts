@@ -4,6 +4,7 @@ export interface PlatformConfig {
   mcpUrl: string
   toolRegistryUrl: string
   llmRunnerUrl: string
+  llmRunnerApiKey?: string
   llmBackend: string
   ollamaModel: string
   vllmModel: string
@@ -20,6 +21,7 @@ export function loadConfig(): PlatformConfig {
     llmRunnerUrl: (
       process.env.LLM_RUNNER_URL ?? "http://llm-runner:11434"
     ).replace(/\/$/, ""),
+    llmRunnerApiKey: process.env.LLM_RUNNER_API_KEY,
     llmBackend: (process.env.LLM_BACKEND ?? "mock").toLowerCase(),
     ollamaModel: process.env.OLLAMA_MODEL ?? "llama3:8b-instruct",
     vllmModel: process.env.VLLM_MODEL ?? "default",

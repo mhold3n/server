@@ -140,6 +140,28 @@ class Settings(BaseSettings):
         description="Host path for marker processed documents (if mounted)",
     )
 
+    # Development plane / isolated project workspaces
+    devplane_root: str = Field(
+        default="/tmp/birtha-devplane",
+        description="Root directory for isolated project worktrees and task packets",
+    )
+    devplane_db_path: str = Field(
+        default="/tmp/birtha-devplane/devplane.sqlite3",
+        description="SQLite database path for the development plane registry",
+    )
+    devplane_default_remote: str = Field(
+        default="origin",
+        description="Default Git remote used for branch pushes and PR creation",
+    )
+    agent_platform_url: str = Field(
+        default="http://wrkhrs-agent-platform:8000",
+        description="Base URL for the internal agent-platform execution backend",
+    )
+    devplane_public_base_url: str = Field(
+        default="http://api:8080",
+        description="Public base URL used by the execution backend for dev-plane callbacks",
+    )
+
     def model_post_init(self, __context) -> None:
         """Validate configuration after initialization."""
         if self.debug and not self.jwt_secret:

@@ -95,11 +95,17 @@ services:
   mcp-secrets:
     build:
       context: ./mcp/servers/secrets-mcp
+    env_file:
+      # Centralized Bitwarden SM access token (host path; not in git)
+      - ${BWS_ENV_FILE:-${SERVER_DATA_ROOT:-/mnt/appdata}/server/secrets/bitwarden-sm/bws.env}
     environment:
-      - VAULT_ADDR=${VAULT_ADDR:-http://vault:8200}
-      - VAULT_TOKEN=${VAULT_TOKEN}
+      # Token comes from env_file as BWS_ACCESS_TOKEN.
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    depends_on:
+      - api
     ports:
-      - "7002:7002"
+      # Loopback-only: secrets resolution should not be LAN/public reachable.
+      - "127.0.0.1:7002:7002"
     restart: unless-stopped
 
   mcp-vector-db:

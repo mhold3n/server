@@ -74,6 +74,10 @@ class SchemaValidator:
         """Validate a KernelResult against its schema."""
         return self.validate_against_schema(data, "kernel_result")
 
+    def validate_task_dossier(self, data: dict) -> tuple[bool, list[str]]:
+        """Validate a TaskDossier against its schema."""
+        return self.validate_against_schema(data, "task_dossier")
+
 
 class RegistryValidator:
     """

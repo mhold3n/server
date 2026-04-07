@@ -11,6 +11,13 @@ import {
   type TeamConfig,
 } from "@server/open-multi-agent"
 import { loadConfig } from "./config.js"
+import { executeBackendRun } from "./devplane/runner.js"
+import {
+  createBackendRun,
+  getBackendRun,
+  markRunCancelled,
+} from "./devplane/run-store.js"
+import { devPlaneRunCreateSchema } from "./devplane/types.js"
 import { LLMManager } from "./llm/manager.js"
 import { createWrkhrsOmaTools } from "./oma/wrkhrs-tools.js"
 import type { ChatMessage } from "./tools/wrkhrs.js"
@@ -29,6 +36,7 @@ const WORKFLOW_NAMES = [
   "tool_execution",
   "github_integration",
   "policy_validation",
+  "devplane_code_task",
 ] as const
 
 export function buildServer() {
@@ -255,6 +263,71 @@ export function buildServer() {
       return {
         id: request.params.id,
         status: ok ? "cancelled" : "completed",
+      }
+    },
+  )
+
+  app.post("/v1/devplane/runs", async (request, reply) => {
+    const parsed = devPlaneRunCreateSchema.safeParse(request.body)
+    if (!parsed.success) {
+      return reply.status(400).send({ detail: parsed.error.flatten() })
+    }
+    const backendRun = createBackendRun(parsed.data)
+    void executeBackendRun(backendRun.run_id, {
+      cfg,
+      defaultModel,
+      defaultProvider,
+    }).catch((error) => {
+      app.log.error(error)
+    })
+    return {
+      run_id: backendRun.run_id,
+      control_run_id: backendRun.control_run_id,
+      status: backendRun.status,
+      phase: backendRun.phase,
+      summary: backendRun.summary,
+      files_changed: backendRun.files_changed,
+      verification_results: backendRun.verification_results,
+      artifacts: backendRun.artifacts,
+    }
+  })
+
+  app.get<{ Params: { id: string } }>(
+    "/v1/devplane/runs/:id",
+    async (request, reply) => {
+      const backendRun = getBackendRun(request.params.id)
+      if (!backendRun) {
+        return reply.status(404).send({ detail: "run not found" })
+      }
+      return {
+        run_id: backendRun.run_id,
+        control_run_id: backendRun.control_run_id,
+        status: backendRun.status,
+        phase: backendRun.phase,
+        summary: backendRun.summary,
+        files_changed: backendRun.files_changed,
+        verification_results: backendRun.verification_results,
+        artifacts: backendRun.artifacts,
+      }
+    },
+  )
+
+  app.post<{ Params: { id: string } }>(
+    "/v1/devplane/runs/:id/cancel",
+    async (request, reply) => {
+      const backendRun = markRunCancelled(request.params.id)
+      if (!backendRun) {
+        return reply.status(404).send({ detail: "run not found" })
+      }
+      return {
+        run_id: backendRun.run_id,
+        control_run_id: backendRun.control_run_id,
+        status: backendRun.status,
+        phase: backendRun.phase,
+        summary: backendRun.summary,
+        files_changed: backendRun.files_changed,
+        verification_results: backendRun.verification_results,
+        artifacts: backendRun.artifacts,
       }
     },
   )
