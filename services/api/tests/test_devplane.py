@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -12,7 +13,18 @@ from src.routes.devplane import reset_devplane_service_for_tests
 
 
 def _run(cmd: list[str], cwd: Path) -> None:
-    subprocess.run(cmd, cwd=cwd, check=True, capture_output=True, text=True)
+    # Test repos should not depend on developer-global git config (e.g. commit signing).
+    env = dict(os.environ)
+    env["GIT_CONFIG_GLOBAL"] = os.devnull
+    env["GIT_CONFIG_SYSTEM"] = os.devnull
+    subprocess.run(
+        cmd,
+        cwd=cwd,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
 
 
 def _init_git_repo(repo: Path) -> None:

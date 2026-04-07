@@ -56,6 +56,10 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", description="Logging level")
     host: str = Field(default="0.0.0.0", description="Host to bind to")
     port: int = Field(default=8080, description="Port to bind to")
+    environment: str = Field(
+        default="development",
+        description="Runtime environment name (e.g. development, staging, production)",
+    )
 
     # Security
     jwt_secret: str | None = Field(default=None, description="JWT secret key")

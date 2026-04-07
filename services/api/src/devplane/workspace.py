@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -271,9 +272,15 @@ class WorkspaceManager:
         return (pr_url, commands, errors)
 
     def _run_git(self, cwd: Path, args: list[str]) -> CommandExecution:
+        # Git operations must not depend on developer-global config such as commit
+        # signing helpers (e.g. 1Password SSH signing) being present on the host.
+        env = dict(os.environ)
+        env["GIT_CONFIG_GLOBAL"] = os.devnull
+        env["GIT_CONFIG_SYSTEM"] = os.devnull
         process = subprocess.run(
             ["git", *args],
             cwd=str(cwd),
+            env=env,
             check=False,
             capture_output=True,
             text=True,
@@ -290,9 +297,13 @@ class WorkspaceManager:
         return command
 
     def _optional_git_output(self, cwd: Path, args: list[str]) -> str | None:
+        env = dict(os.environ)
+        env["GIT_CONFIG_GLOBAL"] = os.devnull
+        env["GIT_CONFIG_SYSTEM"] = os.devnull
         process = subprocess.run(
             ["git", *args],
             cwd=str(cwd),
+            env=env,
             check=False,
             capture_output=True,
             text=True,

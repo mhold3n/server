@@ -1,6 +1,7 @@
 """FastAPI control plane for agent orchestration."""
 
 import asyncio
+import os
 from collections.abc import Awaitable, Callable
 from datetime import datetime
 from pathlib import Path
@@ -29,21 +30,13 @@ from .observability.provenance import ProvenanceLogger
 from .observability.trace import get_trace_context
 from .policies.middleware import policy_enforcer
 
-# Routers (scaffolded control plane API)
-try:
-    from .routes import ai as ai_router
-    from .routes import apps as apps_router
-    from .routes import devplane as devplane_router
-    from .routes import search as search_router
-    from .routes import torrents as torrents_router
-    from .routes import vms as vms_router
-except Exception:
-    vms_router = None  # type: ignore
-    torrents_router = None  # type: ignore
-    search_router = None  # type: ignore
-    apps_router = None  # type: ignore
-    ai_router = None  # type: ignore
-    devplane_router = None  # type: ignore
+# Routers (control plane API)
+from .routes import ai as ai_router
+from .routes import apps as apps_router
+from .routes import devplane as devplane_router
+from .routes import search as search_router
+from .routes import torrents as torrents_router
+from .routes import vms as vms_router
 
 # Configure structured logging
 structlog.configure(
@@ -168,19 +161,13 @@ app.add_middleware(
 # Request context middleware for provenance tracking
 app.add_middleware(RequestContextMiddleware)
 
-# Mount routers if import succeeded
-if vms_router is not None:
-    app.include_router(vms_router.router)
-if torrents_router is not None:
-    app.include_router(torrents_router.router)
-if search_router is not None:
-    app.include_router(search_router.router)
-if apps_router is not None:
-    app.include_router(apps_router.router)
-if ai_router is not None:
-    app.include_router(ai_router.router)
-if devplane_router is not None:
-    app.include_router(devplane_router.router)
+# Mount routers
+app.include_router(vms_router.router)
+app.include_router(torrents_router.router)
+app.include_router(search_router.router)
+app.include_router(apps_router.router)
+app.include_router(ai_router.router)
+app.include_router(devplane_router.router)
 
 # Static UI (small SPA panels)
 _static_dir = Path(__file__).resolve().parent / "static"
@@ -403,6 +390,9 @@ async def chat_completions(request: ChatRequest, http_request: Request) -> JSONR
     trace_id = context.get("trace_id")
     run_id = context.get("run_id")
     policy_set = context.get("policy_set", "default")
+    enforcement_mode = os.environ.get("POLICY_ENFORCEMENT_MODE") or (
+        "block" if settings.environment.lower() == "production" else "report"
+    )
 
     try:
         logger.info(
@@ -449,6 +439,20 @@ async def chat_completions(request: ChatRequest, http_request: Request) -> JSONR
                     retrieval_docs=None,  # TODO: Add retrieval docs from RAG
                     policy_set=policy_set,
                 )
+                if enforcement_mode == "block" and not policy_verdict.overall_passed:
+                    body = {
+                        "detail": "Policy enforcement blocked this response",
+                        "policy_set": policy_set,
+                        "policy_verdict": policy_verdict.model_dump(),
+                    }
+                    http_response = JSONResponse(content=body, status_code=422)
+                    http_response.headers["x-policy-verdict"] = str(
+                        policy_verdict.overall_passed
+                    )
+                    http_response.headers["x-policy-score"] = str(
+                        policy_verdict.overall_score
+                    )
+                    return http_response
 
                 # Log policy verdicts to MLflow
                 if mlflow_logger and trace_id:

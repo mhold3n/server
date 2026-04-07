@@ -269,148 +269,18 @@ async def call_mcp_tool(
 
 @app.post("/route", response_model=TaskResponse)
 async def route_task(request: TaskRequest) -> TaskResponse:
-    """Route a task through the agent system with MCP tool integration."""
-    if not api_client:
-        raise HTTPException(
-            status_code=503,
-            detail="API client not available",
-        )
+    """Deprecated orchestration endpoint (do not use).
 
-    start_time = asyncio.get_event_loop().time()
-    task_id = f"task_{int(start_time)}"
-    tools_used = []
-
-    try:
-        logger.info(
-            "Processing task",
-            task_id=task_id,
-            prompt_length=len(request.prompt),
-            tools=request.tools,
-        )
-
-        # Prepare messages
-        messages = [
-            {"role": "system", "content": request.system},
-            {"role": "user", "content": request.prompt},
-        ]
-
-        # If tools are specified, try to use them
-        if request.tools:
-            async with MCPClient() as mcp:
-                for tool_spec in request.tools:
-                    try:
-                        # Parse tool specification (format: "server:tool" or just "tool")
-                        if ":" in tool_spec:
-                            server_name, tool_name = tool_spec.split(":", 1)
-                        else:
-                            # Default to first available server
-                            servers = await mcp.list_servers()
-                            if not servers:
-                                continue
-                            server_name = servers[0].name
-                            tool_name = tool_spec
-
-                        # Build tool arguments
-                        args: dict[str, Any] = {"query": request.prompt}
-                        key = f"{server_name}:{tool_name}"
-                        if request.tool_args and key in request.tool_args:
-                            args.update(request.tool_args[key])
-
-                        # Call the MCP tool
-                        tool_result = await mcp.call_tool(
-                            server_name,
-                            tool_name,
-                            args,
-                        )
-
-                        # Add tool result to messages (compact RAG evidence for LLM)
-                        content = compact_tool_result_for_llm(
-                            server_name, tool_name, tool_result
-                        )
-                        messages.append(
-                            {
-                                "role": "assistant",
-                                "content": content,
-                            }
-                        )
-
-                        tools_used.append(f"{server_name}:{tool_name}")
-
-                    except Exception as e:
-                        logger.warning(
-                            "Failed to use MCP tool",
-                            tool=tool_spec,
-                            error=str(e),
-                        )
-                        continue
-
-        # Call the API service
-        payload = {
-            "model": request.model,
-            "messages": messages,
-            "temperature": request.temperature,
-            "max_tokens": request.max_tokens,
-        }
-
-        response = await api_client.post("/v1/chat/completions", json=payload)
-        response.raise_for_status()
-
-        result = response.json()
-        execution_time = asyncio.get_event_loop().time() - start_time
-
-        logger.info(
-            "Task completed successfully",
-            task_id=task_id,
-            execution_time=execution_time,
-            tools_used=tools_used,
-        )
-
-        return TaskResponse(
-            task_id=task_id,
-            status="completed",
-            result=result,
-            tools_used=tools_used,
-            execution_time=execution_time,
-        )
-
-    except HTTPError as e:
-        execution_time = asyncio.get_event_loop().time() - start_time
-        resp = getattr(e, "response", None)
-        error_msg = f"API request failed: {resp.text if resp is not None else str(e)}"
-
-        logger.error(
-            "Task failed with API error",
-            task_id=task_id,
-            error=error_msg,
-            execution_time=execution_time,
-        )
-
-        return TaskResponse(
-            task_id=task_id,
-            status="failed",
-            error=error_msg,
-            tools_used=tools_used,
-            execution_time=execution_time,
-        )
-
-    except Exception as e:
-        execution_time = asyncio.get_event_loop().time() - start_time
-        error_msg = f"Unexpected error: {str(e)}"
-
-        logger.error(
-            "Task failed with unexpected error",
-            task_id=task_id,
-            error=error_msg,
-            execution_time=execution_time,
-        )
-
-        return TaskResponse(
-            task_id=task_id,
-            status="failed",
-            error=error_msg,
-            tools_used=tools_used,
-            execution_time=execution_time,
-        )
+    Orchestration has moved to the API control plane + LangGraph agent-platform.
+    This router remains as an MCP tool execution adapter only.
+    """
+    raise HTTPException(
+        status_code=410,
+        detail=(
+            "Deprecated: router orchestration is removed. "
+            "Use the API control plane endpoints (e.g. /api/ai/query)."
+        ),
+    )
 
 
 if __name__ == "__main__":
