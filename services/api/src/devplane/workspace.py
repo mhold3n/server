@@ -129,11 +129,14 @@ class WorkspaceManager:
             "task_id": task.task_id,
             "project_id": task.project_id,
             "state": task.state,
+            "reasoning_tier": getattr(task.dossier, "reasoning_tier", None),
             "plan": task.plan.model_dump(mode="json") if task.plan else None,
             "patch_plan": (
                 task.patch_plan.model_dump(mode="json") if task.patch_plan else None
             ),
             "clarifications": task.clarifications.model_dump(mode="json"),
+            "escalation_packets": getattr(task.dossier, "escalation_packets", []),
+            "api_brain_verdict": getattr(task.dossier, "api_brain_verdict", None),
             "dossier_path": str(packet_dir / "dossier.json"),
         }
         packet_path.write_text(json.dumps(packet, indent=2), encoding="utf-8")

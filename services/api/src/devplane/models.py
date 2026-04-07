@@ -277,6 +277,13 @@ class TaskDossier(BaseModel):
     task_id: str
     project_id: str
     state: TaskState
+    reasoning_tier: str | None = Field(
+        default=None,
+        description=(
+            "Execution routing tier for the task (e.g. 'local_worker', 'hosted_api_brain'). "
+            "This is informational and can be used by operators to understand escalation."
+        ),
+    )
     request: TaskRequestRecord
     clarifications: TaskClarification = Field(default_factory=TaskClarification)
     plan: TaskPlan | None = None
@@ -288,6 +295,19 @@ class TaskDossier(BaseModel):
     files_changed: list[FileChangeRecord] = Field(default_factory=list)
     verification_results: list[VerificationResult] = Field(default_factory=list)
     artifacts: list[ArtifactRecord] = Field(default_factory=list)
+    escalation_packets: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description=(
+            "Compressed evidence packets produced during local-first execution "
+            "and optionally sent to a hosted API brain for planning/review."
+        ),
+    )
+    api_brain_verdict: dict[str, Any] | None = Field(
+        default=None,
+        description=(
+            "Latest structured PLAN/REVIEW/DECISION/PATCH_GUIDANCE response from the hosted API brain."
+        ),
+    )
     publish_result: PublishResult | None = None
     final_outcome: str | None = None
     created_at: datetime = Field(default_factory=utc_now)

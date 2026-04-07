@@ -42,7 +42,6 @@ const WORKFLOW_NAMES = [
 export function buildServer() {
   const cfg = loadConfig()
   const llm = new LLMManager(cfg)
-  const chatWorkflow = createChatWorkflow(cfg, llm)
   const omaTools = createWrkhrsOmaTools(cfg)
 
   const defaultModel = process.env.OMA_DEFAULT_MODEL ?? "claude-sonnet-4-20250514"
@@ -58,6 +57,34 @@ export function buildServer() {
       extraTools: [...omaTools],
     })
   }
+
+  async function callApiBrain(packet: string): Promise<string> {
+    if (!cfg.apiBrainEnabled) {
+      return "API brain disabled."
+    }
+    const model = cfg.apiBrainModel || defaultModel
+    const provider = cfg.apiBrainProvider || defaultProvider
+    const registry = new ToolRegistry()
+    for (const t of omaTools) {
+      registry.register(t)
+    }
+    const executor = new ToolExecutor(registry)
+    const agentConfig: AgentConfig = {
+      name: "api_brain",
+      model,
+      provider,
+      systemPrompt:
+        "You are the hosted API brain. Return a compact PLAN/REVIEW/DECISION/PATCH_GUIDANCE. " +
+        "Do not ask questions. Do not include raw logs. Use only the provided packet.",
+      tools: [],
+      maxTurns: 4,
+    }
+    const agent = new Agent(agentConfig, registry, executor)
+    const result = await agent.run(packet)
+    return result.output ?? ""
+  }
+
+  const chatWorkflow = createChatWorkflow(cfg, llm, callApiBrain)
 
   const app = Fastify({ logger: true })
 
@@ -196,13 +223,25 @@ export function buildServer() {
         const messages = (inputData.messages as ChatMessage[]) ?? [
           { role: "user", content: String(inputData.prompt ?? inputData.query ?? "") },
         ]
+        const workflowConfig = (body.workflow_config as Record<string, unknown> | undefined) ?? undefined
+        const requiredToolResults = (inputData.required_tool_results as unknown[] | undefined) ?? undefined
         const result = await chatWorkflow.invoke({
           messages,
           current_step: "analyze",
           tools_needed: [],
           tool_results: {},
+          workflow_config: workflowConfig,
+          required_tool_results: requiredToolResults,
         })
-        output = { final_response: result.final_response, tool_results: result.tool_results }
+        output = {
+          final_response: result.final_response,
+          tool_results: result.tool_results,
+          api_brain: {
+            escalation_count: (result as any).escalation_count ?? 0,
+            packet: (result as any).api_brain_packet,
+            output: (result as any).api_brain_output,
+          },
+        }
       } else if (workflowName === "rag_retrieval") {
         const { searchKnowledgeBase } = await import("./tools/wrkhrs.js")
         const evidence = await searchKnowledgeBase(

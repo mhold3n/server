@@ -168,6 +168,12 @@ function run(command: string[], cwd: string): void {
   const result = spawnSync(command[0]!, command.slice(1), {
     cwd,
     encoding: "utf8",
+    env: {
+      ...process.env,
+      // Tests should not depend on developer-global git config (e.g. commit signing helpers).
+      GIT_CONFIG_GLOBAL: "/dev/null",
+      GIT_CONFIG_SYSTEM: "/dev/null",
+    },
   })
   if (result.status !== 0) {
     throw new Error(result.stderr || `Command failed: ${command.join(" ")}`)

@@ -14,10 +14,15 @@ const WorkflowAnnotation = Annotation.Root({
   tools_needed: Annotation<string[]>(),
   rag_results: Annotation<string | undefined>(),
   asr_results: Annotation<string | undefined>(),
+  required_tool_results: Annotation<unknown[] | undefined>(),
   tool_results: Annotation<Record<string, string>>({
     reducer: (left, right) => ({ ...left, ...right }),
     default: () => ({}),
   }),
+  workflow_config: Annotation<Record<string, unknown> | undefined>(),
+  escalation_count: Annotation<number>({ default: () => 0 }),
+  api_brain_packet: Annotation<string | undefined>(),
+  api_brain_output: Annotation<string | undefined>(),
   final_response: Annotation<string | undefined>(),
 })
 
@@ -99,6 +104,56 @@ function buildGatherContext(cfg: PlatformConfig) {
   }
 }
 
+function shouldEscalateToApiBrain(
+  cfg: PlatformConfig,
+  state: WorkflowStateType,
+): { escalate: boolean; reason: string } {
+  const wc = state.workflow_config ?? {}
+  const allow = wc.allow_api_brain === true || wc.reasoning_tier === "api_brain"
+  if (!cfg.apiBrainEnabled || !allow) {
+    return { escalate: false, reason: "disabled_or_not_allowed" }
+  }
+  if (state.escalation_count >= cfg.apiBrainMaxEscalationsPerTask) {
+    return { escalate: false, reason: "budget_exhausted" }
+  }
+
+  const messages = state.messages ?? []
+  const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? ""
+  const lower = lastUser.toLowerCase()
+
+  // Heuristic escalation triggers. Keep conservative: default local.
+  const triggers = [
+    "architecture",
+    "tradeoff",
+    "conflict",
+    "design",
+    "ambiguous",
+    "review",
+    "plan",
+  ]
+  const hit = triggers.some((t) => lower.includes(t))
+  return { escalate: hit, reason: hit ? "heuristic_trigger" : "no_trigger" }
+}
+
+function buildApiBrainPacket(state: WorkflowStateType): string {
+  const messages = state.messages ?? []
+  const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? ""
+  const toolResults = state.tool_results ?? {}
+  const requiredToolResults = state.required_tool_results ?? []
+
+  const packet = {
+    type: "CODE_STATE",
+    goal: "Provide a compact PLAN/REVIEW/DECISION to guide local execution.",
+    user_message: lastUser.slice(0, 4000),
+    tool_results: toolResults,
+    required_tool_results: requiredToolResults,
+    notes: {
+      current_step: state.current_step,
+    },
+  }
+  return JSON.stringify(packet, null, 2)
+}
+
 function buildGenerateResponse(llm: LLMManager) {
   return async function generateResponse(
     state: WorkflowStateType,
@@ -109,6 +164,11 @@ function buildGenerateResponse(llm: LLMManager) {
     }
     if (state.asr_results) {
       contextParts.push(`Audio Transcript:\n${state.asr_results}`)
+    }
+    if (state.required_tool_results && state.required_tool_results.length > 0) {
+      contextParts.push(
+        `Required Tool Results:\n${JSON.stringify(state.required_tool_results, null, 2)}`,
+      )
     }
     for (const [toolName, result] of Object.entries(state.tool_results)) {
       if (toolName.startsWith("mcp_")) {
@@ -130,6 +190,19 @@ function buildGenerateResponse(llm: LLMManager) {
       } else {
         enhancedMessages = [{ role: "system", content: `Additional Context:\n${context}` }, ...enhancedMessages]
       }
+    }
+
+    // If we have API brain output, prepend it as guidance for the local worker.
+    if (state.api_brain_output) {
+      enhancedMessages = [
+        {
+          role: "system",
+          content:
+            "Hosted API brain guidance (use as high-level planning/review only; execute locally):\n\n" +
+            state.api_brain_output,
+        },
+        ...enhancedMessages,
+      ]
     }
 
     try {
@@ -154,16 +227,39 @@ function buildGenerateResponse(llm: LLMManager) {
   }
 }
 
-export function createChatWorkflow(cfg: PlatformConfig, llm: LLMManager) {
+export function createChatWorkflow(
+  cfg: PlatformConfig,
+  llm: LLMManager,
+  apiBrainCall?: (packet: string) => Promise<string>,
+) {
   const gatherContext = buildGatherContext(cfg)
   const generateResponse = buildGenerateResponse(llm)
 
+  const decideEscalation = async (
+    state: WorkflowStateType,
+  ): Promise<Partial<WorkflowStateType>> => {
+    const decision = shouldEscalateToApiBrain(cfg, state)
+    if (!decision.escalate || !apiBrainCall) {
+      return { current_step: state.tools_needed.length > 0 ? "gather_context" : "generate_response" }
+    }
+    const packet = buildApiBrainPacket(state)
+    const output = await apiBrainCall(packet)
+    return {
+      api_brain_packet: packet,
+      api_brain_output: output,
+      escalation_count: state.escalation_count + 1,
+      current_step: state.tools_needed.length > 0 ? "gather_context" : "generate_response",
+    }
+  }
+
   const graph = new StateGraph(WorkflowAnnotation)
     .addNode("analyze", analyzeRequest)
+    .addNode("decide_escalation", decideEscalation)
     .addNode("gather_context", gatherContext)
     .addNode("generate_response", generateResponse)
     .addEdge(START, "analyze")
-    .addConditionalEdges("analyze", (s) =>
+    .addEdge("analyze", "decide_escalation")
+    .addConditionalEdges("decide_escalation", (s) =>
       s.tools_needed.length > 0 ? "gather_context" : "generate_response",
     )
     .addEdge("gather_context", "generate_response")

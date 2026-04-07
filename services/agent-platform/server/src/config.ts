@@ -8,6 +8,10 @@ export interface PlatformConfig {
   llmBackend: string
   ollamaModel: string
   vllmModel: string
+  apiBrainEnabled: boolean
+  apiBrainMaxEscalationsPerTask: number
+  apiBrainProvider: "anthropic" | "openai"
+  apiBrainModel: string
 }
 
 export function loadConfig(): PlatformConfig {
@@ -25,5 +29,11 @@ export function loadConfig(): PlatformConfig {
     llmBackend: (process.env.LLM_BACKEND ?? "mock").toLowerCase(),
     ollamaModel: process.env.OLLAMA_MODEL ?? "llama3:8b-instruct",
     vllmModel: process.env.VLLM_MODEL ?? "default",
+    apiBrainEnabled: (process.env.API_BRAIN_ENABLED ?? "false").toLowerCase() === "true",
+    apiBrainMaxEscalationsPerTask: Number(process.env.API_BRAIN_MAX_ESCALATIONS_PER_TASK ?? "1"),
+    apiBrainProvider:
+      ((process.env.API_BRAIN_PROVIDER as "anthropic" | "openai" | undefined) ??
+        "anthropic"),
+    apiBrainModel: process.env.API_BRAIN_MODEL ?? "",
   }
 }

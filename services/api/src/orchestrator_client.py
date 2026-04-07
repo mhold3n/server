@@ -103,8 +103,13 @@ class OrchestratorClient:
             "workflow_name": workflow_name,
             "input_data": input_data,
         }
-        if workflow_config is not None:
-            payload["workflow_config"] = workflow_config
+        # Fail-closed defaults: hosted escalation is opt-in per workflow run.
+        merged_config: dict[str, Any] = {}
+        if workflow_config:
+            merged_config.update(workflow_config)
+        merged_config.setdefault("allow_api_brain", False)
+        merged_config.setdefault("escalation_budget", 0)
+        payload["workflow_config"] = merged_config
 
         response = await self._client.post("/v1/workflows/execute", json=payload)
         response.raise_for_status()
