@@ -19,6 +19,9 @@ Configuration (env):
 - Router/AI stack: `ROUTER_URL=http://router:8000`, `AI_STACK_URL=http://ai-stack:8090`
 - AI Repos for workflows: `AI_REPOS` (comma-separated), defaults include this monorepo (`server`) and marker
 - Marker paths (optional): `MARKER_DOCS_DIR`, `MARKER_PROCESSED_DIR`
+- Hosted API brain (optional escalation): `API_BRAIN_ENABLED=false`, `API_BRAIN_BASE_URL`, `API_BRAIN_API_KEY`, `API_BRAIN_MODEL`
+  - Controls: `API_BRAIN_MAX_ESCALATIONS_PER_TASK=1`, `API_BRAIN_TEXT_ONLY=true`
+  - Safeties: `API_BRAIN_ALLOW_RAW_SCREENSHOTS=false`, `API_BRAIN_ALLOW_RAW_PDFS=false`, `API_BRAIN_ALLOW_FULL_LOGS=false`, `API_BRAIN_ALLOW_FULL_REPO_CONTEXT=false`
 
 Notes
 

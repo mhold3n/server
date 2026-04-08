@@ -1,0 +1,293 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "task_dossier.schema.json",
+    "title": "TaskDossier",
+    "description": "Final task dossier and execution trace for the development plane",
+    "type": "object",
+    "properties": {
+        "task_id": {
+            "type": "string",
+            "format": "uuid"
+        },
+        "project_id": {
+            "type": "string"
+        },
+        "state": {
+            "type": "string",
+            "enum": [
+                "pending_clarification",
+                "ready",
+                "planning",
+                "implementing",
+                "verifying",
+                "ready_to_publish",
+                "published",
+                "failed",
+                "cancelled"
+            ]
+        },
+        "request": {
+            "$ref": "#/$defs/TaskRequest"
+        },
+        "plan": {
+            "$ref": "#/$defs/TaskPlan"
+        },
+        "patch_plan": {
+            "$ref": "#/$defs/PatchPlan"
+        },
+        "run_ids": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "uuid"
+            }
+        },
+        "workspace": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "properties": {
+                "canonical_repo_path": {
+                    "type": "string"
+                },
+                "worktree_path": {
+                    "type": "string"
+                },
+                "branch_name": {
+                    "type": "string"
+                },
+                "base_branch": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "canonical_repo_path",
+                "worktree_path",
+                "branch_name",
+                "base_branch"
+            ]
+        },
+        "commands": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "command": {
+                        "type": "string"
+                    },
+                    "cwd": {
+                        "type": "string"
+                    },
+                    "exit_code": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "command",
+                    "cwd"
+                ]
+            }
+        },
+        "files_changed": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string"
+                    },
+                    "change_type": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "path"
+                ]
+            }
+        },
+        "verification_results": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "command": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "passed",
+                            "failed",
+                            "skipped"
+                        ]
+                    }
+                },
+                "required": [
+                    "name",
+                    "status"
+                ]
+            }
+        },
+        "artifacts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "name",
+                    "path",
+                    "kind"
+                ]
+            }
+        },
+        "publish_result": {
+            "type": "object",
+            "properties": {
+                "branch_name": {
+                    "type": "string"
+                },
+                "remote_name": {
+                    "type": "string"
+                },
+                "commit_sha": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "pr_url": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "review_status": {
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "branch_name",
+                "remote_name"
+            ]
+        },
+        "final_outcome": {
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        "created_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "updated_at": {
+            "type": "string",
+            "format": "date-time"
+        }
+    },
+    "required": [
+        "task_id",
+        "project_id",
+        "state",
+        "request",
+        "run_ids",
+        "created_at",
+        "updated_at"
+    ],
+    "$defs": {
+        "TaskRequest": {
+            "type": "object",
+            "properties": {
+                "user_input": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "project_id": {
+                    "type": "string"
+                },
+                "repo_ref_hint": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "user_input"
+            ]
+        },
+        "TaskPlan": {
+            "type": "object",
+            "properties": {
+                "domain": {
+                    "type": "string"
+                },
+                "objective": {
+                    "type": "string"
+                },
+                "required_gates": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "domain",
+                "required_gates"
+            ]
+        },
+        "PatchPlan": {
+            "type": "object",
+            "properties": {
+                "plan_id": {
+                    "type": "string"
+                },
+                "patches": {
+                    "type": "array"
+                }
+            },
+            "required": [
+                "plan_id",
+                "patches"
+            ]
+        }
+    }
+}

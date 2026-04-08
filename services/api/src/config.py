@@ -45,6 +45,58 @@ class Settings(BaseSettings):
         description="LLM worker profile (gpu or apple)",
     )
 
+    # Hosted API brain configuration (optional; local-first hybrid routing)
+    api_brain_enabled: bool = Field(
+        default=False,
+        description=(
+            "Enable hosted 'API brain' escalation for planning/review. "
+            "When disabled, all reasoning stays local."
+        ),
+    )
+    api_brain_base_url: str = Field(
+        default="",
+        description=(
+            "Base URL for the hosted API brain (OpenAI-compatible). "
+            "Empty disables outbound calls unless explicitly enabled."
+        ),
+    )
+    api_brain_api_key: str | None = Field(
+        default=None,
+        description="API key for the hosted API brain (if required).",
+    )
+    api_brain_model: str = Field(
+        default="",
+        description=(
+            "Model identifier to use for the hosted API brain. "
+            "Empty means 'use provider default'."
+        ),
+    )
+    api_brain_max_escalations_per_task: int = Field(
+        default=1,
+        ge=0,
+        description="Maximum allowed hosted escalations per logical task/workflow run.",
+    )
+    api_brain_text_only: bool = Field(
+        default=True,
+        description="If true, only allow text-only packets to the hosted brain.",
+    )
+    api_brain_allow_raw_screenshots: bool = Field(
+        default=False,
+        description="Allow sending raw screenshots to the hosted API brain.",
+    )
+    api_brain_allow_raw_pdfs: bool = Field(
+        default=False,
+        description="Allow sending raw PDFs to the hosted API brain.",
+    )
+    api_brain_allow_full_logs: bool = Field(
+        default=False,
+        description="Allow sending full logs to the hosted API brain.",
+    )
+    api_brain_allow_full_repo_context: bool = Field(
+        default=False,
+        description="Allow sending large/full repo context to the hosted API brain.",
+    )
+
     # Redis configuration
     redis_url: str = Field(
         default="redis://localhost:6379",
@@ -56,6 +108,10 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", description="Logging level")
     host: str = Field(default="0.0.0.0", description="Host to bind to")
     port: int = Field(default=8080, description="Port to bind to")
+    environment: str = Field(
+        default="development",
+        description="Runtime environment name (e.g. development, staging, production)",
+    )
 
     # Security
     jwt_secret: str | None = Field(default=None, description="JWT secret key")
@@ -138,6 +194,28 @@ class Settings(BaseSettings):
     marker_processed_dir: str = Field(
         default="/mnt/appdata/addons/documents_processed",
         description="Host path for marker processed documents (if mounted)",
+    )
+
+    # Development plane / isolated project workspaces
+    devplane_root: str = Field(
+        default="/tmp/birtha-devplane",
+        description="Root directory for isolated project worktrees and task packets",
+    )
+    devplane_db_path: str = Field(
+        default="/tmp/birtha-devplane/devplane.sqlite3",
+        description="SQLite database path for the development plane registry",
+    )
+    devplane_default_remote: str = Field(
+        default="origin",
+        description="Default Git remote used for branch pushes and PR creation",
+    )
+    agent_platform_url: str = Field(
+        default="http://wrkhrs-agent-platform:8000",
+        description="Base URL for the internal agent-platform execution backend",
+    )
+    devplane_public_base_url: str = Field(
+        default="http://api:8080",
+        description="Public base URL used by the execution backend for dev-plane callbacks",
     )
 
     def model_post_init(self, __context) -> None:

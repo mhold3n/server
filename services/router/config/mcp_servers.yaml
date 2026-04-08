@@ -29,12 +29,12 @@ servers:
   - name: secrets-mcp
     type: http
     url: http://mcp-secrets:7002
-    description: "Secure secrets management and retrieval"
+    description: "Secure secrets management and retrieval (Bitwarden Secrets Manager via bws)"
     capabilities:
       - secret_retrieval
       - credential_management
       - environment_variables
-      - vault_integration
+      - bitwarden_secrets_manager
 
   - name: vector-db-mcp
     type: http

@@ -4,9 +4,18 @@ export interface PlatformConfig {
   mcpUrl: string
   toolRegistryUrl: string
   llmRunnerUrl: string
+  llmRunnerApiKey?: string
   llmBackend: string
   ollamaModel: string
   vllmModel: string
+  apiBrainEnabled: boolean
+  apiBrainMaxEscalationsPerTask: number
+  apiBrainProvider: "anthropic" | "openai"
+  apiBrainModel: string
+  /** Base URL of FastAPI control plane (for structure classify + contract gates). */
+  orchestratorApiUrl: string
+  /** Python model-runtime (`/infer/*`, `/solve/*`); empty disables physics harness HTTP. */
+  modelRuntimeBaseUrl: string
 }
 
 export function loadConfig(): PlatformConfig {
@@ -20,8 +29,19 @@ export function loadConfig(): PlatformConfig {
     llmRunnerUrl: (
       process.env.LLM_RUNNER_URL ?? "http://llm-runner:11434"
     ).replace(/\/$/, ""),
+    llmRunnerApiKey: process.env.LLM_RUNNER_API_KEY,
     llmBackend: (process.env.LLM_BACKEND ?? "mock").toLowerCase(),
     ollamaModel: process.env.OLLAMA_MODEL ?? "llama3:8b-instruct",
     vllmModel: process.env.VLLM_MODEL ?? "default",
+    apiBrainEnabled: (process.env.API_BRAIN_ENABLED ?? "false").toLowerCase() === "true",
+    apiBrainMaxEscalationsPerTask: Number(process.env.API_BRAIN_MAX_ESCALATIONS_PER_TASK ?? "1"),
+    apiBrainProvider:
+      ((process.env.API_BRAIN_PROVIDER as "anthropic" | "openai" | undefined) ??
+        "anthropic"),
+    apiBrainModel: process.env.API_BRAIN_MODEL ?? "",
+    orchestratorApiUrl: (
+      process.env.ORCHESTRATOR_API_URL ?? process.env.DEVPLANE_PUBLIC_BASE_URL ?? ""
+    ).replace(/\/$/, ""),
+    modelRuntimeBaseUrl: (process.env.MODEL_RUNTIME_URL ?? "").replace(/\/$/, ""),
   }
 }

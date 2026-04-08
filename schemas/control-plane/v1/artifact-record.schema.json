@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/artifact-record.schema.json",
+  "title": "Typed artifact envelope",
+  "description": "For agents: wraps any versioned payload with lifecycle + validation state. Persisted rows in DevPlane dossier mirror this shape.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifact_id",
+    "artifact_type",
+    "schema_version",
+    "status",
+    "validation_state",
+    "producer",
+    "input_artifact_refs",
+    "supersedes",
+    "payload",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "artifact_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/uuidString"
+    },
+    "artifact_type": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactTypeEnum"
+    },
+    "schema_version": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/semverString"
+    },
+    "status": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactStatusEnum"
+    },
+    "validation_state": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactValidationStateEnum"
+    },
+    "producer": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/producerObject"
+    },
+    "input_artifact_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "supersedes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "invalid_reasons": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "payload": { "type": "object" },
+    "created_at": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/iso8601Utc"
+    },
+    "updated_at": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/iso8601Utc"
+    },
+    "expires_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "SUPERSEDED" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "supersedes": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "validation_state": { "const": "INVALID" } },
+        "required": ["validation_state"]
+      },
+      "then": {
+        "properties": {
+          "invalid_reasons": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["invalid_reasons"]
+      }
+    }
+  ]
+}

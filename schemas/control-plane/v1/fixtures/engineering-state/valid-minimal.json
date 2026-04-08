@@ -1,0 +1,76 @@
+{
+  "engineering_state_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "schema_version": "1.0.0",
+  "problem_brief_ref": "artifact://problem_brief/8b7e4f2e-1c3a-4b5d-9e6f-0a1b2c3d4e5f",
+  "evidence_bundle_refs": ["artifact://document_extract/layout-pdf"],
+  "normalized_boundary": {
+    "system_of_interest": "Timing drive subsystem",
+    "system_level": "subsystem",
+    "included": ["belt/pulley kinematics"],
+    "excluded": ["full NVH model"],
+    "interfaces": ["motor shaft input", "camshaft phase output"]
+  },
+  "objectives": [
+    {
+      "objective_id": "phase_error",
+      "statement": "Maximum phase error stays within allowable budget across the operating scenario.",
+      "metric": "phase_error_deg",
+      "verification_method": "simulation",
+      "priority": "HIGH"
+    }
+  ],
+  "verification_intent": [
+    {
+      "criterion_id": "phase_error",
+      "verification_method": "simulation",
+      "expected_evidence": "simulation",
+      "target_summary": "<= 0.5 deg",
+      "status": "planned"
+    }
+  ],
+  "variables": [
+    {
+      "id": "phase_error_deg",
+      "description": "Predicted phase error at the output shaft.",
+      "role": "response",
+      "unit": "deg",
+      "bounds": { "min": 0.0, "max": 1.0 },
+      "source_artifact_ref": "artifact://problem_brief/8b7e4f2e-1c3a-4b5d-9e6f-0a1b2c3d4e5f"
+    }
+  ],
+  "constraints": [
+    {
+      "id": "center_distance_window",
+      "statement": "Center distance adjustment must remain inside the OEM packaging window.",
+      "kind": "geometric",
+      "source_artifact_ref": "artifact://problem_brief/8b7e4f2e-1c3a-4b5d-9e6f-0a1b2c3d4e5f",
+      "provenance_source": "document",
+      "rationale": "Packaging envelope is fixed by adjacent assemblies."
+    }
+  ],
+  "boundary_conditions": [
+    "Scenario baseline_hot: ambient_temperature <= 85 celsius",
+    "Scenario baseline_hot: nominal belt tension"
+  ],
+  "unknowns": [],
+  "assumption_status": [
+    {
+      "assumption_id": "thermal_model",
+      "statement": "A lumped thermal model is acceptable for the first-pass study.",
+      "validation_intent": "Compare the first-pass prediction against a finer-grained model before release.",
+      "status": "pending",
+      "blocking": false,
+      "impact_if_false": "Thermal growth may be underpredicted and phase error budget could be invalid."
+    }
+  ],
+  "open_issues": [],
+  "mechanism_candidates": [],
+  "analysis_pathways": [],
+  "conflicts": [],
+  "staleness": [],
+  "required_gates": [],
+  "ready_for_task_decomposition": true,
+  "merge_policy_version": "merge-v2-engineering-governed",
+  "summary_for_routing": "Timing drive study with one simulation-governed phase-error objective and no blocking unknowns.",
+  "updated_at": "2026-04-07T12:00:00Z"
+}

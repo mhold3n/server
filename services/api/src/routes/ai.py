@@ -9,6 +9,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from ..config import get_worker_settings, settings
+from ..control_plane.engineering import should_auto_promote_engineering
+from ..orchestrator_client import OrchestratorClient
 from ..workflows import (
     build_tool_args_for_card,
     get_task_card,
@@ -21,69 +23,191 @@ _worker_settings = get_worker_settings(settings)
 DEFAULT_LLM_MODEL = _worker_settings.default_model
 
 
+async def _call_router_mcp_tool(
+    *,
+    server: str,
+    tool: str,
+    arguments: dict[str, Any],
+    timeout_s: float = 180.0,
+) -> dict[str, Any]:
+    """Call an MCP tool via the router's MCP surface.
+
+    This keeps the router as a **tool execution adapter** while orchestration
+    decisions and prompt assembly remain in the API + LangGraph pipeline.
+    """
+    async with httpx.AsyncClient(timeout=timeout_s) as client:
+        r = await client.post(
+            f"{settings.router_url}/mcp/servers/{server}/call",
+            json={"tool_name": tool, "arguments": arguments},
+        )
+        r.raise_for_status()
+        data = r.json()
+        if not isinstance(data, dict):
+            raise ValueError("Unexpected MCP tool response shape")
+        return data
+
+
+async def _run_required_tools(
+    *,
+    prompt: str,
+    tools: list[str],
+    tool_args: dict[str, dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    """Execute a list of required tools and return their structured results."""
+    results: list[dict[str, Any]] = []
+    for tool_spec in tools:
+        if ":" not in tool_spec:
+            raise ValueError(f"Tool spec must be 'server:tool', got: {tool_spec}")
+        server, tool = tool_spec.split(":", 1)
+        args: dict[str, Any] = {"query": prompt}
+        key = f"{server}:{tool}"
+        if tool_args and key in tool_args:
+            override = tool_args[key]
+            if isinstance(override, dict):
+                args.update(override)
+        out = await _call_router_mcp_tool(server=server, tool=tool, arguments=args)
+        results.append(
+            {
+                "tool": key,
+                "arguments": args,
+                "result": out.get("result", out),
+            }
+        )
+    return results
+
+
 class QueryRequest(BaseModel):
+    """High-level chat/query request.
+
+    This request is the **canonical** external contract for orchestration-style
+    chat. Internally, the control plane forwards it to the LangGraph workflow
+    named ``\"wrkhrs_chat\"`` running in the TypeScript agent-platform.
+
+    The `provider` field lets callers express a preference for which backing
+    provider to use. The exact routing rules are implemented inside the
+    orchestrator; this API simply forwards the hint via `workflow_config`.
+    """
+
     prompt: str | None = Field(default=None)
     messages: list[dict[str, str]] | None = Field(default=None)
     model: str = Field(default=DEFAULT_LLM_MODEL)
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int | None = Field(default=None, gt=0)
     tools: list[str] | None = Field(
-        default=None, description="MCP tools to use via router (server:tool)"
+        default=None,
+        description=(
+            "Logical tools to use during orchestration. These are forwarded as part "
+            "of the workflow input and may influence which RAG / MCP integrations "
+            "the LangGraph workflow activates."
+        ),
     )
     tool_args: dict[str, dict[str, Any]] | None = Field(
-        default=None, description="Per-tool argument overrides (key: server:tool)"
+        default=None,
+        description=(
+            "Per-tool argument overrides (key: tool identifier). The semantics are "
+            "interpreted by the LangGraph workflow and its tools."
+        ),
     )
-    context: dict[str, Any] | None = Field(default=None)
+    context: dict[str, Any] | None = Field(
+        default=None,
+        description="Opaque context bag forwarded to the workflow as-is.",
+    )
+    # Kept for backwards compatibility with older callers; the new pipeline
+    # always uses the LangGraph orchestrator for routed queries.
     use_router: bool = Field(
-        default=True, description="Route via agent router with MCP integration"
+        default=True,
+        description="Deprecated: retained for compatibility; always routes via orchestrator.",
     )
     system: str = Field(default="You are a helpful AI assistant.")
+    provider: str | None = Field(
+        default=None,
+        description=(
+            "Optional provider preference hint for the orchestrator. Expected values "
+            "include 'local_worker', 'swarm', or 'hosted_api'. The orchestrator may "
+            "ignore unknown values."
+        ),
+    )
 
 
 @router.post("/query")
 async def ai_query(req: QueryRequest) -> dict[str, Any]:
+    """Primary chat/query endpoint backed by the LangGraph orchestrator.
+
+    This endpoint no longer talks directly to the Python router or AI stack
+    workers. Instead it delegates to the `wrkhrs_chat` workflow, which owns
+    tool selection and provider routing.
+    """
     if not req.prompt and not req.messages:
         raise HTTPException(status_code=400, detail="Provide 'prompt' or 'messages'")
 
-    if req.use_router:
-        payload = {
-            "prompt": req.prompt
-            or (req.messages[-1]["content"] if req.messages else ""),
-            "system": req.system,
-            "model": req.model,
-            "tools": req.tools,
-            "tool_args": req.tool_args,
-            "temperature": req.temperature,
-            "max_tokens": req.max_tokens,
-        }
-        # Router calls can take a while when the backing LLM is running locally.
-        async with httpx.AsyncClient(timeout=180.0) as client:
-            resp = await client.post(f"{settings.router_url}/route", json=payload)
-            try:
-                resp.raise_for_status()
-            except httpx.HTTPError:
-                raise HTTPException(
-                    status_code=resp.status_code, detail=resp.text
-                ) from None
-            return resp.json()
+    # Normalise into a messages-style payload for the orchestrator.
+    if req.messages:
+        messages = list(req.messages)
     else:
-        # Simple LLM call via AI stack
-        payload = {
-            "prompt": req.prompt
-            or (req.messages[-1]["content"] if req.messages else ""),
-            "model": req.model,
-        }
-        async with httpx.AsyncClient(timeout=180.0) as client:
-            resp = await client.post(
-                f"{settings.ai_stack_url}/llm/prompt", json=payload
+        messages = [{"role": "user", "content": req.prompt or ""}]
+
+    # Prepend system message if provided.
+    if req.system:
+        messages = [{"role": "system", "content": req.system}] + messages
+
+    required_tool_results: list[dict[str, Any]] = []
+    if req.tools:
+        try:
+            required_tool_results = await _run_required_tools(
+                prompt=req.prompt or (req.messages[-1]["content"] if req.messages else ""),
+                tools=req.tools,
+                tool_args=req.tool_args,
             )
-            try:
-                resp.raise_for_status()
-            except httpx.HTTPError:
-                raise HTTPException(
-                    status_code=resp.status_code, detail=resp.text
-                ) from None
-            return resp.json()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=502,
+                detail=f"Required tool execution failed: {exc}",
+            ) from exc
+
+    input_data: dict[str, Any] = {
+        "messages": messages,
+        "model": req.model,
+        "temperature": req.temperature,
+        "max_tokens": req.max_tokens,
+        "tools": req.tools,
+        "tool_args": req.tool_args,
+        "context": req.context,
+        "required_tool_results": required_tool_results,
+    }
+    workflow_config: dict[str, Any] = {}
+    workflow_name = "wrkhrs_chat"
+    if req.provider:
+        workflow_config["provider_preference"] = req.provider
+    if req.tools:
+        # Tools passed by the caller are treated as required intent for orchestration.
+        # The LangGraph workflow decides how to satisfy them.
+        workflow_config["strict_tools"] = True
+    promotion = should_auto_promote_engineering(
+        prompt=req.prompt,
+        messages=messages,
+        context=req.context,
+    )
+    if promotion["promote"]:
+        workflow_name = "engineering_workflow"
+        workflow_config["strict_engineering"] = True
+        workflow_config["engineering_promotion_reason"] = promotion["reason"]
+        if req.context and req.context.get("engineering_session_id"):
+            input_data["engineering_session_id"] = req.context["engineering_session_id"]
+
+    async with OrchestratorClient() as client:
+        try:
+            result = await client.execute_workflow(
+                workflow_name=workflow_name,
+                input_data=input_data,
+                workflow_config=workflow_config or None,
+            )
+        except Exception as exc:  # pragma: no cover - network I/O
+            raise HTTPException(
+                status_code=502,
+                detail=f"Orchestrator workflow 'wrkhrs_chat' failed: {exc}",
+            ) from exc
+
+    return result
 
 
 class WorkflowRunRequest(BaseModel):
@@ -94,6 +218,13 @@ class WorkflowRunRequest(BaseModel):
     model: str = Field(default=DEFAULT_LLM_MODEL)
     temperature: float = Field(default=0.2)
     max_tokens: int | None = Field(default=None)
+    provider: str | None = Field(
+        default=None,
+        description=(
+            "Optional provider preference hint for this workflow run "
+            "('local_worker', 'swarm', or 'hosted_api')."
+        ),
+    )
 
 
 @router.get("/tasks")
@@ -120,31 +251,68 @@ async def run_workflow(req: WorkflowRunRequest) -> dict[str, Any]:
     )
 
     prompt = _workflow_prompt_from_card(name, req.input)
-    payload: dict[str, Any] = {
-        "prompt": prompt,
-        "system": card.system_prompt,
+
+    # Map task cards onto the canonical LangGraph workflow surface. For now
+    # all workflows share the chat-style graph and rely on card metadata to
+    # control prompts and tool usage.
+    workflow_name = "wrkhrs_chat"
+    messages = [
+        {"role": "system", "content": card.system_prompt},
+        {"role": "user", "content": prompt},
+    ]
+
+    required_tool_results: list[dict[str, Any]] = []
+    if card.required_tools:
+        try:
+            required_tool_results = await _run_required_tools(
+                prompt=prompt,
+                tools=card.required_tools,
+                tool_args=tool_args,
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status_code=502,
+                detail=f"Required tool execution failed: {exc}",
+            ) from exc
+
+    input_data: dict[str, Any] = {
+        "messages": messages,
         "model": req.model or DEFAULT_LLM_MODEL,
         "temperature": (
             req.temperature if req.temperature is not None else card.temperature
         ),
         "max_tokens": req.max_tokens if req.max_tokens is not None else card.max_tokens,
+        "tools": card.required_tools or None,
+        "tool_args": tool_args or None,
+        "required_tool_results": required_tool_results,
+        "task_card_id": name,
+        "raw_input": req.input,
     }
+    workflow_config: dict[str, Any] = {}
+    if req.provider:
+        workflow_config["provider_preference"] = req.provider
     if card.required_tools:
-        payload["tools"] = card.required_tools
-        payload["tool_args"] = tool_args
+        workflow_config["strict_tools"] = True
 
-    async with httpx.AsyncClient(timeout=180.0) as client:
-        resp = await client.post(f"{settings.router_url}/route", json=payload)
+    async with OrchestratorClient() as client:
         try:
-            resp.raise_for_status()
-        except httpx.HTTPError:
+            result = await client.execute_workflow(
+                workflow_name=workflow_name,
+                input_data=input_data,
+                workflow_config=workflow_config or None,
+            )
+        except Exception as exc:  # pragma: no cover - network I/O
             raise HTTPException(
-                status_code=resp.status_code, detail=resp.text
-            ) from None
-        result = resp.json()
-        if isinstance(result, dict):
-            result["task_card_id"] = name
-        return result
+                status_code=502,
+                detail=f"Orchestrator workflow '{workflow_name}' failed: {exc}",
+            ) from exc
+
+    if isinstance(result, dict) and "result" in result and isinstance(
+        result["result"],
+        dict,
+    ):
+        result["result"]["task_card_id"] = name
+    return result
 
 
 def _workflow_prompt_from_card(card_id: str, input_: dict[str, Any]) -> str:
@@ -166,20 +334,39 @@ class SimulationAnalyzeRequest(BaseModel):
 
 @router.post("/simulations/analyze")
 async def simulations_analyze(req: SimulationAnalyzeRequest) -> dict[str, Any]:
-    # Simple analysis via AI stack LLM
-    prompt = f"Instructions: {req.instructions}\n\nPayload JSON:\n{json.dumps(req.payload, indent=2)}\n\nProvide concise analysis."
-    async with httpx.AsyncClient(timeout=180.0) as client:
-        resp = await client.post(
-            f"{settings.ai_stack_url}/llm/prompt",
-            json={"prompt": prompt, "model": req.model},
-        )
+    """Run a lightweight analysis via the LangGraph orchestrator.
+
+    This endpoint intentionally does not talk directly to the legacy AI stack.
+    """
+    prompt = (
+        f"Instructions:\n{req.instructions}\n\n"
+        f"Payload JSON:\n{json.dumps(req.payload, indent=2)}\n\n"
+        "Provide concise analysis."
+    )
+    input_data: dict[str, Any] = {
+        "messages": [
+            {"role": "system", "content": "You are a careful analyst."},
+            {"role": "user", "content": prompt},
+        ],
+        "model": req.model,
+        "temperature": 0.2,
+        "max_tokens": None,
+        "tools": None,
+        "tool_args": None,
+        "context": {"endpoint": "simulations_analyze"},
+    }
+    async with OrchestratorClient() as client:
         try:
-            resp.raise_for_status()
-        except httpx.HTTPError:
+            return await client.execute_workflow(
+                workflow_name="wrkhrs_chat",
+                input_data=input_data,
+                workflow_config=None,
+            )
+        except Exception as exc:  # pragma: no cover - network I/O
             raise HTTPException(
-                status_code=resp.status_code, detail=resp.text
-            ) from None
-        return resp.json()
+                status_code=502,
+                detail=f"Orchestrator workflow 'wrkhrs_chat' failed: {exc}",
+            ) from exc
 
 
 def _health_url(path: str, base: str | None) -> str | None:

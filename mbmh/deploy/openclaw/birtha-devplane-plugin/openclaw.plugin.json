@@ -1,0 +1,49 @@
+{
+  "id": "birtha-devplane",
+  "name": "Birtha DevPlane",
+  "description": "Operator plugin for Birtha development-plane project, task, run, dossier, and publish control.",
+  "version": "0.1.0",
+  "skills": [
+    "./skills"
+  ],
+  "contracts": {
+    "tools": [
+      "devplane_list_projects",
+      "devplane_register_project",
+      "devplane_submit_task",
+      "devplane_answer_clarifications",
+      "devplane_get_task",
+      "devplane_get_run",
+      "devplane_get_dossier",
+      "devplane_publish_task",
+      "devplane_cancel_task",
+      "devplane_retry_task",
+      "devplane_inspect_workspace"
+    ]
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "baseUrl": {
+        "type": "string",
+        "description": "Base URL for the Birtha control-plane API."
+      },
+      "requestTimeoutMs": {
+        "type": "integer",
+        "minimum": 1000,
+        "description": "HTTP timeout in milliseconds for dev-plane API calls."
+      }
+    }
+  },
+  "uiHints": {
+    "baseUrl": {
+      "label": "Control Plane URL",
+      "placeholder": "http://api:8080"
+    },
+    "requestTimeoutMs": {
+      "label": "Request Timeout (ms)",
+      "placeholder": "30000"
+    }
+  }
+}

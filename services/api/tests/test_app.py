@@ -1,5 +1,7 @@
 """Tests for the FastAPI application."""
 
+import types
+from contextlib import contextmanager
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
@@ -195,6 +197,131 @@ class TestChatCompletions:
         call_args = src.app.openai_client.chat.completions.create.call_args_list[-1]
         assert call_args.kwargs.get("temperature") == 0.5
 
+    def test_chat_completions_runs_policy_mlflow_and_span_paths(
+        self,
+        test_client: TestClient,
+        setup_clients,
+        sample_chat_request: dict,
+        sample_chat_response: dict,
+    ) -> None:
+        """Exercise policy verdict, MLflow logging, and OTel span attribute paths."""
+        import src.app
+        from src.policies.evidence import PolicyResult
+        from src.policies.middleware import PolicyVerdict
+
+        completion = ChatCompletion(
+            id=sample_chat_response["id"],
+            object=sample_chat_response["object"],
+            created=sample_chat_response["created"],
+            model=sample_chat_response["model"],
+            choices=[
+                Choice(
+                    index=0,
+                    finish_reason="stop",
+                    message=ChatCompletionMessage(role="assistant", content="Output [1]."),
+                )
+            ],
+        )
+
+        src.app.openai_client.chat.completions.create = AsyncMock(return_value=completion)
+
+        verdict = PolicyVerdict(
+            overall_passed=True,
+            overall_score=0.9,
+            total_violations=0,
+            total_suggestions=0,
+            policy_results={
+                "citations": PolicyResult(
+                    passed=True,
+                    score=0.9,
+                    violations=[],
+                    suggestions=[],
+                    metadata={},
+                )
+            },
+            metadata={},
+        )
+
+        fake_span = types.SimpleNamespace(
+            is_recording=lambda: True,
+            set_attribute=lambda *args, **kwargs: None,
+        )
+
+        @contextmanager
+        def _fake_start_run(*args, **kwargs):
+            yield None
+
+        fake_mlflow = types.SimpleNamespace(
+            start_run=_fake_start_run,
+            set_tag=lambda *args, **kwargs: None,
+            log_metrics=lambda *args, **kwargs: None,
+            log_metric=lambda *args, **kwargs: None,
+        )
+
+        with patch("src.app.get_request_context", return_value={"trace_id": "t", "run_id": "r", "policy_set": "default"}):
+            with patch.object(src.app, "mlflow_logger", object()):
+                with patch("src.app.policy_enforcer.validate", new=AsyncMock(return_value=verdict)):
+                    with patch("src.app.trace.get_current_span", return_value=fake_span):
+                        with patch.dict("sys.modules", {"mlflow": fake_mlflow}):
+                            resp = test_client.post("/v1/chat/completions", json=sample_chat_request)
+
+        assert resp.status_code == 200
+        assert resp.headers.get("x-policy-verdict") in ("True", "true")
+        assert resp.headers.get("x-policy-score") == "0.9"
+
+    def test_chat_completions_blocks_on_policy_when_enabled(
+        self,
+        test_client: TestClient,
+        setup_clients,
+        sample_chat_request: dict,
+    ) -> None:
+        """In block mode, failing policy verdict should return 422."""
+        import src.app
+        from src.policies.evidence import PolicyResult
+        from src.policies.middleware import PolicyVerdict
+
+        completion = ChatCompletion(
+            id="chatcmpl-block",
+            object="chat.completion",
+            created=1,
+            model="test-model",
+            choices=[
+                Choice(
+                    index=0,
+                    finish_reason="stop",
+                    message=ChatCompletionMessage(role="assistant", content="No citations here."),
+                )
+            ],
+        )
+        src.app.openai_client.chat.completions.create = AsyncMock(return_value=completion)
+
+        verdict = PolicyVerdict(
+            overall_passed=False,
+            overall_score=0.1,
+            total_violations=1,
+            total_suggestions=0,
+            policy_results={
+                "citations": PolicyResult(
+                    passed=False,
+                    score=0.1,
+                    violations=["missing citations"],
+                    suggestions=[],
+                    metadata={},
+                )
+            },
+            metadata={},
+        )
+
+        with patch("src.app.get_request_context", return_value={"policy_set": "default"}):
+            with patch("src.app.policy_enforcer.validate", new=AsyncMock(return_value=verdict)):
+                with patch.dict("os.environ", {"POLICY_ENFORCEMENT_MODE": "block"}):
+                    resp = test_client.post("/v1/chat/completions", json=sample_chat_request)
+
+        assert resp.status_code == 422
+        body = resp.json()
+        assert "policy_verdict" in body
+        assert resp.headers.get("x-policy-verdict") in ("False", "false")
+
 
 class TestRootEndpoint:
     """Test root endpoint."""
@@ -245,3 +372,55 @@ class TestMiddleware:
             assert "access-control-allow-methods" in response.headers
         finally:
             src.app.settings.debug = original_debug
+
+
+class TestAppHelpers:
+    """Coverage for helper functions in src.app."""
+
+    def test_usage_for_log_supports_dict_method(self) -> None:
+        import src.app
+
+        class _Obj:
+            def dict(self):
+                return {"a": 1}
+
+        assert src.app._usage_for_log(_Obj()) == {"a": 1}
+
+    def test_completion_response_body_supports_attr_object(self) -> None:
+        import src.app
+
+        obj = types.SimpleNamespace(
+            id="x",
+            object="chat.completion",
+            created=1,
+            model="m",
+            choices=[],
+            usage={"prompt_tokens": 1},
+        )
+        body = src.app._completion_response_body(obj)
+        assert body["id"] == "x"
+        assert body["usage"] == {"prompt_tokens": 1}
+
+    def test_usage_for_log_returns_none_for_unexpected_shape(self) -> None:
+        import src.app
+
+        class _Obj:
+            def dict(self):
+                return "not-a-dict"
+
+        assert src.app._usage_for_log(_Obj()) is None
+
+    def test_completion_response_body_prefers_model_dump_and_dict(self) -> None:
+        import src.app
+
+        class _ModelDump:
+            def model_dump(self):
+                return {"ok": True}
+
+        assert src.app._completion_response_body(_ModelDump()) == {"ok": True}
+
+        class _Dict:
+            def dict(self):
+                return {"ok": "dict"}
+
+        assert src.app._completion_response_body(_Dict()) == {"ok": "dict"}

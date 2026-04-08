@@ -174,34 +174,14 @@ async def test_router_startup_and_shutdown_branches(monkeypatch) -> None:
 def test_route_task_default_server_selection_no_servers(
     test_client, setup_clients
 ) -> None:
-    # Tool spec without ":" should attempt default server selection; with no servers it skips.
     request = {"prompt": "hello", "model": "test-model", "tools": ["just-a-tool"]}
-    mock_mcp = AsyncMock()
-    mock_mcp.list_servers.return_value = []
-
-    with patch("src.router.MCPClient") as mock_mcp_class:
-        mock_mcp_class.return_value.__aenter__.return_value = mock_mcp
-        r = test_client.post("/route", json=request)
-
-    assert r.status_code == 200
-    assert r.json()["status"] == "completed"
-    assert r.json()["tools_used"] == []
+    r = test_client.post("/route", json=request)
+    assert r.status_code == 410
 
 
 def test_route_task_unexpected_exception_returns_failed(
     test_client, setup_clients
 ) -> None:
-    import src.router as router_mod
-
-    router_mod.api_client.post.side_effect = RuntimeError("boom")
     request = {"prompt": "hello", "model": "test-model"}
-
-    with patch("src.router.MCPClient") as mock_mcp_class:
-        mock_mcp = AsyncMock()
-        mock_mcp_class.return_value.__aenter__.return_value = mock_mcp
-        r = test_client.post("/route", json=request)
-
-    assert r.status_code == 200
-    data = r.json()
-    assert data["status"] == "failed"
-    assert "Unexpected error" in data["error"]
+    r = test_client.post("/route", json=request)
+    assert r.status_code == 410

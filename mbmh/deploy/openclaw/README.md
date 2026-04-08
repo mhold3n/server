@@ -11,10 +11,10 @@ Official references:
 
 ## 1. Start the MBMH OpenAI-compatible server
 
-From the `mbmh` directory (with venv activated if you use one):
+From the `mbmh` directory (with the repo conda env `server` activated):
 
 ```bash
-.venv/bin/python scripts/serve_local.py --config configs/runtime/openai-compatible.yaml
+python scripts/serve_local.py --config configs/runtime/openai-compatible.yaml
 ```
 
 Defaults: `http://127.0.0.1:8000`, agents from `configs/agents/`, keys from `configs/auth/api_keys.yaml`.
@@ -40,13 +40,13 @@ OpenClaw reads **`~/.openclaw/openclaw.json`** (or the path from `openclaw confi
 cd mbmh
 
 # List model ids OpenClaw must register (same as GET /v1/models)
-.venv/bin/python scripts/emit_openclaw_provider_config.py --list-agent-ids
+python scripts/emit_openclaw_provider_config.py --list-agent-ids
 
 # With serve_local.py running: verify HTTP then print JSON
-.venv/bin/python scripts/emit_openclaw_provider_config.py --check
+python scripts/emit_openclaw_provider_config.py --check
 
 # Safer merge: only the models.* subtree (avoids clobbering unrelated agents.defaults)
-.venv/bin/python scripts/emit_openclaw_provider_config.py --models-only > mbmh-openclaw-models.json
+python scripts/emit_openclaw_provider_config.py --models-only > mbmh-openclaw-models.json
 ```
 
 Merge `mbmh-openclaw-models.json` into your OpenClaw config under the top-level `models` key (Control UI → Config → raw editor, or your editor), **or** paste the full output of the script without `--models-only` if you intend to set `agents.defaults.model.primary` in the same file.
@@ -153,8 +153,59 @@ Or re-merge output from `scripts/emit_openclaw_provider_config.py` (defaults use
 
 ## 7. Bundled skills (“42 missing requirements”)
 
-That message is from **`openclaw skills check`**: most bundled skills need extra CLIs or API keys. You do not have to enable all of them. See **[SKILLS-SETUP.md](./SKILLS-SETUP.md)** for strategies and quick wins.
+That message is from **`openclaw skills check`**: most bundled skills need extra CLIs or API keys. You do not have to enable all of them. See **[SKILLS-SETUP.md](./SKILLS-SETUP.md)** for strategies, **Bitwarden Secrets Manager** + ClawHub/marketplace notes, and **[openclaw-limited-agents-bitwarden.json5](./openclaw-limited-agents-bitwarden.json5)** for a gateway/tool allowlist example.
 
 ## 8. Adapter YAML in this folder
 
 `adapters/test_adapter.yaml` is a placeholder bridge metadata file; live wiring is **OpenClaw `openclaw.json` + MBMH `serve_local.py`** as above.
+
+## 9. Development-plane control API
+
+OpenClaw can also act as the **operator shell** for the new development plane, using the control-plane API exposed by `services/api`:
+
+- `POST /api/dev/projects` — register an external project checkout (must be outside the control-plane repo)
+- `GET /api/dev/projects` — list registered projects
+- `POST /api/dev/tasks` — submit a code task against a registered project
+- `POST /api/dev/tasks/{task_id}/answer` — answer clarification questions
+- `POST /api/dev/tasks/{task_id}/resume` — provision an isolated task worktree and dispatch an internal `agent-platform` run by default
+- `GET /api/dev/runs/{run_id}` — inspect the current control-plane view of an internal or external run
+- `POST /api/dev/runs/{run_id}/events` — legacy/manual callback surface for external operator sessions
+- `POST /api/dev/runs/{run_id}/complete` — legacy/manual completion surface for external operator sessions
+- `POST /api/dev/tasks/{task_id}/publish` — commit the task branch and optionally push / create a PR
+- `GET /api/dev/tasks/{task_id}/dossier` — fetch the final branch/test/verification dossier
+
+The intended flow is:
+
+1. OpenClaw submits a task to the control plane.
+2. The control plane either returns clarification questions or a ready task plan.
+3. When resumed, the control plane provisions an isolated git worktree, writes `.birtha/task-packet.json`, and dispatches the internal `agent-platform` task-agent runtime.
+4. The internal task-agent runtime performs implementation work inside the isolated workspace only, runs deterministic verification, and reports progress back into the dossier.
+5. OpenClaw stays in the operator lane: it inspects task/run state, answers clarifications, reviews dossiers, inspects workspaces, retries runs, and publishes approved work.
+
+This keeps OpenClaw as the primary internal interface while preserving a strict separation between:
+
+- the **control plane** (this repository),
+- the **development plane** (registered external project workspaces), and
+- the **host system**.
+
+## 10. Native OpenClaw operator plugin
+
+A native OpenClaw plugin package now lives at [`birtha-devplane-plugin`](./birtha-devplane-plugin). It is intentionally a **thin control plugin**:
+
+- manifest: `openclaw.plugin.json`
+- runtime entry: `index.ts`
+- operator skill root: `skills/`
+- API client helpers and tests: `src/operator-client.js`, `tests/operator-client.test.mjs`
+
+This plugin exposes operator-facing `devplane_*` tools for:
+
+- listing and registering projects
+- submitting tasks
+- answering clarifications
+- checking task and run state
+- fetching dossiers
+- inspecting the active workspace
+- retrying or cancelling runs
+- publishing approved task branches
+
+It does **not** edit code itself. Code changes remain the responsibility of the internal Birtha task-agent runtime running under `services/agent-platform`.

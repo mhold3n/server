@@ -5,10 +5,10 @@ from typing import Any
 
 import structlog
 from cryptography.fernet import Fernet
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from .vault_client import VaultClient
+from .bitwarden_sm_client import BitwardenSmClient
 
 # Configure structured logging
 structlog.configure(
@@ -33,8 +33,24 @@ logger = structlog.get_logger()
 
 app = FastAPI(title="Secrets MCP Server", version="0.1.0")
 
-# Global vault client
-vault_client = VaultClient()
+# Global secrets backend client (Bitwarden Secrets Manager)
+vault_client = BitwardenSmClient()
+
+def _require_call_auth(request: Request) -> None:
+    """Optionally require an auth token for /call to reduce prompt-injection blast radius.
+
+    If `MCP_SECRETS_AUTH_TOKEN` is unset/empty, /call is unauthenticated.
+    If set, callers must send `Authorization: Bearer <token>`.
+    """
+
+    expected = os.getenv("MCP_SECRETS_AUTH_TOKEN", "").strip()
+    if expected == "":
+        return
+
+    auth = (request.headers.get("authorization") or "").strip()
+    if auth == f"Bearer {expected}":
+        return
+    raise HTTPException(status_code=401, detail="Unauthorized")
 
 
 class ToolRequest(BaseModel):
@@ -77,7 +93,7 @@ async def list_tools() -> dict[str, Any]:
         "tools": [
             {
                 "name": "get_secret",
-                "description": "Retrieve a secret from the vault",
+                    "description": "Retrieve a secret via 1Password Connect (`op://...` refs or `<Vault>/<Item>` + key)",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -92,7 +108,7 @@ async def list_tools() -> dict[str, Any]:
             },
             {
                 "name": "set_secret",
-                "description": "Store a secret in the vault",
+                    "description": "Store/update a secret via 1Password Connect (requires `op://<Vault>/<Item>/<field>`)",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -104,7 +120,7 @@ async def list_tools() -> dict[str, Any]:
             },
             {
                 "name": "list_secrets",
-                "description": "List secrets in a path",
+                    "description": "List secrets/items in a vault (Connect backend)",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -115,7 +131,7 @@ async def list_tools() -> dict[str, Any]:
             },
             {
                 "name": "delete_secret",
-                "description": "Delete a secret from the vault",
+                    "description": "Delete an item/secret via 1Password Connect (requires `op://...`)",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -154,43 +170,46 @@ async def list_tools() -> dict[str, Any]:
 
 
 @app.post("/call", response_model=ToolResponse)
-async def call_tool(request: ToolRequest) -> ToolResponse:
+async def call_tool(request: Request, payload: ToolRequest) -> ToolResponse:
     """Call a tool with the given arguments."""
     try:
+        _require_call_auth(request)
         logger.info(
             "Calling tool",
-            tool=request.tool,
-            arguments=request.arguments,
+            tool=payload.tool,
+            arguments=payload.arguments,
         )
 
         result: Any
-        if request.tool == "get_secret":
+        if payload.tool == "get_secret":
             result = await vault_client.get_secret(
-                request.arguments["path"],
-                request.arguments.get("key"),
+                payload.arguments["path"],
+                payload.arguments.get("key"),
             )
-        elif request.tool == "set_secret":
+        elif payload.tool == "set_secret":
             result = await vault_client.set_secret(
-                request.arguments["path"],
-                request.arguments["data"],
+                payload.arguments["path"],
+                payload.arguments["data"],
             )
-        elif request.tool == "list_secrets":
-            result = await vault_client.list_secrets(request.arguments["path"])
-        elif request.tool == "delete_secret":
-            result = await vault_client.delete_secret(request.arguments["path"])
-        elif request.tool == "encrypt_data":
-            result = await encrypt_data_locally(request.arguments["data"])
-        elif request.tool == "decrypt_data":
-            result = await decrypt_data_locally(request.arguments["encrypted_data"])
+        elif payload.tool == "list_secrets":
+            result = await vault_client.list_secrets(payload.arguments["path"])
+        elif payload.tool == "delete_secret":
+            result = await vault_client.delete_secret(payload.arguments["path"])
+        elif payload.tool == "encrypt_data":
+            result = await encrypt_data_locally(payload.arguments["data"])
+        elif payload.tool == "decrypt_data":
+            result = await decrypt_data_locally(payload.arguments["encrypted_data"])
         else:
-            raise HTTPException(status_code=400, detail=f"Unknown tool: {request.tool}")
+            raise HTTPException(status_code=400, detail=f"Unknown tool: {payload.tool}")
 
         return ToolResponse(content=[{"type": "text", "text": str(result)}])
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(
             "Tool call failed",
-            tool=request.tool,
+            tool=payload.tool,
             error=str(e),
         )
         raise HTTPException(status_code=500, detail=str(e)) from e

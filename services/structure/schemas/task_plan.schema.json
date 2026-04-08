@@ -12,9 +12,110 @@
                 "chemistry",
                 "math",
                 "code",
-                "general"
+                "general",
+                "experiment",
+                "survey",
+                "project",
+                "operations",
+                "analysis"
             ],
             "description": "Primary domain classification"
+        },
+        "project_id": {
+            "type": "string",
+            "description": "Optional registered development-plane project identifier"
+        },
+        "objective": {
+            "type": "string",
+            "description": "Normalized delivery objective for the task"
+        },
+        "constraints": {
+            "type": "array",
+            "description": "Constraints gathered from intake and clarification",
+            "items": {
+                "type": "string"
+            }
+        },
+        "acceptance_criteria": {
+            "type": "array",
+            "description": "Conditions required for successful completion",
+            "items": {
+                "type": "string"
+            }
+        },
+        "implementation_outline": {
+            "type": "array",
+            "description": "High-level implementation stages for the task",
+            "items": {
+                "type": "string"
+            }
+        },
+        "delegation_hints": {
+            "type": "array",
+            "description": "Optional hints about how the lead executor may delegate focused subtasks",
+            "items": {
+                "type": "string"
+            }
+        },
+        "work_items": {
+            "type": "array",
+            "description": "Optional normalized work-item checklist for the internal task-agent runtime",
+            "items": {
+                "type": "string"
+            }
+        },
+        "verification_plan": {
+            "type": "array",
+            "description": "Verification commands or checks that should be run",
+            "items": {
+                "type": "string"
+            }
+        },
+        "verification_blocks": {
+            "type": "array",
+            "description": "Explicit structured verification commands for execution handoff",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "command": {
+                        "type": "string"
+                    },
+                    "required": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name",
+                    "command"
+                ],
+                "additionalProperties": false
+            }
+        },
+        "publish_intent": {
+            "type": "object",
+            "description": "Desired publish or delivery mode for the task",
+            "properties": {
+                "mode": {
+                    "type": "string"
+                },
+                "push": {
+                    "type": "boolean"
+                },
+                "create_pr": {
+                    "type": "boolean"
+                },
+                "remote_name": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true
+        },
+        "planned_branch": {
+            "type": "string",
+            "description": "Preferred branch name for an isolated task workspace"
         },
         "subdomain": {
             "type": "string",

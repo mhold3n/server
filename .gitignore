@@ -241,6 +241,9 @@ docker-compose.local.yml
 # Structure schemas, registries, and policies are source files, not generated artifacts
 !services/structure/schemas/**/*.json
 !services/structure/registry/**/*.json
+# Monorepo JSON Schema contracts (control-plane + model-runtime registries and fixtures)
+!schemas/control-plane/**/*.json
+!schemas/model-runtime/**/*.json
 !services/structure/policies/**/*.yaml
 
 # Cache and temporary files

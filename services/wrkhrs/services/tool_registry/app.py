@@ -294,8 +294,31 @@ class CLIToolPlugin:
             raise ValueError("CLI tool missing command template")
 
         # Parameter substitution
+        payload = dict(parameters or {})
+        # Common flags used by our CLI-wrapped tools.
+        payload.setdefault(
+            "model_flag",
+            f'--model "{payload.get("model")}"' if str(payload.get("model") or "").strip() else "",
+        )
+        payload.setdefault(
+            "skip_services_flag",
+            "--skip-services" if bool(payload.get("skip_services")) else "",
+        )
+        payload.setdefault(
+            "type_flag",
+            f'--type "{payload.get("type")}"' if str(payload.get("type") or "").strip() else "",
+        )
+        payload.setdefault(
+            "marker_extra_args_flag",
+            " ".join(
+                f'--marker-extra-arg "{token}"'
+                for token in (payload.get("marker_extra_args") or "").split("||")
+                if str(token).strip()
+            ),
+        )
+
         try:
-            command = command_template.format(**parameters)
+            command = command_template.format(**payload)
         except KeyError as e:
             raise ValueError(f"Missing required parameter: {e}")
 

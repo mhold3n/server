@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/routing-policy.schema.json",
+  "title": "routing_policy — versioned router + budgets + tool admissibility",
+  "description": "For agents: referenced by task_packet.routing_metadata.router_policy_version. Single-user local deployment: still version and audit policy changes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "routing_policy_id",
+    "schema_version",
+    "router_policy_version",
+    "default_budget_policy",
+    "escalation_rules",
+    "plane_tool_matrix",
+    "created_at"
+  ],
+  "properties": {
+    "routing_policy_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/uuidString"
+    },
+    "schema_version": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/semverString"
+    },
+    "router_policy_version": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "notes": { "type": "string" },
+    "default_budget_policy": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/budgetPolicyObject"
+    },
+    "cost_ceiling": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_tokens_per_trace": { "type": ["integer", "null"], "minimum": 0 },
+        "max_cost_usd_per_trace": { "type": ["number", "null"], "minimum": 0 },
+        "max_escalation_events_per_trace": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "escalation_rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rule_id", "when", "threshold", "action"],
+        "properties": {
+          "rule_id": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "when": {
+            "type": "string",
+            "enum": [
+              "conflict_open_count_gt",
+              "verification_fail_count_gt",
+              "unknown_blocking_count_gt",
+              "manual_flag",
+              "stale_evidence_present"
+            ]
+          },
+          "threshold": { "type": "number" },
+          "action": {
+            "type": "string",
+            "enum": ["ESCALATE", "REQUEST_HUMAN", "RECOMPRESS", "STOP"]
+          }
+        }
+      }
+    },
+    "executor_defaults": {
+      "type": "object",
+      "description": "Map task_type or plane to preferred executor (policy may override).",
+      "additionalProperties": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/executorEnum"
+      }
+    },
+    "plane_tool_matrix": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["plane", "allowed_tools", "side_effects"],
+        "properties": {
+          "plane": {
+            "type": "string",
+            "enum": [
+              "interaction",
+              "control",
+              "research",
+              "multimodal",
+              "coding",
+              "analysis_simulation",
+              "review_verification"
+            ]
+          },
+          "allowed_tools": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "side_effects": {
+            "type": "string",
+            "enum": ["none", "read_only", "write_repo", "write_artifacts", "network", "execute_code"]
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "cache_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "key_components": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "schema_version",
+              "inputs_hash",
+              "tool_version",
+              "model_id",
+              "artifact_refs"
+            ]
+          }
+        },
+        "persist_tier": {
+          "type": "string",
+          "enum": ["memory_only", "disk_allowed", "disabled"]
+        }
+      }
+    },
+    "created_at": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/iso8601Utc"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "assumption_profile_id": "RIGID_BLOCK_DRY_SLIDING_V1",
+  "assumption_overrides": { "fluid_id": null, "viscous_enabled": false },
+  "geometry": { "shape": "CUBE", "cube_side_m": 1.0 },
+  "block_material_id": "steel_7850",
+  "surface_material_id": "concrete_rough",
+  "fluid_id": null,
+  "applied_force_N": 40000.0,
+  "force_direction_assumption": "horizontal_in_plane",
+  "displacement_m": 1.0
+}

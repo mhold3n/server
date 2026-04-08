@@ -142,9 +142,18 @@ def create_openai_app(
 
         agent = registry[agent_name]
 
-        # Override temperature / max_tokens if the request supplies them
+        # Override temperature / max_tokens if the request supplies them.
+        # For local inference, never let the client raise max_tokens above the
+        # agent's configured ceiling; oversized generation windows can make the
+        # local runtime unstable on consumer hardware.
         temperature = body.temperature if body.temperature is not None else agent.config.temperature
-        max_tokens = body.max_tokens if body.max_tokens is not None else agent.config.max_tokens
+        agent_max_tokens = getattr(agent.config, "max_tokens", None)
+        if body.max_tokens is None:
+            max_tokens = agent_max_tokens
+        elif agent_max_tokens is None:
+            max_tokens = body.max_tokens
+        else:
+            max_tokens = min(body.max_tokens, agent_max_tokens)
 
         # Build a generate_fn wrapper that respects per-request overrides
         _gen = app.state.generate_fn

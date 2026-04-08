@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/escalation-packet.schema.json",
+  "title": "escalation_packet — expensive-model handoff",
+  "description": "For agents: narrow bundle for strategic_reviewer. References compressed state; never embed full histories.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "escalation_packet_id",
+    "schema_version",
+    "reason",
+    "unresolved_items",
+    "supporting_artifact_refs",
+    "compressed_state_ref",
+    "requested_by",
+    "created_at"
+  ],
+  "properties": {
+    "escalation_packet_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/uuidString"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "reason": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/escalationReasonEnum"
+    },
+    "unresolved_items": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "supporting_artifact_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "compressed_state_ref": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+    },
+    "requested_by": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "parent_verification_report_id": {
+      "anyOf": [
+        {
+          "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/uuidString"
+        },
+        { "type": "null" }
+      ]
+    },
+    "created_at": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/iso8601Utc"
+    }
+  }
+}

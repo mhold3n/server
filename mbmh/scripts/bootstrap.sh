@@ -2,6 +2,13 @@
 set -e
 
 echo "Bootstrapping environment..."
+echo "NOTE: MBMH now expects the repo-level conda env named 'server' (see /Users/maxholden/GitHub/server/environment.yml)." >&2
+echo "If you still want an mbmh-only venv, set MBMH_BOOTSTRAP_VENV=1 and rerun." >&2
+
+if [[ "${MBMH_BOOTSTRAP_VENV:-}" != "1" ]]; then
+  exit 2
+fi
+
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -U pip

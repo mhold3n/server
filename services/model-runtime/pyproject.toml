@@ -1,0 +1,23 @@
+[project]
+name = "model-runtime"
+version = "0.1.0"
+description = "Strict local inference /infer/* + /solve/mechanics (engineering-core)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.27",
+  "pydantic>=2",
+  "pyyaml>=6",
+  "jsonschema>=4.20",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
