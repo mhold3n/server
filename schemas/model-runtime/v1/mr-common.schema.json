@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/model-runtime/v1/mr-common.schema.json",
+  "title": "Model runtime v1 — shared definitions",
+  "description": "For agents: complements control-plane common; reuse uuid/artifact patterns via $ref where applicable.",
+  "$defs": {
+    "uuidString": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/uuidString"
+    },
+    "nonEmptyString": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "artifactRef": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+    }
+  }
+}

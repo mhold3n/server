@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/model-runtime/v1/verification_outcome.schema.json",
+  "title": "Verification outcome (deterministic gate)",
+  "description": "Top-level status is workflow gate; checks use PASS|FAIL only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "checks",
+    "blocking_issues",
+    "tolerance_results"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["PASS", "REWORK", "ESCALATE"]
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status", "details"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "REQUIRED_FIELDS_PRESENT",
+              "MASS_CONSISTENCY",
+              "FORCE_BALANCE",
+              "ENERGY_BALANCE",
+              "NONNEGATIVE_DISSIPATION"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PASS", "FAIL"]
+          },
+          "details": { "type": "string" }
+        }
+      }
+    },
+    "blocking_issues": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "tolerance_results": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    }
+  }
+}

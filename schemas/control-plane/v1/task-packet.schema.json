@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/task-packet.schema.json",
+  "title": "task_packet — specialist execution contract",
+  "description": "For agents: narrow work order for coding/multimodal/research/validation. Never carries full chat history — only artifact refs and compressed context_summary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_packet_id",
+    "schema_version",
+    "status",
+    "task_type",
+    "title",
+    "objective",
+    "input_artifact_refs",
+    "required_outputs",
+    "acceptance_criteria",
+    "budget_policy",
+    "routing_metadata",
+    "provenance",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "task_packet_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/uuidString"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "status": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/taskPacketStatusEnum"
+    },
+    "task_type": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/taskTypeEnum"
+    },
+    "title": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "objective": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "scope": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/scopeObject"
+    },
+    "input_artifact_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "context_summary": { "type": ["string", "null"] },
+    "constraints": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/requiredOutputSpec"
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "validation_requirements": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "priority": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/priorityEnum"
+    },
+    "budget_policy": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/budgetPolicyObject"
+    },
+    "routing_metadata": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/routingMetadataObject"
+    },
+    "provenance": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/provenanceObject"
+    },
+    "created_at": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/iso8601Utc"
+    },
+    "updated_at": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/iso8601Utc"
+    }
+  }
+}

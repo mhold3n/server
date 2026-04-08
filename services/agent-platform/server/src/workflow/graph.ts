@@ -8,7 +8,7 @@ import {
   searchKnowledgeBase,
 } from "../tools/wrkhrs.js"
 
-const WorkflowAnnotation = Annotation.Root({
+export const WorkflowAnnotation = Annotation.Root({
   messages: Annotation<ChatMessage[]>(),
   current_step: Annotation<string>(),
   tools_needed: Annotation<string[]>(),
@@ -20,7 +20,10 @@ const WorkflowAnnotation = Annotation.Root({
     default: () => ({}),
   }),
   workflow_config: Annotation<Record<string, unknown> | undefined>(),
-  escalation_count: Annotation<number>({ default: () => 0 }),
+  escalation_count: Annotation<number>({
+    reducer: (_left, right) => right,
+    default: () => 0,
+  }),
   api_brain_packet: Annotation<string | undefined>(),
   api_brain_output: Annotation<string | undefined>(),
   final_response: Annotation<string | undefined>(),
@@ -28,7 +31,7 @@ const WorkflowAnnotation = Annotation.Root({
 
 export type WorkflowStateType = typeof WorkflowAnnotation.State
 
-function analyzeRequest(state: WorkflowStateType): Partial<WorkflowStateType> {
+export function analyzeRequest(state: WorkflowStateType): Partial<WorkflowStateType> {
   let userMessage = ""
   for (const msg of state.messages) {
     if (msg.role === "user") {
@@ -61,7 +64,7 @@ function analyzeRequest(state: WorkflowStateType): Partial<WorkflowStateType> {
   }
 }
 
-function buildGatherContext(cfg: PlatformConfig) {
+export function buildGatherContext(cfg: PlatformConfig) {
   return async function gatherContext(
     state: WorkflowStateType,
   ): Promise<Partial<WorkflowStateType>> {
@@ -104,7 +107,7 @@ function buildGatherContext(cfg: PlatformConfig) {
   }
 }
 
-function shouldEscalateToApiBrain(
+export function shouldEscalateToApiBrain(
   cfg: PlatformConfig,
   state: WorkflowStateType,
 ): { escalate: boolean; reason: string } {
@@ -135,7 +138,7 @@ function shouldEscalateToApiBrain(
   return { escalate: hit, reason: hit ? "heuristic_trigger" : "no_trigger" }
 }
 
-function buildApiBrainPacket(state: WorkflowStateType): string {
+export function buildApiBrainPacket(state: WorkflowStateType): string {
   const messages = state.messages ?? []
   const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? ""
   const toolResults = state.tool_results ?? {}
@@ -154,7 +157,7 @@ function buildApiBrainPacket(state: WorkflowStateType): string {
   return JSON.stringify(packet, null, 2)
 }
 
-function buildGenerateResponse(llm: LLMManager) {
+export function buildGenerateResponse(llm: LLMManager) {
   return async function generateResponse(
     state: WorkflowStateType,
   ): Promise<Partial<WorkflowStateType>> {

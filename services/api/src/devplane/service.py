@@ -15,6 +15,7 @@ from .models import (
     PublishRequest,
     RunCompleteRequest,
     RunEventRequest,
+    CostLedgerEntry,
     RunLogEntry,
     RunPhase,
     RunRecord,
@@ -372,12 +373,18 @@ class DevPlaneService:
         run.files_changed.extend(request.files_changed)
         run.verification_results.extend(request.verification_results)
         run.artifacts.extend(request.artifacts)
+        run.cost_ledger.extend(request.cost_ledger)
         task.dossier.commands.extend(request.commands)
         task.dossier.files_changed = self._merge_file_changes(
             task.dossier.files_changed, request.files_changed
         )
         task.dossier.verification_results.extend(request.verification_results)
         task.dossier.artifacts.extend(request.artifacts)
+        task.dossier.cost_ledger.extend(request.cost_ledger)
+        # Mirror typed control-plane envelopes into dossier.typed_artifacts for orchestration queries.
+        for art in request.artifacts:
+            if art.artifact_id and art.artifact_type:
+                task.dossier.typed_artifacts.append(art.model_dump(mode="json"))
         run.updated_at = utc_now()
         task.updated_at = run.updated_at
         task.dossier.state = task.state
@@ -489,6 +496,26 @@ class DevPlaneService:
 
     def get_dossier(self, task_id: str) -> TaskDossier:
         return self.get_task(task_id).dossier
+
+    def append_cost_ledger(
+        self,
+        task_id: str,
+        *,
+        entry: CostLedgerEntry,
+        run_id: str | None = None,
+    ) -> TaskRecord:
+        """Append a cost ledger entry to the task dossier and optional run."""
+        task = self.get_task(task_id)
+        task.dossier.cost_ledger.append(entry)
+        task.updated_at = utc_now()
+        task.dossier.updated_at = task.updated_at
+        if run_id:
+            run = self.get_run(run_id)
+            run.cost_ledger.append(entry)
+            run.updated_at = task.updated_at
+            self.store.save_run(run)
+        self.store.save_task(task)
+        return task
 
     def _task_state_for_phase(self, phase: RunPhase) -> TaskState:
         mapping = {

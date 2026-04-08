@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Model-runtime v1 JSON Schemas; merged with control-plane registry for $ref resolution.",
+  "schemas": [
+    {
+      "id": "https://birtha.local/schemas/model-runtime/v1/mr-common.schema.json",
+      "path": "mr-common.schema.json",
+      "kind": "shared"
+    },
+    {
+      "id": "https://birtha.local/schemas/model-runtime/v1/orchestration_packet.schema.json",
+      "path": "orchestration_packet.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/model-runtime/v1/solve_mechanics_request_v1.schema.json",
+      "path": "solve_mechanics_request_v1.schema.json",
+      "kind": "contract"
+    }
+  ]
+}

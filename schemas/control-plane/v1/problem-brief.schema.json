@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/problem-brief.schema.json",
+  "title": "problem_brief — root engineering intent artifact",
+  "description": "For agents: canonical first artifact after intent capture. Persist standalone or as TypedArtifactRecord.payload when artifact_type=PROBLEM_BRIEF. Downstream planes consume this; do not duplicate prose — reference artifact refs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "problem_brief_id",
+    "schema_version",
+    "title",
+    "summary",
+    "system_purpose",
+    "engineering_objectives",
+    "required_deliverables",
+    "acceptance_tests",
+    "provenance",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "problem_brief_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/uuidString"
+    },
+    "schema_version": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/semverString"
+    },
+    "trace_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/traceId"
+    },
+    "title": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Compressed narrative for routing; not a substitute for structured fields below."
+    },
+    "system_purpose": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "scope": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/scopeObject"
+    },
+    "engineering_objectives": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "statement"],
+        "properties": {
+          "id": { "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString" },
+          "statement": { "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString" },
+          "priority": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/priorityEnum"
+          }
+        }
+      }
+    },
+    "operating_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "unit_system": {
+          "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/unitSystemEnum"
+        },
+        "notes": { "type": "string" },
+        "bounds": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name"],
+            "properties": {
+              "name": { "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString" },
+              "min": { "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/quantifiedScalar" },
+              "max": { "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/quantifiedScalar" },
+              "nominal": { "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/quantifiedScalar" }
+            }
+          }
+        }
+      }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "constraints": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "forbidden_actions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Hard deny list for tools and edits (e.g. no force-push to main)."
+    },
+    "required_deliverables": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description"],
+        "properties": {
+          "id": { "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString" },
+          "description": { "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString" },
+          "artifact_type_hint": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactTypeEnum"
+          }
+        }
+      }
+    },
+    "acceptance_tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "kind"],
+        "properties": {
+          "id": { "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString" },
+          "description": { "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString" },
+          "kind": {
+            "type": "string",
+            "enum": ["manual", "automated", "simulation", "inspection"]
+          },
+          "criteria_ref": {
+            "type": "string",
+            "description": "Optional pointer to test spec URI or artifact ref."
+          }
+        }
+      }
+    },
+    "evidence_expectations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["document", "drawing", "codebase", "standard", "measurement", "other"]
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "human_approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required_before_execution": { "type": "boolean", "default": false },
+        "gates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["gate_id"],
+            "properties": {
+              "gate_id": { "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString" },
+              "rationale": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_stage", "producer"],
+      "properties": {
+        "source_stage": { "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString" },
+        "producer": {
+          "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/producerObject"
+        },
+        "input_digest_sha256": {
+          "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/sha256Hex"
+        },
+        "parent_trace_id": { "type": ["string", "null"] },
+        "raw_intent_artifact_ref": {
+          "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+        }
+      }
+    },
+    "created_at": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/iso8601Utc"
+    },
+    "updated_at": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/iso8601Utc"
+    }
+  }
+}

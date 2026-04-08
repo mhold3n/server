@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Machine-readable manifest of control-plane v1 JSON Schemas (Draft 2020-12).",
+  "schemas": [
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/common.schema.json",
+      "path": "common.schema.json",
+      "kind": "shared"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/problem-brief.schema.json",
+      "path": "problem-brief.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/task-packet.schema.json",
+      "path": "task-packet.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/task-queue.schema.json",
+      "path": "task-queue.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/engineering-state.schema.json",
+      "path": "engineering-state.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/routing-policy.schema.json",
+      "path": "routing-policy.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/artifact-record.schema.json",
+      "path": "artifact-record.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/verification-report.schema.json",
+      "path": "verification-report.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/escalation-packet.schema.json",
+      "path": "escalation-packet.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/contract-error.schema.json",
+      "path": "contract-error.schema.json",
+      "kind": "error"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/control-plane.bundle.schema.json",
+      "path": "control-plane.bundle.schema.json",
+      "kind": "bundle"
+    }
+  ]
+}

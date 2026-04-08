@@ -12,6 +12,8 @@ orchestrated flows.
 | API chat / query                | `/api/ai/query`             | General chat, tool-assisted queries    | `wrkhrs_chat`             |
 | API task card workflow run      | `/api/ai/workflows/run`     | Code RAG, media fixups, sysadmin ops   | `wrkhrs_chat` (card-specified) |
 | DevPlane task execution (API)   | `/api/dev/tasks/{id}/resume`| DevPlane backend code task orchestration | `devplane_code_task` (planned) |
+| Control plane validation        | `POST /api/control-plane/validate/task-packet` | JSON Schema gate for task packets | API (`services/api`) |
+| Structure classify (router)     | `POST /api/control-plane/structure/classify` | `services/structure` classifier via API bridge | API (`services/api`) |
 
 ## Internal Orchestrator (LangGraph) Surface
 
@@ -20,6 +22,7 @@ service at `settings.agent_platform_url`:
 
 - `POST /v1/workflows/execute`
   - `workflow_name="wrkhrs_chat"` for chat and task card workflows.
+  - `workflow_name="engineering_workflow"` for **unified control-plane** runs: requires `input_data.task_packet`, calls `ORCHESTRATOR_API_URL` (or `DEVPLANE_PUBLIC_BASE_URL`) for structure classify, optional `task_id` dossier hydrate and `run_id` verification persistence via `POST /api/dev/runs/{run_id}/events`.
   - `workflow_name="rag_retrieval"` for low-level RAG utility flows.
   - `workflow_name="devplane_code_task"` (future) for DevPlane backend runs.
 
@@ -29,6 +32,7 @@ The following entrypoints are considered legacy and should not be used for
 new integrations:
 
 - Python router `/route` in `services/router/src/router.py` (**returns 410 Gone**; tool-only adapter now)
+- Direct `services/structure` imports from non-API callers for **ingress** (use `POST /api/control-plane/structure/classify` or in-process graph nodes that share the same contract)
 - Direct AI stack prompts via `/llm/prompt`
 - MBMH control-plane style `/v1/chat/completions` (non-provider usage)
 

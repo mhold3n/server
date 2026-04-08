@@ -12,6 +12,10 @@ export interface PlatformConfig {
   apiBrainMaxEscalationsPerTask: number
   apiBrainProvider: "anthropic" | "openai"
   apiBrainModel: string
+  /** Base URL of FastAPI control plane (for structure classify + contract gates). */
+  orchestratorApiUrl: string
+  /** Python model-runtime (`/infer/*`, `/solve/*`); empty disables physics harness HTTP. */
+  modelRuntimeBaseUrl: string
 }
 
 export function loadConfig(): PlatformConfig {
@@ -35,5 +39,9 @@ export function loadConfig(): PlatformConfig {
       ((process.env.API_BRAIN_PROVIDER as "anthropic" | "openai" | undefined) ??
         "anthropic"),
     apiBrainModel: process.env.API_BRAIN_MODEL ?? "",
+    orchestratorApiUrl: (
+      process.env.ORCHESTRATOR_API_URL ?? process.env.DEVPLANE_PUBLIC_BASE_URL ?? ""
+    ).replace(/\/$/, ""),
+    modelRuntimeBaseUrl: (process.env.MODEL_RUNTIME_URL ?? "").replace(/\/$/, ""),
   }
 }

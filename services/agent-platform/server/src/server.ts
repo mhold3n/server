@@ -22,6 +22,8 @@ import { LLMManager } from "./llm/manager.js"
 import { createWrkhrsOmaTools } from "./oma/wrkhrs-tools.js"
 import type { ChatMessage } from "./tools/wrkhrs.js"
 import { createChatWorkflow } from "./workflow/graph.js"
+import { createEngineeringWorkflow } from "./workflow/engineering-graph.js"
+import { createPhysicsHarnessWorkflow } from "./workflow/physics-harness-graph.js"
 import {
   completeWorkflowRun,
   createWorkflowRun,
@@ -32,6 +34,8 @@ import {
 
 const WORKFLOW_NAMES = [
   "wrkhrs_chat",
+  "engineering_workflow",
+  "engineering_physics_v1",
   "rag_retrieval",
   "tool_execution",
   "github_integration",
@@ -85,6 +89,8 @@ export function buildServer() {
   }
 
   const chatWorkflow = createChatWorkflow(cfg, llm, callApiBrain)
+  const engineeringWorkflow = createEngineeringWorkflow(cfg, llm, callApiBrain)
+  const physicsHarnessWorkflow = createPhysicsHarnessWorkflow(cfg)
 
   const app = Fastify({ logger: true })
 
@@ -241,6 +247,87 @@ export function buildServer() {
             packet: (result as any).api_brain_packet,
             output: (result as any).api_brain_output,
           },
+        }
+      } else if (workflowName === "engineering_workflow") {
+        const tp = inputData.task_packet
+        if (!tp || typeof tp !== "object") {
+          return reply.status(422).send({
+            error_code: "TASK_PACKET_REQUIRED",
+            contract_type: "TASK_PACKET",
+            schema_id:
+              "https://birtha.local/schemas/control-plane/v1/task-packet.schema.json",
+            details: [
+              {
+                path: "/input_data/task_packet",
+                message: "engineering_workflow requires input_data.task_packet",
+                keyword: "required",
+              },
+            ],
+          })
+        }
+        const pkt = tp as Record<string, unknown>
+        const messages = (inputData.messages as ChatMessage[]) ?? [
+          { role: "user", content: String(pkt.objective ?? "") },
+        ]
+        const workflowConfig =
+          (body.workflow_config as Record<string, unknown> | undefined) ?? undefined
+        const requiredToolResults =
+          (inputData.required_tool_results as unknown[] | undefined) ?? undefined
+        const result = await engineeringWorkflow.invoke({
+          messages,
+          current_step: "intake",
+          tools_needed: [],
+          tool_results: {},
+          workflow_config: workflowConfig,
+          required_tool_results: requiredToolResults,
+          run_id: inputData.run_id as string | undefined,
+          task_id: inputData.task_id as string | undefined,
+          dossier_id: inputData.dossier_id as string | undefined,
+          task_packet: pkt,
+          cost_ledger_entries: [],
+        } as any)
+        output = {
+          final_response: result.final_response,
+          tool_results: result.tool_results,
+          referential_state: {
+            run_id: result.run_id,
+            task_id: result.task_id,
+            dossier_id: result.dossier_id,
+            active_task_packet_id: result.active_task_packet_id,
+            dossier_snapshot: (result as { dossier_snapshot?: unknown })
+              .dossier_snapshot,
+          },
+          structure_route: result.structure_route,
+          verification_outcome: result.verification_outcome,
+          verification_report: result.verification_report,
+          cost_ledger_entries: result.cost_ledger_entries,
+          api_brain: {
+            escalation_count: (result as any).escalation_count ?? 0,
+            packet: (result as any).api_brain_packet,
+            output: (result as any).api_brain_output,
+          },
+        }
+      } else if (workflowName === "engineering_physics_v1") {
+        const prompt = String(inputData.user_prompt ?? inputData.prompt ?? "")
+        if (!prompt.trim()) {
+          return reply.status(422).send({
+            detail: "engineering_physics_v1 requires input_data.user_prompt",
+          })
+        }
+        const result = await physicsHarnessWorkflow.invoke({
+          user_prompt: prompt,
+          current_step: "intake",
+        })
+        const syn = result.synthesis_infer as { text?: string } | undefined
+        output = {
+          root_packet_id: result.root_packet_id,
+          intake_infer: result.intake_infer,
+          solve_request: result.solve_request,
+          engineering_report: result.engineering_report,
+          verification_outcome: result.verification_outcome,
+          synthesis_infer: result.synthesis_infer,
+          harness_error: result.harness_error,
+          final_response: syn?.text ?? result.harness_error ?? "",
         }
       } else if (workflowName === "rag_retrieval") {
         const { searchKnowledgeBase } = await import("./tools/wrkhrs.js")

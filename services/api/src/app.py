@@ -34,6 +34,7 @@ from .policies.middleware import policy_enforcer
 from .routes import ai as ai_router
 from .routes import apps as apps_router
 from .routes import automation as automation_router
+from .routes import control_plane as control_plane_router
 from .routes import devplane as devplane_router
 from .routes import search as search_router
 from .routes import torrents as torrents_router
@@ -169,6 +170,7 @@ app.include_router(search_router.router)
 app.include_router(apps_router.router)
 app.include_router(ai_router.router)
 app.include_router(automation_router.router)
+app.include_router(control_plane_router.router)
 app.include_router(devplane_router.router)
 
 # Static UI (small SPA panels)

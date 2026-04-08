@@ -7,7 +7,7 @@ from enum import StrEnum
 from typing import Any
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 def utc_now() -> datetime:
@@ -229,13 +229,90 @@ class VerificationBlock(BaseModel):
     required: bool = True
 
 
-class ArtifactRecord(BaseModel):
-    """Artifacts emitted by the task or run."""
+class CostLedgerEntry(BaseModel):
+    """Per-node / per-call token and cost accounting for budget-aware routing."""
 
-    name: str
-    path: str
-    kind: str
+    component: str = Field(..., min_length=1)
+    model: str | None = None
+    tokens_in: int | None = Field(default=None, ge=0)
+    tokens_out: int | None = Field(default=None, ge=0)
+    cost_usd: float | None = Field(default=None, ge=0)
+    duration_ms: int | None = Field(default=None, ge=0)
+    run_id: str | None = None
+    task_packet_id: str | None = None
+    timestamp: datetime = Field(default_factory=utc_now)
+
+
+class MigrationStatus(StrEnum):
+    """Legacy artifact disposition (migration gate)."""
+
+    MIGRATED = "migrated"
+    LEGACY_READONLY = "legacy_readonly"
+    REJECTED = "rejected"
+
+
+class LegacyMigrationMeta(BaseModel):
+    """Required when persisting or reading legacy-shaped artifacts."""
+
+    original_type: str = Field(..., min_length=1)
+    original_version: str = Field(..., min_length=1)
+    migration_status: MigrationStatus
+    target_schema_id: str = Field(..., min_length=1)
+    target_schema_version: str = Field(..., min_length=1)
+    migration_timestamp: datetime = Field(default_factory=utc_now)
+    migration_tool: str = Field(..., min_length=1)
+    migration_tool_version: str = Field(..., min_length=1)
+    lossy_migration: bool = False
+    review_needed: bool = False
+
+
+class ArtifactRecord(BaseModel):
+    """Artifacts emitted by the task or run.
+
+    Either **legacy** shape (name, path, kind) or **typed** control-plane envelope
+    (artifact_id, artifact_type, schema_version, ...). Typed writes on canonical paths
+    must pass JSON Schema + lifecycle gates.
+    """
+
+    name: str = ""
+    path: str = ""
+    kind: str = ""
     description: str | None = None
+    # --- Typed control-plane fields (optional) ---
+    artifact_id: str | None = None
+    artifact_type: str | None = None
+    schema_version: str | None = None
+    artifact_status: str | None = None
+    validation_state: str | None = None
+    producer: dict[str, Any] | None = None
+    input_artifact_refs: list[str] = Field(default_factory=list)
+    supersedes: list[str] = Field(default_factory=list)
+    invalid_reasons: list[str] = Field(default_factory=list)
+    payload: dict[str, Any] | None = None
+    migration: LegacyMigrationMeta | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    @model_validator(mode="after")
+    def _legacy_or_typed(self) -> ArtifactRecord:
+        typed = self.artifact_id is not None
+        legacy = bool(self.name and self.path and self.kind)
+        if typed:
+            if not self.artifact_type or not self.schema_version:
+                raise ValueError(
+                    "typed artifact requires artifact_type and schema_version",
+                )
+        elif legacy:
+            return self
+        elif not self.name and not self.path and not self.kind and not typed:
+            raise ValueError(
+                "ArtifactRecord requires legacy fields (name, path, kind) or typed artifact_id",
+            )
+        else:
+            raise ValueError(
+                "ArtifactRecord: incomplete legacy or typed fields",
+            )
+        return self
 
 
 class PublishResult(BaseModel):
@@ -295,6 +372,14 @@ class TaskDossier(BaseModel):
     files_changed: list[FileChangeRecord] = Field(default_factory=list)
     verification_results: list[VerificationResult] = Field(default_factory=list)
     artifacts: list[ArtifactRecord] = Field(default_factory=list)
+    typed_artifacts: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Serialized TypedArtifactRecord payloads for control-plane registry.",
+    )
+    cost_ledger: list[CostLedgerEntry] = Field(
+        default_factory=list,
+        description="Cumulative token/cost usage for budget-aware routing.",
+    )
     escalation_packets: list[dict[str, Any]] = Field(
         default_factory=list,
         description=(
@@ -347,6 +432,7 @@ class RunRecord(BaseModel):
     files_changed: list[FileChangeRecord] = Field(default_factory=list)
     verification_results: list[VerificationResult] = Field(default_factory=list)
     artifacts: list[ArtifactRecord] = Field(default_factory=list)
+    cost_ledger: list[CostLedgerEntry] = Field(default_factory=list)
     publish_result: PublishResult | None = None
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
@@ -383,6 +469,7 @@ class RunEventRequest(BaseModel):
     files_changed: list[FileChangeRecord] = Field(default_factory=list)
     verification_results: list[VerificationResult] = Field(default_factory=list)
     artifacts: list[ArtifactRecord] = Field(default_factory=list)
+    cost_ledger: list[CostLedgerEntry] = Field(default_factory=list)
 
 
 class RunCompleteRequest(BaseModel):

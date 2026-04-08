@@ -1,0 +1,54 @@
+{
+  "problem_brief_id": "8b7e4f2e-1c3a-4b5d-9e6f-0a1b2c3d4e5f",
+  "schema_version": "1.0.0",
+  "trace_id": "trace-local-001",
+  "title": "Kinematic timing transmission — phase and thermal study",
+  "summary": "Investigate phase accuracy, backlash sensitivity, thermal growth, manufacturability.",
+  "system_purpose": "Define analysis scope and deliverables for a timing drive subsystem.",
+  "scope": {
+    "included": ["belt/pulley kinematics", "thermal expansion effects on center distance"],
+    "excluded": ["full NVH model", "supplier quotes"]
+  },
+  "engineering_objectives": [
+    {
+      "id": "obj-1",
+      "statement": "Quantify phase error vs temperature and tension.",
+      "priority": "HIGH"
+    }
+  ],
+  "operating_envelope": {
+    "unit_system": "SI",
+    "bounds": [
+      {
+        "name": "ambient_temperature",
+        "min": { "value": -20, "unit": "celsius" },
+        "max": { "value": 85, "unit": "celsius" }
+      }
+    ]
+  },
+  "assumptions": ["Lumped thermal model acceptable for first pass."],
+  "constraints": ["Must not exceed OEM envelope for center distance adjustment."],
+  "forbidden_actions": ["No deletion of safety-critical tests without human approval."],
+  "required_deliverables": [
+    {
+      "id": "del-1",
+      "description": "Parameterized kinematic model inputs for solver",
+      "artifact_type_hint": "ANALYSIS_PLAN"
+    }
+  ],
+  "acceptance_tests": [
+    {
+      "id": "acc-1",
+      "description": "Phase error budget documented with sources",
+      "kind": "manual"
+    }
+  ],
+  "evidence_expectations": [{ "kind": "drawing", "notes": "Timing layout PDF if available." }],
+  "human_approval": { "required_before_execution": false, "gates": [] },
+  "provenance": {
+    "source_stage": "intent_capture",
+    "producer": { "component": "local_orchestrator", "executor": "local_general_model" }
+  },
+  "created_at": "2026-04-07T12:00:00Z",
+  "updated_at": "2026-04-07T12:00:00Z"
+}

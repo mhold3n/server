@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process"
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
-import { describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { buildServer } from "./server.js"
 
 interface DevplaneRunSnapshot {
@@ -44,6 +44,110 @@ describe("agent-platform server", () => {
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.body) as { workflows: string[] }
     expect(body.workflows).toContain("wrkhrs_chat")
+    expect(body.workflows).toContain("engineering_physics_v1")
+  })
+
+  describe("engineering_physics_v1", () => {
+    beforeEach(() => {
+      process.env.MODEL_RUNTIME_URL = "http://127.0.0.1:8765"
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (url: string | URL) => {
+          const u = typeof url === "string" ? url : url.toString()
+          if (u.includes("infer/general") && u.includes("workflow_root=true")) {
+            return new Response(
+              JSON.stringify({
+                usage: { prompt_tokens: 1, completion_tokens: 1, latency_ms: 1 },
+                model_id_resolved: "Qwen/Qwen3-4B",
+                structured_output: {
+                  block_material_id: "steel_7850",
+                  surface_material_id: "concrete_rough",
+                  applied_force_N: 40000,
+                  cube_side_m: 1.0,
+                },
+              }),
+              { status: 200 },
+            )
+          }
+          if (u.includes("solve/mechanics")) {
+            const rep = {
+              schema_version: "1.0.0",
+              problem_brief: { summary: "t" },
+              assumptions: ["a"],
+              inputs: {},
+              derived_quantities: {
+                mass_kg: 7850,
+                kinetic_friction_coefficient: 0.45,
+                friction_force_N: 1,
+              },
+              results: {
+                acceleration_mps2: 1,
+                normal_force_N: 1,
+                reaction_force_N: 1,
+                resisting_force_N: 1,
+                heat_dissipation_J: 1,
+              },
+              energy_balance: {
+                work_in_J: 1,
+                kinetic_energy_change_J: 0,
+                dissipated_J: 1,
+                residual_J: 0,
+              },
+              model_limits: [],
+              comparison_case: {},
+            }
+            return new Response(JSON.stringify(rep), { status: 200 })
+          }
+          if (u.includes("solve/verify")) {
+            return new Response(
+              JSON.stringify({
+                status: "PASS",
+                checks: [],
+                blocking_issues: [],
+                tolerance_results: {},
+              }),
+              { status: 200 },
+            )
+          }
+          if (u.includes("workflow_root=false")) {
+            return new Response(
+              JSON.stringify({
+                usage: { prompt_tokens: 1, completion_tokens: 1, latency_ms: 1 },
+                model_id_resolved: "Qwen/Qwen3-4B",
+                text: "Done.",
+              }),
+              { status: 200 },
+            )
+          }
+          return new Response("nf", { status: 404 })
+        }),
+      )
+    })
+    afterEach(() => {
+      vi.unstubAllGlobals()
+      delete process.env.MODEL_RUNTIME_URL
+    })
+
+    it("POST /v1/workflows/execute completes with mocked model-runtime", async () => {
+      process.env.LLM_BACKEND = "mock"
+      const app = buildServer()
+      const res = await app.inject({
+        method: "POST",
+        url: "/v1/workflows/execute",
+        payload: {
+          workflow_name: "engineering_physics_v1",
+          input_data: { user_prompt: "Sliding steel cube" },
+        },
+      })
+      expect(res.statusCode).toBe(200)
+      const body = JSON.parse(res.body) as {
+        status: string
+        result: { verification_outcome?: { status: string }; final_response?: string }
+      }
+      expect(body.status).toBe("completed")
+      expect(body.result?.verification_outcome?.status).toBe("PASS")
+      expect(body.result?.final_response).toContain("Done")
+    })
   })
 
   it("POST /v1/workflows/execute wrkhrs_chat returns completed + envelope", async () => {

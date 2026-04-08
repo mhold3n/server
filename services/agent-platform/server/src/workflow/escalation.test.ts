@@ -17,6 +17,8 @@ function baseCfg(): PlatformConfig {
     apiBrainMaxEscalationsPerTask: 1,
     apiBrainProvider: "openai",
     apiBrainModel: "brain-model",
+    orchestratorApiUrl: "",
+    modelRuntimeBaseUrl: "",
   }
 }
 

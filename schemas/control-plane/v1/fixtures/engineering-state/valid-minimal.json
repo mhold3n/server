@@ -1,0 +1,13 @@
+{
+  "engineering_state_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "schema_version": "1.0.0",
+  "problem_brief_ref": "artifact://problem_brief/8b7e4f2e",
+  "evidence_bundle_refs": ["artifact://research_digest/r1"],
+  "variables": [],
+  "constraints": [],
+  "unknowns": [],
+  "conflicts": [],
+  "staleness": [],
+  "merge_policy_version": "merge-v1-default",
+  "updated_at": "2026-04-07T12:00:00Z"
+}
