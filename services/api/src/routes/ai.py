@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from ..config import get_worker_settings, settings
+from ..control_plane.engineering import should_auto_promote_engineering
 from ..orchestrator_client import OrchestratorClient
 from ..workflows import (
     build_tool_args_for_card,
@@ -174,17 +175,29 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
         "required_tool_results": required_tool_results,
     }
     workflow_config: dict[str, Any] = {}
+    workflow_name = "wrkhrs_chat"
     if req.provider:
         workflow_config["provider_preference"] = req.provider
     if req.tools:
         # Tools passed by the caller are treated as required intent for orchestration.
         # The LangGraph workflow decides how to satisfy them.
         workflow_config["strict_tools"] = True
+    promotion = should_auto_promote_engineering(
+        prompt=req.prompt,
+        messages=messages,
+        context=req.context,
+    )
+    if promotion["promote"]:
+        workflow_name = "engineering_workflow"
+        workflow_config["strict_engineering"] = True
+        workflow_config["engineering_promotion_reason"] = promotion["reason"]
+        if req.context and req.context.get("engineering_session_id"):
+            input_data["engineering_session_id"] = req.context["engineering_session_id"]
 
     async with OrchestratorClient() as client:
         try:
             result = await client.execute_workflow(
-                workflow_name="wrkhrs_chat",
+                workflow_name=workflow_name,
                 input_data=input_data,
                 workflow_config=workflow_config or None,
             )

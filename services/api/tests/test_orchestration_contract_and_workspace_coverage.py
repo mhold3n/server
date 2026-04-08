@@ -26,6 +26,7 @@ from src.devplane.models import (
     WorkspaceRecord,
 )
 from src.devplane.workspace import WorkspaceManager
+from src.control_plane.engineering import intake_engineering_request
 
 
 def _git(cmd: list[str], cwd: Path) -> None:
@@ -117,12 +118,31 @@ def test_workspace_manager_detect_file_changes_and_task_packet(tmp_path: Path) -
         request=req,
         dossier=dossier,
     )
-    artifact = mgr.write_task_packet(workspace=workspace, task=task)
+    engineering_bundle = intake_engineering_request(
+        user_input=req.user_intent,
+        task_plan=TaskPlan(
+            project_id=project.project_id,
+            objective="Implement a governed repository change",
+            constraints=["Only touch the isolated workspace"],
+            acceptance_criteria=["Verification commands pass"],
+            implementation_outline=["Inspect the repo", "Apply the minimal change"],
+            verification_plan=["git status --short"],
+        ).model_dump(mode="json"),
+        project_context={"project_id": project.project_id, "project_name": project.name},
+    )
+    artifacts = mgr.write_task_packet(
+        workspace=workspace,
+        task=task,
+        engineering_bundle=engineering_bundle,
+    )
+    artifact = next(item for item in artifacts if item.kind == "task_packet")
     packet_path = Path(artifact.path)
     body = json.loads(packet_path.read_text(encoding="utf-8"))
     assert body["task_id"] == "t1"
     assert body["project_id"] == "p1"
     assert body["dossier_path"].endswith("dossier.json")
+    assert body["problem_brief_ref"].startswith("artifact://problem_brief/")
+    assert body["engineering_state_ref"].startswith("artifact://engineering_state/")
 
 
 def test_workspace_manager_create_workspace_returns_existing_dir_without_git(tmp_path: Path) -> None:
@@ -364,4 +384,3 @@ async def test_execution_client_errors_and_success(tmp_path: Path) -> None:
         with pytest.raises(ExecutionBackendError) as exc2:
             await client.get_run("backend-1")
         assert exc2.value.status_code == 404
-

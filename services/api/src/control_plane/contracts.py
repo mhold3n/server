@@ -82,6 +82,15 @@ class Scope(BaseModel):
     excluded: list[str] = Field(default_factory=list)
 
 
+class CodeGuidance(BaseModel):
+    summary: str | None = None
+    file_scope: Scope | None = None
+    target_paths: list[str] = Field(default_factory=list)
+    implementation_hints: list[str] = Field(default_factory=list)
+    acceptance_focus: list[str] = Field(default_factory=list)
+    forbidden_actions: list[str] = Field(default_factory=list)
+
+
 class RequiredOutputSpec(BaseModel):
     artifact_type: ArtifactType
     schema_version: str = Field(..., pattern=r"^[0-9]+\.[0-9]+\.[0-9]+$")
@@ -120,6 +129,7 @@ class TaskPacket(BaseModel):
     context_summary: str | None = None
     constraints: list[str] = Field(default_factory=list)
     assumptions: list[str] = Field(default_factory=list)
+    code_guidance: CodeGuidance | None = None
     required_outputs: list[RequiredOutputSpec] = Field(..., min_length=1)
     acceptance_criteria: list[str] = Field(..., min_length=1)
     validation_requirements: list[str] = Field(default_factory=list)
@@ -292,16 +302,51 @@ class OperatingEnvelope(BaseModel):
     bounds: list[EnvelopeBound] = Field(default_factory=list)
 
 
+class SystemBoundary(BaseModel):
+    system_of_interest: str = Field(..., min_length=1)
+    system_level: str | None = None
+    included: list[str] = Field(default_factory=list)
+    excluded: list[str] = Field(default_factory=list)
+    interfaces: list[str] = Field(default_factory=list)
+
+
+class ProblemStatement(BaseModel):
+    need: str = Field(..., min_length=1)
+    why: str | None = None
+    non_goals: list[str] = Field(default_factory=list)
+
+
 class EngineeringObjective(BaseModel):
     id: str = Field(..., min_length=1)
     statement: str = Field(..., min_length=1)
     priority: Priority | None = None
 
 
+class OperationalScenario(BaseModel):
+    scenario_id: str = Field(..., min_length=1)
+    description: str = Field(..., min_length=1)
+    operating_conditions: list[str] = Field(default_factory=list)
+    environment: str | None = None
+    usage_mode: str | None = None
+
+
+class OperationalContext(BaseModel):
+    unit_system: str | None = None
+    notes: str | None = None
+    scenarios: list[OperationalScenario] = Field(..., min_length=1)
+
+
 class RequiredDeliverable(BaseModel):
     id: str = Field(..., min_length=1)
     description: str = Field(..., min_length=1)
     artifact_type_hint: ArtifactType | None = None
+
+
+class DeliverableSpec(BaseModel):
+    deliverable_id: str = Field(..., min_length=1)
+    description: str = Field(..., min_length=1)
+    artifact_type_hint: ArtifactType | None = None
+    acceptance_criteria: list[str] = Field(default_factory=list)
 
 
 class AcceptanceTestSpec(BaseModel):
@@ -320,6 +365,97 @@ class EvidenceExpectation(BaseModel):
         pattern=r"^(document|drawing|codebase|standard|measurement|other)$",
     )
     notes: str | None = None
+
+
+class EvidenceInput(BaseModel):
+    input_id: str = Field(..., min_length=1)
+    kind: str = Field(
+        ...,
+        pattern=r"^(document|drawing|codebase|standard|measurement|artifact|other)$",
+    )
+    description: str = Field(..., min_length=1)
+    ref: str | None = None
+    required: bool = True
+
+
+class SuccessCriterion(BaseModel):
+    criterion_id: str = Field(..., min_length=1)
+    statement: str = Field(..., min_length=1)
+    metric: str = Field(..., min_length=1)
+    target: QuantifiedScalar | None = None
+    minimum: QuantifiedScalar | None = None
+    maximum: QuantifiedScalar | None = None
+    verification_method: str = Field(
+        ...,
+        pattern=r"^(analytical|simulation|test|inspection|review|other)$",
+    )
+    expected_evidence: str = Field(
+        ...,
+        pattern=r"^(document|drawing|codebase|standard|measurement|simulation|other)$",
+    )
+    priority: Priority | None = None
+    rationale: str | None = None
+
+    @model_validator(mode="after")
+    def _require_quantitative_target(self) -> SuccessCriterion:
+        if self.target is None and self.minimum is None and self.maximum is None:
+            raise ValueError(
+                "success_criteria require at least one of target, minimum, or maximum",
+            )
+        return self
+
+
+class ConstraintProvenance(BaseModel):
+    source_type: str = Field(
+        ...,
+        pattern=r"^(user|task_packet|task_plan|document|drawing|standard|codebase|system_policy|other)$",
+    )
+    source_ref: str | None = None
+    rationale: str | None = None
+
+
+class ConstraintSpec(BaseModel):
+    constraint_id: str = Field(..., min_length=1)
+    statement: str = Field(..., min_length=1)
+    kind: str | None = Field(
+        default=None,
+        pattern=r"^(physical|geometric|regulatory|economic|software|workflow|other)$",
+    )
+    metric: str | None = None
+    target: QuantifiedScalar | None = None
+    minimum: QuantifiedScalar | None = None
+    maximum: QuantifiedScalar | None = None
+    provenance: ConstraintProvenance
+
+
+class AssumptionSpec(BaseModel):
+    assumption_id: str = Field(..., min_length=1)
+    statement: str = Field(..., min_length=1)
+    validation_intent: str = Field(..., min_length=1)
+    impact_if_false: str = Field(..., min_length=1)
+    blocking_if_unvalidated: bool = False
+    status: str = Field(
+        default="assumed",
+        pattern=r"^(assumed|validated|waived)$",
+    )
+
+
+class DesignVariableSpec(BaseModel):
+    variable_id: str = Field(..., min_length=1)
+    description: str = Field(..., min_length=1)
+    category: str = Field(
+        ...,
+        pattern=r"^(response|controllable|noise|fixed)$",
+    )
+    unit: str | None = None
+    bounds: dict[str, float] | None = None
+
+
+class DesignSpace(BaseModel):
+    responses: list[DesignVariableSpec] = Field(..., min_length=1)
+    controllable_variables: list[DesignVariableSpec] = Field(default_factory=list)
+    noise_factors: list[DesignVariableSpec] = Field(default_factory=list)
+    fixed_parameters: list[DesignVariableSpec] = Field(default_factory=list)
 
 
 class HumanApprovalGate(BaseModel):
@@ -351,20 +487,88 @@ class ProblemBrief(BaseModel):
     trace_id: str | None = Field(default=None, min_length=8)
     title: str = Field(..., min_length=1)
     summary: str = ""
-    system_purpose: str = Field(..., min_length=1)
+    system_boundary: SystemBoundary
+    problem_statement: ProblemStatement
+    operational_context: OperationalContext
+    success_criteria: list[SuccessCriterion] = Field(..., min_length=1)
+    constraints: list[ConstraintSpec] = Field(..., min_length=1)
+    assumptions: list[AssumptionSpec] = Field(default_factory=list)
+    design_space: DesignSpace
+    deliverables: list[DeliverableSpec] = Field(..., min_length=1)
+    inputs: list[EvidenceInput] = Field(..., min_length=1)
+    code_guidance: CodeGuidance | None = None
+    system_purpose: str | None = None
     scope: Scope | None = None
-    engineering_objectives: list[EngineeringObjective] = Field(..., min_length=1)
+    engineering_objectives: list[EngineeringObjective] = Field(default_factory=list)
     operating_envelope: OperatingEnvelope | None = None
-    assumptions: list[str] = Field(default_factory=list)
-    constraints: list[str] = Field(default_factory=list)
     forbidden_actions: list[str] = Field(default_factory=list)
-    required_deliverables: list[RequiredDeliverable] = Field(..., min_length=1)
-    acceptance_tests: list[AcceptanceTestSpec] = Field(..., min_length=1)
+    required_deliverables: list[RequiredDeliverable] = Field(default_factory=list)
+    acceptance_tests: list[AcceptanceTestSpec] = Field(default_factory=list)
     evidence_expectations: list[EvidenceExpectation] = Field(default_factory=list)
     human_approval: HumanApprovalBlock | None = None
     provenance: ProblemBriefProvenance
     created_at: datetime
     updated_at: datetime
+
+    @model_validator(mode="after")
+    def _backfill_legacy_views(self) -> ProblemBrief:
+        if self.system_purpose is None:
+            self.system_purpose = self.problem_statement.need
+        if self.scope is None:
+            self.scope = Scope(
+                included=list(self.system_boundary.included),
+                excluded=list(self.system_boundary.excluded),
+            )
+        if not self.engineering_objectives:
+            self.engineering_objectives = [
+                EngineeringObjective(
+                    id=criterion.criterion_id,
+                    statement=criterion.statement,
+                    priority=criterion.priority,
+                )
+                for criterion in self.success_criteria
+            ]
+        if not self.required_deliverables:
+            self.required_deliverables = [
+                RequiredDeliverable(
+                    id=deliverable.deliverable_id,
+                    description=deliverable.description,
+                    artifact_type_hint=deliverable.artifact_type_hint,
+                )
+                for deliverable in self.deliverables
+            ]
+        if not self.acceptance_tests:
+            self.acceptance_tests = [
+                AcceptanceTestSpec(
+                    id=criterion.criterion_id,
+                    description=criterion.statement,
+                    kind=(
+                        "simulation"
+                        if criterion.verification_method == "simulation"
+                        else "inspection"
+                        if criterion.verification_method == "inspection"
+                        else "automated"
+                    ),
+                    criteria_ref=criterion.criterion_id,
+                )
+                for criterion in self.success_criteria
+            ]
+        if not self.evidence_expectations:
+            seen: set[str] = set()
+            for criterion in self.success_criteria:
+                if criterion.expected_evidence in seen:
+                    continue
+                seen.add(criterion.expected_evidence)
+                self.evidence_expectations.append(
+                    EvidenceExpectation(
+                        kind=criterion.expected_evidence
+                        if criterion.expected_evidence
+                        in {"document", "drawing", "codebase", "standard", "measurement", "other"}
+                        else "other",
+                        notes=f"Derived from success criterion {criterion.criterion_id}",
+                    )
+                )
+        return self
 
 
 # --- task_queue (see task-queue.schema.json) ---
@@ -420,6 +624,10 @@ class TaskQueue(BaseModel):
 class StateVariable(BaseModel):
     id: str = Field(..., min_length=1)
     description: str = ""
+    role: str | None = Field(
+        default=None,
+        pattern=r"^(response|controllable|noise|fixed)$",
+    )
     unit: str | None = None
     bounds: dict[str, float] | None = None
     source_artifact_ref: str | None = Field(default=None, pattern=r"^artifact://.+")
@@ -433,6 +641,8 @@ class StateConstraint(BaseModel):
         pattern=r"^(physical|geometric|regulatory|economic|other)$",
     )
     source_artifact_ref: str | None = Field(default=None, pattern=r"^artifact://.+")
+    provenance_source: str | None = None
+    rationale: str | None = None
 
 
 class UnknownItem(BaseModel):
@@ -470,6 +680,60 @@ class StalenessRecord(BaseModel):
     reason: str = ""
 
 
+class NormalizedBoundary(BaseModel):
+    system_of_interest: str = Field(..., min_length=1)
+    system_level: str | None = None
+    included: list[str] = Field(default_factory=list)
+    excluded: list[str] = Field(default_factory=list)
+    interfaces: list[str] = Field(default_factory=list)
+
+
+class ObjectiveRecord(BaseModel):
+    objective_id: str = Field(..., min_length=1)
+    statement: str = Field(..., min_length=1)
+    metric: str = Field(..., min_length=1)
+    verification_method: str = Field(..., min_length=1)
+    priority: Priority | None = None
+
+
+class VerificationIntentRow(BaseModel):
+    criterion_id: str = Field(..., min_length=1)
+    verification_method: str = Field(..., min_length=1)
+    expected_evidence: str = Field(..., min_length=1)
+    target_summary: str = Field(..., min_length=1)
+    status: str = Field(default="planned", pattern=r"^(planned|blocked|satisfied)$")
+
+
+class AssumptionStatusRecord(BaseModel):
+    assumption_id: str = Field(..., min_length=1)
+    statement: str = Field(..., min_length=1)
+    validation_intent: str = Field(..., min_length=1)
+    status: str = Field(..., pattern=r"^(pending|validated|waived)$")
+    blocking: bool = False
+    impact_if_false: str = Field(..., min_length=1)
+
+
+class OpenIssueRecord(BaseModel):
+    issue_id: str = Field(..., min_length=1)
+    description: str = Field(..., min_length=1)
+    category: str = Field(
+        ...,
+        pattern=r"^(missing_information|assumption|approval|conflict|staleness|other)$",
+    )
+    blocking: bool = False
+    source_artifact_refs: list[str] = Field(default_factory=list)
+
+
+class RequiredGateRecord(BaseModel):
+    gate_id: str = Field(..., min_length=1)
+    gate_type: str = Field(
+        ...,
+        pattern=r"^(clarification|approval|verification|conflict|staleness)$",
+    )
+    status: str = Field(..., pattern=r"^(PENDING|SATISFIED|WAIVED)$")
+    rationale: str = Field(..., min_length=1)
+
+
 class EngineeringState(BaseModel):
     """Canonical merged technical state for routing and decomposition."""
 
@@ -478,14 +742,21 @@ class EngineeringState(BaseModel):
     trace_id: str | None = Field(default=None, min_length=8)
     problem_brief_ref: str = Field(..., min_length=1, pattern=r"^artifact://.+")
     evidence_bundle_refs: list[str] = Field(default_factory=list)
+    normalized_boundary: NormalizedBoundary
+    objectives: list[ObjectiveRecord] = Field(..., min_length=1)
+    verification_intent: list[VerificationIntentRow] = Field(..., min_length=1)
     variables: list[StateVariable] = Field(default_factory=list)
     constraints: list[StateConstraint] = Field(default_factory=list)
     boundary_conditions: list[str] = Field(default_factory=list)
     unknowns: list[UnknownItem] = Field(default_factory=list)
+    assumption_status: list[AssumptionStatusRecord] = Field(default_factory=list)
+    open_issues: list[OpenIssueRecord] = Field(default_factory=list)
     mechanism_candidates: list[MechanismCandidate] = Field(default_factory=list)
     analysis_pathways: list[AnalysisPathway] = Field(default_factory=list)
     conflicts: list[ConflictRecord] = Field(default_factory=list)
     staleness: list[StalenessRecord] = Field(default_factory=list)
+    required_gates: list[RequiredGateRecord] = Field(default_factory=list)
+    ready_for_task_decomposition: bool
     merge_policy_version: str = Field(..., min_length=1)
     summary_for_routing: str | None = None
     updated_at: datetime

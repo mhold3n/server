@@ -176,6 +176,59 @@ describe("agent-platform server", () => {
     expect(body.result?.final_response).toBeDefined()
   })
 
+  it("POST /v1/workflows/execute engineering_workflow bridges to clarification without task_packet", async () => {
+    process.env.LLM_BACKEND = "mock"
+    process.env.ORCHESTRATOR_API_URL = "http://127.0.0.1:7777"
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string | URL) => {
+        const u = typeof url === "string" ? url : url.toString()
+        if (u.includes("/api/control-plane/engineering/intake")) {
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              status: "CLARIFICATION_REQUIRED",
+              engineering_session_id: "sess-1",
+              problem_brief: { title: "Draft" },
+              problem_brief_ref: "artifact://problem_brief/draft-1",
+              clarification_questions: ["What system is in scope?"],
+            }),
+            { status: 200 },
+          )
+        }
+        return new Response("nf", { status: 404 })
+      }),
+    )
+
+    const app = buildServer()
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/workflows/execute",
+      payload: {
+        workflow_name: "engineering_workflow",
+        input_data: {
+          messages: [
+            {
+              role: "user",
+              content:
+                "Design an engineering workflow that refactors multiple files and adds deterministic verification gates.",
+            },
+          ],
+        },
+      },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = JSON.parse(res.body) as {
+      status: string
+      result: { final_response?: string; referential_state?: { engineering_session_id?: string } }
+    }
+    expect(body.status).toBe("completed")
+    expect(body.result?.final_response).toContain("Engineering clarification required")
+    expect(body.result?.referential_state?.engineering_session_id).toBe("sess-1")
+    vi.unstubAllGlobals()
+    delete process.env.ORCHESTRATOR_API_URL
+  })
+
   it("GET /v1/workflows/:name/schema returns JSON", async () => {
     const app = buildServer()
     const res = await app.inject({

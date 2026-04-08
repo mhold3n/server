@@ -11,9 +11,19 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from ..control_plane.engineering import (
+    build_escalation_packet,
+    build_task_queue,
+    derive_engineering_state,
+    intake_engineering_request,
+)
 from ..control_plane.errors import ContractValidationError
 from ..control_plane.structure_bridge import classify_user_input
-from ..control_plane.validation import validate_task_packet_json
+from ..control_plane.validation import (
+    validate_engineering_state_json,
+    validate_problem_brief_json,
+    validate_task_packet_json,
+)
 
 router = APIRouter(prefix="/api/control-plane", tags=["control-plane"])
 
@@ -27,6 +37,32 @@ class ValidateTaskPacketRequest(BaseModel):
 class StructureClassifyRequest(BaseModel):
     user_input: str = Field(..., min_length=1)
     request_id: str | None = None
+
+
+class EngineeringIntakeRequest(BaseModel):
+    user_input: str | None = None
+    messages: list[dict[str, Any]] | None = None
+    context: dict[str, Any] | None = None
+    session_id: str | None = None
+    task_packet: dict[str, Any] | None = None
+    task_plan: dict[str, Any] | None = None
+    project_context: dict[str, Any] | None = None
+
+
+class DeriveEngineeringStateRequest(BaseModel):
+    problem_brief: dict[str, Any]
+
+
+class BuildTaskQueueRequest(BaseModel):
+    problem_brief: dict[str, Any]
+    engineering_state: dict[str, Any]
+
+
+class BuildEscalationRequest(BaseModel):
+    engineering_state: dict[str, Any]
+    verification_report: dict[str, Any]
+    problem_brief_ref: str = Field(..., min_length=1)
+    verification_report_ref: str | None = None
 
 
 @router.post("/validate/task-packet")
@@ -56,3 +92,75 @@ async def structure_classify(req: StructureClassifyRequest) -> dict[str, Any]:
             },
         ) from e
     return {"ok": True, "task_spec": spec}
+
+
+@router.post("/engineering/intake")
+async def engineering_intake(req: EngineeringIntakeRequest) -> dict[str, Any]:
+    """Bridge chat/task-plan/task-packet inputs into governing engineering artifacts."""
+    try:
+        return intake_engineering_request(
+            user_input=req.user_input,
+            messages=req.messages,
+            context=req.context,
+            session_id=req.session_id,
+            task_packet=req.task_packet,
+            task_plan=req.task_plan,
+            project_context=req.project_context,
+        )
+    except ContractValidationError as e:
+        raise HTTPException(status_code=422, detail=e.to_envelope()) from e
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail={"message": str(e)}) from e
+
+
+@router.post("/engineering/derive-state")
+async def engineering_derive_state(req: DeriveEngineeringStateRequest) -> dict[str, Any]:
+    """Derive a deterministic engineering_state from a valid problem_brief."""
+    try:
+        problem_brief = validate_problem_brief_json(req.problem_brief)
+        state = derive_engineering_state(problem_brief)
+    except ContractValidationError as e:
+        raise HTTPException(status_code=422, detail=e.to_envelope()) from e
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail={"message": str(e)}) from e
+    return {"ok": True, "engineering_state": state.model_dump(mode="json", exclude_none=True)}
+
+
+@router.post("/engineering/build-task-queue")
+async def engineering_build_task_queue(req: BuildTaskQueueRequest) -> dict[str, Any]:
+    """Build a governed task_queue only when engineering_state is ready."""
+    try:
+        problem_brief = validate_problem_brief_json(req.problem_brief)
+        engineering_state = validate_engineering_state_json(req.engineering_state)
+        task_queue, task_packets = build_task_queue(
+            problem_brief=problem_brief,
+            engineering_state=engineering_state,
+        )
+    except ContractValidationError as e:
+        raise HTTPException(status_code=422, detail=e.to_envelope()) from e
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail={"message": str(e)}) from e
+    return {
+        "ok": True,
+        "task_queue": task_queue.model_dump(mode="json", exclude_none=True),
+        "task_packets": [
+            packet.model_dump(mode="json", exclude_none=True) for packet in task_packets
+        ],
+    }
+
+
+@router.post("/engineering/build-escalation")
+async def engineering_build_escalation(req: BuildEscalationRequest) -> dict[str, Any]:
+    """Create a typed escalation packet from verification/conflict artifacts."""
+    try:
+        escalation = build_escalation_packet(
+            engineering_state=req.engineering_state,
+            verification_report=req.verification_report,
+            problem_brief_ref=req.problem_brief_ref,
+            verification_report_ref=req.verification_report_ref,
+        )
+    except ContractValidationError as e:
+        raise HTTPException(status_code=422, detail=e.to_envelope()) from e
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail={"message": str(e)}) from e
+    return {"ok": True, "escalation_packet": escalation.model_dump(mode="json", exclude_none=True)}

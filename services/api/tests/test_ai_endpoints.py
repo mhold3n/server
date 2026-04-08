@@ -49,6 +49,36 @@ def test_ai_query_via_ai_stack():
         assert resp.json()["workflow_name"] == "wrkhrs_chat"
 
 
+def test_ai_query_auto_promotes_complex_engineering_prompt():
+    client = TestClient(app)
+    with respx.mock(assert_all_called=True) as mock:
+        route = mock.post(f"{settings.agent_platform_url}/v1/workflows/execute").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "status": "completed",
+                    "workflow_id": "weng",
+                    "workflow_name": "engineering_workflow",
+                    "duration": 0.01,
+                    "result": {
+                        "final_response": "Engineering clarification required",
+                        "clarification_questions": ["What system is in scope?"],
+                    },
+                },
+            )
+        )
+        resp = client.post(
+            "/api/ai/query",
+            json={
+                "prompt": "Design an engineering workflow that refactors multiple files and adds deterministic verification gates for the orchestrator.",
+            },
+        )
+        assert resp.status_code == 200
+        payload = json.loads(route.calls[0].request.content.decode("utf-8"))
+        assert payload["workflow_name"] == "engineering_workflow"
+        assert payload["workflow_config"]["strict_engineering"] is True
+
+
 def test_workflows_code_rag_calls_router():
     client = TestClient(app)
     with respx.mock(assert_all_called=True) as mock:

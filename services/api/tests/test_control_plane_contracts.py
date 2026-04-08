@@ -17,6 +17,12 @@ from src.control_plane.contracts import (
     TaskPacketStatus,
     TaskType,
 )
+from src.control_plane.engineering import (
+    build_task_queue,
+    derive_engineering_state,
+    intake_engineering_request,
+    reset_engineering_sessions_for_tests,
+)
 from src.control_plane.errors import ContractValidationError
 from src.control_plane.lifecycle import (
     assert_artifact_transition,
@@ -32,6 +38,12 @@ from src.control_plane.validation import (
     validate_typed_artifact_json,
 )
 from src.devplane.models import ArtifactRecord, CostLedgerEntry
+
+
+def _load_fixture(relative_path: str) -> dict:
+    root = Path(__file__).resolve().parents[3]
+    path = root / relative_path
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _minimal_task_packet_dict() -> dict:
@@ -166,46 +178,40 @@ def test_structure_classify_route(test_client: TestClient) -> None:
 
 
 def test_golden_fixture_file_matches_schema() -> None:
-    root = Path(__file__).resolve().parents[3]
-    fix = root / "schemas" / "control-plane" / "v1" / "fixtures" / "task-packet" / "valid-minimal.json"
-    data = json.loads(fix.read_text(encoding="utf-8"))
+    data = _load_fixture(
+        "schemas/control-plane/v1/fixtures/task-packet/valid-minimal.json"
+    )
     validate_task_packet_json(data)
 
 
 def test_golden_problem_brief_round_trip() -> None:
-    root = Path(__file__).resolve().parents[3]
-    fix = root / "schemas" / "control-plane" / "v1" / "fixtures" / "problem-brief" / "valid-minimal.json"
-    data = json.loads(fix.read_text(encoding="utf-8"))
+    data = _load_fixture(
+        "schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
+    )
     pb = validate_problem_brief_json(data)
-    assert pb.title
+    assert pb.problem_statement.need
+    assert pb.design_space.responses[0].variable_id
 
 
 def test_golden_task_queue_round_trip() -> None:
-    root = Path(__file__).resolve().parents[3]
-    fix = root / "schemas" / "control-plane" / "v1" / "fixtures" / "task-queue" / "valid-minimal.json"
-    data = json.loads(fix.read_text(encoding="utf-8"))
+    data = _load_fixture(
+        "schemas/control-plane/v1/fixtures/task-queue/valid-minimal.json"
+    )
     validate_task_queue_json(data)
 
 
 def test_golden_engineering_state_round_trip() -> None:
-    root = Path(__file__).resolve().parents[3]
-    fix = (
-        root
-        / "schemas"
-        / "control-plane"
-        / "v1"
-        / "fixtures"
-        / "engineering-state"
-        / "valid-minimal.json"
+    data = _load_fixture(
+        "schemas/control-plane/v1/fixtures/engineering-state/valid-minimal.json"
     )
-    data = json.loads(fix.read_text(encoding="utf-8"))
-    validate_engineering_state_json(data)
+    state = validate_engineering_state_json(data)
+    assert state.ready_for_task_decomposition is True
 
 
 def test_golden_routing_policy_round_trip() -> None:
-    root = Path(__file__).resolve().parents[3]
-    fix = root / "schemas" / "control-plane" / "v1" / "fixtures" / "routing-policy" / "valid-minimal.json"
-    data = json.loads(fix.read_text(encoding="utf-8"))
+    data = _load_fixture(
+        "schemas/control-plane/v1/fixtures/routing-policy/valid-minimal.json"
+    )
     validate_routing_policy_json(data)
 
 
@@ -217,6 +223,157 @@ def test_cost_ledger_entry_model() -> None:
 def test_schema_registry_loads() -> None:
     store = get_schema_store()
     assert "https://birtha.local/schemas/control-plane/v1/task-packet.schema.json" in store
+
+
+def test_problem_brief_rejects_missing_engineering_fields() -> None:
+    data = _load_fixture(
+        "schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
+    )
+    del data["success_criteria"]
+    with pytest.raises(ContractValidationError):
+        validate_problem_brief_json(data)
+
+
+def test_engineering_state_derivation_is_idempotent_and_permutation_invariant() -> None:
+    data = _load_fixture(
+        "schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
+    )
+    pb = validate_problem_brief_json(data)
+    derived_a = derive_engineering_state(pb).model_dump(mode="json")
+    derived_b = derive_engineering_state(pb).model_dump(mode="json")
+    for payload in (derived_a, derived_b):
+        payload.pop("engineering_state_id", None)
+        payload.pop("updated_at", None)
+    assert derived_a == derived_b
+
+    permuted = _load_fixture(
+        "schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
+    )
+    permuted["constraints"] = list(reversed(permuted["constraints"]))
+    permuted["inputs"] = list(reversed(permuted["inputs"]))
+    permuted["deliverables"] = list(reversed(permuted["deliverables"]))
+    state_a = derive_engineering_state(validate_problem_brief_json(data)).model_dump(mode="json")
+    state_b = derive_engineering_state(validate_problem_brief_json(permuted)).model_dump(mode="json")
+    assert sorted(item["id"] for item in state_a["constraints"]) == sorted(
+        item["id"] for item in state_b["constraints"]
+    )
+    assert sorted(item["issue_id"] for item in state_a["open_issues"]) == sorted(
+        item["issue_id"] for item in state_b["open_issues"]
+    )
+    assert sorted(item["criterion_id"] for item in state_a["verification_intent"]) == sorted(
+        item["criterion_id"] for item in state_b["verification_intent"]
+    )
+
+
+def test_task_queue_generation_requires_ready_engineering_state() -> None:
+    problem_brief = validate_problem_brief_json(
+        _load_fixture("schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
+    )
+    state = derive_engineering_state(problem_brief).model_copy(
+        update={"ready_for_task_decomposition": False}
+    )
+    with pytest.raises(ValueError):
+        build_task_queue(problem_brief=problem_brief, engineering_state=state)
+
+
+def test_control_plane_engineering_intake_route_requires_clarification(
+    test_client: TestClient,
+) -> None:
+    reset_engineering_sessions_for_tests()
+    response = test_client.post(
+        "/api/control-plane/engineering/intake",
+        json={"user_input": "Help with the repo"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "CLARIFICATION_REQUIRED"
+    assert body["clarification_questions"]
+
+
+def test_control_plane_engineering_intake_route_builds_governing_artifacts(
+    test_client: TestClient,
+) -> None:
+    reset_engineering_sessions_for_tests()
+    response = test_client.post(
+        "/api/control-plane/engineering/intake",
+        json={
+            "user_input": "Implement a governed repository change",
+            "task_plan": {
+                "project_id": "proj_x",
+                "objective": "Implement a governed repository change",
+                "constraints": ["Only touch the isolated workspace"],
+                "acceptance_criteria": ["Verification commands pass"],
+                "implementation_outline": ["Update the targeted files"],
+                "verification_plan": ["pytest -q"],
+                "delegation_hints": [],
+                "work_items": [],
+                "verification_blocks": [],
+                "planned_branch": "birtha/example"
+            },
+            "project_context": {
+                "project_id": "proj_x",
+                "project_name": "Example Repo"
+            }
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "READY"
+    assert body["problem_brief_valid"] is True
+    assert body["ready_for_task_decomposition"] is True
+    assert body["task_queue"]
+    assert body["task_packets"]
+
+
+def test_control_plane_build_task_queue_route_blocks_when_state_not_ready(
+    test_client: TestClient,
+) -> None:
+    problem_brief = validate_problem_brief_json(
+        _load_fixture("schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
+    )
+    engineering_state = derive_engineering_state(problem_brief).model_dump(mode="json")
+    engineering_state["ready_for_task_decomposition"] = False
+    response = test_client.post(
+        "/api/control-plane/engineering/build-task-queue",
+        json={
+            "problem_brief": problem_brief.model_dump(mode="json", exclude_none=True),
+            "engineering_state": engineering_state,
+        },
+    )
+    assert response.status_code == 409
+
+
+def test_control_plane_build_escalation_route_returns_typed_packet(
+    test_client: TestClient,
+) -> None:
+    engineering_state = derive_engineering_state(
+        validate_problem_brief_json(
+            _load_fixture("schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
+        )
+    ).model_dump(mode="json")
+    response = test_client.post(
+        "/api/control-plane/engineering/build-escalation",
+        json={
+            "engineering_state": engineering_state,
+            "problem_brief_ref": engineering_state["problem_brief_ref"],
+            "verification_report": {
+                "verification_report_id": str(uuid4()),
+                "schema_version": "1.0.0",
+                "outcome": "ESCALATE",
+                "blocking_findings": [
+                    {
+                        "code": "ENGINEERING_GATE_BLOCKED",
+                        "severity": "high",
+                        "artifact_ref": engineering_state["problem_brief_ref"],
+                    }
+                ],
+                "validated_artifact_refs": [engineering_state["problem_brief_ref"]],
+            },
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["escalation_packet"]["reason"] in {"AMBIGUITY", "CONFLICT", "HIGH_IMPACT_REVIEW"}
 
 
 def test_validate_typed_artifact_envelope() -> None:

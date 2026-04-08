@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process"
-import { mkdir, writeFile } from "node:fs/promises"
+import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { OpenMultiAgent } from "@server/open-multi-agent"
 import type { PlatformConfig } from "../config.js"
@@ -33,6 +33,24 @@ interface ExecutionAccumulator {
   commands: CommandExecution[]
   verificationResults: VerificationResult[]
   artifacts: ArtifactRecord[]
+}
+
+interface ActiveTaskPacket {
+  objective?: string
+  constraints?: string[]
+  acceptance_criteria?: string[]
+  context_summary?: string
+  code_guidance?: {
+    implementation_hints?: string[]
+    target_paths?: string[]
+  }
+}
+
+interface TaskPacketManifest {
+  active_task_packet?: ActiveTaskPacket
+  active_task_packet_ref?: string
+  problem_brief_ref?: string
+  engineering_state_ref?: string
 }
 
 export async function executeBackendRun(
@@ -138,6 +156,8 @@ async function executeImplementationPhase(
   const onCommand = (command: CommandExecution): void => {
     accumulator.commands.push(command)
   }
+  const manifest = await readTaskPacketManifest(record.request.task_packet_path)
+  const effectiveObjective = manifest?.active_task_packet?.objective ?? record.request.plan.objective
 
   if (shouldUseMockExecutor(options.defaultProvider, options.cfg.llmBackend)) {
     const notePath = path.join(workspaceRoot, ".birtha", "mock-agent-notes.md")
@@ -149,7 +169,7 @@ async function executeImplementationPhase(
         "",
         "The agent-platform run executed in mock mode.",
         "",
-        `Objective: ${record.request.plan.objective}`,
+        `Objective: ${effectiveObjective}`,
       ].join("\n"),
       "utf8",
     )
@@ -200,17 +220,17 @@ async function executeImplementationPhase(
   })
 
   const result = await orchestration.runTasks(team, [
-    {
-      title: "Implement requested changes",
-      description: buildImplementationTask(record.request),
-      assignee: "lead_executor",
-    },
-    {
-      title: "Review workspace readiness",
-      description: buildReviewTask(record.request),
-      assignee: "reviewer",
-      dependsOn: ["Implement requested changes"],
-    },
+      {
+        title: "Implement requested changes",
+        description: buildImplementationTask(record.request, manifest),
+        assignee: "lead_executor",
+      },
+      {
+        title: "Review workspace readiness",
+        description: buildReviewTask(record.request, manifest),
+        assignee: "reviewer",
+        dependsOn: ["Implement requested changes"],
+      },
   ])
 
   const summaryPath = path.join(workspaceRoot, ".birtha", "agent-platform-output.md")
@@ -517,27 +537,51 @@ function buildLeadSystemPrompt(workspaceRoot: string): string {
 
 function buildReviewerSystemPrompt(workspaceRoot: string): string {
   return [
-    "You are a reviewer for an internal dev-plane run.",
+    "You are the non-authoritative reviewer for an internal dev-plane run.",
     `You may inspect only this workspace: ${workspaceRoot}`,
     "Do not edit files unless absolutely necessary; prefer reporting risks and readiness.",
     "Do not publish or push changes.",
   ].join(" ")
 }
 
-function buildImplementationTask(request: DevPlaneRunCreatePayload): string {
+function buildImplementationTask(
+  request: DevPlaneRunCreatePayload,
+  manifest?: TaskPacketManifest,
+): string {
+  const activeTaskPacket = manifest?.active_task_packet
+  const objective = activeTaskPacket?.objective ?? request.plan.objective
+  const constraints =
+    activeTaskPacket?.constraints && activeTaskPacket.constraints.length > 0
+      ? activeTaskPacket.constraints
+      : request.plan.constraints
+  const acceptanceCriteria =
+    activeTaskPacket?.acceptance_criteria && activeTaskPacket.acceptance_criteria.length > 0
+      ? activeTaskPacket.acceptance_criteria
+      : request.plan.acceptance_criteria
+  const implementationHints =
+    activeTaskPacket?.code_guidance?.implementation_hints &&
+    activeTaskPacket.code_guidance.implementation_hints.length > 0
+      ? activeTaskPacket.code_guidance.implementation_hints
+      : request.plan.implementation_outline
   return [
-    `Objective: ${request.plan.objective}`,
-    request.plan.constraints.length > 0
-      ? `Constraints:\n- ${request.plan.constraints.join("\n- ")}`
+    `Objective: ${objective}`,
+    activeTaskPacket?.context_summary
+      ? `Task packet context:\n${activeTaskPacket.context_summary}`
+      : "",
+    constraints.length > 0
+      ? `Constraints:\n- ${constraints.join("\n- ")}`
       : "Constraints: none provided.",
-    request.plan.acceptance_criteria.length > 0
-      ? `Acceptance criteria:\n- ${request.plan.acceptance_criteria.join("\n- ")}`
+    acceptanceCriteria.length > 0
+      ? `Acceptance criteria:\n- ${acceptanceCriteria.join("\n- ")}`
       : "Acceptance criteria: satisfy the task packet and preserve workspace safety.",
     request.plan.delegation_hints.length > 0
       ? `Delegation hints:\n- ${request.plan.delegation_hints.join("\n- ")}`
       : "Delegation hints: keep implementation ownership with the lead executor.",
-    request.plan.implementation_outline.length > 0
-      ? `Implementation outline:\n- ${request.plan.implementation_outline.join("\n- ")}`
+    implementationHints.length > 0
+      ? `Implementation outline:\n- ${implementationHints.join("\n- ")}`
+      : "",
+    manifest?.active_task_packet_ref
+      ? `Active governed task packet: ${manifest.active_task_packet_ref}`
       : "",
     "Use workspace_git_status before and after meaningful edits.",
     "Leave the branch ready for deterministic verification by the control plane.",
@@ -546,11 +590,18 @@ function buildImplementationTask(request: DevPlaneRunCreatePayload): string {
     .join("\n\n")
 }
 
-function buildReviewTask(request: DevPlaneRunCreatePayload): string {
+function buildReviewTask(
+  request: DevPlaneRunCreatePayload,
+  manifest?: TaskPacketManifest,
+): string {
+  const objective = manifest?.active_task_packet?.objective ?? request.plan.objective
   return [
-    `Review the workspace for task objective: ${request.plan.objective}`,
+    `Review the workspace for task objective: ${objective}`,
     "Confirm whether the current state appears ready for deterministic verification and publish handoff.",
     "Summarize any remaining risk, missing tests, or suspicious file changes.",
+    manifest?.active_task_packet_ref
+      ? `Active governed task packet: ${manifest.active_task_packet_ref}`
+      : "",
     request.task_packet_path
       ? `Task packet path: ${request.task_packet_path}`
       : "",
@@ -574,6 +625,18 @@ function excerpt(value: string): string | undefined {
     return value
   }
   return `${value.slice(0, MAX_EXCERPT_CHARS)}\n...<truncated>`
+}
+
+async function readTaskPacketManifest(
+  taskPacketPath: string | null | undefined,
+): Promise<TaskPacketManifest | undefined> {
+  if (!taskPacketPath) return undefined
+  try {
+    const raw = await readFile(taskPacketPath, "utf8")
+    return JSON.parse(raw) as TaskPacketManifest
+  } catch {
+    return undefined
+  }
 }
 
 function isCancelRequested(runId: string): boolean {

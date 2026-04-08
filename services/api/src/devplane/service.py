@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import uuid4
 
+from ..control_plane.engineering import intake_engineering_request
 from .models import (
     ArtifactRecord,
     ClarificationAnswer,
@@ -254,7 +255,36 @@ class DevPlaneService:
 
         task.state = TaskState.PLANNING
         task.updated_at = utc_now()
-        artifact = self.workspace_manager.write_task_packet(workspace=workspace, task=task)
+        engineering_bundle = intake_engineering_request(
+            user_input=task.request.user_intent,
+            context={
+                "target_paths": [
+                    patch.file_path for patch in (task.patch_plan.patches if task.patch_plan else [])
+                ],
+            },
+            task_plan=task.plan.model_dump(mode="json") if task.plan else None,
+            project_context={
+                "project_id": project.project_id,
+                "project_name": project.name,
+            },
+        )
+        if not engineering_bundle.get("problem_brief_valid"):
+            prompts = engineering_bundle.get("clarification_questions", [])
+            detail = "; ".join(prompts) if prompts else "Problem brief is incomplete."
+            raise DevPlaneError(
+                f"Task cannot launch until strict engineering clarification is complete: {detail}",
+                status_code=409,
+            )
+        if not engineering_bundle.get("ready_for_task_decomposition"):
+            raise DevPlaneError(
+                "Task cannot launch because engineering_state is not ready for task decomposition",
+                status_code=409,
+            )
+        artifacts = self.workspace_manager.write_task_packet(
+            workspace=workspace,
+            task=task,
+            engineering_bundle=engineering_bundle,
+        )
         run_id = str(uuid4())
         run = RunRecord(
             run_id=run_id,
@@ -264,20 +294,27 @@ class DevPlaneService:
             workspace=workspace,
             execution_mode=request.execution_mode,
             agent_session_id=request.agent_session_id,
-            artifacts=[artifact],
+            artifacts=artifacts,
             commands=commands,
             logs=[
                 RunLogEntry(
                     phase=RunPhase.PLANNING,
-                    message="Workspace provisioned and task packet written",
-                    details={"workspace_path": workspace.worktree_path},
+                    message="Workspace provisioned and engineering-governed task packet written",
+                    details={
+                        "workspace_path": workspace.worktree_path,
+                        "problem_brief_ref": engineering_bundle.get("problem_brief_ref"),
+                        "engineering_state_ref": engineering_bundle.get("engineering_state_ref"),
+                    },
                 )
             ],
         )
         task.current_run_id = run_id
         task.dossier.workspace = workspace
         task.dossier.run_ids.append(run_id)
-        task.dossier.artifacts.append(artifact)
+        task.dossier.artifacts.extend(artifacts)
+        for artifact in artifacts:
+            if artifact.artifact_id and artifact.artifact_type:
+                task.dossier.typed_artifacts.append(artifact.model_dump(mode="json"))
         task.dossier.commands.extend(commands)
         task.dossier.logs.extend(run.logs)
         task.dossier.state = task.state

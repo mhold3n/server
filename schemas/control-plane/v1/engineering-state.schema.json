@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://birtha.local/schemas/control-plane/v1/engineering-state.schema.json",
   "title": "engineering_state — canonical merged technical state",
-  "description": "For agents: system-of-record for variables, evidence links, conflicts, and staleness. Merge rules are versioned via merge_policy_version; do not fork silently — record branches as separate state artifacts.",
+  "description": "For agents: system-of-record for normalized engineering boundary, variables, verification intent, open issues, conflicts, and gates. Task decomposition must be blocked until ready_for_task_decomposition=true.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -10,11 +10,19 @@
     "schema_version",
     "problem_brief_ref",
     "evidence_bundle_refs",
+    "normalized_boundary",
+    "objectives",
+    "verification_intent",
     "variables",
     "constraints",
+    "boundary_conditions",
     "unknowns",
+    "assumption_status",
+    "open_issues",
     "conflicts",
     "staleness",
+    "required_gates",
+    "ready_for_task_decomposition",
     "merge_policy_version",
     "updated_at"
   ],
@@ -33,9 +41,91 @@
     },
     "evidence_bundle_refs": {
       "type": "array",
-      "description": "Merged pointers to research_digest, document_extract, codebase_map, etc.",
       "items": {
         "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "normalized_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system_of_interest"],
+      "properties": {
+        "system_of_interest": {
+          "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+        },
+        "system_level": {
+          "type": ["string", "null"]
+        },
+        "included": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "excluded": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "interfaces": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "objectives": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["objective_id", "statement", "metric", "verification_method"],
+        "properties": {
+          "objective_id": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "statement": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "metric": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "verification_method": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "priority": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/priorityEnum"
+          }
+        }
+      }
+    },
+    "verification_intent": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "criterion_id",
+          "verification_method",
+          "expected_evidence",
+          "target_summary"
+        ],
+        "properties": {
+          "criterion_id": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "verification_method": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "expected_evidence": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "target_summary": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["planned", "blocked", "satisfied"]
+          }
+        }
       }
     },
     "variables": {
@@ -49,9 +139,13 @@
             "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
           },
           "description": { "type": "string" },
-          "unit": { "type": "string" },
+          "role": {
+            "type": ["string", "null"],
+            "enum": ["response", "controllable", "noise", "fixed", null]
+          },
+          "unit": { "type": ["string", "null"] },
           "bounds": {
-            "type": "object",
+            "type": ["object", "null"],
             "additionalProperties": false,
             "properties": {
               "min": { "type": "number" },
@@ -81,8 +175,8 @@
           },
           "statement": { "type": "string" },
           "kind": {
-            "type": "string",
-            "enum": ["physical", "geometric", "regulatory", "economic", "other"]
+            "type": ["string", "null"],
+            "enum": ["physical", "geometric", "regulatory", "economic", "other", null]
           },
           "source_artifact_ref": {
             "anyOf": [
@@ -91,6 +185,12 @@
               },
               { "type": "null" }
             ]
+          },
+          "provenance_source": {
+            "type": ["string", "null"]
+          },
+          "rationale": {
+            "type": ["string", "null"]
           }
         }
       }
@@ -114,6 +214,66 @@
         }
       }
     },
+    "assumption_status": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "assumption_id",
+          "statement",
+          "validation_intent",
+          "status",
+          "impact_if_false"
+        ],
+        "properties": {
+          "assumption_id": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "statement": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "validation_intent": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "validated", "waived"]
+          },
+          "blocking": { "type": "boolean" },
+          "impact_if_false": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          }
+        }
+      }
+    },
+    "open_issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["issue_id", "description", "category"],
+        "properties": {
+          "issue_id": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "description": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["missing_information", "assumption", "approval", "conflict", "staleness", "other"]
+          },
+          "blocking": { "type": "boolean" },
+          "source_artifact_refs": {
+            "type": "array",
+            "items": {
+              "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+            }
+          }
+        }
+      }
+    },
     "mechanism_candidates": {
       "type": "array",
       "items": {
@@ -125,7 +285,7 @@
             "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
           },
           "name": { "type": "string" },
-          "notes": { "type": "string" }
+          "notes": { "type": ["string", "null"] }
         }
       }
     },
@@ -155,8 +315,8 @@
           },
           "description": { "type": "string" },
           "severity": {
-            "type": "string",
-            "enum": ["low", "medium", "high", "critical"]
+            "type": ["string", "null"],
+            "enum": ["low", "medium", "high", "critical", null]
           },
           "involved_artifact_refs": {
             "type": "array",
@@ -169,7 +329,7 @@
             "type": "string",
             "enum": ["open", "escalated", "resolved", "waived"]
           },
-          "resolution_notes": { "type": "string" }
+          "resolution_notes": { "type": ["string", "null"] }
         }
       }
     },
@@ -190,6 +350,33 @@
           "reason": { "type": "string" }
         }
       }
+    },
+    "required_gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["gate_id", "gate_type", "status", "rationale"],
+        "properties": {
+          "gate_id": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "gate_type": {
+            "type": "string",
+            "enum": ["clarification", "approval", "verification", "conflict", "staleness"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "SATISFIED", "WAIVED"]
+          },
+          "rationale": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          }
+        }
+      }
+    },
+    "ready_for_task_decomposition": {
+      "type": "boolean"
     },
     "merge_policy_version": {
       "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"

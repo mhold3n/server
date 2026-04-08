@@ -4,46 +4,138 @@
   "trace_id": "trace-local-001",
   "title": "Kinematic timing transmission — phase and thermal study",
   "summary": "Investigate phase accuracy, backlash sensitivity, thermal growth, manufacturability.",
-  "system_purpose": "Define analysis scope and deliverables for a timing drive subsystem.",
-  "scope": {
+  "system_boundary": {
+    "system_of_interest": "Timing drive subsystem",
+    "system_level": "subsystem",
     "included": ["belt/pulley kinematics", "thermal expansion effects on center distance"],
-    "excluded": ["full NVH model", "supplier quotes"]
+    "excluded": ["full NVH model", "supplier quotes"],
+    "interfaces": ["motor shaft input", "camshaft phase output"]
   },
-  "engineering_objectives": [
-    {
-      "id": "obj-1",
-      "statement": "Quantify phase error vs temperature and tension.",
-      "priority": "HIGH"
-    }
-  ],
-  "operating_envelope": {
+  "problem_statement": {
+    "need": "Quantify timing-drive phase error, backlash sensitivity, thermal growth, and manufacturability for the current architecture.",
+    "why": "The subsystem must maintain phase accuracy across the operating envelope without creating an unmanufacturable tolerance stack.",
+    "non_goals": ["full NVH optimization", "supplier selection"]
+  },
+  "operational_context": {
     "unit_system": "SI",
-    "bounds": [
+    "notes": "First-pass study for architecture selection.",
+    "scenarios": [
       {
-        "name": "ambient_temperature",
-        "min": { "value": -20, "unit": "celsius" },
-        "max": { "value": 85, "unit": "celsius" }
+        "scenario_id": "baseline_hot",
+        "description": "Steady-state hot operation at maximum ambient temperature.",
+        "operating_conditions": ["ambient_temperature <= 85 celsius", "nominal belt tension"],
+        "environment": "underhood",
+        "usage_mode": "steady_state"
       }
     ]
   },
-  "assumptions": ["Lumped thermal model acceptable for first pass."],
-  "constraints": ["Must not exceed OEM envelope for center distance adjustment."],
+  "success_criteria": [
+    {
+      "criterion_id": "phase_error",
+      "statement": "Maximum phase error stays within allowable budget across the operating scenario.",
+      "metric": "phase_error_deg",
+      "maximum": { "value": 0.5, "unit": "deg" },
+      "verification_method": "simulation",
+      "expected_evidence": "simulation",
+      "priority": "HIGH",
+      "rationale": "Phase error is the primary functional risk."
+    }
+  ],
+  "constraints": [
+    {
+      "constraint_id": "center_distance_window",
+      "statement": "Center distance adjustment must remain inside the OEM packaging window.",
+      "kind": "geometric",
+      "provenance": {
+        "source_type": "document",
+        "source_ref": "artifact://document_extract/layout-pdf",
+        "rationale": "Packaging envelope is fixed by adjacent assemblies."
+      }
+    }
+  ],
+  "assumptions": [
+    {
+      "assumption_id": "thermal_model",
+      "statement": "A lumped thermal model is acceptable for the first-pass study.",
+      "validation_intent": "Compare the first-pass prediction against a finer-grained model before release.",
+      "impact_if_false": "Thermal growth may be underpredicted and phase error budget could be invalid.",
+      "blocking_if_unvalidated": false,
+      "status": "assumed"
+    }
+  ],
+  "design_space": {
+    "responses": [
+      {
+        "variable_id": "phase_error_deg",
+        "description": "Predicted phase error at the output shaft.",
+        "category": "response",
+        "unit": "deg",
+        "bounds": { "min": 0.0, "max": 1.0 }
+      }
+    ],
+    "controllable_variables": [
+      {
+        "variable_id": "belt_tension_n",
+        "description": "Nominal installed belt tension.",
+        "category": "controllable",
+        "unit": "N",
+        "bounds": { "min": 100.0, "max": 400.0 }
+      }
+    ],
+    "noise_factors": [
+      {
+        "variable_id": "ambient_temperature_c",
+        "description": "Ambient temperature variation.",
+        "category": "noise",
+        "unit": "celsius",
+        "bounds": { "min": -20.0, "max": 85.0 }
+      }
+    ],
+    "fixed_parameters": [
+      {
+        "variable_id": "center_distance_mm",
+        "description": "Current nominal center distance.",
+        "category": "fixed",
+        "unit": "mm",
+        "bounds": { "min": 240.0, "max": 240.0 }
+      }
+    ]
+  },
+  "deliverables": [
+    {
+      "deliverable_id": "analysis_plan",
+      "description": "Parameterized kinematic and thermal analysis plan with executable artifacts.",
+      "artifact_type_hint": "ANALYSIS_PLAN",
+      "acceptance_criteria": ["Analysis plan references the governing variables, constraints, and verification path."]
+    },
+    {
+      "deliverable_id": "verification_report",
+      "description": "Verification report covering phase-error limits and blocked assumptions.",
+      "artifact_type_hint": "VERIFICATION_REPORT",
+      "acceptance_criteria": ["Verification outcome is explicit and references the generated analysis artifacts."]
+    }
+  ],
+  "inputs": [
+    {
+      "input_id": "layout_pdf",
+      "kind": "artifact",
+      "description": "Layout PDF or drawing extract for the timing system.",
+      "ref": "artifact://document_extract/layout-pdf",
+      "required": true
+    }
+  ],
+  "code_guidance": {
+    "summary": "Implementation should stay inside the analysis tooling for the timing study.",
+    "file_scope": {
+      "included": ["analysis/", "tests/"],
+      "excluded": ["deployment/"]
+    },
+    "target_paths": ["analysis/timing_model.py", "tests/test_timing_model.py"],
+    "implementation_hints": ["Prefer deterministic calculations over heuristic approximations."],
+    "acceptance_focus": ["Executable analysis artifacts", "deterministic verification"],
+    "forbidden_actions": ["No edits to deployment infrastructure."]
+  },
   "forbidden_actions": ["No deletion of safety-critical tests without human approval."],
-  "required_deliverables": [
-    {
-      "id": "del-1",
-      "description": "Parameterized kinematic model inputs for solver",
-      "artifact_type_hint": "ANALYSIS_PLAN"
-    }
-  ],
-  "acceptance_tests": [
-    {
-      "id": "acc-1",
-      "description": "Phase error budget documented with sources",
-      "kind": "manual"
-    }
-  ],
-  "evidence_expectations": [{ "kind": "drawing", "notes": "Timing layout PDF if available." }],
   "human_approval": { "required_before_execution": false, "gates": [] },
   "provenance": {
     "source_stage": "intent_capture",

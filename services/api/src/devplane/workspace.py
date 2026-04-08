@@ -8,6 +8,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from .models import (
     ArtifactRecord,
@@ -119,37 +120,221 @@ class WorkspaceManager:
         return (record, [command])
 
     def write_task_packet(
-        self, *, workspace: WorkspaceRecord, task: TaskRecord
-    ) -> ArtifactRecord:
-        """Write the task packet that an external agent session should consume."""
+        self,
+        *,
+        workspace: WorkspaceRecord,
+        task: TaskRecord,
+        engineering_bundle: dict[str, Any] | None = None,
+    ) -> list[ArtifactRecord]:
+        """Write the task packet and any governing engineering artifacts."""
         packet_dir = Path(workspace.worktree_path) / ".birtha"
         packet_dir.mkdir(parents=True, exist_ok=True)
         packet_path = packet_dir / "task-packet.json"
-        packet = {
-            "task_id": task.task_id,
-            "project_id": task.project_id,
-            "state": task.state,
-            "reasoning_tier": getattr(task.dossier, "reasoning_tier", None),
-            "plan": task.plan.model_dump(mode="json") if task.plan else None,
-            "patch_plan": (
-                task.patch_plan.model_dump(mode="json") if task.patch_plan else None
-            ),
-            "clarifications": task.clarifications.model_dump(mode="json"),
-            "escalation_packets": getattr(task.dossier, "escalation_packets", []),
-            "api_brain_verdict": getattr(task.dossier, "api_brain_verdict", None),
-            "dossier_path": str(packet_dir / "dossier.json"),
-        }
-        packet_path.write_text(json.dumps(packet, indent=2), encoding="utf-8")
+        artifacts: list[ArtifactRecord] = []
+        manifest: dict[str, Any]
+        if engineering_bundle:
+            artifacts.extend(
+                self._write_engineering_artifacts(
+                    packet_dir=packet_dir,
+                    engineering_bundle=engineering_bundle,
+                )
+            )
+            task_packets = engineering_bundle.get("task_packets") or []
+            active_task_packet = next(
+                (
+                    packet
+                    for packet in task_packets
+                    if packet.get("task_type") != "VALIDATION"
+                ),
+                task_packets[0] if task_packets else None,
+            )
+            manifest = {
+                "task_id": task.task_id,
+                "project_id": task.project_id,
+                "state": task.state,
+                "reasoning_tier": getattr(task.dossier, "reasoning_tier", None),
+                "plan": task.plan.model_dump(mode="json") if task.plan else None,
+                "patch_plan": (
+                    task.patch_plan.model_dump(mode="json") if task.patch_plan else None
+                ),
+                "clarifications": task.clarifications.model_dump(mode="json"),
+                "problem_brief_ref": engineering_bundle.get("problem_brief_ref"),
+                "problem_brief": engineering_bundle.get("problem_brief"),
+                "engineering_state_ref": engineering_bundle.get("engineering_state_ref"),
+                "engineering_state": engineering_bundle.get("engineering_state"),
+                "task_queue": engineering_bundle.get("task_queue"),
+                "task_packet_refs": engineering_bundle.get("task_packet_refs", []),
+                "task_packets_path": str(packet_dir / "task-packets"),
+                "active_task_packet_ref": (
+                    f"artifact://task_packet/{active_task_packet['task_packet_id']}"
+                    if active_task_packet
+                    else None
+                ),
+                "active_task_packet": active_task_packet,
+                "required_gates": engineering_bundle.get("required_gates", []),
+                "ready_for_task_decomposition": engineering_bundle.get(
+                    "ready_for_task_decomposition", False
+                ),
+                "escalation_packets": getattr(task.dossier, "escalation_packets", []),
+                "api_brain_verdict": getattr(task.dossier, "api_brain_verdict", None),
+                "dossier_path": str(packet_dir / "dossier.json"),
+            }
+        else:
+            manifest = {
+                "task_id": task.task_id,
+                "project_id": task.project_id,
+                "state": task.state,
+                "reasoning_tier": getattr(task.dossier, "reasoning_tier", None),
+                "plan": task.plan.model_dump(mode="json") if task.plan else None,
+                "patch_plan": (
+                    task.patch_plan.model_dump(mode="json") if task.patch_plan else None
+                ),
+                "clarifications": task.clarifications.model_dump(mode="json"),
+                "escalation_packets": getattr(task.dossier, "escalation_packets", []),
+                "api_brain_verdict": getattr(task.dossier, "api_brain_verdict", None),
+                "dossier_path": str(packet_dir / "dossier.json"),
+            }
+        packet_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
         dossier_path = packet_dir / "dossier.json"
         dossier_path.write_text(
             task.dossier.model_dump_json(indent=2), encoding="utf-8"
         )
-        return ArtifactRecord(
-            name="task-packet",
-            path=str(packet_path),
-            kind="task_packet",
-            description="OpenClaw/operator task packet for the isolated workspace",
+        artifacts.insert(
+            0,
+            ArtifactRecord(
+                name="task-packet",
+                path=str(packet_path),
+                kind="task_packet",
+                description="OpenClaw/operator task packet for the isolated workspace",
+            ),
         )
+        return artifacts
+
+    def _write_engineering_artifacts(
+        self,
+        *,
+        packet_dir: Path,
+        engineering_bundle: dict[str, Any],
+    ) -> list[ArtifactRecord]:
+        """Persist governing control-plane artifacts alongside the task manifest."""
+        artifacts: list[ArtifactRecord] = []
+        created_at = engineering_bundle.get("problem_brief", {}).get("created_at")
+        updated_at = engineering_bundle.get("problem_brief", {}).get("updated_at")
+
+        def _typed_record(
+            *,
+            name: str,
+            file_path: Path,
+            artifact_type: str,
+            payload: dict[str, Any],
+            input_refs: list[str],
+        ) -> ArtifactRecord:
+            return ArtifactRecord(
+                name=name,
+                path=str(file_path),
+                kind=artifact_type.lower(),
+                artifact_id=str(
+                    payload.get(
+                        f"{artifact_type.lower()}_id",
+                        payload.get("task_packet_id")
+                        or payload.get("task_queue_id")
+                        or payload.get("problem_brief_id")
+                        or payload.get("engineering_state_id"),
+                    )
+                ),
+                artifact_type=artifact_type,
+                schema_version=str(payload.get("schema_version", "1.0.0")),
+                artifact_status="ACTIVE",
+                validation_state="VALID",
+                producer={
+                    "component": "devplane.workspace_manager",
+                    "executor": "local_general_model",
+                },
+                input_artifact_refs=input_refs,
+                payload=payload,
+                created_at=created_at,
+                updated_at=updated_at,
+                description=f"Persisted {artifact_type} artifact for the engineering-governed task run.",
+            )
+
+        problem_brief = engineering_bundle.get("problem_brief")
+        if isinstance(problem_brief, dict):
+            problem_brief_path = packet_dir / "problem-brief.json"
+            problem_brief_path.write_text(
+                json.dumps(problem_brief, indent=2),
+                encoding="utf-8",
+            )
+            artifacts.append(
+                _typed_record(
+                    name="problem-brief",
+                    file_path=problem_brief_path,
+                    artifact_type="PROBLEM_BRIEF",
+                    payload=problem_brief,
+                    input_refs=[],
+                )
+            )
+
+        engineering_state = engineering_bundle.get("engineering_state")
+        if isinstance(engineering_state, dict):
+            engineering_state_path = packet_dir / "engineering-state.json"
+            engineering_state_path.write_text(
+                json.dumps(engineering_state, indent=2),
+                encoding="utf-8",
+            )
+            artifacts.append(
+                _typed_record(
+                    name="engineering-state",
+                    file_path=engineering_state_path,
+                    artifact_type="ENGINEERING_STATE",
+                    payload=engineering_state,
+                    input_refs=[engineering_bundle.get("problem_brief_ref")] if engineering_bundle.get("problem_brief_ref") else [],
+                )
+            )
+
+        task_queue = engineering_bundle.get("task_queue")
+        if isinstance(task_queue, dict):
+            task_queue_path = packet_dir / "task-queue.json"
+            task_queue_path.write_text(
+                json.dumps(task_queue, indent=2),
+                encoding="utf-8",
+            )
+            artifacts.append(
+                _typed_record(
+                    name="task-queue",
+                    file_path=task_queue_path,
+                    artifact_type="TASK_QUEUE",
+                    payload=task_queue,
+                    input_refs=[
+                        ref
+                        for ref in [
+                            engineering_bundle.get("problem_brief_ref"),
+                            engineering_bundle.get("engineering_state_ref"),
+                        ]
+                        if ref
+                    ],
+                )
+            )
+
+        task_packets = engineering_bundle.get("task_packets") or []
+        if task_packets:
+            task_packets_dir = packet_dir / "task-packets"
+            task_packets_dir.mkdir(parents=True, exist_ok=True)
+            for packet in task_packets:
+                task_packet_path = task_packets_dir / f"{packet['task_packet_id']}.json"
+                task_packet_path.write_text(
+                    json.dumps(packet, indent=2),
+                    encoding="utf-8",
+                )
+                artifacts.append(
+                    _typed_record(
+                        name=f"task-packet-{packet['task_packet_id']}",
+                        file_path=task_packet_path,
+                        artifact_type="TASK_PACKET",
+                        payload=packet,
+                        input_refs=packet.get("input_artifact_refs", []),
+                    )
+                )
+        return artifacts
 
     def detect_file_changes(self, workspace: WorkspaceRecord) -> list[FileChangeRecord]:
         """Return normalized file changes from git status porcelain output."""

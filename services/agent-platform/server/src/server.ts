@@ -250,24 +250,16 @@ export function buildServer() {
         }
       } else if (workflowName === "engineering_workflow") {
         const tp = inputData.task_packet
-        if (!tp || typeof tp !== "object") {
-          return reply.status(422).send({
-            error_code: "TASK_PACKET_REQUIRED",
-            contract_type: "TASK_PACKET",
-            schema_id:
-              "https://birtha.local/schemas/control-plane/v1/task-packet.schema.json",
-            details: [
-              {
-                path: "/input_data/task_packet",
-                message: "engineering_workflow requires input_data.task_packet",
-                keyword: "required",
-              },
-            ],
-          })
-        }
-        const pkt = tp as Record<string, unknown>
         const messages = (inputData.messages as ChatMessage[]) ?? [
-          { role: "user", content: String(pkt.objective ?? "") },
+          {
+            role: "user",
+            content: String(
+              (tp as Record<string, unknown> | undefined)?.objective ??
+                inputData.prompt ??
+                inputData.query ??
+                "",
+            ),
+          },
         ]
         const workflowConfig =
           (body.workflow_config as Record<string, unknown> | undefined) ?? undefined
@@ -279,11 +271,27 @@ export function buildServer() {
           tools_needed: [],
           tool_results: {},
           workflow_config: workflowConfig,
+          request_context: (inputData.context as Record<string, unknown> | undefined) ?? undefined,
           required_tool_results: requiredToolResults,
           run_id: inputData.run_id as string | undefined,
           task_id: inputData.task_id as string | undefined,
           dossier_id: inputData.dossier_id as string | undefined,
-          task_packet: pkt,
+          task_plan: (inputData.task_plan as Record<string, unknown> | undefined) ?? undefined,
+          project_context:
+            (inputData.project_context as Record<string, unknown> | undefined) ?? undefined,
+          engineering_session_id:
+            (inputData.engineering_session_id as string | undefined) ?? undefined,
+          task_packet: tp as Record<string, unknown> | undefined,
+          task_queue: (inputData.task_queue as Record<string, unknown> | undefined) ?? undefined,
+          task_packets: (inputData.task_packets as Record<string, unknown>[] | undefined) ?? [],
+          problem_brief:
+            (inputData.problem_brief as Record<string, unknown> | undefined) ?? undefined,
+          problem_brief_ref:
+            (inputData.problem_brief_ref as string | undefined) ?? undefined,
+          engineering_state:
+            (inputData.engineering_state as Record<string, unknown> | undefined) ?? undefined,
+          engineering_state_ref:
+            (inputData.engineering_state_ref as string | undefined) ?? undefined,
           cost_ledger_entries: [],
         } as any)
         output = {
@@ -293,13 +301,23 @@ export function buildServer() {
             run_id: result.run_id,
             task_id: result.task_id,
             dossier_id: result.dossier_id,
+            engineering_session_id: result.engineering_session_id,
+            problem_brief_ref: result.problem_brief_ref,
+            engineering_state_ref: result.engineering_state_ref,
             active_task_packet_id: result.active_task_packet_id,
             dossier_snapshot: (result as { dossier_snapshot?: unknown })
               .dossier_snapshot,
           },
+          problem_brief: (result as { problem_brief?: unknown }).problem_brief,
+          engineering_state: (result as { engineering_state?: unknown }).engineering_state,
+          task_queue: (result as { task_queue?: unknown }).task_queue,
+          task_packets: (result as { task_packets?: unknown }).task_packets,
+          clarification_questions: (result as { clarification_questions?: unknown })
+            .clarification_questions,
           structure_route: result.structure_route,
           verification_outcome: result.verification_outcome,
           verification_report: result.verification_report,
+          escalation_packet: (result as { escalation_packet?: unknown }).escalation_packet,
           cost_ledger_entries: result.cost_ledger_entries,
           api_brain: {
             escalation_count: (result as any).escalation_count ?? 0,
