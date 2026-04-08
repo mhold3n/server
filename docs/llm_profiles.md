@@ -20,7 +20,7 @@ and resolved in `services/api/src/config.py:get_worker_settings()`. The router a
 - **How to run**:
 
 ```bash
-cd Birtha_bigger_n_badder/worker/vllm
+cd /path/to/server/worker/vllm
 docker compose -f docker-compose.vllm.yml up -d
 ```
 
@@ -76,7 +76,7 @@ With this configuration:
 3. Restart API + router:
 
 ```bash
-cd Birtha_bigger_n_badder
+cd /path/to/server
 docker compose -p agent-orchestrator --env-file .env up -d api router
 ```
 
@@ -91,4 +91,3 @@ You should see:
 - `qwen.reachable: true`
 - `worker.status: "healthy"`
 - `profile` and `worker_base_url` (once added in the status payload).
-

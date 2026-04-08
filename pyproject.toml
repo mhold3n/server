@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "server-workspace"
+version = "0.1.0"
+description = "Unified workspace for the server control plane and active platform services"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "agent-orchestrator-api[dev]",
+    "agent-orchestrator-router[dev]",
+    "agent-orchestrator-worker-client[dev]",
+    "mcp-registry[dev]",
+    "model-runtime[dev]",
+    "engineering-core[dev]",
+    "ai-stack",
+    "structure[dev]",
+    "wrkhrs[dev]",
+    "filesystem-mcp-server[dev]",
+    "secrets-mcp-server[dev]",
+    "vector-db-mcp-server[dev]",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = []
+
+[tool.uv]
+package = false
+default-groups = []
+
+[tool.uv.sources]
+agent-orchestrator-api = { workspace = true }
+agent-orchestrator-router = { workspace = true }
+agent-orchestrator-worker-client = { workspace = true }
+mcp-registry = { workspace = true }
+model-runtime = { workspace = true }
+engineering-core = { workspace = true }
+ai-stack = { workspace = true }
+structure = { workspace = true }
+wrkhrs = { workspace = true }
+filesystem-mcp-server = { workspace = true }
+secrets-mcp-server = { workspace = true }
+vector-db-mcp-server = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+    "services/api",
+    "services/router",
+    "services/worker_client",
+    "services/mcp-registry",
+    "services/model-runtime",
+    "services/engineering-core",
+    "services/ai_stack",
+    "services/structure",
+    "services/wrkhrs",
+    "mcp/servers/filesystem-mcp",
+    "mcp/servers/secrets-mcp",
+    "mcp/servers/vector-db-mcp",
+]

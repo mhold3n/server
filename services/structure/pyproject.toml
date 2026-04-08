@@ -52,6 +52,8 @@ python_files = ["test_*.py"]
 addopts = [
     "--strict-markers",
     "--strict-config",
+    "-o",
+    "cache_dir=../../.cache/pytest/services-structure",
     "--cov=.",
     "--cov-report=term-missing",
     "--cov-report=xml",
@@ -81,6 +83,7 @@ omit = [
 
 [tool.mypy]
 python_version = "3.11"
+cache_dir = "../../.cache/mypy/services-structure"
 strict = true
 show_error_codes = true
 plugins = ["pydantic.mypy"]
@@ -160,6 +163,7 @@ warn_required_dynamic_aliases = true
 
 [tool.ruff]
 line-length = 100
+cache-dir = "../../.cache/ruff"
 
 [tool.ruff.lint]
 # F401: unused imports (framework defines interfaces ahead of implementation)

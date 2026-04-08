@@ -1,8 +1,0 @@
-{
-  "name": "@server/agent-platform-workspace",
-  "private": true,
-  "workspaces": [
-    "open-multi-agent",
-    "server"
-  ]
-}

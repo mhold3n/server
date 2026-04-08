@@ -315,15 +315,15 @@ OpenClaw’s **MBMH** OpenAI-compatible server on `:8000` is a **model HTTP fron
 
 ### MartyMedia Whisper + agent-platform bridge (local-first)
 
-This repo includes a working “attach” for MartyMedia’s conda-backed Whisper and a `codex` shim that forwards to the local agent-platform HTTP API.
+This repo includes a working “attach” for the focused `whisper-asr` tool env and a `codex` shim that forwards to the local agent-platform HTTP API.
 
-#### 1) MartyMedia Whisper (conda) as OpenClaw `whisper`
+#### 1) MartyMedia Whisper as OpenClaw `whisper`
 
-- Launcher script: `MartyMedia-/bin/martymedia-whisper`
+- Bootstrap the focused env first: `scripts/bootstrap_tool_env.sh whisper-asr`
 - Install for the gateway: symlink it as `~/.local/bin/whisper` (the gateway PATH includes `~/.local/bin` before Homebrew):
 
 ```bash
-ln -sf /Users/maxholden/GitHub/server/MartyMedia-/bin/martymedia-whisper ~/.local/bin/whisper
+ln -sf /Users/maxholden/GitHub/server/.cache/envs/whisper-asr/bin/whisper ~/.local/bin/whisper
 openclaw gateway restart
 openclaw skills info openai-whisper
 ```

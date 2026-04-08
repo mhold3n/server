@@ -42,6 +42,8 @@ addopts = [
     "-ra",
     "--strict-markers",
     "--strict-config",
+    "-o",
+    "cache_dir=../../../.cache/pytest/mcp-vector-db",
     "--cov=src",
     "--cov-report=term-missing",
     "--cov-report=xml",
@@ -56,6 +58,7 @@ markers = [
 
 [tool.mypy]
 python_version = "3.11"
+cache_dir = "../../../.cache/mypy/mcp-vector-db"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
@@ -82,6 +85,7 @@ ignore_missing_imports = true
 [tool.ruff]
 target-version = "py311"
 line-length = 88
+cache-dir = "../../../.cache/ruff"
 
 [tool.ruff.lint]
 select = [

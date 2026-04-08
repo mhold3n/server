@@ -41,14 +41,33 @@ Use the appropriate issue template:
 - Proxmox host ready; create a VM/LXC for `agent-server`.
 - Docker + Compose on server and workstation.
 - (Workstation) NVIDIA driver + `nvidia-container-toolkit`.
+- `uv` for the main Python workspace.
+- `npm` for the root Node workspace.
 
-### 1) Configure environment
+### 1) Bootstrap the workspace
+
+```bash
+uv sync --python 3.11
+npm install
+```
+
+Focused tool envs are bootstrapped explicitly and live under `.cache/envs/`:
+
+```bash
+scripts/bootstrap_tool_env.sh marker-pdf
+scripts/bootstrap_tool_env.sh whisper-asr
+scripts/bootstrap_tool_env.sh qwen-runtime
+```
+
+Shared caches and reproducible local model state live under `.cache/`.
+
+### 2) Configure environment
 Copy `.env.example` to `.env` and fill values:
 ```bash
 cp .env.example .env
 ```
 
-### 2) Start server stack (control plane)
+### 3) Start server stack (control plane)
 
 ```bash
 # Platform services (MLflow, observability)
@@ -67,7 +86,7 @@ docker compose -f docker-compose.addons.yml up -d
 make up-all
 ```
 
-### 3) Start GPU worker on workstation
+### 4) Start GPU worker on workstation
 
 ```bash
 # Start GPU worker
@@ -77,7 +96,7 @@ make worker-up
 docker compose -f docker-compose.worker.yml --profile ollama up -d
 ```
 
-### 4) Test
+### 5) Test
 
 ```bash
 # Health check all services
@@ -96,7 +115,7 @@ curl -s https://worker.local:8443/v1/models
 open http://localhost:5000
 ```
 
-### 5) Dev UX
+### 6) Dev UX
 
 * All devs SSH or VS Code Remote into the **server**.
 * The server exposes a unified API through Birtha's API and Router services.
@@ -335,7 +354,7 @@ make ci              # Run full CI pipeline
 
 ## Project Structure
 
-Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/server)** (clone directory name may still be `Birtha_bigger_n_badder` locally). Use a **single clone** for day-to-day work; optional legacy repos belong **outside** this tree—see [`docs/dev-environment.md`](docs/dev-environment.md). WrkHrs code is only under **`services/wrkhrs/`** ([`docs/migration-wrkhrs-path.md`](docs/migration-wrkhrs-path.md)).
+Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. Use a **single clone** for day-to-day work; optional legacy repos belong **outside** this tree—see [`docs/dev-environment.md`](docs/dev-environment.md). WrkHrs code is only under **`services/wrkhrs/`** ([`docs/migration-wrkhrs-path.md`](docs/migration-wrkhrs-path.md)).
 
 ```
 server/   # repository root (suggested clone folder name)

@@ -2,3 +2,4 @@
 # ruff runs in CI still cover gateway/orchestrator and key tests (see ci.yml).
 line-length = 88
 target-version = "py311"
+cache-dir = ".cache/ruff"

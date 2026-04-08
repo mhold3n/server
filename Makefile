@@ -1,4 +1,27 @@
 SHELL := /bin/bash
+ROOT := $(CURDIR)
+ENV_BOOTSTRAP := source $(ROOT)/scripts/workspace_env.sh
+
+sync:
+	@bash -lc '$(ENV_BOOTSTRAP) && uv sync --python 3.11'
+
+node-install:
+	@bash -lc '$(ENV_BOOTSTRAP) && npm install'
+
+tool-env-marker:
+	@bash -lc '$(ENV_BOOTSTRAP) && scripts/bootstrap_tool_env.sh marker-pdf'
+
+tool-env-whisper:
+	@bash -lc '$(ENV_BOOTSTRAP) && scripts/bootstrap_tool_env.sh whisper-asr'
+
+tool-env-qwen:
+	@bash -lc '$(ENV_BOOTSTRAP) && scripts/bootstrap_tool_env.sh qwen-runtime'
+
+tool-env-mbmh:
+	@bash -lc '$(ENV_BOOTSTRAP) && scripts/bootstrap_tool_env.sh mbmh'
+
+tool-env-larrak:
+	@bash -lc '$(ENV_BOOTSTRAP) && scripts/bootstrap_tool_env.sh larrak-audio'
 
 # Local dev
 up:
@@ -92,12 +115,12 @@ smoke-test:
 
 # Seed corpora
 seed-corpora:
-	python scripts/ingest/ingest_code.py
-	python scripts/ingest/ingest_docs.py
+	@bash -lc '$(ENV_BOOTSTRAP) && uv run python scripts/ingest/ingest_code.py'
+	@bash -lc '$(ENV_BOOTSTRAP) && uv run python scripts/ingest/ingest_docs.py'
 
 # Run evaluation
 eval:
-	pytest services/api/tests/eval/ -v --tb=short
+	@bash -lc '$(ENV_BOOTSTRAP) && cd services/api && PYTEST_ADDOPTS="-o cache_dir=$(ROOT)/.cache/pytest/services-api $$PYTEST_ADDOPTS" uv run --package agent-orchestrator-api pytest tests/eval/ -v --tb=short'
 
 # MLflow UI
 mlflow-ui:
@@ -106,37 +129,33 @@ mlflow-ui:
 
 # Testing
 test-api:
-	set -e; \
-	export PYTHONPATH=services/api; \
-	pytest -q services/api/tests --maxfail=1 --cov=services/api/src --cov-report= --cov-append=no
+	@bash -lc '$(ENV_BOOTSTRAP) && cd services/api && PYTEST_ADDOPTS="-o cache_dir=$(ROOT)/.cache/pytest/services-api $$PYTEST_ADDOPTS" uv run --package agent-orchestrator-api pytest -q tests --maxfail=1 --cov=src --cov-report= --cov-append=no'
 
 test-router:
-	set -e; \
-	export PYTHONPATH=services/router; \
-	pytest -q services/router/tests --maxfail=1 --cov=services/router/src --cov-report= --cov-append
+	@bash -lc '$(ENV_BOOTSTRAP) && cd services/router && PYTEST_ADDOPTS="-o cache_dir=$(ROOT)/.cache/pytest/services-router $$PYTEST_ADDOPTS" uv run --package agent-orchestrator-router pytest -q tests --maxfail=1 --cov=src --cov-report= --cov-append'
 
 test-combined: test-api test-router
-	set -e; \
-	python -m coverage combine || true; \
-	python -m coverage report --fail-under=80; \
-	python -m coverage xml
+	@bash -lc '$(ENV_BOOTSTRAP) && uv run python -m coverage combine || true'
+	@bash -lc '$(ENV_BOOTSTRAP) && uv run python -m coverage report --fail-under=80'
+	@bash -lc '$(ENV_BOOTSTRAP) && uv run python -m coverage xml'
 
 test: test-combined
 
 lint:
-	ruff check services mcp/servers --force-exclude && black --check services mcp/servers
+	@bash -lc '$(ENV_BOOTSTRAP) && uv run ruff check services mcp/servers --force-exclude'
+	@bash -lc '$(ENV_BOOTSTRAP) && uv run black --check services mcp/servers'
 
 type:
-	set -e; \
-	(cd services/api && mypy --strict src); \
-	(cd services/router && mypy --strict src); \
-	(cd services/worker_client && mypy --strict src); \
-	(cd mcp/servers/filesystem-mcp && mypy --strict src); \
-	(cd mcp/servers/secrets-mcp && mypy --strict src); \
-	(cd mcp/servers/vector-db-mcp && mypy --strict src)
+	@bash -lc '$(ENV_BOOTSTRAP) && cd services/api && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/services-api uv run --package agent-orchestrator-api mypy --strict src'
+	@bash -lc '$(ENV_BOOTSTRAP) && cd services/router && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/services-router uv run --package agent-orchestrator-router mypy --strict src'
+	@bash -lc '$(ENV_BOOTSTRAP) && cd services/worker_client && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/services-worker-client uv run --package agent-orchestrator-worker-client mypy --strict src'
+	@bash -lc '$(ENV_BOOTSTRAP) && cd mcp/servers/filesystem-mcp && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/mcp-filesystem uv run --package filesystem-mcp-server mypy --strict src'
+	@bash -lc '$(ENV_BOOTSTRAP) && cd mcp/servers/secrets-mcp && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/mcp-secrets uv run --package secrets-mcp-server mypy --strict src'
+	@bash -lc '$(ENV_BOOTSTRAP) && cd mcp/servers/vector-db-mcp && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/mcp-vector-db uv run --package vector-db-mcp-server mypy --strict src'
 
 fix:
-	ruff check --fix services mcp/servers --force-exclude && black services mcp/servers
+	@bash -lc '$(ENV_BOOTSTRAP) && uv run ruff check --fix services mcp/servers --force-exclude'
+	@bash -lc '$(ENV_BOOTSTRAP) && uv run black services mcp/servers'
 
 # CI simulation
 ci: lint type test-combined
@@ -165,11 +184,13 @@ install-pre-commit:
 
 dev-setup: install-pre-commit
 	@echo "Setting up development environment..."
-	@echo "1. Run 'make detect-hardware' to detect hardware"
-	@echo "2. Run 'make configure-network' to setup network"
-	@echo "3. Copy machine-config/env.template to .env and configure"
-	@echo "4. Run 'make up' to start local stack"
-	@echo "5. Run 'make test-chat' to verify setup"
+	@echo "1. Run 'make sync' to create the root uv workspace env"
+	@echo "2. Run 'make node-install' for the root npm workspace"
+	@echo "3. Run 'make detect-hardware' to detect hardware"
+	@echo "4. Run 'make configure-network' to setup network"
+	@echo "5. Copy machine-config/env.template to .env and configure"
+	@echo "6. Run 'make up' to start local stack"
+	@echo "7. Run 'make test-chat' to verify setup"
 
 # Cleanup
 clean:

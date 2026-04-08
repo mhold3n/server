@@ -24,6 +24,7 @@ MANIFEST
 # Virtual environments
 .env
 .venv
+.cache/envs/
 env/
 venv/
 ENV/
@@ -93,6 +94,7 @@ jspm_packages/
 
 # Optional npm cache directory
 .npm
+/.cache/npm/
 
 # Optional eslint cache
 .eslintcache
@@ -238,6 +240,8 @@ docker-compose.local.yml
 !infra/observability/**/*.yaml
 # TypeScript/npm workspace for agent-platform (normally ignored by *.json above)
 !services/agent-platform/**/*.json
+!/package.json
+!/package-lock.json
 # Structure schemas, registries, and policies are source files, not generated artifacts
 !services/structure/schemas/**/*.json
 !services/structure/registry/**/*.json
@@ -249,6 +253,11 @@ docker-compose.local.yml
 # Cache and temporary files
 .cache/
 *.cache
+/.cache/uv/
+/.cache/mypy/
+/.cache/pytest/
+/.cache/ruff/
+/.cache/models/
 *.tmp
 *.temp
 *.swp
@@ -285,12 +294,8 @@ Thumbs.db
 # -----------------------------------------------------------------------------
 # Monorepo-local artifacts (do not commit)
 # -----------------------------------------------------------------------------
-.ci-local-venv/
-.venv-ci/
 .venv-test/
 **/.venv-test/
-.venv-hf/
-.venv-qwen/
 
 # Local model/data caches (users manage locally)
 /models/
@@ -301,11 +306,12 @@ Thumbs.db
 coverage.xml
 services/**/.coverage
 
-# Optional sibling checkouts at repo root (see docs/dev-environment.md)—not part of this repo
-/WrkHrs/
+# Local-only scratch and archived legacy directories at repo root
 /Birtha_bigger_n_badder/
+/2c679151f2c240975f56fccbec3a79f3966a56fd08878e024ca4d5b63c8509d0-2026-03-16-19-30-36-f92e214ac68e4903ab045ccc182de582/
 /Compute_Node_Birtha/
-/structure/
+/MartyMedia-/
+/WrkHrs/
+/larrak-audio/
 /llama.cpp/
 /transcript_miner/
-/2c679151f2c240975f56fccbec3a79f3966a56fd08878e024ca4d5b63c8509d0-2026-03-16-19-30-36-f92e214ac68e4903ab045ccc182de582/

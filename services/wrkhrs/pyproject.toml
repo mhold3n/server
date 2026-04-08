@@ -31,8 +31,6 @@ dependencies = [
   "qdrant-client>=1.6.0",
   "rank_bm25>=0.2.0",
   "nltk>=3.8.0",
-  # Used by services/asr (services/wrkhrs/services/asr/app.py)
-  "faster-whisper>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -42,6 +40,9 @@ dev = [
   "pytest-asyncio>=0.23.0",
   "ruff>=0.2.0",
   "black>=24.0.0",
+]
+asr = [
+  "faster-whisper>=1.0.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -53,6 +54,8 @@ python_files = ["test_*.py"]
 addopts = [
   "--strict-markers",
   "--strict-config",
+  "-o",
+  "cache_dir=../../.cache/pytest/services-wrkhrs",
   "--ignore=scripts",
   "--cov=services/gateway",
   "--cov=services/prompt_middleware",
@@ -77,4 +80,3 @@ omit = [
     "scripts/*",
     "_archive/*",
 ]
-

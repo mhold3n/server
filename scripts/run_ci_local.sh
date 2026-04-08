@@ -6,52 +6,31 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 PYTHON="${PYTHON:-python3.11}"
-VENV="${VENV:-$ROOT/.ci-local-venv}"
+# shellcheck source=/dev/null
+source "$ROOT/scripts/workspace_env.sh"
 
 echo "==> Using Python: $($PYTHON --version)"
-echo "==> Venv: $VENV"
+echo "==> Workspace env: $ROOT/.venv"
 
-if [[ ! -x "$VENV/bin/pip" ]]; then
-  "$PYTHON" -m venv "$VENV"
-fi
-# shellcheck source=/dev/null
-source "$VENV/bin/activate"
-python -m pip install --upgrade pip
+uv sync --python "$PYTHON"
 
-install_editable() {
-  local dir="$1"
-  echo "==> pip install -e $dir (+ dev)"
-  (cd "$dir" && pip install -e . && pip install -e ".[dev]")
-}
-
-install_editable services/api
-install_editable services/router
-install_editable services/worker_client
-install_editable services/structure
-install_editable mcp/servers/filesystem-mcp
-install_editable mcp/servers/secrets-mcp
-install_editable mcp/servers/vector-db-mcp
-install_editable mbmh
-install_editable services/wrkhrs
-
-echo "==> Lint (ruff + black + mbmh ruff)"
-ruff check services/ mcp/servers/
-black --check services/ mcp/servers/
-(cd mbmh && python -m ruff check src/ scripts/ tests/)
-(cd services/wrkhrs && ruff check \
+echo "==> Lint (ruff + black)"
+uv run ruff check services/ mcp/servers/
+uv run black --check services/ mcp/servers/
+(cd services/wrkhrs && uv run --package wrkhrs ruff check \
   services/gateway/app.py \
   tests/_module_loader.py \
   tests/test_gateway.py \
   scripts/test-llm-backends.py)
 
 echo "==> Mypy (per package)"
-(cd services/api && mypy --strict src)
-(cd services/router && mypy --strict src)
-(cd services/worker_client && mypy --strict src)
-(cd services/structure && mypy --strict . || true)
-(cd mcp/servers/filesystem-mcp && mypy --strict src)
-(cd mcp/servers/secrets-mcp && mypy --strict src)
-(cd mcp/servers/vector-db-mcp && mypy --strict src)
+(cd services/api && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-api" uv run --package agent-orchestrator-api mypy --strict src)
+(cd services/router && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-router" uv run --package agent-orchestrator-router mypy --strict src)
+(cd services/worker_client && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-worker-client" uv run --package agent-orchestrator-worker-client mypy --strict src)
+(cd services/structure && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-structure" uv run --package structure mypy --strict . || true)
+(cd mcp/servers/filesystem-mcp && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/mcp-filesystem" uv run --package filesystem-mcp-server mypy --strict src)
+(cd mcp/servers/secrets-mcp && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/mcp-secrets" uv run --package secrets-mcp-server mypy --strict src)
+(cd mcp/servers/vector-db-mcp && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/mcp-vector-db" uv run --package vector-db-mcp-server mypy --strict src)
 
 # Each package uses a top-level `src/` tree; multiple editable installs share the name `src`
 # on sys.path. Prefer this package's tree so imports resolve correctly.
@@ -102,23 +81,25 @@ export RUN_LIVE_STACK_TESTS=1
 
 pytest_pkg() {
   local dir="$1"
+  local cache_name="$2"
+  shift
   shift
   if [[ ! -d "$dir/tests" ]]; then
     echo "==> SKIP pytest: no $dir/tests"
     return 0
   fi
-  (cd "$dir" && PYTHONPATH="$(pwd)" pytest "$@")
+  mkdir -p "$PYTEST_CACHE_ROOT/$cache_name"
+  (cd "$dir" && PYTHONPATH="$(pwd)" PYTEST_ADDOPTS="-o cache_dir=$PYTEST_CACHE_ROOT/$cache_name ${PYTEST_ADDOPTS:-}" uv run pytest "$@")
 }
 
-pytest_pkg services/api tests/ -v --cov=src --cov-report=xml
-pytest_pkg services/router tests/ -v --cov=src --cov-report=xml
-pytest_pkg services/worker_client tests/ -v --cov=src --cov-report=xml
-pytest_pkg services/structure tests/ -v --cov=. --cov-report=xml
-pytest_pkg mcp/servers/filesystem-mcp tests/ -v --cov=src --cov-report=xml
-pytest_pkg mcp/servers/secrets-mcp tests/ -v --cov=src --cov-report=xml
-pytest_pkg mcp/servers/vector-db-mcp tests/ -v --cov=src --cov-report=xml
-pytest_pkg mbmh tests/ -v
-WRKHRS_DISABLE_MODEL_LOAD=1 pytest_pkg services/wrkhrs tests/ -v --cov=services/gateway --cov=services/prompt_middleware --cov=services/rag --cov-report=xml --cov-fail-under=90
+pytest_pkg services/api services-api tests/ -v --cov=src --cov-report=xml
+pytest_pkg services/router services-router tests/ -v --cov=src --cov-report=xml
+pytest_pkg services/worker_client services-worker-client tests/ -v --cov=src --cov-report=xml
+pytest_pkg services/structure services-structure tests/ -v --cov=. --cov-report=xml
+pytest_pkg mcp/servers/filesystem-mcp mcp-filesystem tests/ -v --cov=src --cov-report=xml
+pytest_pkg mcp/servers/secrets-mcp mcp-secrets tests/ -v --cov=src --cov-report=xml
+pytest_pkg mcp/servers/vector-db-mcp mcp-vector-db tests/ -v --cov=src --cov-report=xml
+WRKHRS_DISABLE_MODEL_LOAD=1 pytest_pkg services/wrkhrs services-wrkhrs tests/ -v --cov=services/gateway --cov=services/prompt_middleware --cov=services/rag --cov-report=xml --cov-fail-under=90
 
 echo "==> Node (github-mcp)"
 if [[ -d "mcp/servers/github-mcp" ]] && compgen -G "mcp/servers/github-mcp/package*.json" > /dev/null; then

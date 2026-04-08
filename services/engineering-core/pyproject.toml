@@ -3,7 +3,7 @@ name = "engineering-core"
 version = "0.1.0"
 description = "Deterministic reference mechanics and verification for v1 engineering harness"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
   "jsonschema>=4.20.0",
 ]
@@ -23,3 +23,7 @@ engineering_core = ["fixtures/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = [
+  "-o",
+  "cache_dir=../../.cache/pytest/services-engineering-core",
+]

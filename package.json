@@ -1,0 +1,20 @@
+{
+  "name": "@server/root-workspace",
+  "private": true,
+  "packageManager": "npm@11.12.1",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "workspaces": [
+    "services/agent-platform/open-multi-agent",
+    "services/agent-platform/server",
+    "services/topology-viewer"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "dev:topology": "npm run dev --workspace=topology-viewer",
+    "dev:agent-platform": "npm run dev --workspace=@server/agent-platform-server"
+  }
+}

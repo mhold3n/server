@@ -177,6 +177,9 @@ curl -X POST http://localhost:8082/documents/upload \
 ### Audio Transcription
 
 ```bash
+# Focused env for local ASR + whisper tooling
+scripts/bootstrap_tool_env.sh whisper-asr
+
 # Transcribe audio file with technical segment extraction
 curl -X POST http://localhost:8084/transcribe/file \
   -F "file=@lecture.mp3" \

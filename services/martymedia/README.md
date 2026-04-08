@@ -11,6 +11,7 @@ This service wraps the `whisper` CLI (OpenAI Whisper) to generate `.srt` caption
 
 ### Requirements
 
+- Bootstrap the focused tool env from the repo root with `scripts/bootstrap_tool_env.sh whisper-asr`.
 - `whisper` must be available on `PATH` inside the environment that runs this tool.
 - `ffmpeg` is typically required by Whisper.
 
@@ -24,4 +25,3 @@ martymedia-whisper --input "/path/to/video.mp4" --language en --output-dir "/pat
 
 Environment variables:
 - `MARTYMEDIA_WHISPER_MODEL` (optional): default Whisper model name to pass to `whisper --model`.
-

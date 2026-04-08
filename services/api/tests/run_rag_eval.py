@@ -5,7 +5,7 @@ Usage:
   python tests/run_rag_eval.py --api-url http://localhost:8080
   RAG_EVAL_API_URL=http://localhost:8080 python tests/run_rag_eval.py
 
-Scenarios are loaded from Birtha_bigger_n_badder/docs/rag_eval_scenarios.yaml.
+Scenarios are loaded from server/docs/rag_eval_scenarios.yaml.
 """
 
 from __future__ import annotations

@@ -10,20 +10,19 @@ Single Python process: **strict** `POST /infer/general`, `/infer/coding`, `/infe
 ## Download weights (operator)
 
 ```bash
-python -m venv .venv-models
-source .venv-models/bin/activate
-pip install torch transformers accelerate huggingface_hub qwen-vl-utils fastapi uvicorn pydantic pyyaml jsonschema
+scripts/bootstrap_tool_env.sh qwen-runtime
+source .cache/envs/qwen-runtime/bin/activate
 hf auth login
-hf download Qwen/Qwen3-4B --local-dir ./models/Qwen3-4B
+hf download Qwen/Qwen3-4B --local-dir ./.cache/models/Qwen3-4B
 # ... set local_model_path in YAML
 ```
 
 ## Run
 
 ```bash
+uv sync --python 3.11
 cd services/model-runtime
-pip install -e ".[dev]"
-MODEL_RUNTIME_HOST=127.0.0.1 MODEL_RUNTIME_PORT=8765 python -m model_runtime.main
+MODEL_RUNTIME_HOST=127.0.0.1 MODEL_RUNTIME_PORT=8765 uv run --package model-runtime python -m model_runtime.main
 ```
 
 ## v1 behavior

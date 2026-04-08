@@ -66,7 +66,10 @@ def _check_executable(name: str, command: str, smoke_help: bool) -> CheckResult:
             name=name,
             ok=False,
             detail=f"command not found: {command}",
-            remediation=f"Install {name} and/or set {name.upper()}_BIN environment variable.",
+            remediation=(
+                "Bootstrap the focused tool env and/or set "
+                f"{name.upper()}_BIN. For marker use: scripts/bootstrap_tool_env.sh marker-pdf"
+            ),
         )
 
     if not smoke_help:
@@ -143,4 +146,3 @@ def _resolve_ffprobe(ffmpeg_bin: str) -> str:
     if ffmpeg_bin.endswith("ffmpeg"):
         return ffmpeg_bin[:-6] + "ffprobe"
     return "ffprobe"
-

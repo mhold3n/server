@@ -19,8 +19,9 @@ A single monorepo bridging local model training (SFT, PEFT, continued pretrainin
 
 ## Quickstart
 Review `docs/runbooks.md` for specific steps. To begin:
-1. Create/activate the repo conda env: `conda env create -f ../environment.yml && conda activate server`
-2. Run the runtime: `python scripts/serve_local.py ...`
+1. Bootstrap the focused MBMH env from the repo root: `scripts/bootstrap_tool_env.sh mbmh`
+2. Activate it: `source .cache/envs/mbmh/bin/activate`
+3. Run the runtime: `python scripts/serve_local.py ...`
 
 ## Training Workflow
 Executed via `scripts/train_sft.py` or `scripts/train_clm.py`. Reads configs from `configs/` and writes bundled artifacts into `outputs/`.

@@ -5,9 +5,8 @@ Interactive, browser-based view of the platform topology (React Flow). The machi
 ## Run locally (dev)
 
 ```bash
-cd services/topology-viewer
 npm install
-npm run dev
+npm run dev --workspace=topology-viewer
 ```
 
 Open the URL Vite prints (default `http://localhost:5173`). The app loads `topology.json` from the dev server.
@@ -15,7 +14,7 @@ Open the URL Vite prints (default `http://localhost:5173`). The app loads `topol
 ## Build
 
 ```bash
-npm run build
+npm run build --workspace=topology-viewer
 ```
 
 Output is in `dist/`, including `topology.json` copied from `public/`.
@@ -25,7 +24,7 @@ Output is in `dist/`, including `topology.json` copied from `public/`.
 The FastAPI app serves static files under `/ui` from [`services/api/src/static`](../api/src/static). After you change the viewer or `topology.json`, rebuild and copy:
 
 ```bash
-npm run deploy-api-static
+npm run deploy-api-static --workspace=topology-viewer
 ```
 
 This runs `vite build` with `base: /ui/topology/` and copies `dist/` into `services/api/src/static/topology/`. Then open `http://localhost:8080/ui/topology/` (or your API host) when the API container is up.

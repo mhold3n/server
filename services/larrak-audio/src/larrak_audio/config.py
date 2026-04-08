@@ -25,7 +25,7 @@ class AudiobookConfig:
     scopus_retry_backoff_s: str = "2.0"
     scopus_request_timeout_s: str = "30"
     scopus_min_remaining_quota: str = "25"
-    marker_bin: str = "marker_single"
+    marker_bin: str = ""
     ollama_base_url: str = "http://127.0.0.1:11434"
     ollama_model_cleanup: str = "qwen2.5:7b-instruct"
     meili_url: str = "http://127.0.0.1:7700"
@@ -100,6 +100,12 @@ def _project_root() -> Path:
     return root
 
 
+def _repo_root(project_root: Path) -> Path:
+    root = project_root.parent.parent
+    assert (root / "pyproject.toml").exists(), "expected workspace pyproject.toml in repo root"
+    return root
+
+
 def _resolve_default_annas_mcp_bin(project_root: Path) -> str:
     candidate = (project_root / "tools" / "bin" / "annas-mcp").resolve()
     if candidate.is_file() and os.access(candidate, os.X_OK):
@@ -107,11 +113,16 @@ def _resolve_default_annas_mcp_bin(project_root: Path) -> str:
     return "annas-mcp"
 
 
+def _resolve_default_marker_bin(repo_root: Path) -> str:
+    return str((repo_root / ".cache" / "envs" / "marker-pdf" / "bin" / "marker_single").resolve())
+
+
 def load_audiobook_config() -> AudiobookConfig:
     """Load static env-first settings for audiobook pipeline.
     Loads .env from project root if present; environment variables override.
     """
     project_root = _project_root()
+    repo_root = _repo_root(project_root)
     load_dotenv(project_root / ".env")
 
     kwargs: dict[str, str] = {}
@@ -125,9 +136,9 @@ def load_audiobook_config() -> AudiobookConfig:
         kwargs[field_name] = value
 
     kwargs.setdefault("annas_mcp_bin", _resolve_default_annas_mcp_bin(project_root))
+    kwargs.setdefault("marker_bin", _resolve_default_marker_bin(repo_root))
 
     cfg = AudiobookConfig(**kwargs)
     Path(cfg.output_root).mkdir(parents=True, exist_ok=True)
     Path(cfg.queue_db_path).parent.mkdir(parents=True, exist_ok=True)
     return cfg
-

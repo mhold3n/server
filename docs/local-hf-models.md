@@ -1,20 +1,20 @@
 ## Local Hugging Face Models – RAG & ASR
 
-This document describes how to verify that the local Birtha_bigger_n_badder stack is using offline Hugging Face models via the shared cache.
+This document describes how to verify that the local `server` stack is using offline Hugging Face models via the shared cache.
 
 ### Prerequisites
 
 - `.env` in the project root has:
-  - `HF_HOME=./models/hf-home`
-  - `MODEL_CACHE_DIR=./models/hf-home`
+  - `HF_HOME=./.cache/models/hf`
+  - `MODEL_CACHE_DIR=./.cache/models/hf`
   - `EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2`
   - `ASR_MODEL=Systran/faster-whisper-small`
-- Models are pre-cached into `./models/hf-home` using the `.venv-hf` virtualenv.
+- Models are pre-cached into `./.cache/models/hf` using a focused tool env such as `scripts/bootstrap_tool_env.sh whisper-asr` or `scripts/bootstrap_tool_env.sh qwen-runtime`.
 
 ### 1. Start the local AI stack (Apple / dev profile)
 
 ```bash
-cd Birtha_bigger_n_badder
+cd /path/to/server
 docker compose -f docker-compose.yml -f docker-compose.local-ai.yml up -d
 ```
 
@@ -107,7 +107,7 @@ Expected:
 When you have access to an NVIDIA GPU Linux host and want the full Qwen3.5-9B model, run the vLLM worker and point the orchestrator at it:
 
 ```bash
-cd Birtha_bigger_n_badder/worker/vllm
+cd /path/to/server/worker/vllm
 docker compose -f docker-compose.vllm.yml up -d
 ```
 
@@ -140,4 +140,3 @@ Then:
 
 - `wrkhrs-asr /health` will show `use_mock: true` and `status: "degraded"` with a synthetic transcript from `/transcribe`.
 - `wrkhrs-rag /health` will show `use_mock: true` and still allow search using deterministic hash-based embeddings.
-
