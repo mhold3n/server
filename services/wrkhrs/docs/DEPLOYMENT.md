@@ -72,7 +72,7 @@ make monitoring-up
 LLM_BACKEND=vllm
 ASR_DEVICE=cuda
 ENABLE_GPU=true
-VLLM_MODEL=/models/<your-model>
+VLLM_MODEL=/.cache/models/vllm/<your-model>
 ```
 
 2) Build & run
@@ -106,5 +106,3 @@ make backup-data
 - If orchestrator/LLM is unavailable, the gateway will return a fallback message.
 - Use `LLM_BACKEND=mock` to operate without a model.
 - Check logs: `make logs`
-
-

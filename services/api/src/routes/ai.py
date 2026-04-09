@@ -234,6 +234,12 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
     input_data["engagement_mode_reasons"] = mode_decision["engagement_mode_reasons"]
     input_data["minimum_engagement_mode"] = mode_decision["minimum_engagement_mode"]
     input_data["pending_mode_change"] = mode_decision.get("pending_mode_change")
+    input_data["knowledge_pool_assessment_ref"] = mode_decision.get(
+        "knowledge_pool_assessment_ref"
+    )
+    input_data["knowledge_pool_coverage"] = mode_decision.get("knowledge_pool_coverage")
+    input_data["knowledge_candidate_refs"] = mode_decision.get("knowledge_candidate_refs", [])
+    input_data["knowledge_required"] = mode_decision.get("knowledge_required")
     workflow_config["engagement_mode"] = selected_mode
     workflow_config["engagement_mode_source"] = mode_decision["engagement_mode_source"]
     workflow_config["engagement_mode_confidence"] = mode_decision["engagement_mode_confidence"]
@@ -295,6 +301,27 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
     if selected_mode in {"engineering_task", "strict_engineering"} and engineering_task_id and engineering_run_id:
         result_payload = result.get("result", {}) if isinstance(result, dict) else {}
         if isinstance(result_payload, dict):
+            result_payload.setdefault(
+                "knowledge_pool_assessment_ref",
+                mode_decision.get("knowledge_pool_assessment_ref"),
+            )
+            result_payload.setdefault(
+                "knowledge_pool_coverage",
+                mode_decision.get("knowledge_pool_coverage"),
+            )
+            result_payload.setdefault(
+                "knowledge_candidate_refs",
+                mode_decision.get("knowledge_candidate_refs", []),
+            )
+            result_payload.setdefault(
+                "knowledge_required",
+                mode_decision.get("knowledge_required"),
+            )
+            if mode_decision.get("knowledge_pool_assessment") is not None:
+                result_payload.setdefault(
+                    "knowledge_pool_assessment",
+                    mode_decision.get("knowledge_pool_assessment"),
+                )
             synced = service.sync_engineering_chat_session(
                 task_id=engineering_task_id,
                 run_id=engineering_run_id,
@@ -328,6 +355,10 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
                         "selected_executor",
                         session.active_selected_executor,
                     )
+                    referential_state.setdefault(
+                        "knowledge_pool_assessment_ref",
+                        session.knowledge_pool_assessment_ref,
+                    )
             result_payload.setdefault(
                 "required_gates",
                 session.required_gates if session is not None else [],
@@ -356,6 +387,38 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
             result_payload.setdefault(
                 "pending_mode_change",
                 mode_decision.get("pending_mode_change"),
+            )
+            result_payload.setdefault(
+                "knowledge_pool_assessment_ref",
+                (
+                    session.knowledge_pool_assessment_ref
+                    if session is not None and session.knowledge_pool_assessment_ref
+                    else mode_decision.get("knowledge_pool_assessment_ref")
+                ),
+            )
+            result_payload.setdefault(
+                "knowledge_pool_coverage",
+                (
+                    session.knowledge_pool_coverage
+                    if session is not None and session.knowledge_pool_coverage
+                    else mode_decision.get("knowledge_pool_coverage")
+                ),
+            )
+            result_payload.setdefault(
+                "knowledge_candidate_refs",
+                (
+                    list(session.knowledge_candidate_refs)
+                    if session is not None and session.knowledge_candidate_refs
+                    else mode_decision.get("knowledge_candidate_refs", [])
+                ),
+            )
+            result_payload.setdefault(
+                "knowledge_required",
+                (
+                    bool(session.knowledge_required)
+                    if session is not None and session.knowledge_required
+                    else mode_decision.get("knowledge_required")
+                ),
             )
             pending = mode_decision.get("pending_mode_change")
             if isinstance(pending, dict) and pending.get("prompt"):
@@ -387,6 +450,22 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
             result_payload.setdefault(
                 "pending_mode_change",
                 mode_decision.get("pending_mode_change"),
+            )
+            result_payload.setdefault(
+                "knowledge_pool_assessment_ref",
+                mode_decision.get("knowledge_pool_assessment_ref"),
+            )
+            result_payload.setdefault(
+                "knowledge_pool_coverage",
+                mode_decision.get("knowledge_pool_coverage"),
+            )
+            result_payload.setdefault(
+                "knowledge_candidate_refs",
+                mode_decision.get("knowledge_candidate_refs", []),
+            )
+            result_payload.setdefault(
+                "knowledge_required",
+                mode_decision.get("knowledge_required"),
             )
             pending = mode_decision.get("pending_mode_change")
             if isinstance(pending, dict) and pending.get("prompt"):

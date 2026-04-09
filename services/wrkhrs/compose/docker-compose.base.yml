@@ -22,12 +22,18 @@ volumes:
       type: none
       o: bind
       device: ${RAG_CACHE_PATH:-./data/rag_cache}
-  models:
+  ollama_models:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${MODELS_PATH:-./models}
+      device: ${OLLAMA_MODELS_PATH:-./.cache/models/ollama}
+  vllm_models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${VLLM_MODELS_PATH:-./.cache/models/vllm}
   plugins:
     driver: local
     driver_opts:
@@ -218,8 +224,9 @@ services:
     networks: [ llm_net ]
     ports: [ "11434:11434" ]
     volumes:
-      - "models:/models"
+      - "ollama_models:/.cache/models/ollama"
     environment:
+      - OLLAMA_MODELS=/.cache/models/ollama
       - OLLAMA_KEEP_ALIVE=24h
       - OLLAMA_ORIGINS=*
     restart: unless-stopped

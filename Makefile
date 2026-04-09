@@ -40,70 +40,70 @@ test-chat:
 
 # Server deployment
 up-server:
-	docker compose -f docker-compose.yml -f docker-compose.server.yml up -d --build
+	docker compose -f docker-compose.yml -f compose/docker-compose.server.yml up -d --build
 
 logs-server:
-	docker compose -f docker-compose.yml -f docker-compose.server.yml logs -f
+	docker compose -f docker-compose.yml -f compose/docker-compose.server.yml logs -f
 
 redeploy-caddy:
 	./dev/scripts/redeploy_caddy.sh
 
 # Addons
 up-addons:
-	COMPOSE_PROFILES=security,search,ai,media,data,games,apps,network docker compose -f docker-compose.addons.yml up -d
+	COMPOSE_PROFILES=security,search,ai,media,data,games,apps,network docker compose -f compose/docker-compose.addons.yml up -d
 
 logs-addons:
-	COMPOSE_PROFILES=security,search,ai,media,data,games,apps,network docker compose -f docker-compose.addons.yml logs -f
+	COMPOSE_PROFILES=security,search,ai,media,data,games,apps,network docker compose -f compose/docker-compose.addons.yml logs -f
 
 up-all:
-	COMPOSE_PROFILES=security,search,ai,media,data,games,apps,network docker compose -f docker-compose.yml -f docker-compose.server.yml -f docker-compose.addons.yml up -d --build
+	COMPOSE_PROFILES=security,search,ai,media,data,games,apps,network docker compose -f docker-compose.yml -f compose/docker-compose.server.yml -f compose/docker-compose.addons.yml up -d --build
 
 # Worker deployment
 up-worker:
-	docker compose -f docker-compose.worker.yml up -d
+	docker compose -f compose/docker-compose.worker.yml up -d
 
 logs-worker:
-	docker compose -f docker-compose.worker.yml logs -f
+	docker compose -f compose/docker-compose.worker.yml logs -f
 
 # Platform services (MLflow, observability)
 platform-up:
-	docker compose -f docker-compose.yml -f docker-compose.platform.yml up -d
+	docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml up -d
 
 platform-down:
-	docker compose -f docker-compose.yml -f docker-compose.platform.yml down
+	docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml down
 
 logs-platform:
-	docker compose -f docker-compose.yml -f docker-compose.platform.yml logs -f
+	docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml logs -f
 
 # AI stack (WrkHrs services)
 ai-up:
-	docker compose -f docker-compose.yml -f docker-compose.ai.yml up -d
+	docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d
 
 ai-down:
-	docker compose -f docker-compose.yml -f docker-compose.ai.yml down
+	docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml down
 
 logs-ai:
-	docker compose -f docker-compose.yml -f docker-compose.ai.yml logs -f
+	docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs -f
 
 # Full server deployment (platform + AI + server)
 server-up:
-	docker compose -f docker-compose.yml -f docker-compose.platform.yml -f docker-compose.ai.yml -f docker-compose.server.yml up -d
+	docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml -f compose/docker-compose.ai.yml -f compose/docker-compose.server.yml up -d
 
 server-down:
-	docker compose -f docker-compose.yml -f docker-compose.platform.yml -f docker-compose.ai.yml -f docker-compose.server.yml down
+	docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml -f compose/docker-compose.ai.yml -f compose/docker-compose.server.yml down
 
 logs-server-full:
-	docker compose -f docker-compose.yml -f docker-compose.platform.yml -f docker-compose.ai.yml -f docker-compose.server.yml logs -f
+	docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml -f compose/docker-compose.ai.yml -f compose/docker-compose.server.yml logs -f
 
 # Worker (GPU) deployment
 worker-up:
-	docker compose -f docker-compose.worker.yml up -d
+	docker compose -f compose/docker-compose.worker.yml up -d
 
 worker-down:
-	docker compose -f docker-compose.worker.yml down
+	docker compose -f compose/docker-compose.worker.yml down
 
 logs-worker:
-	docker compose -f docker-compose.worker.yml logs -f
+	docker compose -f compose/docker-compose.worker.yml logs -f
 
 # Health checks
 health:

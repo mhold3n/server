@@ -30,7 +30,7 @@ Notes
 
 Server override
 
-- `docker-compose.server.yml` mounts `/var/run/docker.sock` into `api` so `/api/apps/{id}/restart` can actually restart compose-managed containers by service name.
+- `compose/docker-compose.server.yml` mounts `/var/run/docker.sock` into `api` so `/api/apps/{id}/restart` can actually restart compose-managed containers by service name.
 UI
 
 - VMs panel: `/ui/vms/` (start/stop VMs)

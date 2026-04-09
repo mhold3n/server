@@ -1,0 +1,24 @@
+{
+  "knowledge_pool_assessment_id": "11111111-1111-4111-8111-111111111111",
+  "schema_version": "1.0.0",
+  "derived_task_class": "thermochemistry_screening",
+  "coverage_class": "strong",
+  "required_for_mode": true,
+  "candidate_pack_refs": [
+    "artifact://knowledge-pack/cantera"
+  ],
+  "preferred_adapter_refs": [
+    "artifact://execution-adapter-spec/cantera_probe"
+  ],
+  "preferred_environment_refs": [
+    "artifact://environment-spec/eng_thermochem_uv"
+  ],
+  "runtime_verification_refs": [
+    "artifact://verification-report/c6a1c15b-dd77-5d87-b80a-c3adcb5cc48b"
+  ],
+  "knowledge_gaps": [],
+  "rule_matches": [
+    "knowledge_pool:pack_candidate_present"
+  ],
+  "created_at": "2026-04-08T00:00:00Z"
+}

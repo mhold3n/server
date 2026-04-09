@@ -29,9 +29,10 @@ from src.control_plane.lifecycle import (
     assert_task_packet_transition,
 )
 from src.control_plane.validation import (
-    validate_environment_spec_json,
     get_schema_store,
+    validate_environment_spec_json,
     validate_engineering_state_json,
+    validate_knowledge_pool_assessment_json,
     validate_problem_brief_json,
     validate_routing_policy_json,
     validate_task_packet_json,
@@ -101,6 +102,23 @@ def test_task_packet_validation_type_requires_requirements() -> None:
     raw["validation_requirements"] = []
     with pytest.raises(ContractValidationError):
         validate_task_packet_json(raw)
+
+
+def test_task_packet_accepts_knowledge_context_when_required() -> None:
+    raw = _minimal_task_packet_dict()
+    raw["knowledge_context"] = {
+        "assessment_ref": "artifact://knowledge_pool_assessment/kpa-1",
+        "candidate_pack_refs": ["artifact://knowledge-pack/test-pack"],
+        "role_context_ref": "artifact://role_context_bundle/coder_abc",
+        "preferred_adapter_ref": "artifact://execution-adapter/adapter-1",
+        "preferred_environment_ref": "artifact://environment-spec/env-1",
+        "runtime_verification_refs": ["artifact://verification-report/runtime-1"],
+        "coverage_class": "partial",
+        "required": True,
+    }
+    packet = validate_task_packet_json(raw)
+    assert packet.knowledge_context is not None
+    assert packet.knowledge_context.required is True
 
 
 def test_lifecycle_task_packet_illegal() -> None:
@@ -210,6 +228,14 @@ def test_golden_engineering_state_round_trip() -> None:
     assert state.ready_for_task_decomposition is True
 
 
+def test_golden_knowledge_pool_assessment_round_trip() -> None:
+    data = _load_fixture(
+        "schemas/control-plane/v1/fixtures/knowledge-pool-assessment/valid-minimal.json"
+    )
+    assessment = validate_knowledge_pool_assessment_json(data)
+    assert assessment.coverage_class.value == "strong"
+
+
 def test_golden_routing_policy_round_trip() -> None:
     data = _load_fixture(
         "schemas/control-plane/v1/fixtures/routing-policy/valid-minimal.json"
@@ -281,6 +307,15 @@ def test_engineering_state_derivation_is_idempotent_and_permutation_invariant() 
     assert sorted(item["criterion_id"] for item in state_a["verification_intent"]) == sorted(
         item["criterion_id"] for item in state_b["verification_intent"]
     )
+    assert isinstance(state_a["knowledge_pool_assessment_ref"], str)
+    assert state_a["knowledge_pool_coverage"] in {
+        "not_applicable",
+        "none",
+        "weak",
+        "partial",
+        "strong",
+    }
+    assert isinstance(state_a["knowledge_candidate_refs"], list)
 
 
 def test_task_queue_generation_requires_ready_engineering_state() -> None:
@@ -292,6 +327,35 @@ def test_task_queue_generation_requires_ready_engineering_state() -> None:
     )
     with pytest.raises(ValueError):
         build_task_queue(problem_brief=problem_brief, engineering_state=state)
+
+
+def test_task_queue_generation_blocks_low_required_knowledge_coverage() -> None:
+    problem_brief = validate_problem_brief_json(
+        _load_fixture("schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
+    )
+    state = derive_engineering_state(problem_brief)
+    weak_assessment = validate_knowledge_pool_assessment_json(
+        {
+            "knowledge_pool_assessment_id": str(uuid4()),
+            "schema_version": "1.0.0",
+            "derived_task_class": "simulation_pipeline",
+            "coverage_class": "weak",
+            "required_for_mode": True,
+            "candidate_pack_refs": [],
+            "preferred_adapter_refs": [],
+            "preferred_environment_refs": [],
+            "runtime_verification_refs": [],
+            "knowledge_gaps": ["missing runtime coverage"],
+            "rule_matches": ["knowledge_pool:test"],
+            "created_at": "2026-04-08T00:00:00Z",
+        }
+    )
+    with pytest.raises(ValueError, match="knowledge pool coverage is insufficient"):
+        build_task_queue(
+            problem_brief=problem_brief,
+            engineering_state=state,
+            knowledge_pool_assessment=weak_assessment,
+        )
 
 
 def test_control_plane_engineering_intake_route_requires_clarification(

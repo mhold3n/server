@@ -198,8 +198,12 @@ def test_devplane_internal_dispatch_lifecycle_and_publish(
         worktree_path = Path(run["workspace"]["worktree_path"])
         assert worktree_path.exists()
         assert (worktree_path / ".birtha" / "task-packet.json").exists()
+        manifest = (worktree_path / ".birtha" / "task-packet.json").read_text(encoding="utf-8")
+        assert "knowledge_pool_assessment_ref" in manifest
         assert run["backend_run_id"].startswith("backend-")
         assert run["execution_mode"] == "internal"
+        assert run["knowledge_pool_assessment_ref"]
+        assert "knowledge_pool_coverage" in run
         assert fake_client.started == [run_id]
 
         run_status = client.get(f"/api/dev/runs/{run_id}")
@@ -212,6 +216,8 @@ def test_devplane_internal_dispatch_lifecycle_and_publish(
         dossier = dossier_resp.json()
         assert dossier["state"] == "ready_to_publish"
         assert dossier["artifacts"]
+        assert dossier["knowledge_pool_assessment_ref"]
+        assert "knowledge_pool_coverage" in dossier
         assert dossier["verification_results"][0]["status"] == "passed"
 
         publish_resp = client.post(

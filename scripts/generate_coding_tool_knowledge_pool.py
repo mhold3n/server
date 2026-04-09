@@ -13,6 +13,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_ROOT = REPO_ROOT / "knowledge" / "coding-tools"
 RUNTIME_ROOT = OUTPUT_ROOT / "runtime"
 EXCLUDED_PATH = REPO_ROOT / "KNOWLEGE MINUTES EXCLUDED.md"
+ACQUISITION_DOSSIERS_JSON_PATH = OUTPUT_ROOT / "substrate" / "deferred-acquisition-dossiers.json"
+ACQUISITION_DOSSIERS_MD_PATH = OUTPUT_ROOT / "DEFERRED_ACQUISITION_DOSSIERS.md"
 SEED_TS = "2026-04-08T00:00:00Z"
 PRODUCER = {"component": "knowledge_pool.seed", "executor": "curation_seed_builder"}
 
@@ -71,28 +73,334 @@ def excluded(
     }
 
 
+def minutes_module_ref(slug: str) -> str:
+    return f"minutes-module://{slug}"
+
+
+INSTALL_METHOD_CATEGORIES: dict[str, dict[str, str]] = {
+    "I1_containerized_native_solver_platform": {
+        "title": "I1 containerized_native_solver_platform",
+        "kb_build_method_category": "K1_executable_solver_platform_pack",
+        "description": "Containerized native solver and platform applications with executable runtime surfaces.",
+    },
+    "I2_containerized_native_backend_family": {
+        "title": "I2 containerized_native_backend_family",
+        "kb_build_method_category": "K2_backend_family_pack",
+        "description": "Containerized native backend families and kernel libraries that should be built once and reused by dependents.",
+    },
+    "I3_python_first_venv_package": {
+        "title": "I3 python_first_venv_package",
+        "kb_build_method_category": "K3_python_framework_pack",
+        "description": "Python-first packages installed into shared uv environments by compatible family.",
+    },
+    "I4_host_companion_wrapper": {
+        "title": "I4 host_companion_wrapper",
+        "kb_build_method_category": "K4_companion_host_bound_pack",
+        "description": "Host-bound wrappers and companions that inherit their installation path from a verified parent runtime.",
+    },
+    "I5_knowledge_only_standard": {
+        "title": "I5 knowledge_only_standard",
+        "kb_build_method_category": "K5_standard_spec_pack",
+        "description": "Standards and exchange formats modeled as knowledge artifacts with validators and mappings, not installs.",
+    },
+    "I6_deferred_external_manual": {
+        "title": "I6 deferred_external_manual",
+        "kb_build_method_category": "K6_acquisition_deferred_pack",
+        "description": "Modules blocked on user-supplied source, licenses, proprietary runtimes, or interactive/manual acquisition.",
+    },
+}
+
+KB_BUILD_METHOD_CATEGORIES: dict[str, dict[str, str]] = {
+    "K1_executable_solver_platform_pack": {
+        "title": "K1 executable_solver_platform_pack",
+        "description": "Executable application and solver platform packs with runtime-linked recipes, adapters, and evidence.",
+    },
+    "K2_backend_family_pack": {
+        "title": "K2 backend_family_pack",
+        "description": "Backend family packs with shared runtime evidence and child overlays for tightly related kernels.",
+    },
+    "K3_python_framework_pack": {
+        "title": "K3 python_framework_pack",
+        "description": "API-centric Python package packs with import probes, minimal recipes, and framework-specific failure signatures.",
+    },
+    "K4_companion_host_bound_pack": {
+        "title": "K4 companion_host_bound_pack",
+        "description": "Companion packs that must link to a verified parent runtime and compatibility evidence.",
+    },
+    "K5_standard_spec_pack": {
+        "title": "K5 standard_spec_pack",
+        "description": "Knowledge-only standard packs with validators, schema maps, examples, and host/runtime mappings.",
+    },
+    "K6_acquisition_deferred_pack": {
+        "title": "K6 acquisition_deferred_pack",
+        "description": "Placeholder packs for externally acquired modules, recording capability, constraints, and acquisition prerequisites.",
+    },
+}
+
+RECOVERY_DEFAULTS = {
+    "phase1_priority": "foundations_first",
+    "standards_policy": "knowledge_only_artifacts",
+    "manual_install_policy": "defer_only_proprietary_or_website_email_delivered_installs",
+    "phase1_cli_policy": "promote_all_non_proprietary_cli_installables_into_phase1_batches",
+    "pyfmi_default_host": minutes_module_ref("openmodelica"),
+    "pyoptsparse_default_backend": minutes_module_ref("ipopt"),
+    "precice_default_solver_pair": [minutes_module_ref("openfoam"), minutes_module_ref("calculix")],
+    "vtk_default_host": minutes_module_ref("paraview"),
+}
+
+INSTALL_BATCH_DEFINITIONS = [
+    {
+        "id": "phase1_batch1a_petsc_family",
+        "phase": "phase1",
+        "order": 1,
+        "install_method_category": "I2_containerized_native_backend_family",
+        "title": "Batch 1A: PETSc family",
+        "description": "Build the PETSc-centered backend family first so dependent wrappers and eigensolvers inherit one native base.",
+    },
+    {
+        "id": "phase1_batch1b_trilinos_family",
+        "phase": "phase1",
+        "order": 2,
+        "install_method_category": "I2_containerized_native_backend_family",
+        "title": "Batch 1B: Trilinos family",
+        "description": "Build the Trilinos family after PETSc to cover the second major backend lineage.",
+    },
+    {
+        "id": "phase1_batch1c_sparse_direct_family",
+        "phase": "phase1",
+        "order": 3,
+        "install_method_category": "I2_containerized_native_backend_family",
+        "title": "Batch 1C: Sparse-direct family",
+        "description": "Build sparse direct and factorization backends that later solver platforms can reuse.",
+    },
+    {
+        "id": "phase1_batch1d_nlp_time_chem_family",
+        "phase": "phase1",
+        "order": 4,
+        "install_method_category": "I2_containerized_native_backend_family",
+        "title": "Batch 1D: IPOPT/SUNDIALS/TChem family",
+        "description": "Build the nonlinear optimization, time integration, and chemistry-kernel family.",
+    },
+    {
+        "id": "phase1_batch1e_geometry_native_family",
+        "phase": "phase1",
+        "order": 5,
+        "install_method_category": "I2_containerized_native_backend_family",
+        "title": "Batch 1E: Geometry native family",
+        "description": "Build low-level geometry-native libraries after the numerical backend families are frozen.",
+    },
+    {
+        "id": "phase1_batch1f_onemkl_family",
+        "phase": "phase1",
+        "order": 6,
+        "install_method_category": "I2_containerized_native_backend_family",
+        "title": "Batch 1F: Intel oneMKL family",
+        "description": "Build the Intel oneMKL-backed sparse and nonlinear backend container path after the open NLP family is frozen.",
+    },
+    {
+        "id": "phase1_batch2a_solver_platforms_first_wave",
+        "phase": "phase1",
+        "order": 7,
+        "install_method_category": "I1_containerized_native_solver_platform",
+        "title": "Batch 2A: Core solver/platform first wave",
+        "description": "Install the first-wave seed stack and coupling-adjacent platforms.",
+    },
+    {
+        "id": "phase1_batch2b_solver_platforms_second_wave",
+        "phase": "phase1",
+        "order": 8,
+        "install_method_category": "I1_containerized_native_solver_platform",
+        "title": "Batch 2B: Core solver/platform second wave",
+        "description": "Install the second-wave platforms after the first-wave solver path is stable.",
+    },
+    {
+        "id": "phase1_batch3a_petsc_wrapper",
+        "phase": "phase1",
+        "order": 9,
+        "install_method_category": "I4_host_companion_wrapper",
+        "title": "Batch 3A: PETSc companion wrappers",
+        "description": "Install PETSc-bound wrappers only after the PETSc family is green.",
+    },
+    {
+        "id": "phase1_batch3b_nlp_wrapper",
+        "phase": "phase1",
+        "order": 10,
+        "install_method_category": "I4_host_companion_wrapper",
+        "title": "Batch 3B: NLP companion wrappers",
+        "description": "Install wrappers that depend on the chosen nonlinear optimization backend family.",
+    },
+    {
+        "id": "phase1_batch3c_coupling_wrapper",
+        "phase": "phase1",
+        "order": 11,
+        "install_method_category": "I4_host_companion_wrapper",
+        "title": "Batch 3C: Coupling wrappers",
+        "description": "Install coupling wrappers once their paired solver platforms are verified.",
+    },
+    {
+        "id": "phase1_batch3d_modelica_wrapper",
+        "phase": "phase1",
+        "order": 12,
+        "install_method_category": "I4_host_companion_wrapper",
+        "title": "Batch 3D: Modelica wrappers",
+        "description": "Install OpenModelica-bound wrappers after the Modelica host runtime is verified.",
+    },
+    {
+        "id": "phase1_batch3e_fmu_wrapper",
+        "phase": "phase1",
+        "order": 13,
+        "install_method_category": "I4_host_companion_wrapper",
+        "title": "Batch 3E: FMU wrappers",
+        "description": "Install FMU wrappers after the chosen FMU host path is frozen.",
+    },
+    {
+        "id": "phase1_batch3f_salome_wrapper",
+        "phase": "phase1",
+        "order": 14,
+        "install_method_category": "I4_host_companion_wrapper",
+        "title": "Batch 3F: SALOME companions",
+        "description": "Install SALOME-bound translators after the SALOME platform is verified.",
+    },
+    {
+        "id": "phase1_batch3g_visualization_wrapper",
+        "phase": "phase1",
+        "order": 15,
+        "install_method_category": "I4_host_companion_wrapper",
+        "title": "Batch 3G: Visualization companions",
+        "description": "Install visualization companions after the visualization host stack is verified.",
+    },
+    {
+        "id": "phase1_batch3h_rhino_host_wrapper",
+        "phase": "phase1",
+        "order": 16,
+        "install_method_category": "I4_host_companion_wrapper",
+        "title": "Batch 3H: Rhino host companions",
+        "description": "Install Rhino-bound scripting and API companions after the local Rhino host runtime is verified.",
+    },
+    {
+        "id": "phase1_batch4a_openmdao_adjacent",
+        "phase": "phase1",
+        "order": 17,
+        "install_method_category": "I3_python_first_venv_package",
+        "title": "Batch 4A: OpenMDAO-adjacent Python frameworks",
+        "description": "Install OpenMDAO-adjacent Python frameworks in one shared uv environment.",
+    },
+    {
+        "id": "phase1_batch4b_process_system",
+        "phase": "phase1",
+        "order": 18,
+        "install_method_category": "I3_python_first_venv_package",
+        "title": "Batch 4B: Process/system Python frameworks",
+        "description": "Install process and system-model frameworks in one shared uv environment.",
+    },
+    {
+        "id": "phase1_batch4c_inverse_physics_domain",
+        "phase": "phase1",
+        "order": 19,
+        "install_method_category": "I3_python_first_venv_package",
+        "title": "Batch 4C: Inverse-physics/domain Python frameworks",
+        "description": "Install domain and inverse-physics frameworks in one shared uv environment.",
+    },
+    {
+        "id": "phase1_batch4d_distributed_ml_reserve",
+        "phase": "phase1",
+        "order": 20,
+        "install_method_category": "I3_python_first_venv_package",
+        "title": "Batch 4D: Distributed/ML/reserve Python frameworks",
+        "description": "Install distributed and ML-oriented reserve frameworks in one shared uv environment.",
+    },
+    {
+        "id": "phase1_batch5_standards",
+        "phase": "phase1",
+        "order": 21,
+        "install_method_category": "I5_knowledge_only_standard",
+        "title": "Batch 5: Standards",
+        "description": "Build knowledge-only validators, mappings, and examples for standards and exchange formats.",
+    },
+    {
+        "id": "phase1_batch6_deferred_external_manual",
+        "phase": "next_sprint",
+        "order": 22,
+        "install_method_category": "I6_deferred_external_manual",
+        "title": "Batch 6: Deferred external/manual",
+        "description": "Do not install in this sprint; prepare acquisition dossiers for the next sprint.",
+    },
+]
+
+KB_BUILD_BATCH_DEFINITIONS = [
+    {
+        "id": "phase2_batch_k1_solver_platforms",
+        "phase": "phase2",
+        "order": 1,
+        "kb_build_method_category": "K1_executable_solver_platform_pack",
+        "title": "Phase 2 K1: Solver/platform packs",
+        "description": "Build executable solver platform packs with runtime-linked recipes, adapters, and evidence.",
+    },
+    {
+        "id": "phase2_batch_k2_backend_families",
+        "phase": "phase2",
+        "order": 2,
+        "kb_build_method_category": "K2_backend_family_pack",
+        "title": "Phase 2 K2: Backend family packs",
+        "description": "Build one family pack per backend lineage, then add child overlays.",
+    },
+    {
+        "id": "phase2_batch_k3_python_frameworks",
+        "phase": "phase2",
+        "order": 3,
+        "kb_build_method_category": "K3_python_framework_pack",
+        "title": "Phase 2 K3: Python framework packs",
+        "description": "Build API-centric Python framework packs with import probes, recipes, and failure signatures.",
+    },
+    {
+        "id": "phase2_batch_k4_host_companions",
+        "phase": "phase2",
+        "order": 4,
+        "kb_build_method_category": "K4_companion_host_bound_pack",
+        "title": "Phase 2 K4: Host companion packs",
+        "description": "Build companion packs tied to verified parent runtimes and compatibility evidence.",
+    },
+    {
+        "id": "phase2_batch_k5_standards",
+        "phase": "phase2",
+        "order": 5,
+        "kb_build_method_category": "K5_standard_spec_pack",
+        "title": "Phase 2 K5: Standard/spec packs",
+        "description": "Build knowledge-only standard packs with validators, schema maps, and host mappings.",
+    },
+    {
+        "id": "phase2_batch_k6_deferred_acquisition",
+        "phase": "next_sprint",
+        "order": 6,
+        "kb_build_method_category": "K6_acquisition_deferred_pack",
+        "title": "Phase 2 K6: Deferred acquisition packs",
+        "description": "Build placeholder packs for externally acquired modules after acquisition prerequisites are met.",
+    },
+]
+
+
 RUNTIME_PROFILES: list[dict] = [
     {
         "id": "eng_geometry_uv",
         "runtime_profile": "eng-geometry",
         "delivery_kind": "uv_venv",
-        "module_ids": ["gmsh", "cadquery", "occt", "meshio"],
+        "module_ids": ["gmsh", "cadquery", "occt", "meshio", "compas"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "requirements_txt",
         "manifest_path": "knowledge/coding-tools/runtime/uv/eng-geometry.requirements.txt",
         "runtime_locator": ".cache/knowledge-envs/eng-geometry",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_uv",
-        "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_uv --imports cadquery gmsh OCP meshio",
+        "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_uv --imports cadquery gmsh OCP meshio compas",
         "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-geometry.sh",
-        "requirements": ["cadquery", "gmsh", "meshio"],
+        "requirements": ["cadquery", "gmsh", "meshio", "compas"],
         "verification_enabled": True,
-        "notes": ["Companion local geometry runtime for scripted CAD, meshing, and translation."],
+        "notes": ["Companion local geometry runtime for scripted CAD, meshing, translation, and geometry-side Python frameworks."],
     },
     {
         "id": "eng_geometry_docker",
         "runtime_profile": "eng-geometry",
         "delivery_kind": "docker_image",
-        "module_ids": ["gmsh", "cadquery", "occt", "meshio"],
+        "module_ids": ["gmsh", "cadquery", "occt", "meshio", "compas"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "dockerfile",
         "manifest_path": "knowledge/coding-tools/runtime/docker/eng-geometry.Dockerfile",
@@ -151,14 +459,19 @@ RUNTIME_PROFILES: list[dict] = [
             "openmdao",
             "cvxpy",
             "jmetalpy",
-            "enoppy"
+            "enoppy",
+            "dymos",
+            "mphys",
+            "optas",
+            "nevergrad",
+            "botorch"
         ],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "requirements_txt",
         "manifest_path": "knowledge/coding-tools/runtime/uv/eng-mdo.requirements.txt",
         "runtime_locator": ".cache/knowledge-envs/eng-mdo",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv",
-        "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv --imports casadi pymoo ortools pyomo.environ openturns smt SALib openmdao.api cvxpy jmetal enoppy",
+        "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv --imports casadi pymoo ortools pyomo.environ openturns smt SALib openmdao.api cvxpy jmetal enoppy dymos mphys optas nevergrad botorch",
         "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-mdo.sh",
         "requirements": [
             "casadi",
@@ -171,12 +484,18 @@ RUNTIME_PROFILES: list[dict] = [
             "openmdao",
             "cvxpy",
             "jmetalpy",
-            "enoppy"
+            "enoppy",
+            "dymos",
+            "mphys",
+            "optas",
+            "nevergrad",
+            "botorch"
         ],
         "verification_enabled": True,
         "verification_reasons": [
             "Runtime profile eng-mdo passed its linked import health check during this sprint.",
             "cvxpy loaded with OR-Tools compatibility warnings for GLOP/PDLP on OR-Tools 9.15.6755; core imports still completed successfully.",
+            "The shared MDO runtime now includes the Phase 1 CLI-installable OpenMDAO-adjacent and black-box optimization packages from the excluded tracker.",
         ],
         "notes": ["Companion local MDO runtime for optimization, UQ, and design-space tooling."],
     },
@@ -195,7 +514,12 @@ RUNTIME_PROFILES: list[dict] = [
             "openmdao",
             "cvxpy",
             "jmetalpy",
-            "enoppy"
+            "enoppy",
+            "dymos",
+            "mphys",
+            "optas",
+            "nevergrad",
+            "botorch"
         ],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "dockerfile",
@@ -212,23 +536,27 @@ RUNTIME_PROFILES: list[dict] = [
         "id": "eng_structures_uv",
         "runtime_profile": "eng-structures",
         "delivery_kind": "uv_venv",
-        "module_ids": ["fipy"],
+        "module_ids": ["fipy", "simpeg", "openpnm"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "requirements_txt",
         "manifest_path": "knowledge/coding-tools/runtime/uv/eng-structures.requirements.txt",
         "runtime_locator": ".cache/knowledge-envs/eng-structures",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_structures_uv",
-        "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_structures_uv --imports fipy",
+        "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_structures_uv --imports fipy simpeg openpnm",
         "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-structures.sh",
-        "requirements": ["fipy"],
+        "requirements": ["fipy", "simpeg", "openpnm"],
         "verification_enabled": True,
-        "notes": ["Companion local lightweight structures/PDE runtime for custom transport models."],
+        "verification_reasons": [
+            "Runtime profile eng-structures passed its linked import health check during this sprint.",
+            "The structures/domain runtime now includes the Phase 1 CLI-installable inverse-physics and porous-domain Python packages from the excluded tracker.",
+        ],
+        "notes": ["Companion local lightweight structures/PDE runtime for custom transport models and inverse/domain-specific Python packages."],
     },
     {
         "id": "eng_structures_docker",
         "runtime_profile": "eng-structures",
         "delivery_kind": "docker_image",
-        "module_ids": ["fipy"],
+        "module_ids": ["fipy", "simpeg", "openpnm"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "dockerfile",
         "manifest_path": "knowledge/coding-tools/runtime/docker/eng-structures.Dockerfile",
@@ -244,23 +572,27 @@ RUNTIME_PROFILES: list[dict] = [
         "id": "eng_system_uv",
         "runtime_profile": "eng-system",
         "delivery_kind": "uv_venv",
-        "module_ids": ["pyspice", "fmpy"],
+        "module_ids": ["pyspice", "fmpy", "idaes", "ompython", "simpy"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "requirements_txt",
         "manifest_path": "knowledge/coding-tools/runtime/uv/eng-system.requirements.txt",
         "runtime_locator": ".cache/knowledge-envs/eng-system",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv",
-        "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv --imports PySpice fmpy",
+        "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv --imports PySpice fmpy idaes OMPython simpy",
         "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-system.sh",
-        "requirements": ["PySpice", "fmpy"],
+        "requirements": ["PySpice", "fmpy", "idaes-pse", "ompython", "simpy"],
         "verification_enabled": True,
-        "notes": ["Companion local system-model runtime for circuit and FMU execution libraries."],
+        "verification_reasons": [
+            "Runtime profile eng-system passed its linked import health check during this sprint.",
+            "The system/process runtime now includes the Phase 1 CLI-installable process-system Python packages from the excluded tracker.",
+        ],
+        "notes": ["Companion local system-model runtime for circuit, FMU, Modelica-adjacent, and process-system execution libraries."],
     },
     {
         "id": "eng_system_docker",
         "runtime_profile": "eng-system",
         "delivery_kind": "docker_image",
-        "module_ids": ["pyspice", "fmpy"],
+        "module_ids": ["pyspice", "fmpy", "idaes", "ompython", "simpy"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "dockerfile",
         "manifest_path": "knowledge/coding-tools/runtime/docker/eng-system.Dockerfile",
@@ -276,23 +608,27 @@ RUNTIME_PROFILES: list[dict] = [
         "id": "eng_backbone_uv",
         "runtime_profile": "eng-backbone",
         "delivery_kind": "uv_venv",
-        "module_ids": ["pint", "unyt", "xarray", "h5py", "zarr", "dask", "parsl", "pybind11", "nanobind", "mpi4py"],
+        "module_ids": ["pint", "unyt", "xarray", "h5py", "zarr", "dask", "parsl", "pybind11", "nanobind", "mpi4py", "ray", "vtk"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "requirements_txt",
         "manifest_path": "knowledge/coding-tools/runtime/uv/eng-backbone.requirements.txt",
         "runtime_locator": ".cache/knowledge-envs/eng-backbone",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_backbone_uv",
-        "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_backbone_uv --imports pint unyt xarray h5py zarr dask parsl pybind11 nanobind mpi4py",
+        "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_backbone_uv --imports pint unyt xarray h5py zarr dask parsl pybind11 nanobind mpi4py ray vtk",
         "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-backbone.sh",
-        "requirements": ["pint", "unyt", "xarray", "h5py", "zarr", "dask", "parsl", "pybind11", "nanobind", "mpi4py"],
+        "requirements": ["pint", "unyt", "xarray", "h5py", "zarr", "dask", "parsl", "pybind11", "nanobind", "mpi4py", "ray", "vtk"],
         "verification_enabled": True,
-        "notes": ["Companion local backbone runtime for units, arrays, orchestration, and native bridges."],
+        "verification_reasons": [
+            "Runtime profile eng-backbone passed its linked import health check during this sprint.",
+            "The backbone runtime now includes the Phase 1 CLI-installable distributed and visualization-side Python packages from the excluded tracker.",
+        ],
+        "notes": ["Companion local backbone runtime for units, arrays, orchestration, native bridges, and visualization/distributed support packages."],
     },
     {
         "id": "eng_backbone_docker",
         "runtime_profile": "eng-backbone",
         "delivery_kind": "docker_image",
-        "module_ids": ["pint", "unyt", "xarray", "h5py", "zarr", "dask", "parsl", "pybind11", "nanobind", "mpi4py"],
+        "module_ids": ["pint", "unyt", "xarray", "h5py", "zarr", "dask", "parsl", "pybind11", "nanobind", "mpi4py", "ray", "vtk"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "dockerfile",
         "manifest_path": "knowledge/coding-tools/runtime/docker/eng-backbone.Dockerfile",
@@ -308,11 +644,11 @@ RUNTIME_PROFILES: list[dict] = [
         "id": "eng_dotnet_sdk",
         "runtime_profile": "eng-dotnet",
         "delivery_kind": "dotnet_toolchain",
-        "module_ids": ["unitsnet", "mathnet_numerics"],
+        "module_ids": ["unitsnet", "mathnet_numerics", "picogk"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "csproj",
         "manifest_path": "knowledge/coding-tools/runtime/dotnet/eng-dotnet/KnowledgeDotnetRuntime.csproj",
-        "runtime_locator": "knowledge/coding-tools/runtime/dotnet/eng-dotnet/bin/Release/net8.0",
+        "runtime_locator": "knowledge/coding-tools/runtime/dotnet/eng-dotnet/bin/Release/net9.0",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_dotnet_sdk",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_dotnet_sdk --dotnet-probe",
         "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-dotnet.sh",
@@ -320,9 +656,96 @@ RUNTIME_PROFILES: list[dict] = [
         "verification_enabled": True,
         "verification_reasons": [
             "Runtime profile eng-dotnet passed its linked health check during this sprint.",
-            "The probe runs with DOTNET_ROLL_FORWARD=Major so the net8.0 test project can execute on the installed host runtime.",
+            "The probe runs with DOTNET_ROLL_FORWARD=Major so the net9.0 test project can execute on the installed host runtime.",
+            "The .NET runtime now restores and loads PicoGK from NuGet so geometry-kernel CLI installs can move through Phase 1 without manual acquisition.",
         ],
-        "notes": ["Companion dotnet runtime for implemented engineering support libraries."],
+        "notes": ["Companion dotnet runtime for implemented engineering support libraries and CLI-installable geometry kernels."],
+    },
+    {
+        "id": "eng_ipopt_onemkl_docker",
+        "runtime_profile": "eng-ipopt-onemkl",
+        "delivery_kind": "docker_image",
+        "module_ids": ["ipopt", "coinhsl", "onemkl", "ma57", "ma77", "ma86", "ma97"],
+        "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
+        "manifest_format": "dockerfile",
+        "manifest_path": "knowledge/coding-tools/runtime/docker/eng-ipopt-onemkl.Dockerfile",
+        "runtime_locator": "birtha/knowledge-eng-ipopt-onemkl:1.0.0",
+        "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker",
+        "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker --container-command bash -lc 'pkg-config --exists ipopt && test -d /opt/vendor/coinhsl-src && test -f /opt/intel/oneapi/mkl/latest/lib/libmkl_rt.so && echo OK:ipopt,hsl,onemkl'",
+        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-ipopt-onemkl-container.sh",
+        "requirements": [],
+        "verification_enabled": False,
+        "dockerfile_lines": [
+            "FROM ubuntu:24.04",
+            "SHELL [\"/bin/bash\", \"-lc\"]",
+            "WORKDIR /workspace",
+            "RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates wget gpg build-essential cmake ninja-build pkg-config git gfortran python3 python3-pip coinor-libipopt-dev && rm -rf /var/lib/apt/lists/*",
+            "RUN wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor > /usr/share/keyrings/oneapi-archive-keyring.gpg && echo \"deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main\" > /etc/apt/sources.list.d/oneAPI.list && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends intel-oneapi-mkl intel-oneapi-mkl-devel && rm -rf /var/lib/apt/lists/*",
+            "COPY HSL/coinhsl-2024.05.15 /opt/vendor/coinhsl-src",
+            "COPY HSL/CoinHSL.v2024.5.15.aarch64-apple-darwin-libgfortran5 /opt/vendor/coinhsl-prebuilt-darwin",
+            "RUN test -f /opt/vendor/coinhsl-src/README && test -d /opt/vendor/coinhsl-src/ma57 && test -d /opt/vendor/coinhsl-src/hsl_ma77 && test -d /opt/vendor/coinhsl-src/hsl_ma86 && test -d /opt/vendor/coinhsl-src/hsl_ma97",
+            "RUN test -f /opt/intel/oneapi/mkl/latest/lib/libmkl_rt.so",
+            "CMD [\"bash\"]",
+            "",
+        ],
+        "notes": [
+            "Canonical Docker staging path for the open IPOPT backend with Intel oneMKL and locally provided HSL sources.",
+            "This environment supersedes the earlier licensed-PARDISO acquisition path for the excluded-module recovery plan.",
+        ],
+    },
+    {
+        "id": "eng_rhino_host",
+        "runtime_profile": "eng-rhino",
+        "delivery_kind": "host_app",
+        "module_ids": ["rhino8", "rhinocode", "yak", "rhino_common"],
+        "supported_host_platforms": ["darwin-arm64"],
+        "manifest_format": "other",
+        "manifest_path": "knowledge/coding-tools/runtime/host/eng-rhino.manifest.txt",
+        "runtime_locator": "/Applications/Rhino 8.app",
+        "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_rhino_host",
+        "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_rhino_host",
+        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-rhino.sh",
+        "requirements": [],
+        "verification_enabled": True,
+        "verification_reasons": [
+            "The local Rhino 8 host runtime is installed on this machine and the checked-in launcher resolves to the RhinoCode CLI.",
+            "The RhinoCode CLI returned its version successfully during this sprint, so the host scripting path is directly linked to the knowledge base.",
+            "Rhino's official scripting docs support Grasshopper Python and C# scripting, and RhinoCommon is available as a cross-platform NuGet package on Mac.",
+        ],
+        "verification_detail": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_rhino_host",
+        "notes": [
+            "Verified host-app runtime for Rhino 8 scripting via the local RhinoCode CLI and Yak tooling.",
+            "Use this runtime for RhinoCommon- and Grasshopper-adjacent scripting paths that are bound to the installed Rhino host.",
+        ],
+    },
+    {
+        "id": "eng_wine_docker",
+        "runtime_profile": "eng-wine",
+        "delivery_kind": "docker_image",
+        "module_ids": ["wine64", "cabextract", "unzip"],
+        "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
+        "manifest_format": "dockerfile",
+        "manifest_path": "knowledge/coding-tools/runtime/docker/eng-wine.Dockerfile",
+        "runtime_locator": "birtha/knowledge-eng-wine:1.0.0",
+        "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_wine_docker",
+        "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_wine_docker --container-command wine64 --version",
+        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-wine-container.sh",
+        "requirements": [],
+        "verification_enabled": True,
+        "verification_reasons": [
+            "Runtime profile eng-wine passed its linked health check during this sprint.",
+            "The canonical Docker runtime installs wine64 so Windows-oriented CLI installers can be hosted in a repeatable knowledge-base environment.",
+        ],
+        "verification_detail": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_wine_docker --container-command wine64 --version",
+        "dockerfile_lines": [
+            "FROM python:3.11-slim-bookworm",
+            "WORKDIR /workspace",
+            "RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wine64 cabextract unzip && ln -s /usr/lib/wine/wine64 /usr/local/bin/wine64 && ln -s /usr/lib/wine/wineserver64 /usr/local/bin/wineserver64 && rm -rf /var/lib/apt/lists/*",
+            "RUN wine64 --version",
+            'CMD [\"python\"]',
+            "",
+        ],
+        "notes": ["Canonical wine-backed Docker runtime for website-delivered Windows installers and FEMM-style tooling."],
     },
 ]
 
@@ -793,11 +1216,41 @@ IMPLEMENTED_MODULES = [
 ]
 
 
+INSTALLED_RUNTIME_LINK_PENDING_REASON = (
+    "installed and import-verified in the knowledge runtime, but runtime-linked "
+    "knowledge artifacts have not been built in this sprint"
+)
+INSTALLED_RUNTIME_LINK_PARENT_PENDING_REASON = (
+    "installed and import-verified in the knowledge runtime, but the parent host "
+    "runtime and runtime-linked knowledge artifacts have not been fully built in this sprint"
+)
+INSTALLED_DOTNET_RUNTIME_LINK_PENDING_REASON = (
+    "installed and runtime-verified in the shared .NET knowledge runtime, but "
+    "runtime-linked knowledge artifacts have not been built in this sprint"
+)
+PLANNED_IPOPT_ONEMKL_CONTAINER_REASON = (
+    "canonical Docker path is defined for open IPOPT with staged local HSL inputs "
+    "and Intel oneMKL, but the container build has not been verified in this sprint"
+)
+PLANNED_HSL_BACKEND_CONTAINER_REASON = (
+    "local HSL source is staged for containerized backend packaging, but the canonical "
+    "Docker build has not been verified in this sprint"
+)
+PLANNED_ONEMKL_SUBSTITUTE_REASON = (
+    "licensed PARDISO acquisition has been replaced with an Intel oneMKL container path, "
+    "but that canonical Docker build has not been verified in this sprint"
+)
+INSTALLED_RHINO_HOST_PENDING_REASON = (
+    "installed and CLI-verified in the Rhino 8 host runtime, but runtime-linked "
+    "knowledge artifacts have not been built in this sprint"
+)
+
+
 EXCLUDED_MODULES = [
     excluded(slug="openfoam", name="OpenFOAM", category="seed_stack", module_class="application", source_refs=["minutes://table1#L298"], reason="no viable canonical Docker runtime verified in this sprint"),
     excluded(slug="calculix", name="CalculiX", category="seed_stack", module_class="application", source_refs=["minutes://table1#L299"], reason="no viable canonical Docker runtime verified in this sprint"),
-    excluded(slug="picogk_shapekernel", name="PicoGK / ShapeKernel", category="seed_stack", module_class="application", source_refs=["minutes://table1#L301"], reason="no headless redistributable runtime was packaged in this sprint"),
-    excluded(slug="ipopt", name="IPOPT", category="seed_stack", module_class="runtime_kernel", source_refs=["minutes://table1#L303"], reason="isolated native backend packaging was not verified in this sprint"),
+    excluded(slug="picogk_shapekernel", name="PicoGK / ShapeKernel", category="seed_stack", module_class="application", source_refs=["minutes://table1#L301"], reason=INSTALLED_DOTNET_RUNTIME_LINK_PENDING_REASON),
+    excluded(slug="ipopt", name="IPOPT", category="seed_stack", module_class="runtime_kernel", source_refs=["minutes://table1#L303"], reason=PLANNED_IPOPT_ONEMKL_CONTAINER_REASON),
     excluded(slug="opencamlib", name="OpenCAMLib", category="geometry_manufacturing", module_class="runtime_kernel", source_refs=["minutes://table1#L308"], reason="no reliable isolated runtime was verified in this sprint"),
     excluded(slug="cgal", name="CGAL", category="geometry_manufacturing", module_class="runtime_kernel", source_refs=["minutes://table1#L309"], reason="no viable isolated runtime package was verified in this sprint"),
     excluded(slug="su2", name="SU2", category="thermofluids_chemistry", module_class="application", source_refs=["minutes://table1#L312"], reason="no viable canonical Docker runtime was verified in this sprint"),
@@ -805,7 +1258,7 @@ EXCLUDED_MODULES = [
     excluded(slug="openwam", name="OpenWAM", category="thermofluids_chemistry", module_class="application", source_refs=["minutes://table1#L314"], reason="no isolated runtime package was verified in this sprint"),
     excluded(slug="opensmokepp", name="OpenSMOKE++", category="thermofluids_chemistry", module_class="application", source_refs=["minutes://table1#L315"], reason="no isolated runtime package was verified in this sprint"),
     excluded(slug="tchem", name="TChem", category="thermofluids_chemistry", module_class="runtime_kernel", source_refs=["minutes://table1#L316"], reason="HPC chemistry runtime was not verified in this sprint"),
-    excluded(slug="idaes", name="IDAES", category="thermofluids_chemistry", module_class="framework", source_refs=["minutes://table1#L319"], reason="heavyweight process-stack runtime was not verified in this sprint"),
+    excluded(slug="idaes", name="IDAES", category="thermofluids_chemistry", module_class="framework", source_refs=["minutes://table1#L319"], reason=INSTALLED_RUNTIME_LINK_PENDING_REASON),
     excluded(slug="fenicsx", name="FEniCSx", category="structures_pde", module_class="framework", source_refs=["minutes://table1#L320"], reason="no isolated runtime package was verified in this sprint"),
     excluded(slug="dealii", name="deal.II", category="structures_pde", module_class="framework", source_refs=["minutes://section2#L67"], reason="no isolated runtime package was verified in this sprint"),
     excluded(slug="hermes", name="Hermes", category="structures_pde", module_class="framework", source_refs=["minutes://section2#L75"], reason="no isolated runtime package was verified in this sprint"),
@@ -814,16 +1267,16 @@ EXCLUDED_MODULES = [
     excluded(slug="code_aster", name="Code_Aster", category="structures_pde", module_class="application", source_refs=["minutes://table1#L324"], reason="no viable canonical Docker runtime was verified in this sprint"),
     excluded(slug="project_chrono", name="Project Chrono", category="electrics_dynamics_system", module_class="framework", source_refs=["minutes://table1#L325"], reason="no reliable isolated runtime package was verified in this sprint"),
     excluded(slug="pyleecan", name="PYLEECAN", category="electrics_dynamics_system", module_class="application", source_refs=["minutes://table1#L326"], reason="package depends on a URL-only swat-em source that was not locked into a canonical isolated runtime in this sprint"),
-    excluded(slug="femm", name="FEMM", category="electrics_dynamics_system", module_class="application", source_refs=["minutes://table1#L327"], reason="non-headless GUI and Windows-leaning runtime"),
+    excluded(slug="femm", name="FEMM", category="electrics_dynamics_system", module_class="application", source_refs=["minutes://table1#L327"], reason="website-delivered Windows installer has not yet been mirrored into the wine-backed canonical runtime"),
     excluded(slug="openmodelica", name="OpenModelica", category="electrics_dynamics_system", module_class="application", source_refs=["minutes://table1#L329"], reason="no canonical headless Modelica toolchain was verified in this sprint"),
-    excluded(slug="ompython", name="OMPython", category="electrics_dynamics_system", module_class="integration_layer", source_refs=["minutes://table1#L329"], reason="depends on an OpenModelica host runtime that was not verified in this sprint"),
+    excluded(slug="ompython", name="OMPython", category="electrics_dynamics_system", module_class="integration_layer", source_refs=["minutes://table1#L329"], reason=INSTALLED_RUNTIME_LINK_PARENT_PENDING_REASON),
     excluded(slug="modelica_standard_library", name="Modelica Standard Library", category="electrics_dynamics_system", module_class="standard", source_refs=["minutes://table1#L329"], reason="depends on a verified Modelica host that was not packaged in this sprint", executable=False),
-    excluded(slug="pyoptsparse", name="pyOptSparse", category="optimization_uq_backbone", module_class="framework", source_refs=["minutes://table1#L330"], reason="native optimization backend stack was not verified in this sprint"),
+    excluded(slug="pyoptsparse", name="pyOptSparse", category="optimization_uq_backbone", module_class="framework", source_refs=["minutes://table1#L330"], reason="depends on the open IPOPT plus oneMKL/HSL container path that has not been verified in this sprint"),
     excluded(slug="dakota", name="Dakota", category="optimization_uq_backbone", module_class="application", source_refs=["minutes://table1#L331"], reason="no isolated runtime package was verified in this sprint"),
     excluded(slug="petsc", name="PETSc", category="optimization_uq_backbone", module_class="runtime_kernel", source_refs=["minutes://table1#L335"], reason="HPC native runtime was not verified in this sprint"),
     excluded(slug="petsc4py", name="petsc4py", category="optimization_uq_backbone", module_class="integration_layer", source_refs=["minutes://table1#L335"], reason="depends on PETSc runtime that was not verified in this sprint"),
     excluded(slug="sundials", name="SUNDIALS", category="optimization_uq_backbone", module_class="runtime_kernel", source_refs=["minutes://table1#L336"], reason="native solver stack was not verified in this sprint"),
-    excluded(slug="mphys", name="MPhys", category="workflow_coupling", module_class="integration_layer", source_refs=["minutes://table2#L347"], reason="package/runtime was not verified in this sprint"),
+    excluded(slug="mphys", name="MPhys", category="workflow_coupling", module_class="integration_layer", source_refs=["minutes://table2#L347"], reason=INSTALLED_RUNTIME_LINK_PENDING_REASON),
     excluded(slug="precice", name="preCICE", category="workflow_coupling", module_class="integration_layer", source_refs=["minutes://table2#L348"], reason="no viable canonical Docker runtime was verified in this sprint"),
     excluded(slug="fmi_fmus", name="FMI / FMUs", category="workflow_coupling", module_class="standard", source_refs=["minutes://table2#L349"], reason="standard/specification, not a standalone runtime installation", executable=False),
     excluded(slug="pyfmi", name="PyFMI", category="workflow_coupling", module_class="integration_layer", source_refs=["minutes://table2#L350"], reason="native FMI backend was not verified in this sprint"),
@@ -831,31 +1284,31 @@ EXCLUDED_MODULES = [
     excluded(slug="medcoupling", name="MEDCoupling", category="workflow_coupling", module_class="translator", source_refs=["minutes://table2#L353"], reason="native SALOME dependency stack was not verified in this sprint"),
     excluded(slug="cgns", name="CGNS", category="workflow_coupling", module_class="standard", source_refs=["minutes://table2#L354"], reason="standard/format, not a standalone runtime installation", executable=False),
     excluded(slug="exodus_ii", name="Exodus II", category="workflow_coupling", module_class="standard", source_refs=["minutes://table2#L354"], reason="standard/format, not a standalone runtime installation", executable=False),
-    excluded(slug="ray", name="Ray", category="workflow_coupling", module_class="integration_layer", source_refs=["minutes://table2#L357"], reason="distributed runtime was not verified in this sprint"),
+    excluded(slug="ray", name="Ray", category="workflow_coupling", module_class="integration_layer", source_refs=["minutes://table2#L357"], reason=INSTALLED_RUNTIME_LINK_PENDING_REASON),
     excluded(slug="paraview", name="ParaView", category="workflow_coupling", module_class="application", source_refs=["minutes://table2#L360"], reason="GUI-heavy visualization stack was not packaged in this sprint"),
-    excluded(slug="vtk", name="VTK", category="workflow_coupling", module_class="framework", source_refs=["minutes://table2#L360"], reason="runtime was not verified in this sprint"),
-    excluded(slug="compas", name="Compas", category="geometry_manufacturing", module_class="framework", source_refs=["minutes://section5#L147"], reason="not prioritized for this sprint"),
-    excluded(slug="simpeg", name="SimPEG", category="domain_specific", module_class="framework", source_refs=["minutes://section4#L125"], reason="not prioritized for this sprint"),
+    excluded(slug="vtk", name="VTK", category="workflow_coupling", module_class="framework", source_refs=["minutes://table2#L360"], reason=INSTALLED_RUNTIME_LINK_PARENT_PENDING_REASON),
+    excluded(slug="compas", name="Compas", category="geometry_manufacturing", module_class="framework", source_refs=["minutes://section5#L147"], reason=INSTALLED_RUNTIME_LINK_PENDING_REASON),
+    excluded(slug="simpeg", name="SimPEG", category="domain_specific", module_class="framework", source_refs=["minutes://section4#L125"], reason=INSTALLED_RUNTIME_LINK_PENDING_REASON),
     excluded(slug="pyphs", name="PyPHS", category="domain_specific", module_class="framework", source_refs=["minutes://section4#L132"], reason="not prioritized for this sprint"),
-    excluded(slug="rhino_common", name="RhinoCommon", category="csharp_examples", module_class="framework", source_refs=["minutes://section_csharp#L290"], reason="proprietary CAD runtime not packaged in this sprint"),
+    excluded(slug="rhino_common", name="RhinoCommon", category="csharp_examples", module_class="framework", source_refs=["minutes://section_csharp#L290"], reason=INSTALLED_RHINO_HOST_PENDING_REASON),
     excluded(slug="mbdyn", name="MBDyn", category="reserve", module_class="application", source_refs=["minutes://table1#L338"], reason="reserve-list runtime not prioritized in this sprint"),
     excluded(slug="rmg_py", name="RMG-Py", category="reserve", module_class="application", source_refs=["minutes://table1#L338"], reason="reserve-list runtime not prioritized in this sprint"),
-    excluded(slug="simpy", name="SimPy", category="reserve", module_class="framework", source_refs=["minutes://table1#L338"], reason="reserve-list runtime not prioritized in this sprint"),
-    excluded(slug="botorch", name="BoTorch", category="reserve", module_class="framework", source_refs=["minutes://table1#L338"], reason="reserve-list runtime not prioritized in this sprint"),
-    excluded(slug="nevergrad", name="Nevergrad", category="reserve", module_class="framework", source_refs=["minutes://table1#L338"], reason="reserve-list runtime not prioritized in this sprint"),
-    excluded(slug="openpnm", name="OpenPNM", category="reserve", module_class="framework", source_refs=["minutes://table1#L338"], reason="reserve-list runtime not prioritized in this sprint"),
+    excluded(slug="simpy", name="SimPy", category="reserve", module_class="framework", source_refs=["minutes://table1#L338"], reason=INSTALLED_RUNTIME_LINK_PENDING_REASON),
+    excluded(slug="botorch", name="BoTorch", category="reserve", module_class="framework", source_refs=["minutes://table1#L338"], reason=INSTALLED_RUNTIME_LINK_PENDING_REASON),
+    excluded(slug="nevergrad", name="Nevergrad", category="reserve", module_class="framework", source_refs=["minutes://table1#L338"], reason=INSTALLED_RUNTIME_LINK_PENDING_REASON),
+    excluded(slug="openpnm", name="OpenPNM", category="reserve", module_class="framework", source_refs=["minutes://table1#L338"], reason=INSTALLED_RUNTIME_LINK_PENDING_REASON),
     excluded(slug="porepy", name="PorePy", category="reserve", module_class="framework", source_refs=["minutes://table1#L338"], reason="reserve-list runtime not prioritized in this sprint"),
-    excluded(slug="optas", name="OptaS", category="optimization_uq_backbone", module_class="framework", source_refs=["minutes://section3#L114"], reason="runtime was not verified in this sprint"),
-    excluded(slug="dymos", name="Dymos", category="workflow_coupling", module_class="framework", source_refs=["minutes://section_actual_stack#L371"], reason="runtime was not verified in this sprint"),
-    excluded(slug="ma57", name="MA57", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L728"], reason="licensed sparse direct solver backend not packaged in this sprint"),
-    excluded(slug="ma77", name="MA77", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L821"], reason="licensed sparse direct solver backend not packaged in this sprint"),
-    excluded(slug="ma86", name="MA86", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L821"], reason="licensed sparse direct solver backend not packaged in this sprint"),
+    excluded(slug="optas", name="OptaS", category="optimization_uq_backbone", module_class="framework", source_refs=["minutes://section3#L114"], reason=INSTALLED_RUNTIME_LINK_PENDING_REASON),
+    excluded(slug="dymos", name="Dymos", category="workflow_coupling", module_class="framework", source_refs=["minutes://section_actual_stack#L371"], reason=INSTALLED_RUNTIME_LINK_PENDING_REASON),
+    excluded(slug="ma57", name="MA57", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L728"], reason=PLANNED_HSL_BACKEND_CONTAINER_REASON),
+    excluded(slug="ma77", name="MA77", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L821"], reason=PLANNED_HSL_BACKEND_CONTAINER_REASON),
+    excluded(slug="ma86", name="MA86", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L821"], reason=PLANNED_HSL_BACKEND_CONTAINER_REASON),
     excluded(slug="ma87", name="MA87", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L821"], reason="licensed sparse direct solver backend not packaged in this sprint"),
-    excluded(slug="ma97", name="MA97", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L821"], reason="licensed sparse direct solver backend not packaged in this sprint"),
+    excluded(slug="ma97", name="MA97", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L821"], reason=PLANNED_HSL_BACKEND_CONTAINER_REASON),
     excluded(slug="mumps", name="MUMPS", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L729"], reason="native sparse direct backend was not verified in this sprint"),
     excluded(slug="superlu", name="SuperLU", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L730"], reason="native sparse direct backend was not verified in this sprint"),
     excluded(slug="superlu_dist", name="SuperLU_DIST", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L730"], reason="native sparse direct backend was not verified in this sprint"),
-    excluded(slug="pardiso", name="PARDISO", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L731"], reason="licensed sparse direct backend was not packaged in this sprint"),
+    excluded(slug="pardiso", name="PARDISO", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L731"], reason=PLANNED_ONEMKL_SUBSTITUTE_REASON),
     excluded(slug="petsc_ksp", name="PETSc KSP", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L732"], reason="PETSc runtime was not verified in this sprint"),
     excluded(slug="petsc_gamg", name="PETSc GAMG", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L852"], reason="PETSc runtime was not verified in this sprint"),
     excluded(slug="trilinos", name="Trilinos", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L733"], reason="Trilinos runtime was not verified in this sprint"),
@@ -871,6 +1324,419 @@ EXCLUDED_MODULES = [
     excluded(slug="slepc", name="SLEPc", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L866"], reason="PETSc-based eigensolver runtime was not verified in this sprint"),
     excluded(slug="primme", name="PRIMME", category="solver_backends", module_class="runtime_kernel", source_refs=["minutes://solver_table#L867"], reason="native eigensolver runtime was not verified in this sprint"),
 ]
+
+
+def _recovery_entry(
+    *,
+    install_method_category: str,
+    install_batch: str,
+    parent_runtime_refs: list[str] | None = None,
+    blocked_by_refs: list[str] | None = None,
+    manual_acquisition_required: bool = False,
+    acquisition_status: str = "not_required",
+    phase_target: str = "phase1",
+    phase_state: str = "planned",
+    cli_install_channel: str = "unspecified",
+    cli_phase1_status: str = "ready",
+    user_intervention_class: str = "not_required",
+) -> dict[str, object]:
+    kb_build_method_category = INSTALL_METHOD_CATEGORIES[install_method_category]["kb_build_method_category"]
+    kb_build_batch_by_method = {
+        "K1_executable_solver_platform_pack": "phase2_batch_k1_solver_platforms",
+        "K2_backend_family_pack": "phase2_batch_k2_backend_families",
+        "K3_python_framework_pack": "phase2_batch_k3_python_frameworks",
+        "K4_companion_host_bound_pack": "phase2_batch_k4_host_companions",
+        "K5_standard_spec_pack": "phase2_batch_k5_standards",
+        "K6_acquisition_deferred_pack": "phase2_batch_k6_deferred_acquisition",
+    }
+    return {
+        "install_method_category": install_method_category,
+        "install_batch": install_batch,
+        "kb_build_method_category": kb_build_method_category,
+        "kb_build_batch": kb_build_batch_by_method[kb_build_method_category],
+        "phase_target": phase_target,
+        "phase_state": phase_state,
+        "parent_runtime_refs": parent_runtime_refs or [],
+        "blocked_by_refs": blocked_by_refs or [],
+        "manual_acquisition_required": manual_acquisition_required,
+        "acquisition_status": acquisition_status,
+        "cli_install_channel": cli_install_channel,
+        "cli_phase1_status": cli_phase1_status,
+        "user_intervention_class": user_intervention_class,
+    }
+
+
+RECOVERY_METADATA_BY_SLUG: dict[str, dict[str, object]] = {}
+
+for slug in (
+    "openfoam",
+    "calculix",
+    "code_saturne",
+    "su2",
+    "code_aster",
+    "openwam",
+    "opensmokepp",
+    "openmodelica",
+):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I1_containerized_native_solver_platform",
+        install_batch="phase1_batch2a_solver_platforms_first_wave",
+        cli_install_channel="docker_build",
+    )
+
+for slug in (
+    "kratos_multiphysics",
+    "moose",
+    "fenicsx",
+    "dealii",
+    "hermes",
+    "dakota",
+    "project_chrono",
+    "mbdyn",
+    "salome",
+    "paraview",
+):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I1_containerized_native_solver_platform",
+        install_batch="phase1_batch2b_solver_platforms_second_wave",
+        cli_install_channel="docker_build",
+    )
+
+for slug in ("petsc", "petsc_ksp", "petsc_gamg", "slepc", "hypre", "primme"):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I2_containerized_native_backend_family",
+        install_batch="phase1_batch1a_petsc_family",
+        cli_install_channel="docker_build",
+    )
+
+for slug in ("trilinos", "trilinos_belos", "trilinos_ifpack2", "trilinos_muelu"):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I2_containerized_native_backend_family",
+        install_batch="phase1_batch1b_trilinos_family",
+        cli_install_channel="docker_build",
+    )
+
+for slug in ("mumps", "superlu", "superlu_dist", "suitesparse", "cholmod", "umfpack", "klu", "strumpack"):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I2_containerized_native_backend_family",
+        install_batch="phase1_batch1c_sparse_direct_family",
+        cli_install_channel="docker_build",
+    )
+
+for slug in ("ipopt", "sundials", "tchem"):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I2_containerized_native_backend_family",
+        install_batch="phase1_batch1d_nlp_time_chem_family",
+        cli_install_channel="docker_build",
+    )
+RECOVERY_METADATA_BY_SLUG["ipopt"]["cli_install_channel"] = "docker_build_with_local_hsl"
+
+for slug in ("ma57", "ma77", "ma86", "ma97"):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I2_containerized_native_backend_family",
+        install_batch="phase1_batch1d_nlp_time_chem_family",
+        cli_install_channel="docker_build_with_local_hsl",
+    )
+
+for slug in ("cgal", "opencamlib"):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I2_containerized_native_backend_family",
+        install_batch="phase1_batch1e_geometry_native_family",
+        cli_install_channel="docker_build",
+    )
+
+RECOVERY_METADATA_BY_SLUG["pardiso"] = _recovery_entry(
+    install_method_category="I2_containerized_native_backend_family",
+    install_batch="phase1_batch1f_onemkl_family",
+    cli_install_channel="docker_build_with_onemkl",
+)
+
+RECOVERY_METADATA_BY_SLUG["picogk_shapekernel"] = _recovery_entry(
+    install_method_category="I2_containerized_native_backend_family",
+    install_batch="phase1_batch1e_geometry_native_family",
+    parent_runtime_refs=["artifact://environment-spec/eng_dotnet_sdk"],
+    cli_install_channel="dotnet_nuget",
+)
+
+for slug in ("dymos", "mphys"):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I3_python_first_venv_package",
+        install_batch="phase1_batch4a_openmdao_adjacent",
+        cli_install_channel="uv_pip",
+    )
+
+for slug in ("idaes", "optas", "simpy"):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I3_python_first_venv_package",
+        install_batch="phase1_batch4b_process_system",
+        cli_install_channel="uv_pip",
+    )
+
+for slug in ("compas", "simpeg", "pyphs", "openpnm", "porepy", "rmg_py"):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I3_python_first_venv_package",
+        install_batch="phase1_batch4c_inverse_physics_domain",
+        cli_install_channel="uv_pip",
+    )
+
+for slug in ("ray", "botorch", "nevergrad"):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I3_python_first_venv_package",
+        install_batch="phase1_batch4d_distributed_ml_reserve",
+        cli_install_channel="uv_pip",
+    )
+
+RECOVERY_METADATA_BY_SLUG["petsc4py"] = _recovery_entry(
+    install_method_category="I4_host_companion_wrapper",
+    install_batch="phase1_batch3a_petsc_wrapper",
+    parent_runtime_refs=[minutes_module_ref("petsc")],
+    blocked_by_refs=[minutes_module_ref("petsc")],
+    cli_install_channel="uv_pip_after_parent_runtime",
+    cli_phase1_status="blocked_by_parent_runtime",
+)
+RECOVERY_METADATA_BY_SLUG["pyoptsparse"] = _recovery_entry(
+    install_method_category="I4_host_companion_wrapper",
+    install_batch="phase1_batch3b_nlp_wrapper",
+    parent_runtime_refs=[RECOVERY_DEFAULTS["pyoptsparse_default_backend"]],
+    blocked_by_refs=[RECOVERY_DEFAULTS["pyoptsparse_default_backend"]],
+    cli_install_channel="uv_pip_after_parent_runtime",
+    cli_phase1_status="blocked_by_parent_runtime",
+)
+RECOVERY_METADATA_BY_SLUG["precice"] = _recovery_entry(
+    install_method_category="I4_host_companion_wrapper",
+    install_batch="phase1_batch3c_coupling_wrapper",
+    parent_runtime_refs=list(RECOVERY_DEFAULTS["precice_default_solver_pair"]),
+    blocked_by_refs=list(RECOVERY_DEFAULTS["precice_default_solver_pair"]),
+    cli_install_channel="docker_or_source_build_after_parent_runtime",
+    cli_phase1_status="blocked_by_parent_runtime",
+)
+RECOVERY_METADATA_BY_SLUG["ompython"] = _recovery_entry(
+    install_method_category="I4_host_companion_wrapper",
+    install_batch="phase1_batch3d_modelica_wrapper",
+    parent_runtime_refs=[minutes_module_ref("openmodelica")],
+    blocked_by_refs=[minutes_module_ref("openmodelica")],
+    cli_install_channel="uv_pip_after_parent_runtime",
+    cli_phase1_status="blocked_by_parent_runtime",
+)
+RECOVERY_METADATA_BY_SLUG["pyfmi"] = _recovery_entry(
+    install_method_category="I4_host_companion_wrapper",
+    install_batch="phase1_batch3e_fmu_wrapper",
+    parent_runtime_refs=[RECOVERY_DEFAULTS["pyfmi_default_host"]],
+    blocked_by_refs=[RECOVERY_DEFAULTS["pyfmi_default_host"]],
+    cli_install_channel="uv_pip_after_parent_runtime",
+    cli_phase1_status="blocked_by_parent_runtime",
+)
+RECOVERY_METADATA_BY_SLUG["medcoupling"] = _recovery_entry(
+    install_method_category="I4_host_companion_wrapper",
+    install_batch="phase1_batch3f_salome_wrapper",
+    parent_runtime_refs=[minutes_module_ref("salome")],
+    blocked_by_refs=[minutes_module_ref("salome")],
+    cli_install_channel="uv_pip_after_parent_runtime",
+    cli_phase1_status="blocked_by_parent_runtime",
+)
+RECOVERY_METADATA_BY_SLUG["vtk"] = _recovery_entry(
+    install_method_category="I4_host_companion_wrapper",
+    install_batch="phase1_batch3g_visualization_wrapper",
+    parent_runtime_refs=[RECOVERY_DEFAULTS["vtk_default_host"]],
+    blocked_by_refs=[RECOVERY_DEFAULTS["vtk_default_host"]],
+    cli_install_channel="uv_pip_after_parent_runtime",
+    cli_phase1_status="blocked_by_parent_runtime",
+)
+
+for slug in ("cgns", "exodus_ii", "fmi_fmus"):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I5_knowledge_only_standard",
+        install_batch="phase1_batch5_standards",
+        cli_install_channel="knowledge_only",
+        cli_phase1_status="knowledge_only",
+    )
+
+RECOVERY_METADATA_BY_SLUG["modelica_standard_library"] = _recovery_entry(
+    install_method_category="I5_knowledge_only_standard",
+    install_batch="phase1_batch5_standards",
+    parent_runtime_refs=[minutes_module_ref("openmodelica")],
+    blocked_by_refs=[minutes_module_ref("openmodelica")],
+    cli_install_channel="knowledge_only",
+    cli_phase1_status="knowledge_only",
+)
+
+for slug in ("femm", "pyleecan"):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I6_deferred_external_manual",
+        install_batch="phase1_batch6_deferred_external_manual",
+        manual_acquisition_required=True,
+        acquisition_status="awaiting_user_inputs",
+        phase_target="next_sprint",
+        phase_state="deferred",
+        cli_phase1_status="manual_acquisition_required",
+        user_intervention_class="website_download",
+    )
+
+RECOVERY_METADATA_BY_SLUG["pyleecan"] = _recovery_entry(
+    install_method_category="I6_deferred_external_manual",
+    install_batch="phase1_batch6_deferred_external_manual",
+    manual_acquisition_required=True,
+    acquisition_status="awaiting_website_or_git_dependency_source",
+    phase_target="next_sprint",
+    phase_state="deferred",
+    cli_install_channel="uv_pip_with_url_dependency",
+    cli_phase1_status="manual_acquisition_required",
+    user_intervention_class="website_download",
+)
+RECOVERY_METADATA_BY_SLUG["femm"] = _recovery_entry(
+    install_method_category="I6_deferred_external_manual",
+    install_batch="phase1_batch6_deferred_external_manual",
+    manual_acquisition_required=True,
+    acquisition_status="awaiting_website_downloadable_windows_installer",
+    phase_target="next_sprint",
+    phase_state="deferred",
+    parent_runtime_refs=["artifact://environment-spec/eng_wine_docker"],
+    cli_install_channel="wine_installer_after_download",
+    cli_phase1_status="manual_acquisition_required",
+    user_intervention_class="website_download",
+)
+for slug in ("ma87",):
+    RECOVERY_METADATA_BY_SLUG[slug] = _recovery_entry(
+        install_method_category="I6_deferred_external_manual",
+        install_batch="phase1_batch6_deferred_external_manual",
+        manual_acquisition_required=True,
+        acquisition_status="awaiting_license_and_binary_delivery",
+        phase_target="next_sprint",
+        phase_state="deferred",
+        cli_install_channel="licensed_binary_delivery",
+        cli_phase1_status="manual_acquisition_required",
+        user_intervention_class="proprietary_license",
+    )
+RECOVERY_METADATA_BY_SLUG["rhino_common"] = _recovery_entry(
+    install_method_category="I4_host_companion_wrapper",
+    install_batch="phase1_batch3h_rhino_host_wrapper",
+    parent_runtime_refs=["artifact://environment-spec/eng_rhino_host"],
+    cli_install_channel="host_app_cli",
+)
+
+RECOVERY_METADATA_BY_SLUG["petsc_ksp"]["parent_runtime_refs"] = [minutes_module_ref("petsc")]
+RECOVERY_METADATA_BY_SLUG["petsc_ksp"]["blocked_by_refs"] = [minutes_module_ref("petsc")]
+RECOVERY_METADATA_BY_SLUG["petsc_gamg"]["parent_runtime_refs"] = [minutes_module_ref("petsc")]
+RECOVERY_METADATA_BY_SLUG["petsc_gamg"]["blocked_by_refs"] = [minutes_module_ref("petsc")]
+RECOVERY_METADATA_BY_SLUG["slepc"]["parent_runtime_refs"] = [minutes_module_ref("petsc")]
+RECOVERY_METADATA_BY_SLUG["slepc"]["blocked_by_refs"] = [minutes_module_ref("petsc")]
+RECOVERY_METADATA_BY_SLUG["trilinos_belos"]["parent_runtime_refs"] = [minutes_module_ref("trilinos")]
+RECOVERY_METADATA_BY_SLUG["trilinos_belos"]["blocked_by_refs"] = [minutes_module_ref("trilinos")]
+RECOVERY_METADATA_BY_SLUG["trilinos_ifpack2"]["parent_runtime_refs"] = [minutes_module_ref("trilinos")]
+RECOVERY_METADATA_BY_SLUG["trilinos_ifpack2"]["blocked_by_refs"] = [minutes_module_ref("trilinos")]
+RECOVERY_METADATA_BY_SLUG["trilinos_muelu"]["parent_runtime_refs"] = [minutes_module_ref("trilinos")]
+RECOVERY_METADATA_BY_SLUG["trilinos_muelu"]["blocked_by_refs"] = [minutes_module_ref("trilinos")]
+
+EXCLUDED_ENVIRONMENT_REFS = {
+    "picogk_shapekernel": ["artifact://environment-spec/eng_dotnet_sdk"],
+    "ipopt": ["artifact://environment-spec/eng_ipopt_onemkl_docker"],
+    "pyoptsparse": ["artifact://environment-spec/eng_ipopt_onemkl_docker"],
+    "ma57": ["artifact://environment-spec/eng_ipopt_onemkl_docker"],
+    "ma77": ["artifact://environment-spec/eng_ipopt_onemkl_docker"],
+    "ma86": ["artifact://environment-spec/eng_ipopt_onemkl_docker"],
+    "ma97": ["artifact://environment-spec/eng_ipopt_onemkl_docker"],
+    "pardiso": ["artifact://environment-spec/eng_ipopt_onemkl_docker"],
+    "compas": [
+        "artifact://environment-spec/eng_geometry_uv",
+        "artifact://environment-spec/eng_geometry_docker",
+    ],
+    "dymos": [
+        "artifact://environment-spec/eng_mdo_uv",
+        "artifact://environment-spec/eng_mdo_docker",
+    ],
+    "mphys": [
+        "artifact://environment-spec/eng_mdo_uv",
+        "artifact://environment-spec/eng_mdo_docker",
+    ],
+    "optas": [
+        "artifact://environment-spec/eng_mdo_uv",
+        "artifact://environment-spec/eng_mdo_docker",
+    ],
+    "nevergrad": [
+        "artifact://environment-spec/eng_mdo_uv",
+        "artifact://environment-spec/eng_mdo_docker",
+    ],
+    "botorch": [
+        "artifact://environment-spec/eng_mdo_uv",
+        "artifact://environment-spec/eng_mdo_docker",
+    ],
+    "idaes": [
+        "artifact://environment-spec/eng_system_uv",
+        "artifact://environment-spec/eng_system_docker",
+    ],
+    "ompython": [
+        "artifact://environment-spec/eng_system_uv",
+        "artifact://environment-spec/eng_system_docker",
+    ],
+    "simpy": [
+        "artifact://environment-spec/eng_system_uv",
+        "artifact://environment-spec/eng_system_docker",
+    ],
+    "simpeg": [
+        "artifact://environment-spec/eng_structures_uv",
+        "artifact://environment-spec/eng_structures_docker",
+    ],
+    "openpnm": [
+        "artifact://environment-spec/eng_structures_uv",
+        "artifact://environment-spec/eng_structures_docker",
+    ],
+    "ray": [
+        "artifact://environment-spec/eng_backbone_uv",
+        "artifact://environment-spec/eng_backbone_docker",
+    ],
+    "vtk": [
+        "artifact://environment-spec/eng_backbone_uv",
+        "artifact://environment-spec/eng_backbone_docker",
+    ],
+    "rhino_common": ["artifact://environment-spec/eng_rhino_host"],
+}
+
+
+def mark_excluded_module_installed(slug: str, *, acquisition_status: str = "verified_in_knowledge_runtime") -> None:
+    metadata = RECOVERY_METADATA_BY_SLUG[slug]
+    metadata["phase_state"] = "installed"
+    metadata["cli_phase1_status"] = "installed"
+    metadata["acquisition_status"] = acquisition_status
+
+
+for slug in (
+    "picogk_shapekernel",
+    "compas",
+    "dymos",
+    "mphys",
+    "optas",
+    "nevergrad",
+    "botorch",
+    "idaes",
+    "simpy",
+    "simpeg",
+    "openpnm",
+    "ray",
+):
+    mark_excluded_module_installed(slug)
+
+for slug in ("ompython", "vtk"):
+    mark_excluded_module_installed(slug, acquisition_status="verified_in_knowledge_runtime_parent_pending")
+
+mark_excluded_module_installed("rhino_common")
+
+DEFERRED_ACQUISITION_DETAILS = {
+    "femm": {
+        "requested_from_user": "Provide the approved FEMM installer URL, mirrored binary, or downloaded installer artifact so it can be staged inside the wine-backed runtime.",
+        "recommended_runtime_target": "wine_backed_docker_runtime",
+        "next_sprint_entry_condition": "A non-interactive FEMM installer artifact is available for canonical packaging into the wine runtime.",
+    },
+    "pyleecan": {
+        "requested_from_user": "Provide a pinned vendored swat-em source or an internal mirror that can replace the current URL dependency with a reproducible CLI install input.",
+        "recommended_runtime_target": "uv_venv_with_locked_dependency_source",
+        "next_sprint_entry_condition": "The swat-em dependency is pinned to a canonical source that can be installed non-interactively.",
+    },
+    "ma87": {
+        "requested_from_user": "Provide HSL license entitlement plus source or binaries for MA87 packaging.",
+        "recommended_runtime_target": "licensed_containerized_backend_family",
+        "next_sprint_entry_condition": "Licensed source or binaries are available for canonical build automation.",
+    },
+}
 
 
 DECISIONS = [
@@ -1073,6 +1939,189 @@ def decision_refs_by_slug() -> dict[str, list[str]]:
     return mapping
 
 
+def completed_inventory_metadata(module: dict) -> dict[str, object]:
+    return {
+        "install_method_category": "implemented_runtime_linked",
+        "install_batch": "completed_pre_recovery",
+        "kb_build_method_category": "implemented_runtime_linked",
+        "kb_build_batch": "completed_pre_recovery",
+        "phase_target": "completed",
+        "phase_state": "linked",
+        "parent_runtime_refs": [],
+        "blocked_by_refs": [],
+        "manual_acquisition_required": False,
+        "acquisition_status": "not_required",
+        "cli_install_channel": "runtime_linked",
+        "cli_phase1_status": "linked",
+        "user_intervention_class": "not_required",
+    }
+
+
+def excluded_environment_refs(module: dict) -> list[str]:
+    return list(EXCLUDED_ENVIRONMENT_REFS.get(module["slug"], []))
+
+
+def recovery_metadata_for_excluded(module: dict) -> dict[str, object]:
+    metadata = RECOVERY_METADATA_BY_SLUG.get(module["slug"])
+    if metadata is None:
+        raise ValueError(f"Excluded module {module['slug']} is missing recovery metadata")
+    return dict(metadata)
+
+
+def build_recovery_plan_metadata() -> dict[str, object]:
+    return {
+        "defaults": RECOVERY_DEFAULTS,
+        "install_method_categories": [
+            {"id": identifier, **payload}
+            for identifier, payload in INSTALL_METHOD_CATEGORIES.items()
+        ],
+        "kb_build_method_categories": [
+            {"id": identifier, **payload}
+            for identifier, payload in KB_BUILD_METHOD_CATEGORIES.items()
+        ],
+        "install_batches": INSTALL_BATCH_DEFINITIONS,
+        "kb_build_batches": KB_BUILD_BATCH_DEFINITIONS,
+    }
+
+
+def format_ref_list(refs: list[str]) -> str:
+    return ", ".join(refs) if refs else "-"
+
+
+def render_excluded_ledger(excluded_entries: list[dict]) -> str:
+    install_order = list(INSTALL_METHOD_CATEGORIES.keys())
+    kb_order = list(KB_BUILD_METHOD_CATEGORIES.keys())
+    manual_entries = [
+        entry for entry in excluded_entries if entry["manual_acquisition_required"]
+    ]
+    lines = [
+        "# KNOWLEGE MINUTES EXCLUDED",
+        "",
+        "Generated from `knowledge/coding-tools/substrate/minutes-inventory.json`.",
+        "",
+        "Phase state values: `planned`, `installing`, `installed`, `kb_linking`, `linked`, `deferred`.",
+        "",
+        "Manual intervention is reserved for proprietary/license-gated modules or modules that still require website/email-delivered artifacts.",
+        "",
+        "## Remaining User Intervention Required",
+        "",
+        "| name | user intervention class | acquisition status | reason excluded |",
+        "| --- | --- | --- | --- |",
+    ]
+    for entry in sorted(manual_entries, key=lambda item: item["name"].lower()):
+        lines.append(
+            f"| {entry['name']} | {entry['user_intervention_class']} | {entry['acquisition_status']} | "
+            f"{entry['excluded_reason']} |"
+        )
+    lines.extend(
+        [
+            "",
+        "## By Install Method",
+        "",
+        ]
+    )
+    for install_category in install_order:
+        matching = [
+            entry
+            for entry in excluded_entries
+            if entry["install_method_category"] == install_category
+        ]
+        if not matching:
+            continue
+        kb_category = INSTALL_METHOD_CATEGORIES[install_category]["kb_build_method_category"]
+        lines.extend(
+            [
+                f"### {INSTALL_METHOD_CATEGORIES[install_category]['title']} -> {KB_BUILD_METHOD_CATEGORIES[kb_category]['title']}",
+                "",
+                "| name | install batch | kb build batch | cli install channel | cli phase1 status | phase target | phase state | blocked by | acquisition status | reason excluded |",
+                "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+            ]
+        )
+        for entry in sorted(matching, key=lambda item: item["name"].lower()):
+            lines.append(
+                f"| {entry['name']} | {entry['install_batch']} | {entry['kb_build_batch']} | "
+                f"{entry['cli_install_channel']} | {entry['cli_phase1_status']} | "
+                f"{entry['phase_target']} | {entry['phase_state']} | "
+                f"{format_ref_list(entry['blocked_by_refs'])} | {entry['acquisition_status']} | "
+                f"{entry['excluded_reason']} |"
+            )
+        lines.append("")
+
+    lines.extend(["## By Knowledge Build Method", ""])
+    for kb_category in kb_order:
+        matching = [
+            entry
+            for entry in excluded_entries
+            if entry["kb_build_method_category"] == kb_category
+        ]
+        if not matching:
+            continue
+        lines.extend(
+            [
+                f"### {KB_BUILD_METHOD_CATEGORIES[kb_category]['title']}",
+                "",
+                "| name | install method | install batch | kb build batch | cli install channel | cli phase1 status | phase state | manual acquisition | blocked by |",
+                "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+            ]
+        )
+        for entry in sorted(matching, key=lambda item: item["name"].lower()):
+            lines.append(
+                f"| {entry['name']} | {entry['install_method_category']} | {entry['install_batch']} | "
+                f"{entry['kb_build_batch']} | {entry['cli_install_channel']} | {entry['cli_phase1_status']} | {entry['phase_state']} | "
+                f"{'yes' if entry['manual_acquisition_required'] else 'no'} | "
+                f"{format_ref_list(entry['blocked_by_refs'])} |"
+            )
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def build_deferred_acquisition_dossiers(excluded_entries: list[dict]) -> tuple[dict[str, object], str]:
+    deferred_entries = [
+        entry
+        for entry in excluded_entries
+        if entry["install_method_category"] == "I6_deferred_external_manual"
+    ]
+    dossier_entries = []
+    markdown_lines = [
+        "# Deferred Acquisition Dossiers",
+        "",
+        "These modules stay deferred until the listed external inputs are provided.",
+        "",
+        "| name | acquisition status | requested from user | recommended runtime target | next sprint entry condition |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for entry in sorted(deferred_entries, key=lambda item: item["name"].lower()):
+        details = DEFERRED_ACQUISITION_DETAILS[entry["slug"]]
+        dossier = {
+            "name": entry["name"],
+            "slug": entry["slug"],
+            "module_ref": entry["module_ref"],
+            "install_method_category": entry["install_method_category"],
+            "kb_build_method_category": entry["kb_build_method_category"],
+            "phase_target": entry["phase_target"],
+            "phase_state": entry["phase_state"],
+            "acquisition_status": entry["acquisition_status"],
+            "requested_from_user": details["requested_from_user"],
+            "recommended_runtime_target": details["recommended_runtime_target"],
+            "next_sprint_entry_condition": details["next_sprint_entry_condition"],
+            "blocked_by_refs": entry["blocked_by_refs"],
+            "minutes_source_refs": entry["minutes_source_refs"],
+        }
+        dossier_entries.append(dossier)
+        markdown_lines.append(
+            f"| {entry['name']} | {entry['acquisition_status']} | {details['requested_from_user']} | "
+            f"{details['recommended_runtime_target']} | {details['next_sprint_entry_condition']} |"
+        )
+    return (
+        {
+            "schema_version": "1.0.0",
+            "source": "Derived from the excluded-module recovery ledger.",
+            "entries": dossier_entries,
+        },
+        "\n".join(markdown_lines).rstrip() + "\n",
+    )
+
+
 def build_environment_specs() -> tuple[list[dict], list[dict]]:
     environment_records: list[dict] = []
     verification_records: list[dict] = []
@@ -1136,6 +2185,19 @@ def build_seed_files() -> None:
     adapters: list[dict] = []
     evidence_bundles: list[dict] = []
     decisions: list[dict] = []
+
+    excluded_slugs = {module["slug"] for module in EXCLUDED_MODULES}
+    missing_recovery_metadata = sorted(excluded_slugs - set(RECOVERY_METADATA_BY_SLUG))
+    if missing_recovery_metadata:
+        raise ValueError(f"Missing recovery metadata for excluded modules: {missing_recovery_metadata}")
+    deferred_slugs = {
+        slug
+        for slug, metadata in RECOVERY_METADATA_BY_SLUG.items()
+        if metadata["install_method_category"] == "I6_deferred_external_manual"
+    }
+    missing_dossiers = sorted(deferred_slugs - set(DEFERRED_ACQUISITION_DETAILS))
+    if missing_dossiers:
+        raise ValueError(f"Missing deferred acquisition dossiers for modules: {missing_dossiers}")
 
     env_records, verification_records = build_environment_specs()
     decision_index = decision_refs_by_slug()
@@ -1351,6 +2413,7 @@ def build_seed_files() -> None:
             {
                 "name": module["name"],
                 "slug": module["slug"],
+                "module_ref": minutes_module_ref(module["slug"]),
                 "category": module["category"],
                 "module_class": module["module_class"],
                 "minutes_source_refs": module["source_refs"],
@@ -1359,6 +2422,7 @@ def build_seed_files() -> None:
                 "knowledge_pack_ref": artifact_ref("knowledge-pack", module["slug"]),
                 "environment_refs": env_refs_for_module(module),
                 "excluded_reason": None,
+                **completed_inventory_metadata(module),
             }
         )
     for module in EXCLUDED_MODULES:
@@ -1366,36 +2430,38 @@ def build_seed_files() -> None:
             {
                 "name": module["name"],
                 "slug": module["slug"],
+                "module_ref": minutes_module_ref(module["slug"]),
                 "category": module["category"],
                 "module_class": module["module_class"],
                 "minutes_source_refs": module["source_refs"],
                 "executable": module["executable"],
                 "implementation_status": "excluded",
                 "knowledge_pack_ref": None,
-                "environment_refs": [],
+                "environment_refs": excluded_environment_refs(module),
                 "excluded_reason": module["excluded_reason"],
+                **recovery_metadata_for_excluded(module),
             }
         )
     inventory_entries = sorted(inventory_entries, key=lambda item: item["name"].lower())
+    excluded_entries = [
+        entry for entry in inventory_entries if entry["implementation_status"] == "excluded"
+    ]
     write_json(
         OUTPUT_ROOT / "substrate" / "minutes-inventory.json",
         {
             "schema_version": "1.0.0",
             "focus_area": "engineering",
             "source": "Normalized engineering sections from Conversation Minutes; Kimi/Gemma sections excluded.",
+            "recovery_plan": build_recovery_plan_metadata(),
             "entries": inventory_entries,
         },
     )
-
-    excluded_lines = [
-        "# KNOWLEGE MINUTES EXCLUDED",
-        "",
-        "| name | reason excluded |",
-        "| --- | --- |",
-    ]
-    for module in sorted(EXCLUDED_MODULES, key=lambda item: item["name"].lower()):
-        excluded_lines.append(f"| {module['name']} | {module['excluded_reason']} |")
-    write_text(EXCLUDED_PATH, "\n".join(excluded_lines) + "\n")
+    write_text(EXCLUDED_PATH, render_excluded_ledger(excluded_entries))
+    acquisition_dossiers_json, acquisition_dossiers_markdown = build_deferred_acquisition_dossiers(
+        excluded_entries
+    )
+    write_json(ACQUISITION_DOSSIERS_JSON_PATH, acquisition_dossiers_json)
+    write_text(ACQUISITION_DOSSIERS_MD_PATH, acquisition_dossiers_markdown)
 
 
 def build_runtime_manifests() -> None:
@@ -1406,17 +2472,20 @@ def build_runtime_manifests() -> None:
         write_text(REPO_ROOT / profile["manifest_path"], requirement_lines)
 
     for profile in [item for item in RUNTIME_PROFILES if item["delivery_kind"] == "docker_image"]:
-        uv_peer = profile_by_id[f"{profile['id'].replace('_docker', '_uv')}"]
-        dockerfile = "\n".join(
-            [
-                "FROM python:3.11-slim",
-                "WORKDIR /workspace",
-                f"COPY {uv_peer['manifest_path']} /tmp/requirements.txt",
-                "RUN python -m pip install --upgrade pip && python -m pip install -r /tmp/requirements.txt",
-                'ENTRYPOINT ["python"]',
-                "",
-            ]
-        )
+        if "dockerfile_lines" in profile:
+            dockerfile = "\n".join(profile["dockerfile_lines"])
+        else:
+            uv_peer = profile_by_id[f"{profile['id'].replace('_docker', '_uv')}"]
+            dockerfile = "\n".join(
+                [
+                    "FROM python:3.11-slim",
+                    "WORKDIR /workspace",
+                    f"COPY {uv_peer['manifest_path']} /tmp/requirements.txt",
+                    "RUN python -m pip install --upgrade pip && python -m pip install -r /tmp/requirements.txt",
+                    'ENTRYPOINT ["python"]',
+                    "",
+                ]
+            )
         write_text(REPO_ROOT / profile["manifest_path"], dockerfile)
 
     uv_launchers = {
@@ -1455,12 +2524,65 @@ def build_runtime_manifests() -> None:
             executable=True,
         )
 
+    wine_container_launcher = "\n".join(
+        [
+            "#!/usr/bin/env bash",
+            "set -euo pipefail",
+            'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"',
+            'exec docker run --rm -v "$ROOT:$ROOT" -w "$ROOT" birtha/knowledge-eng-wine:1.0.0 "$@"',
+            "",
+        ]
+    )
+    write_text(
+        RUNTIME_ROOT / "launchers" / "eng-wine-container.sh",
+        wine_container_launcher,
+        executable=True,
+    )
+
+    ipopt_onemkl_container_launcher = "\n".join(
+        [
+            "#!/usr/bin/env bash",
+            "set -euo pipefail",
+            'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"',
+            'exec docker run --rm -v "$ROOT:$ROOT" -w "$ROOT" birtha/knowledge-eng-ipopt-onemkl:1.0.0 "$@"',
+            "",
+        ]
+    )
+    write_text(
+        RUNTIME_ROOT / "launchers" / "eng-ipopt-onemkl-container.sh",
+        ipopt_onemkl_container_launcher,
+        executable=True,
+    )
+
+    rhino_manifest = "\n".join(
+        [
+            "runtime_path=/Applications/Rhino 8.app",
+            "rhinocode_path=/Applications/Rhino 8.app/Contents/Resources/bin/rhinocode",
+            "yak_path=/Applications/Rhino 8.app/Contents/Resources/bin/yak",
+            "scripting_docs=https://www.rhino3d.com/features/developer/scripting/",
+            "gh_python_docs=https://developer.rhino3d.com/guides/scripting/scripting-gh-python/",
+            "gh_csharp_docs=https://developer.rhino3d.com/guides/scripting/scripting-gh-csharp/",
+            "",
+        ]
+    )
+    write_text(RUNTIME_ROOT / "host" / "eng-rhino.manifest.txt", rhino_manifest)
+
+    rhino_launcher = "\n".join(
+        [
+            "#!/usr/bin/env bash",
+            "set -euo pipefail",
+            'exec "/Applications/Rhino 8.app/Contents/Resources/bin/rhinocode" "$@"',
+            "",
+        ]
+    )
+    write_text(RUNTIME_ROOT / "launchers" / "eng-rhino.sh", rhino_launcher, executable=True)
+
     dotnet_csproj = "\n".join(
         [
             "<Project Sdk=\"Microsoft.NET.Sdk\">",
             "  <PropertyGroup>",
             "    <OutputType>Exe</OutputType>",
-            "    <TargetFramework>net8.0</TargetFramework>",
+            "    <TargetFramework>net9.0</TargetFramework>",
             "    <RollForward>Major</RollForward>",
             "    <ImplicitUsings>enable</ImplicitUsings>",
             "    <Nullable>enable</Nullable>",
@@ -1468,6 +2590,7 @@ def build_runtime_manifests() -> None:
             "  <ItemGroup>",
             "    <PackageReference Include=\"UnitsNet\" Version=\"5.75.0\" />",
             "    <PackageReference Include=\"MathNet.Numerics\" Version=\"5.0.0\" />",
+            "    <PackageReference Include=\"PicoGK\" Version=\"1.7.7.5\" />",
             "  </ItemGroup>",
             "</Project>",
             "",
@@ -1476,11 +2599,13 @@ def build_runtime_manifests() -> None:
     dotnet_program = "\n".join(
         [
             "using MathNet.Numerics;",
+            "using System.Reflection;",
             "using UnitsNet;",
             "",
             "var length = Length.FromMeters(1.0);",
             "var gamma = SpecialFunctions.Gamma(5);",
-            'Console.WriteLine($"UnitsNet:{length.Meters};MathNet:{gamma}");',
+            'var picoAssembly = Assembly.Load("PicoGK");',
+            'Console.WriteLine($"UnitsNet:{length.Meters};MathNet:{gamma};PicoGK:{picoAssembly.GetName().Version}");',
             "",
         ]
     )

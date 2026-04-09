@@ -1,0 +1,154 @@
+version: "3.9"
+
+# GPU Worker Services - Runs on workstation with RTX 4070 Ti + RTX 2080
+# Provides specialised GPU lanes for Birtha server orchestrator:
+#   GPU 0 (RTX 4070 Ti, 12 GB) → generation (vLLM chat/completions)
+#   GPU 1 (RTX 2080,     8 GB) → embeddings (vLLM or dedicated server)
+
+services:
+  # ── Generation lane ─────────────────────────────────────────────
+  llm-runner-gen:
+    image: vllm/vllm-openai:latest
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - CUDA_VISIBLE_DEVICES=0
+      - LLM_BACKEND=vllm
+      - ENABLE_GPU=true
+      - HF_HOME=/.cache/models/hf
+      - TRANSFORMERS_CACHE=/.cache/models/hf
+      - MODEL_CACHE_DIR=/.cache/models/hf
+    command: [ "--model", "${VLLM_MODEL:-mistralai/Mistral-7B-Instruct-v0.3}", "--dtype", "float16", "--max-model-len", "${VLLM_MAX_MODEL_LEN:-8192}", "--gpu-memory-utilization", "${VLLM_GPU_MEMORY_UTILIZATION:-0.92}", "--enable-prefix-caching", "--host", "0.0.0.0", "--port", "8000" ]
+    ports:
+      - "${WORKER_GEN_PORT:-8000}:8000"
+    volumes:
+      - ./.cache/models/hf:/.cache/models/hf
+      - ./.cache/models/vllm:/.cache/models/vllm
+    runtime: nvidia
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ── Embedding lane ──────────────────────────────────────────────
+  llm-runner-embed:
+    image: vllm/vllm-openai:latest
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - CUDA_VISIBLE_DEVICES=1
+      - ENABLE_GPU=true
+      - HF_HOME=/.cache/models/hf
+      - TRANSFORMERS_CACHE=/.cache/models/hf
+      - MODEL_CACHE_DIR=/.cache/models/hf
+    command: [ "--model", "${EMBED_MODEL:-sentence-transformers/all-MiniLM-L6-v2}", "--dtype", "float16", "--max-model-len", "${EMBED_MAX_MODEL_LEN:-512}", "--gpu-memory-utilization", "${EMBED_GPU_MEMORY_UTILIZATION:-0.85}", "--host", "0.0.0.0", "--port", "8001" ]
+    ports:
+      - "${WORKER_EMBED_PORT:-8001}:8001"
+    volumes:
+      - ./.cache/models/hf:/.cache/models/hf
+    runtime: nvidia
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ── Ollama (development/alternative) ────────────────────────────
+  ollama-runner:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    environment:
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3:8b-instruct-q4_K_M}
+      - OLLAMA_MODELS=/.cache/models/ollama
+      - OLLAMA_ORIGINS=*
+      - OLLAMA_KEEP_ALIVE=24h
+      - LLM_BACKEND=ollama
+      - ENABLE_GPU=true
+    ports:
+      - "${WORKER_OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ./.cache/models/ollama:/.cache/models/ollama
+      - ollama_data:/root/.ollama
+    runtime: nvidia
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:11434/api/tags" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    profiles:
+      - ollama # Use --profile ollama to enable
+
+  # ── Cross-encoder reranker (GPU 1, optional) ────────────────────
+  reranker:
+    build: ./worker/reranker
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    environment:
+      - CUDA_VISIBLE_DEVICES=1
+      - RERANKER_MODEL=${RERANKER_MODEL:-cross-encoder/ms-marco-MiniLM-L-6-v2}
+      - HF_HOME=/.cache/models/hf
+      - TRANSFORMERS_CACHE=/.cache/models/hf
+      - MODEL_CACHE_DIR=/.cache/models/hf
+    ports:
+      - "${WORKER_RERANKER_PORT:-8002}:8000"
+    volumes:
+      - ./.cache/models/hf:/.cache/models/hf
+    runtime: nvidia
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    profiles:
+      - reranker # Use --profile reranker to enable
+
+  # ── Worker Caddy (path-based routing to GPU lanes) ──────────────
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "${WORKER_PROXY_PORT:-8443}:8443"
+    volumes:
+      - ./infra/reverse-proxy/Caddyfile.worker:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - llm-runner-gen
+      - llm-runner-embed
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
+  ollama_data:

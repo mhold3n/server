@@ -49,7 +49,7 @@ def main() -> int:
     else:
         environment = resolve_runtime(
             args.module_ref,
-            host_profile={"preferred_delivery_kinds": ["uv_venv", "dotnet_toolchain", "docker_image"], "verified_only": False},
+            host_profile={"preferred_delivery_kinds": ["uv_venv", "dotnet_toolchain", "host_app", "docker_image"], "verified_only": False},
         )
 
     manifest_path = _resolve_path(environment.manifest_path)
@@ -65,6 +65,16 @@ def main() -> int:
         _run(["dotnet", "restore", str(manifest_path)])
         _run(["dotnet", "build", str(manifest_path), "-c", "Release"])
         print(f"Bootstrapped dotnet runtime from {manifest_path}")
+        return 0
+
+    if environment.delivery_kind == "host_app":
+        runtime_path = _resolve_path(environment.runtime_locator)
+        launcher_path = _resolve_path(environment.launcher_ref)
+        if not runtime_path.exists():
+            raise RuntimeError(f"Host application runtime not found: {runtime_path}")
+        if not launcher_path.exists():
+            raise RuntimeError(f"Host application launcher not found: {launcher_path}")
+        print(f"Verified host application runtime at {runtime_path}")
         return 0
 
     docker_bin = subprocess.run(

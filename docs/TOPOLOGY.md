@@ -143,26 +143,26 @@ worker      ──X──► frontend    (GPU node never calls Birtha directly)
 | Birtha API | 8080 | 8080 | `docker-compose.yml` |
 | Birtha Router | 8000 | 8000 | `docker-compose.yml` |
 | Redis | 6379 | 6379 | `docker-compose.yml` |
-| Caddy (server) | 443 | 8443 | `docker-compose.server.yml` |
-| Structure Gateway | 8000 | `$STRUCTURE_GATEWAY_PORT` (def 8090) | `docker-compose.ai.yml` |
-| WrkHrs Gateway | 8000 | `$WRKHRS_GATEWAY_PORT` (def 8091) | `docker-compose.ai.yml` |
-| WrkHrs Orchestrator | 8000 | `$WRKHRS_ORCH_PORT` (def 8081) | `docker-compose.ai.yml` |
-| WrkHrs RAG | 8000 | `$WRKHRS_RAG_PORT` (def 8082) | `docker-compose.ai.yml` |
-| WrkHrs ASR | 8000 | `$WRKHRS_ASR_PORT` (def 8084) | `docker-compose.ai.yml` |
-| WrkHrs Tools | 8000 | `$WRKHRS_TOOLS_PORT` (def 8086) | `docker-compose.ai.yml` |
-| WrkHrs MCP | 8000 | `$WRKHRS_MCP_PORT` (def 8085) | `docker-compose.ai.yml` |
-| MCP Registry | 8000 | `$MCP_REGISTRY_PORT` (def 8001) | `docker-compose.ai.yml` |
-| Qdrant | 6333 | 6333 | `docker-compose.server.yml` |
-| MLflow | 5000 | 5000 | `docker-compose.platform.yml` |
-| Prometheus | 9090 | 9090 | `docker-compose.platform.yml` |
-| Grafana | 3000 | 3000 | `docker-compose.platform.yml` |
-| Loki | 3100 | 3100 | `docker-compose.platform.yml` |
-| Tempo | 3200/4317 | 3200/4317 | `docker-compose.platform.yml` |
-| Jaeger | 16686 | 16686 | `docker-compose.platform.yml` |
-| vLLM Gen (worker) | 8000 | `$WORKER_GEN_PORT` (def 8000) | `docker-compose.worker.yml` |
-| vLLM Embed (worker) | 8001 | `$WORKER_EMBED_PORT` (def 8001) | `docker-compose.worker.yml` |
-| Reranker (worker) | 8000 | `$WORKER_RERANKER_PORT` (def 8002) | `docker-compose.worker.yml` |
-| Worker Caddy | 8443 | `$WORKER_PROXY_PORT` (def 8443) | `docker-compose.worker.yml` |
+| Caddy (server) | 443 | 8443 | `compose/docker-compose.server.yml` |
+| Structure Gateway | 8000 | `$STRUCTURE_GATEWAY_PORT` (def 8090) | `compose/docker-compose.ai.yml` |
+| WrkHrs Gateway | 8000 | `$WRKHRS_GATEWAY_PORT` (def 8091) | `compose/docker-compose.ai.yml` |
+| WrkHrs Orchestrator | 8000 | `$WRKHRS_ORCH_PORT` (def 8081) | `compose/docker-compose.ai.yml` |
+| WrkHrs RAG | 8000 | `$WRKHRS_RAG_PORT` (def 8082) | `compose/docker-compose.ai.yml` |
+| WrkHrs ASR | 8000 | `$WRKHRS_ASR_PORT` (def 8084) | `compose/docker-compose.ai.yml` |
+| WrkHrs Tools | 8000 | `$WRKHRS_TOOLS_PORT` (def 8086) | `compose/docker-compose.ai.yml` |
+| WrkHrs MCP | 8000 | `$WRKHRS_MCP_PORT` (def 8085) | `compose/docker-compose.ai.yml` |
+| MCP Registry | 8000 | `$MCP_REGISTRY_PORT` (def 8001) | `compose/docker-compose.ai.yml` |
+| Qdrant | 6333 | 6333 | `compose/docker-compose.server.yml` |
+| MLflow | 5000 | 5000 | `compose/docker-compose.platform.yml` |
+| Prometheus | 9090 | 9090 | `compose/docker-compose.platform.yml` |
+| Grafana | 3000 | 3000 | `compose/docker-compose.platform.yml` |
+| Loki | 3100 | 3100 | `compose/docker-compose.platform.yml` |
+| Tempo | 3200/4317 | 3200/4317 | `compose/docker-compose.platform.yml` |
+| Jaeger | 16686 | 16686 | `compose/docker-compose.platform.yml` |
+| vLLM Gen (worker) | 8000 | `$WORKER_GEN_PORT` (def 8000) | `compose/docker-compose.worker.yml` |
+| vLLM Embed (worker) | 8001 | `$WORKER_EMBED_PORT` (def 8001) | `compose/docker-compose.worker.yml` |
+| Reranker (worker) | 8000 | `$WORKER_RERANKER_PORT` (def 8002) | `compose/docker-compose.worker.yml` |
+| Worker Caddy | 8443 | `$WORKER_PROXY_PORT` (def 8443) | `compose/docker-compose.worker.yml` |
 
 ---
 

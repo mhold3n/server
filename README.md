@@ -17,7 +17,7 @@
 
 - **`claw-code-main/`** — Git submodule tracking [`ultraworkers/claw-code`](https://github.com/ultraworkers/claw-code) on `main`.
 - **`openclaw/`** — Git submodule tracking [`openclaw/openclaw`](https://github.com/openclaw/openclaw) on `main`.
-- Refresh both with `npm run deps:external`. See [`docs/external-repos.md`](docs/external-repos.md) for the rationale and workflow.
+- Refresh both with `npm run deps:external`. See [`docs/external-repos.md`](docs/external-repos.md) for the rationale and workflow, and [`docs/external-orchestration-interfaces.md`](docs/external-orchestration-interfaces.md) for how they relate to the active control plane.
 
 ## Project Management
 
@@ -87,7 +87,7 @@ make ai-up
 make server-up
 
 # addons (security/search/media/etc.)
-docker compose -f docker-compose.addons.yml up -d
+docker compose -f compose/docker-compose.addons.yml up -d
 
 # or bring everything up
 make up-all
@@ -100,7 +100,7 @@ make up-all
 make worker-up
 
 # Or start with Ollama instead of vLLM
-docker compose -f docker-compose.worker.yml --profile ollama up -d
+docker compose -f compose/docker-compose.worker.yml --profile ollama up -d
 ```
 
 ### 5) Test
@@ -355,8 +355,8 @@ make ci              # Run full CI pipeline
 
 - Pi‑hole is enabled by default in the server stack. AdGuard Home is scaffolded in its own compose profile and is not started by `make up-addons`.
 - Use only one DNS blocker at a time. To test AdGuard:
-  1) Stop Pi‑hole: `docker compose -f docker-compose.server.yml stop pihole`
-  2) Start AdGuard: `docker compose -f docker-compose.addons.yml --profile adguard up -d`
+  1) Stop Pi‑hole: `docker compose -f compose/docker-compose.server.yml stop pihole`
+  2) Start AdGuard: `docker compose -f compose/docker-compose.addons.yml --profile adguard up -d`
   3) Visit https://adguard.local:8443 after adding DNS/hosts entries
 
 ## Project Structure
@@ -365,6 +365,8 @@ Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/s
 
 ```
 server/   # repository root (suggested clone folder name)
+├── claw-code-main/             # External GitHub submodule: ultraworkers/claw-code
+├── openclaw/                   # External GitHub submodule: openclaw/openclaw
 ├── services/                    # Core services
 │   ├── api/                    # FastAPI control plane with WrkHrs integration
 │   │   ├── src/wrkhrs/         # WrkHrs integration layer

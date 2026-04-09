@@ -36,10 +36,10 @@ make health
 ### Service-Specific Deployment
 ```bash
 # Deploy only RAG service
-docker compose -f docker-compose.yml -f docker-compose.ai.yml up -d wrkhrs-rag
+docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d wrkhrs-rag
 
 # Deploy only ASR service
-docker compose -f docker-compose.yml -f docker-compose.ai.yml up -d wrkhrs-asr
+docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d wrkhrs-asr
 ```
 
 ## Health Monitoring
@@ -68,7 +68,7 @@ curl -f http://localhost:8080/health
 make logs-ai
 
 # View specific service logs
-docker compose -f docker-compose.yml -f docker-compose.ai.yml logs -f wrkhrs-gateway
+docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs -f wrkhrs-gateway
 ```
 
 ## Troubleshooting
@@ -83,10 +83,10 @@ docker compose -f docker-compose.yml -f docker-compose.ai.yml logs -f wrkhrs-gat
 docker ps | grep wrkhrs-gateway
 
 # Check logs
-docker compose -f docker-compose.yml -f docker-compose.ai.yml logs wrkhrs-gateway
+docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs wrkhrs-gateway
 ```
 **Resolution**:
-- Restart service: `docker compose -f docker-compose.yml -f docker-compose.ai.yml restart wrkhrs-gateway`
+- Restart service: `docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml restart wrkhrs-gateway`
 - Check dependencies: Ensure **wrkhrs-agent-platform**, RAG, ASR services are running
 - Verify `ORCHESTRATOR_URL` (default `http://wrkhrs-agent-platform:8000`)
 
@@ -120,7 +120,7 @@ curl -f http://localhost:6333/collections
 nvidia-smi
 
 # Check ASR logs
-docker compose -f docker-compose.yml -f docker-compose.ai.yml logs wrkhrs-asr
+docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs wrkhrs-asr
 ```
 **Resolution**:
 - Verify NVIDIA Container Toolkit installation
@@ -138,7 +138,7 @@ curl -f http://localhost:8086/health
 curl -f http://localhost:8085/health
 ```
 **Resolution**:
-- Restart tool registry: `docker compose -f docker-compose.yml -f docker-compose.ai.yml restart wrkhrs-tool-registry`
+- Restart tool registry: `docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml restart wrkhrs-tool-registry`
 - Check MCP server connectivity
 - Verify tool registration
 
@@ -150,7 +150,7 @@ curl -f http://localhost:8085/health
 docker stats
 
 # Set memory limits
-# In docker-compose.ai.yml:
+# In compose/docker-compose.ai.yml:
 deploy:
   resources:
     limits:
@@ -165,7 +165,7 @@ deploy:
 docker stats
 
 # Set CPU limits
-# In docker-compose.ai.yml:
+# In compose/docker-compose.ai.yml:
 deploy:
   resources:
     limits:
@@ -179,17 +179,17 @@ deploy:
 ### Horizontal Scaling
 ```bash
 # Scale RAG service
-docker compose -f docker-compose.yml -f docker-compose.ai.yml up -d --scale wrkhrs-rag=3
+docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d --scale wrkhrs-rag=3
 
 # Scale ASR service
-docker compose -f docker-compose.yml -f docker-compose.ai.yml up -d --scale wrkhrs-asr=2
+docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d --scale wrkhrs-asr=2
 ```
 
 ### Vertical Scaling
 ```bash
-# Update resource limits in docker-compose.ai.yml
+# Update resource limits in compose/docker-compose.ai.yml
 # Then restart services
-docker compose -f docker-compose.yml -f docker-compose.ai.yml up -d
+docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d
 ```
 
 ## Backup and Recovery
@@ -279,8 +279,8 @@ docker system prune -f
 ```bash
 # Update AI stack
 git pull origin main
-docker compose -f docker-compose.yml -f docker-compose.ai.yml build
-docker compose -f docker-compose.yml -f docker-compose.ai.yml up -d
+docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml build
+docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d
 
 # Verify update
 make health

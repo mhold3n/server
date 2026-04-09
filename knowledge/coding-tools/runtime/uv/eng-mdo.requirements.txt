@@ -9,3 +9,8 @@ openmdao
 cvxpy
 jmetalpy
 enoppy
+dymos
+mphys
+optas
+nevergrad
+botorch

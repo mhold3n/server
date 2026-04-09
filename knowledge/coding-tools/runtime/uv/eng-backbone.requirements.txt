@@ -8,3 +8,5 @@ parsl
 pybind11
 nanobind
 mpi4py
+ray
+vtk

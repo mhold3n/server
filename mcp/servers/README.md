@@ -118,7 +118,7 @@ QDRANT_URL=http://qdrant:6333
 ### Adding New Global MCP Servers
 1. Create a new directory under `mcp/servers/`
 2. Implement the MCP server following the existing patterns
-3. Add to `docker-compose.server.yml`
+3. Add to `compose/docker-compose.server.yml`
 4. Update `config/mcp_servers.yaml`
 5. Add tests and documentation
 

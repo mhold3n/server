@@ -74,24 +74,25 @@ def get_recommended_models(gpu_memory_gb):
 def download_model(model_name, models_dir):
     """Download a model using huggingface-hub"""
     models_path = Path(models_dir)
-    models_path.mkdir(exist_ok=True)
+    models_path.mkdir(parents=True, exist_ok=True)
+    local_model_dir = models_path / model_name.replace("/", "--")
 
     print(f"Downloading model: {model_name}")
-    print(f"Destination: {models_path}")
+    print(f"Destination: {local_model_dir}")
 
     # Use huggingface-hub to download
-    cmd = f"python -c \"from huggingface_hub import snapshot_download; snapshot_download('{model_name}', local_dir='{models_path}/{model_name.replace('/', '--')}', local_dir_use_symlinks=False)\""
+    cmd = f"python -c \"from huggingface_hub import snapshot_download; snapshot_download('{model_name}', local_dir='{local_model_dir}', local_dir_use_symlinks=False)\""
 
     try:
         run_command(cmd)
         print(f"✅ Model {model_name} downloaded successfully!")
-        return True
+        return local_model_dir
     except Exception as e:
         print(f"❌ Failed to download {model_name}: {e}")
-        return False
+        return None
 
 
-def update_env_file(model_name):
+def update_env_file(model_path):
     """Update .env file with the new model"""
     env_file = Path(".env")
     if not env_file.exists():
@@ -106,14 +107,14 @@ def update_env_file(model_name):
     lines = content.split("\n")
     for i, line in enumerate(lines):
         if line.startswith("VLLM_MODEL="):
-            lines[i] = f"VLLM_MODEL={model_name}"
+            lines[i] = f"VLLM_MODEL={model_path}"
             break
 
     # Write back
     with open(env_file, "w") as f:
         f.write("\n".join(lines))
 
-    print(f"✅ Updated .env file with model: {model_name}")
+    print(f"✅ Updated .env file with model: {model_path}")
     return True
 
 
@@ -124,7 +125,7 @@ def main():
     parser.add_argument("--model", help="Specific model to download")
     parser.add_argument("--list", action="store_true", help="List recommended models")
     parser.add_argument(
-        "--models-dir", default="./models", help="Directory to store models"
+        "--models-dir", default="./.cache/models/vllm", help="Directory to store models"
     )
     parser.add_argument(
         "--auto", action="store_true", help="Automatically select best model"
@@ -186,13 +187,16 @@ def main():
             sys.exit(1)
 
     # Download model
-    if download_model(model_name, args.models_dir):
+    local_model_dir = download_model(model_name, args.models_dir)
+    if local_model_dir:
         # Update .env file
-        update_env_file(model_name)
+        container_model_path = Path("/.cache/models/vllm") / local_model_dir.name
+        update_env_file(str(container_model_path))
 
         print("\n🎉 Setup complete!")
         print(f"   Model: {model_name}")
-        print(f"   Location: {args.models_dir}")
+        print(f"   Host location: {local_model_dir}")
+        print(f"   Container location: {container_model_path}")
         print("   Configuration: Updated .env file")
         print("\n🚀 To start vLLM with this model:")
         print(

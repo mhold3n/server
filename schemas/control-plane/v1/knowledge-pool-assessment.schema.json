@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/knowledge-pool-assessment.schema.json",
+  "title": "knowledge_pool_assessment — deterministic knowledge coverage decision",
+  "description": "For agents: records whether the engineering knowledge pool is required, what packs/adapters/environments matched, and which gaps or rule matches governed routing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "knowledge_pool_assessment_id",
+    "schema_version",
+    "derived_task_class",
+    "coverage_class",
+    "required_for_mode",
+    "candidate_pack_refs",
+    "preferred_adapter_refs",
+    "preferred_environment_refs",
+    "runtime_verification_refs",
+    "knowledge_gaps",
+    "rule_matches",
+    "created_at"
+  ],
+  "properties": {
+    "knowledge_pool_assessment_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/uuidString"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "derived_task_class": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "coverage_class": {
+      "type": "string",
+      "enum": ["not_applicable", "none", "weak", "partial", "strong"]
+    },
+    "required_for_mode": {
+      "type": "boolean"
+    },
+    "candidate_pack_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "preferred_adapter_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "preferred_environment_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "runtime_verification_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "knowledge_gaps": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "rule_matches": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "created_at": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/iso8601Utc"
+    }
+  }
+}

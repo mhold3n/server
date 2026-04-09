@@ -15,7 +15,7 @@ This document describes how to verify that the local `server` stack is using off
 
 ```bash
 cd /path/to/server
-docker compose -f docker-compose.yml -f docker-compose.local-ai.yml up -d
+docker compose -f docker-compose.yml -f compose/docker-compose.local-ai.yml up -d
 ```
 
 Key services:
@@ -133,7 +133,7 @@ To run the stack with mock backends instead of real HF models:
 
 ```bash
 export USE_MOCK_MODELS=true
-docker compose -f docker-compose.yml -f docker-compose.local-ai.yml up -d --force-recreate
+docker compose -f docker-compose.yml -f compose/docker-compose.local-ai.yml up -d --force-recreate
 ```
 
 Then:

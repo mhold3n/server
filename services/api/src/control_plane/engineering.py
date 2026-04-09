@@ -9,12 +9,15 @@ governing artifacts are valid and ready.
 
 from __future__ import annotations
 
+import json
+import re
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from hashlib import sha256
+from pathlib import Path
 from typing import Any, Protocol
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from ..wrkhrs.domain_classifier import DomainClassifier
 from .contracts import (
@@ -31,6 +34,9 @@ from .contracts import (
     EngineeringState,
     EvidenceInput,
     Executor,
+    KnowledgeContext,
+    KnowledgeCoverageClass,
+    KnowledgePoolAssessment,
     NormalizedBoundary,
     ObjectiveRecord,
     OpenIssueRecord,
@@ -65,8 +71,10 @@ from .contracts import (
     OperationalScenario,
     HumanApprovalBlock,
 )
+from .knowledge_pool import load_knowledge_pool
 from .validation import (
     validate_engineering_state_json,
+    validate_knowledge_pool_assessment_json,
     validate_problem_brief_json,
     validate_task_packet_json,
     validate_task_queue_json,
@@ -179,6 +187,32 @@ _MECHANICAL_HINTS = (
     "bearing",
     "actuator",
 )
+_KNOWLEDGE_REQUIRED_HINTS = (
+    "solver",
+    "library",
+    "runtime",
+    "adapter",
+    "environment",
+    "simulation",
+    "optimiz",
+    "units",
+)
+_KNOWLEDGE_STRICT_TASK_CLASSES = {
+    "thermochemistry_screening",
+    "optimization_uq_backbone",
+    "geometry_manufacturing",
+    "workflow_coupling",
+    "electrics_dynamics_system",
+    "structures_pde",
+}
+_KNOWLEDGE_ROLE_BY_EXECUTOR = {
+    Executor.CODING_MODEL: "coder",
+    Executor.LOCAL_GENERAL_MODEL: "general",
+    Executor.MULTIMODAL_MODEL: "general",
+    Executor.DETERMINISTIC_VALIDATOR: "reviewer",
+    Executor.STRATEGIC_REVIEWER: "reviewer",
+}
+_KNOWLEDGE_CACHE: tuple[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -443,12 +477,575 @@ class HardRuleSignalProvider:
 
 class KnowledgePoolSignalProvider:
     def collect(self, evaluation: ModeEvaluationContext) -> list[ModeSignal]:
-        _ = evaluation
-        return []
+        assessment = _prompt_knowledge_assessment(
+            text=evaluation.text,
+            context=evaluation.context,
+        )
+        coverage = assessment.coverage_class
+        required = assessment.required_for_mode
+        if not required:
+            return []
+        if assessment.derived_task_class in _KNOWLEDGE_STRICT_TASK_CLASSES:
+            return [
+                ModeSignal(
+                    minimum_mode="strict_engineering",
+                    confidence=0.95 if coverage is KnowledgeCoverageClass.STRONG else 0.86,
+                    reason=f"knowledge_pool:{coverage.value}:{assessment.derived_task_class}",
+                )
+            ]
+        return [
+            ModeSignal(
+                minimum_mode="engineering_task",
+                confidence=0.88 if coverage is KnowledgeCoverageClass.STRONG else 0.78,
+                reason=f"knowledge_pool:{coverage.value}:{assessment.derived_task_class}",
+            )
+        ]
+
+
+def _knowledge_pool_root() -> Path:
+    here = Path(__file__).resolve()
+    for path in [here, *here.parents]:
+        candidate = path / "knowledge" / "coding-tools"
+        if candidate.exists():
+            return candidate
+    raise RuntimeError("Could not locate knowledge/coding-tools")
+
+
+def _knowledge_pool_fingerprint(root: Path) -> str:
+    digest = sha256()
+    for path in sorted(root.rglob("*.json")):
+        stat = path.stat()
+        digest.update(str(path.relative_to(root)).encode("utf-8"))
+        digest.update(str(stat.st_mtime_ns).encode("utf-8"))
+        digest.update(str(stat.st_size).encode("utf-8"))
+    return digest.hexdigest()
+
+
+def _knowledge_catalog() -> Any:
+    global _KNOWLEDGE_CACHE  # noqa: PLW0603 - intentional process-local cache
+    root = _knowledge_pool_root()
+    fingerprint = _knowledge_pool_fingerprint(root)
+    if _KNOWLEDGE_CACHE and _KNOWLEDGE_CACHE[0] == fingerprint:
+        return _KNOWLEDGE_CACHE[1]
+    catalog = load_knowledge_pool(root=root)
+    _KNOWLEDGE_CACHE = (fingerprint, catalog)
+    return catalog
+
+
+def _knowledge_task_class_from_text(
+    text: str,
+    scores: dict[str, float],
+) -> str:
+    lower = text.lower()
+    if any(hint in lower for hint in _CHEMISTRY_HINTS):
+        return "thermochemistry_screening"
+    if any(
+        hint in lower
+        for hint in ("optimization", "optimize", "surrogate", "uncertainty", "uq", "doe")
+    ):
+        return "optimization_uq_backbone"
+    if any(
+        hint in lower
+        for hint in ("cad", "geometry", "mesh", "manufactur", "gmsh", "cadquery", "occt")
+    ):
+        return "geometry_manufacturing"
+    if any(hint in lower for hint in ("spice", "circuit", "electrical", "signal")):
+        return "electrics_dynamics_system"
+    if any(hint in lower for hint in ("pde", "finite volume", "diffusion", "field solve")):
+        return "structures_pde"
+    if any(
+        hint in lower
+        for hint in ("runtime", "adapter", "workflow", "pipeline", "integration", "orchestrat")
+    ):
+        return "workflow_coupling"
+    return "engineering_minutes_runtime_link"
+
+
+def _knowledge_languages(text: str, context: dict[str, Any]) -> list[str]:
+    lower = text.lower()
+    languages: list[str] = []
+    explicit = context.get("languages")
+    if isinstance(explicit, list):
+        languages.extend(str(item).strip().lower() for item in explicit if str(item).strip())
+    if "python" in lower:
+        languages.append("python")
+    if "c++" in lower or "cpp" in lower:
+        languages.append("c++")
+    if "c#" in lower or "dotnet" in lower or ".net" in lower:
+        languages.append("c#")
+    if "cli" in lower:
+        languages.append("cli")
+    if not languages:
+        languages.append("python")
+    return list(dict.fromkeys(languages))
+
+
+def _knowledge_requirement_flags(text: str, context: dict[str, Any]) -> dict[str, bool]:
+    lower = text.lower()
+    has_repo_work = any(hint in lower for hint in _CODING_HINTS)
+    has_simulation = any(hint in lower for hint in _SIMULATION_HINTS)
+    has_multimodal = any(hint in lower for hint in _MULTIMODAL_HINTS)
+    has_runtime = any(hint in lower for hint in _KNOWLEDGE_REQUIRED_HINTS)
+    has_quantitative = any(hint in lower for hint in _QUANTITATIVE_HINTS)
+    explicit_target_paths = isinstance(context.get("target_paths"), list) and bool(context.get("target_paths"))
+    has_units_signal = bool(
+        re.search(r"\bunits?\b", lower)
+        or re.search(r"\bsi\b", lower)
+        or "us customary" in lower
+    )
+    return {
+        "external_solver": has_simulation or "thermo" in lower or "combustion" in lower,
+        "runtime_selection": has_runtime or "bootstrap" in lower or "launcher" in lower,
+        "multimodal_engineering": has_multimodal and (has_repo_work or has_simulation or "engineering" in lower),
+        "tool_backed_codegen": has_repo_work and (
+            has_runtime
+            or has_simulation
+            or "library" in lower
+            or "adapter" in lower
+            or "environment" in lower
+        ),
+        "units_heavy": has_units_signal,
+        "repo_local_only": has_repo_work and not (has_runtime or has_simulation) and explicit_target_paths,
+        "quantitative_reasoning": has_quantitative,
+    }
+
+
+def _knowledge_required_for_mode(
+    *,
+    text: str,
+    context: dict[str, Any],
+) -> bool:
+    flags = _knowledge_requirement_flags(text, context)
+    return any(
+        flags[key]
+        for key in (
+            "external_solver",
+            "runtime_selection",
+            "multimodal_engineering",
+            "tool_backed_codegen",
+            "units_heavy",
+        )
+    )
+
+
+def _prompt_problem_spec(
+    *,
+    text: str,
+    context: dict[str, Any],
+    scores: dict[str, float],
+    task_class: str,
+    flags: dict[str, bool],
+) -> dict[str, Any]:
+    domains = [domain for domain, score in scores.items() if score >= 0.1]
+    return {
+        "request_text": text,
+        "task_class": task_class,
+        "domains": domains,
+        "target_paths": context.get("target_paths") or [],
+        "required_capabilities": [name for name, enabled in flags.items() if enabled],
+    }
+
+
+def _prompt_project_constraints(
+    *,
+    text: str,
+    context: dict[str, Any],
+    flags: dict[str, bool],
+) -> dict[str, Any]:
+    return {
+        "languages": _knowledge_languages(text, context),
+        "integration": "linked runtime" if flags["runtime_selection"] or flags["external_solver"] else "repo-local",
+        "verified_runtime": flags["runtime_selection"] or flags["external_solver"],
+        "repo_scope": "bounded" if context.get("target_paths") else "unbounded",
+    }
+
+
+def _assessment_artifact_ref(assessment: KnowledgePoolAssessment | dict[str, Any]) -> str:
+    identifier = (
+        assessment.knowledge_pool_assessment_id
+        if isinstance(assessment, KnowledgePoolAssessment)
+        else assessment["knowledge_pool_assessment_id"]
+    )
+    return _artifact_ref("knowledge_pool_assessment", identifier)
+
+
+def _coverage_for_candidates(
+    *,
+    required_for_mode: bool,
+    flags: dict[str, bool],
+    candidate_pack_refs: list[str],
+    adapter_refs: list[str],
+    environment_refs: list[str],
+    runtime_verification_refs: list[str],
+) -> tuple[KnowledgeCoverageClass, list[str]]:
+    if not required_for_mode:
+        return (KnowledgeCoverageClass.NOT_APPLICABLE, [])
+    if not candidate_pack_refs:
+        return (
+            KnowledgeCoverageClass.NONE,
+            ["No runtime-linked knowledge packs matched the declared engineering capability needs."],
+        )
+    checks = {
+        "candidate_pack": bool(candidate_pack_refs),
+        "preferred_adapter": (not flags["tool_backed_codegen"]) or bool(adapter_refs),
+        "preferred_environment": (
+            not (flags["runtime_selection"] or flags["external_solver"])
+        )
+        or bool(environment_refs),
+        "runtime_verification": (
+            not (flags["runtime_selection"] or flags["external_solver"])
+        )
+        or bool(runtime_verification_refs),
+    }
+    if all(checks.values()):
+        return (KnowledgeCoverageClass.STRONG, [])
+    gaps = [
+        f"Missing {name.replace('_', ' ')} coverage from the knowledge pool assessment."
+        for name, passed in checks.items()
+        if not passed
+    ]
+    if checks["candidate_pack"] and any(checks.values()):
+        return (KnowledgeCoverageClass.PARTIAL, gaps)
+    return (KnowledgeCoverageClass.WEAK, gaps)
+
+
+def _build_knowledge_pool_assessment(
+    *,
+    derived_task_class: str,
+    required_for_mode: bool,
+    flags: dict[str, bool],
+    problem_spec: dict[str, Any],
+    project_constraints: dict[str, Any],
+    rule_matches: list[str],
+) -> KnowledgePoolAssessment:
+    assessment_id = str(
+        uuid5(
+            NAMESPACE_URL,
+            "knowledge-pool-assessment:"
+            + json.dumps(
+                {
+                    "derived_task_class": derived_task_class,
+                    "required_for_mode": required_for_mode,
+                    "flags": flags,
+                    "problem_spec": problem_spec,
+                    "project_constraints": project_constraints,
+                    "rule_matches": rule_matches,
+                },
+                sort_keys=True,
+            ),
+        )
+    )
+    if not required_for_mode:
+        return validate_knowledge_pool_assessment_json(
+            {
+                "knowledge_pool_assessment_id": assessment_id,
+                "schema_version": "1.0.0",
+                "derived_task_class": derived_task_class,
+                "coverage_class": KnowledgeCoverageClass.NOT_APPLICABLE,
+                "required_for_mode": False,
+                "candidate_pack_refs": [],
+                "preferred_adapter_refs": [],
+                "preferred_environment_refs": [],
+                "runtime_verification_refs": [],
+                "knowledge_gaps": [],
+                "rule_matches": list(rule_matches),
+                "created_at": _iso_now(),
+            }
+        )
+    try:
+        catalog = _knowledge_catalog()
+        ranked = catalog.resolve_stack(problem_spec, project_constraints)
+    except Exception as exc:
+        return validate_knowledge_pool_assessment_json(
+            {
+                "knowledge_pool_assessment_id": assessment_id,
+                "schema_version": "1.0.0",
+                "derived_task_class": derived_task_class,
+                "coverage_class": KnowledgeCoverageClass.NONE,
+                "required_for_mode": True,
+                "candidate_pack_refs": [],
+                "preferred_adapter_refs": [],
+                "preferred_environment_refs": [],
+                "runtime_verification_refs": [],
+                "knowledge_gaps": [f"Knowledge pool unavailable: {exc}"],
+                "rule_matches": [*rule_matches, "knowledge_pool:unavailable"],
+                "created_at": _iso_now(),
+            }
+        )
+
+    candidates = ranked[:5]
+    candidate_pack_refs = [candidate.knowledge_pack_ref for candidate in candidates]
+    adapter_refs = list(
+        dict.fromkeys(
+            adapter_ref
+            for candidate in candidates
+            for adapter_ref in candidate.adapter_refs
+        )
+    )
+    environment_refs = list(
+        dict.fromkeys(
+            environment_ref
+            for candidate in candidates
+            for environment_ref in candidate.environment_refs
+        )
+    )
+    runtime_refs = list(
+        dict.fromkeys(
+            verification_ref
+            for candidate in candidates
+            for verification_ref in candidate.runtime_verification_refs
+        )
+    )
+    coverage_class, gaps = _coverage_for_candidates(
+        required_for_mode=required_for_mode,
+        flags=flags,
+        candidate_pack_refs=candidate_pack_refs,
+        adapter_refs=adapter_refs,
+        environment_refs=environment_refs,
+        runtime_verification_refs=runtime_refs,
+    )
+    return validate_knowledge_pool_assessment_json(
+        {
+            "knowledge_pool_assessment_id": assessment_id,
+            "schema_version": "1.0.0",
+            "derived_task_class": derived_task_class,
+            "coverage_class": coverage_class,
+            "required_for_mode": required_for_mode,
+            "candidate_pack_refs": candidate_pack_refs,
+            "preferred_adapter_refs": adapter_refs[:3],
+            "preferred_environment_refs": environment_refs[:3],
+            "runtime_verification_refs": runtime_refs[:5],
+            "knowledge_gaps": gaps,
+            "rule_matches": [
+                *rule_matches,
+                f"knowledge_pool:coverage:{coverage_class.value}",
+            ],
+            "created_at": _iso_now(),
+        }
+    )
+
+
+def _prompt_knowledge_assessment(
+    *,
+    text: str,
+    context: dict[str, Any],
+) -> KnowledgePoolAssessment:
+    cached = context.get("__knowledge_pool_assessment")
+    if isinstance(cached, dict) and cached.get("knowledge_pool_assessment_id"):
+        return validate_knowledge_pool_assessment_json(cached)
+    scores = DomainClassifier().classify(text, threshold=0.08)
+    flags = _knowledge_requirement_flags(text, context)
+    derived_task_class = _knowledge_task_class_from_text(text, scores)
+    required_for_mode = _knowledge_required_for_mode(text=text, context=context)
+    assessment = _build_knowledge_pool_assessment(
+        derived_task_class=derived_task_class,
+        required_for_mode=required_for_mode,
+        flags=flags,
+        problem_spec=_prompt_problem_spec(
+            text=text,
+            context=context,
+            scores=scores,
+            task_class=derived_task_class,
+            flags=flags,
+        ),
+        project_constraints=_prompt_project_constraints(
+            text=text,
+            context=context,
+            flags=flags,
+        ),
+        rule_matches=[
+            f"knowledge_pool:task_class:{derived_task_class}",
+            *[f"knowledge_pool:domain:{name}" for name, score in scores.items() if score >= 0.1],
+        ],
+    )
+    context["__knowledge_pool_assessment"] = assessment.model_dump(mode="json")
+    return assessment
+
+
+def _problem_brief_knowledge_assessment(problem_brief: ProblemBrief) -> KnowledgePoolAssessment:
+    text = " ".join(
+        [
+            problem_brief.title,
+            problem_brief.summary,
+            problem_brief.problem_statement.need,
+            " ".join(problem_brief.problem_statement.non_goals),
+            " ".join(item.description for item in problem_brief.deliverables),
+            " ".join(item.description for item in problem_brief.inputs),
+            " ".join(criterion.statement for criterion in problem_brief.success_criteria),
+            " ".join(criterion.metric for criterion in problem_brief.success_criteria),
+        ]
+    ).strip()
+    context = {
+        "target_paths": list(problem_brief.code_guidance.target_paths)
+        if problem_brief.code_guidance is not None
+        else [],
+        "knowledge_required": True,
+    }
+    scores = DomainClassifier().classify(text, threshold=0.08)
+    flags = _knowledge_requirement_flags(text, context)
+    derived_task_class = _knowledge_task_class_from_text(text, scores)
+    required_for_mode = (
+        _knowledge_required_for_mode(text=text, context=context)
+        or any(
+            item.kind in {"artifact", "standard", "document", "drawing"}
+            for item in problem_brief.inputs
+        )
+    )
+    return _build_knowledge_pool_assessment(
+        derived_task_class=derived_task_class,
+        required_for_mode=required_for_mode,
+        flags=flags,
+        problem_spec=_prompt_problem_spec(
+            text=text,
+            context=context,
+            scores=scores,
+            task_class=derived_task_class,
+            flags=flags,
+        ),
+        project_constraints={
+            "languages": _knowledge_languages(text, context),
+            "integration": "linked runtime" if required_for_mode else "repo-local",
+            "verified_runtime": required_for_mode,
+            "repo_scope": (
+                "bounded"
+                if problem_brief.code_guidance
+                and problem_brief.code_guidance.target_paths
+                else "unbounded"
+            ),
+        },
+        rule_matches=[
+            f"knowledge_pool:task_class:{derived_task_class}",
+            "knowledge_pool:problem_brief_structured_pass",
+        ],
+    )
+
+
+def _problem_brief_knowledge_project_constraints(
+    problem_brief: ProblemBrief,
+    *,
+    required_for_mode: bool,
+) -> dict[str, Any]:
+    text = " ".join(
+        [
+            problem_brief.title,
+            problem_brief.problem_statement.need,
+            " ".join(criterion.metric for criterion in problem_brief.success_criteria),
+        ]
+    )
+    context = {
+        "target_paths": list(problem_brief.code_guidance.target_paths)
+        if problem_brief.code_guidance is not None
+        else [],
+    }
+    return {
+        "languages": _knowledge_languages(text, context),
+        "integration": "linked runtime" if required_for_mode else "repo-local",
+        "verified_runtime": required_for_mode,
+        "repo_scope": (
+            "bounded"
+            if problem_brief.code_guidance and problem_brief.code_guidance.target_paths
+            else "unbounded"
+        ),
+    }
+
+
+def _knowledge_role_context_payloads(
+    *,
+    assessment: KnowledgePoolAssessment,
+    project_constraints: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    if (
+        not assessment.required_for_mode
+        or assessment.coverage_class not in {KnowledgeCoverageClass.PARTIAL, KnowledgeCoverageClass.STRONG}
+        or not assessment.candidate_pack_refs
+    ):
+        return {}
+    catalog = _knowledge_catalog()
+    payloads: dict[str, dict[str, Any]] = {}
+    for role in ("general", "coder", "reviewer"):
+        payload = catalog.compile_role_context(
+            role=role,
+            candidate_refs=list(assessment.candidate_pack_refs),
+            task_class=assessment.derived_task_class,
+            project_constraints=project_constraints,
+        )
+        payloads[role] = payload.model_dump(mode="json")
+    return payloads
+
+
+def _knowledge_context_for_packet(
+    *,
+    assessment: KnowledgePoolAssessment,
+    executor: Executor,
+    role_contexts: dict[str, dict[str, Any]],
+) -> KnowledgeContext | None:
+    if not assessment.required_for_mode and not assessment.candidate_pack_refs:
+        return None
+    role = _KNOWLEDGE_ROLE_BY_EXECUTOR[executor]
+    role_context = role_contexts.get(role)
+    return KnowledgeContext(
+        assessment_ref=_assessment_artifact_ref(assessment),
+        candidate_pack_refs=list(assessment.candidate_pack_refs),
+        role_context_ref=(
+            _artifact_ref("role_context_bundle", role_context["role_context_bundle_id"])
+            if role_context is not None
+            else None
+        ),
+        role_context_summary=(
+            str(role_context.get("compiled_summary"))
+            if role_context is not None and role_context.get("compiled_summary")
+            else None
+        ),
+        preferred_adapter_ref=(
+            assessment.preferred_adapter_refs[0]
+            if assessment.preferred_adapter_refs
+            else None
+        ),
+        preferred_environment_ref=(
+            assessment.preferred_environment_refs[0]
+            if assessment.preferred_environment_refs
+            else None
+        ),
+        runtime_verification_refs=list(assessment.runtime_verification_refs),
+        coverage_class=assessment.coverage_class,
+        required=assessment.required_for_mode,
+    )
+
+
+def _knowledge_gate_record(assessment: KnowledgePoolAssessment) -> RequiredGateRecord:
+    return RequiredGateRecord(
+        gate_id="knowledge_pool_coverage",
+        gate_type="verification",
+        status="PENDING",
+        rationale="Knowledge-pool coverage is insufficient for governed execution.",
+    )
+
+
+def _knowledge_gap_escalation_packet(
+    *,
+    problem_brief_ref: str,
+    engineering_state_ref: str,
+    assessment: KnowledgePoolAssessment,
+) -> EscalationPacket:
+    supporting_refs = [problem_brief_ref, _assessment_artifact_ref(assessment)]
+    if engineering_state_ref:
+        supporting_refs.append(engineering_state_ref)
+    supporting_refs.extend(assessment.candidate_pack_refs)
+    return EscalationPacket(
+        escalation_packet_id=uuid4(),
+        reason=EscalationReason.COMPLEXITY,
+        unresolved_items=list(assessment.knowledge_gaps) or ["knowledge_pool_coverage_insufficient"],
+        supporting_artifact_refs=list(dict.fromkeys(supporting_refs)),
+        compressed_state_ref=engineering_state_ref or problem_brief_ref,
+        requested_by="knowledge_pool_gate",
+        created_at=datetime.now(UTC),
+    )
 
 
 def reset_engineering_sessions_for_tests() -> None:
     """Strict-engineering sessions are now durably persisted via DevPlane."""
+    global _KNOWLEDGE_CACHE  # noqa: PLW0603 - test reset
+    _KNOWLEDGE_CACHE = None
     return None
 
 
@@ -464,6 +1061,7 @@ def evaluate_engagement_mode(
     """Infer the required engagement mode directly from current evidence."""
     ctx = context or {}
     text = (prompt or _latest_user_content(messages)).strip()
+    prompt_assessment = _prompt_knowledge_assessment(text=text, context=ctx)
     requested = _normalize_mode(
         requested_mode
         or ctx.get("engagement_mode")
@@ -538,6 +1136,13 @@ def evaluate_engagement_mode(
         "pending_mode_change": pending_mode_change,
         "requires_confirmation": pending_mode_change is not None,
         "rule_matches": [signal.reason for signal in signals],
+        "knowledge_pool_assessment": prompt_assessment.model_dump(mode="json"),
+        "knowledge_pool_assessment_ref": _assessment_artifact_ref(prompt_assessment),
+        "knowledge_pool_coverage": prompt_assessment.coverage_class.value,
+        "knowledge_candidate_refs": list(prompt_assessment.candidate_pack_refs),
+        "knowledge_required": prompt_assessment.required_for_mode,
+        "knowledge_gaps": list(prompt_assessment.knowledge_gaps),
+        "derived_task_class": prompt_assessment.derived_task_class,
     }
 
 
@@ -593,6 +1198,12 @@ def intake_engineering_request(
     project_ctx = deepcopy(project_context or {})
     engineering_session_id = session_id or str(uuid4())
     snapshot = deepcopy(persisted_snapshot or {})
+    if isinstance(snapshot.get("knowledge_pool_assessment"), dict):
+        ctx["__knowledge_pool_assessment"] = snapshot["knowledge_pool_assessment"]
+    prompt_assessment = _prompt_knowledge_assessment(
+        text=(user_input or _latest_user_content(messages)).strip(),
+        context=ctx,
+    )
     bridged = _draft_problem_brief(
         base=snapshot.get("problem_brief"),
         user_input=user_input,
@@ -629,6 +1240,14 @@ def intake_engineering_request(
         or _normalize_mode(engagement_mode)
         or "strict_engineering",
         "pending_mode_change": pending_mode_change or snapshot.get("pending_mode_change"),
+        "knowledge_pool_assessment": prompt_assessment.model_dump(mode="json"),
+        "knowledge_pool_assessment_ref": _assessment_artifact_ref(prompt_assessment),
+        "knowledge_pool_coverage": prompt_assessment.coverage_class.value,
+        "knowledge_candidate_refs": list(prompt_assessment.candidate_pack_refs),
+        "knowledge_role_contexts": {},
+        "knowledge_role_context_refs": [],
+        "knowledge_gaps": list(prompt_assessment.knowledge_gaps),
+        "knowledge_required": prompt_assessment.required_for_mode,
         "problem_brief": bridged,
         "problem_brief_ref": _artifact_ref("problem_brief", bridged["problem_brief_id"]),
         "problem_brief_valid": False,
@@ -649,11 +1268,33 @@ def intake_engineering_request(
         return result
 
     pb_model = validate_problem_brief_json(bridged)
-    state_model = derive_engineering_state(pb_model)
+    structured_assessment = _problem_brief_knowledge_assessment(pb_model)
+    role_context_payloads = _knowledge_role_context_payloads(
+        assessment=structured_assessment,
+        project_constraints=_problem_brief_knowledge_project_constraints(
+            pb_model,
+            required_for_mode=structured_assessment.required_for_mode,
+        ),
+    )
+    state_model = derive_engineering_state(
+        pb_model,
+        knowledge_pool_assessment=structured_assessment,
+    )
     result.update(
         {
             "problem_brief": pb_model.model_dump(mode="json", exclude_none=True),
             "problem_brief_valid": True,
+            "knowledge_pool_assessment": structured_assessment.model_dump(mode="json"),
+            "knowledge_pool_assessment_ref": _assessment_artifact_ref(structured_assessment),
+            "knowledge_pool_coverage": structured_assessment.coverage_class.value,
+            "knowledge_candidate_refs": list(structured_assessment.candidate_pack_refs),
+            "knowledge_role_contexts": role_context_payloads,
+            "knowledge_role_context_refs": [
+                _artifact_ref("role_context_bundle", payload["role_context_bundle_id"])
+                for payload in role_context_payloads.values()
+            ],
+            "knowledge_gaps": list(structured_assessment.knowledge_gaps),
+            "knowledge_required": structured_assessment.required_for_mode,
             "engineering_state": state_model.model_dump(mode="json", exclude_none=True),
             "engineering_state_ref": _artifact_ref(
                 "engineering_state",
@@ -665,9 +1306,39 @@ def intake_engineering_request(
     )
 
     if state_model.ready_for_task_decomposition:
+        low_coverage = (
+            structured_assessment.required_for_mode
+            and structured_assessment.coverage_class
+            in {KnowledgeCoverageClass.NONE, KnowledgeCoverageClass.WEAK}
+        )
+        if low_coverage:
+            knowledge_gate = _knowledge_gate_record(structured_assessment).model_dump(mode="json")
+            result["required_gates"] = [*result["required_gates"], knowledge_gate]
+            result["ready_for_task_decomposition"] = False
+            if result["engagement_mode"] == "engineering_task":
+                escalation = _knowledge_gap_escalation_packet(
+                    problem_brief_ref=result["problem_brief_ref"],
+                    engineering_state_ref=result["engineering_state_ref"],
+                    assessment=structured_assessment,
+                )
+                result.update(
+                    {
+                        "status": "ESCALATED",
+                        "escalation_packet": escalation.model_dump(mode="json"),
+                        "escalation_packet_ref": _artifact_ref(
+                            "escalation_record",
+                            escalation.escalation_packet_id,
+                        ),
+                    }
+                )
+                return result
+            result["status"] = "BLOCKED"
+            return result
         task_queue, task_packets = build_task_queue(
             problem_brief=pb_model,
             engineering_state=state_model,
+            knowledge_pool_assessment=structured_assessment,
+            knowledge_role_contexts=role_context_payloads,
         )
         result.update(
             {
@@ -686,12 +1357,23 @@ def intake_engineering_request(
     return result
 
 
-def derive_engineering_state(problem_brief: ProblemBrief | dict[str, Any]) -> EngineeringState:
+def derive_engineering_state(
+    problem_brief: ProblemBrief | dict[str, Any],
+    *,
+    knowledge_pool_assessment: KnowledgePoolAssessment | dict[str, Any] | None = None,
+) -> EngineeringState:
     """Deterministically normalize a valid problem_brief into engineering_state."""
     pb = (
         problem_brief
         if isinstance(problem_brief, ProblemBrief)
         else validate_problem_brief_json(problem_brief)
+    )
+    assessment = (
+        knowledge_pool_assessment
+        if isinstance(knowledge_pool_assessment, KnowledgePoolAssessment)
+        else validate_knowledge_pool_assessment_json(knowledge_pool_assessment)
+        if isinstance(knowledge_pool_assessment, dict)
+        else _problem_brief_knowledge_assessment(pb)
     )
     problem_brief_ref = _artifact_ref("problem_brief", pb.problem_brief_id)
     evidence_refs = [
@@ -757,6 +1439,17 @@ def derive_engineering_state(problem_brief: ProblemBrief | dict[str, Any]) -> En
         for assumption in pb.assumptions
         if assumption.status == "assumed"
     ]
+    if assessment.required_for_mode and assessment.knowledge_gaps:
+        open_issues.extend(
+            OpenIssueRecord(
+                issue_id=f"knowledge_gap_{index}",
+                description=gap,
+                category="other",
+                blocking=False,
+                source_artifact_refs=[problem_brief_ref],
+            )
+            for index, gap in enumerate(assessment.knowledge_gaps, start=1)
+        )
     required_gates: list[RequiredGateRecord] = []
     if pb.human_approval and pb.human_approval.required_before_execution:
         for gate in pb.human_approval.gates:
@@ -782,11 +1475,27 @@ def derive_engineering_state(problem_brief: ProblemBrief | dict[str, Any]) -> En
     staleness: list[Any] = []
     blocking_unknowns = [unknown for unknown in unknowns if unknown.blocking]
     ready_for_task_decomposition = not blocking_unknowns and not required_gates
+    role_context_payloads = _knowledge_role_context_payloads(
+        assessment=assessment,
+        project_constraints=_problem_brief_knowledge_project_constraints(
+            pb,
+            required_for_mode=assessment.required_for_mode,
+        ),
+    )
 
     state_payload = {
         "engineering_state_id": str(uuid4()),
         "schema_version": "1.0.0",
         "problem_brief_ref": problem_brief_ref,
+        "knowledge_pool_assessment_ref": _assessment_artifact_ref(assessment),
+        "knowledge_pool_coverage": assessment.coverage_class.value,
+        "knowledge_candidate_refs": list(assessment.candidate_pack_refs),
+        "knowledge_role_context_refs": [
+            _artifact_ref("role_context_bundle", payload["role_context_bundle_id"])
+            for payload in role_context_payloads.values()
+        ],
+        "knowledge_gaps": list(assessment.knowledge_gaps),
+        "knowledge_required": assessment.required_for_mode,
         "evidence_bundle_refs": evidence_refs,
         "normalized_boundary": {
             "system_of_interest": pb.system_boundary.system_of_interest,
@@ -835,7 +1544,10 @@ def derive_engineering_state(problem_brief: ProblemBrief | dict[str, Any]) -> En
         "required_gates": [gate.model_dump(mode="json") for gate in required_gates],
         "ready_for_task_decomposition": ready_for_task_decomposition,
         "merge_policy_version": "merge-v2-engineering-governed",
-        "summary_for_routing": _engineering_summary(pb, blocking_unknowns),
+        "summary_for_routing": (
+            f"{_engineering_summary(pb, blocking_unknowns)} "
+            f"Knowledge coverage: {assessment.coverage_class.value}."
+        ),
         "updated_at": _iso_now(),
     }
     if pb.trace_id:
@@ -847,6 +1559,8 @@ def build_task_queue(
     *,
     problem_brief: ProblemBrief | dict[str, Any],
     engineering_state: EngineeringState | dict[str, Any],
+    knowledge_pool_assessment: KnowledgePoolAssessment | dict[str, Any] | None = None,
+    knowledge_role_contexts: dict[str, dict[str, Any]] | None = None,
 ) -> tuple[TaskQueue, list[TaskPacket]]:
     """Build governed task_queue + task_packets; fail closed if gates remain open."""
     pb = (
@@ -861,6 +1575,25 @@ def build_task_queue(
     )
     if not state.ready_for_task_decomposition:
         raise ValueError("engineering_state is not ready for task decomposition")
+    assessment = (
+        knowledge_pool_assessment
+        if isinstance(knowledge_pool_assessment, KnowledgePoolAssessment)
+        else validate_knowledge_pool_assessment_json(knowledge_pool_assessment)
+        if isinstance(knowledge_pool_assessment, dict)
+        else _problem_brief_knowledge_assessment(pb)
+    )
+    if (
+        assessment.required_for_mode
+        and assessment.coverage_class in {KnowledgeCoverageClass.NONE, KnowledgeCoverageClass.WEAK}
+    ):
+        raise ValueError("knowledge pool coverage is insufficient for task decomposition")
+    role_contexts = knowledge_role_contexts or _knowledge_role_context_payloads(
+        assessment=assessment,
+        project_constraints=_problem_brief_knowledge_project_constraints(
+            pb,
+            required_for_mode=assessment.required_for_mode,
+        ),
+    )
 
     problem_brief_ref = _artifact_ref("problem_brief", pb.problem_brief_id)
     engineering_state_ref = _artifact_ref("engineering_state", state.engineering_state_id)
@@ -896,6 +1629,8 @@ def build_task_queue(
             problem_brief=pb,
             engineering_state=state,
             input_artifact_refs=ordered_refs,
+            knowledge_pool_assessment=assessment,
+            knowledge_role_contexts=role_contexts,
         )
         packets.append(packet)
         packet_refs.append(_artifact_ref("task_packet", packet.task_packet_id))
@@ -1224,8 +1959,15 @@ def _task_packet_for_deliverable(
     problem_brief: ProblemBrief,
     engineering_state: EngineeringState,
     input_artifact_refs: list[str],
+    knowledge_pool_assessment: KnowledgePoolAssessment,
+    knowledge_role_contexts: dict[str, dict[str, Any]],
 ) -> TaskPacket:
     task_type, executor = _task_routing_for_deliverable(deliverable)
+    knowledge_context = _knowledge_context_for_packet(
+        assessment=knowledge_pool_assessment,
+        executor=executor,
+        role_contexts=knowledge_role_contexts,
+    )
     budget_policy = BudgetPolicy(
         allow_escalation=task_type in {TaskType.VALIDATION, TaskType.ESCALATION_REVIEW},
     )
@@ -1253,6 +1995,11 @@ def _task_packet_for_deliverable(
             for assumption in problem_brief.assumptions
             if assumption.status == "assumed"
         ],
+        "knowledge_context": (
+            knowledge_context.model_dump(mode="json", exclude_none=True)
+            if knowledge_context is not None
+            else None
+        ),
         "code_guidance": (
             problem_brief.code_guidance.model_dump(mode="json", exclude_none=True)
             if problem_brief.code_guidance and executor is Executor.CODING_MODEL

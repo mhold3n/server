@@ -20,6 +20,7 @@ from .contracts import (
     EvidenceBundlePayload,
     ExecutionAdapterSpecPayload,
     KnowledgePackPayload,
+    KnowledgePoolAssessment,
     ProblemBrief,
     RecipeObjectPayload,
     RoleContextBundlePayload,
@@ -41,6 +42,9 @@ PROBLEM_BRIEF_SCHEMA_ID = (
 )
 KNOWLEDGE_PACK_SCHEMA_ID = (
     "https://birtha.local/schemas/control-plane/v1/knowledge-pack.schema.json"
+)
+KNOWLEDGE_POOL_ASSESSMENT_SCHEMA_ID = (
+    "https://birtha.local/schemas/control-plane/v1/knowledge-pool-assessment.schema.json"
 )
 RECIPE_OBJECT_SCHEMA_ID = (
     "https://birtha.local/schemas/control-plane/v1/recipe-object.schema.json"
@@ -204,6 +208,26 @@ def validate_knowledge_pack_json(data: dict[str, Any]) -> KnowledgePackPayload:
         raise _model_error(
             schema_id=KNOWLEDGE_PACK_SCHEMA_ID,
             contract_type="KNOWLEDGE_PACK",
+            error=e,
+        ) from e
+
+
+def validate_knowledge_pool_assessment_json(data: dict[str, Any]) -> KnowledgePoolAssessment:
+    v = _validator_for(KNOWLEDGE_POOL_ASSESSMENT_SCHEMA_ID)
+    try:
+        v.validate(data)
+    except jsonschema.exceptions.ValidationError as e:
+        raise _schema_error(
+            schema_id=KNOWLEDGE_POOL_ASSESSMENT_SCHEMA_ID,
+            contract_type="KNOWLEDGE_POOL_ASSESSMENT",
+            error=e,
+        ) from e
+    try:
+        return KnowledgePoolAssessment.model_validate(data)
+    except ValueError as e:
+        raise _model_error(
+            schema_id=KNOWLEDGE_POOL_ASSESSMENT_SCHEMA_ID,
+            contract_type="KNOWLEDGE_POOL_ASSESSMENT",
             error=e,
         ) from e
 

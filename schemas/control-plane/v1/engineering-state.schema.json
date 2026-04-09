@@ -9,6 +9,10 @@
     "engineering_state_id",
     "schema_version",
     "problem_brief_ref",
+    "knowledge_candidate_refs",
+    "knowledge_role_context_refs",
+    "knowledge_gaps",
+    "knowledge_required",
     "evidence_bundle_refs",
     "normalized_boundary",
     "objectives",
@@ -38,6 +42,37 @@
     },
     "problem_brief_ref": {
       "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+    },
+    "knowledge_pool_assessment_ref": {
+      "anyOf": [
+        {
+          "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+        },
+        { "type": "null" }
+      ]
+    },
+    "knowledge_pool_coverage": {
+      "type": ["string", "null"],
+      "enum": ["not_applicable", "none", "weak", "partial", "strong", null]
+    },
+    "knowledge_candidate_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "knowledge_role_context_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "knowledge_gaps": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "knowledge_required": {
+      "type": "boolean"
     },
     "evidence_bundle_refs": {
       "type": "array",

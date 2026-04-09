@@ -42,8 +42,8 @@ We will merge WrkHrs into Birtha as the canonical AI backend, extending existing
 ### Phase 1: Foundation
 - Clone WrkHrs into `services/wrkhrs/`
 - Merge environment configurations
-- Create `docker-compose.ai.yml` for WrkHrs services
-- Create `docker-compose.platform.yml` for MLflow/observability
+- Create `compose/docker-compose.ai.yml` for WrkHrs services
+- Create `compose/docker-compose.platform.yml` for MLflow/observability
 
 ### Phase 2: Service Integration
 - Extend `services/api` with WrkHrs gateway client

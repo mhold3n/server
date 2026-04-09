@@ -2,15 +2,16 @@
 
 ## Single clone (recommended)
 
-Work from one repository checkout: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. The active repo holds the Birtha control plane, the WrkHrs AI stack under [`services/wrkhrs/`](../services/wrkhrs/), MCP servers, and shared CI. Legacy MBMH training/runtime materials now live in the sibling local archive at `../server-local-archive/2026-04-08/server/`.
+Work from one repository checkout: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. The active repo holds the Birtha control plane, the WrkHrs AI stack under [`services/wrkhrs/`](../services/wrkhrs/), MCP servers, shared CI, and two managed external GitHub submodules at [`claw-code-main/`](../claw-code-main) and [`openclaw/`](../openclaw). Legacy MBMH training/runtime materials now live in the sibling local archive at `../server-local-archive/2026-04-08/server/`.
 
-Cloning additional “legacy” projects **inside** this repository root increases confusion (two trees, two sets of commands, easy to edit the wrong copy). Prefer:
+Cloning additional “legacy” projects **inside** this repository root increases confusion (two trees, two sets of commands, easy to edit the wrong copy). The only in-tree exceptions are the managed submodules `claw-code-main/` and `openclaw/`. Prefer:
 
 - **Same machine:** clone other projects under a sibling directory, e.g. `~/work/server` and `~/work/some-other-repo`, not inside `server/`.
 - **This repo only:** run CI parity with [`scripts/run_ci_local.sh`](../scripts/run_ci_local.sh) from the repository root.
 
 ## Workspace bootstrap
 
+- External GitHub submodules: `npm run deps:external`
 - Main Python workspace: `uv sync --python 3.11`
 - Main Node workspace: `npm install`
 - Focused tool envs: `scripts/bootstrap_tool_env.sh marker-pdf|whisper-asr|qwen-runtime|larrak-audio`

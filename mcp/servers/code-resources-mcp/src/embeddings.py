@@ -1,12 +1,17 @@
 """Code embedding functionality for codebase datasets."""
 
 import os
+from pathlib import Path
 from typing import List, Optional
 
 import structlog
 from sentence_transformers import SentenceTransformer
 
 logger = structlog.get_logger()
+
+DEFAULT_MODEL_CACHE_DIR = (
+    Path(__file__).resolve().parents[4] / ".cache" / "models" / "hf"
+)
 
 
 class CodeEmbedder:
@@ -24,7 +29,10 @@ class CodeEmbedder:
             cache_dir: Directory to cache models
         """
         self.model_name = model_name
-        self.cache_dir = cache_dir or os.getenv("MODEL_CACHE_DIR", "/tmp/models")
+        self.cache_dir = cache_dir or os.getenv(
+            "MODEL_CACHE_DIR", str(DEFAULT_MODEL_CACHE_DIR)
+        )
+        Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
 
         # Load model
         self.model = self._load_model()

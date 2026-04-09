@@ -23,7 +23,9 @@ fi
 # Set default paths if not defined in environment
 QDRANT_DATA_PATH=${QDRANT_DATA_PATH:-./data/qdrant}
 RAG_CACHE_PATH=${RAG_CACHE_PATH:-./data/rag_cache}
-MODELS_PATH=${MODELS_PATH:-./models}
+OLLAMA_MODELS_PATH=${OLLAMA_MODELS_PATH:-./.cache/models/ollama}
+VLLM_MODELS_PATH=${VLLM_MODELS_PATH:-./.cache/models/vllm}
+HF_HOME=${HF_HOME:-./.cache/models/hf}
 PLUGINS_PATH=${PLUGINS_PATH:-./plugins}
 MCP_DATA_PATH=${MCP_DATA_PATH:-./data/mcp}
 LOGS_PATH=${LOGS_PATH:-./logs}
@@ -51,7 +53,9 @@ echo -e "${BLUE}Creating data directories:${NC}"
 
 create_dir "$QDRANT_DATA_PATH" "Qdrant vector database data"
 create_dir "$RAG_CACHE_PATH" "RAG service cache"
-create_dir "$MODELS_PATH" "LLM models storage"
+create_dir "$OLLAMA_MODELS_PATH" "Ollama model storage"
+create_dir "$VLLM_MODELS_PATH" "vLLM model storage"
+create_dir "$HF_HOME" "Hugging Face model cache"
 create_dir "$PLUGINS_PATH" "Tool registry plugins"
 create_dir "$MCP_DATA_PATH" "MCP domain data"
 create_dir "$LOGS_PATH" "Service logs"
@@ -141,7 +145,9 @@ echo ""
 echo -e "${YELLOW}Directory summary:${NC}"
 echo "  • Qdrant data: $QDRANT_DATA_PATH"
 echo "  • RAG cache: $RAG_CACHE_PATH"
-echo "  • Models: $MODELS_PATH"
+echo "  • Ollama models: $OLLAMA_MODELS_PATH"
+echo "  • vLLM models: $VLLM_MODELS_PATH"
+echo "  • HF cache: $HF_HOME"
 echo "  • Plugins: $PLUGINS_PATH"
 echo "  • MCP data: $MCP_DATA_PATH"
 echo "  • Logs: $LOGS_PATH"

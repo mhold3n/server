@@ -34,10 +34,10 @@ case $TARGET in
             cp .env.example .env || true
             
             # Pull latest images
-            docker compose -f docker-compose.yml -f docker-compose.server.yml pull
+            docker compose -f docker-compose.yml -f compose/docker-compose.server.yml pull
             
             # Deploy with health checks
-            docker compose -f docker-compose.yml -f docker-compose.server.yml up -d --build
+            docker compose -f docker-compose.yml -f compose/docker-compose.server.yml up -d --build
             
             # Wait for services to be healthy
             ./deploy/ci/scripts/wait_for_healthy.sh api 8080 60
@@ -56,7 +56,7 @@ EOF
         # Copy worker files
         echo "📋 Copying worker files..."
         rsync -avz \
-            docker-compose.worker.yml \
+            compose/docker-compose.worker.yml \
             infra/reverse-proxy/Caddyfile.worker \
             worker/vllm/ \
             "$WORKER_USER@$WORKER_HOST:~/agent-orchestrator/"
@@ -68,13 +68,13 @@ EOF
             export HF_TOKEN="$HF_TOKEN"
             
             # Stop existing worker
-            docker compose -f docker-compose.worker.yml down || true
+            docker compose -f compose/docker-compose.worker.yml down || true
             
             # Pull latest images
-            docker compose -f docker-compose.worker.yml pull
+            docker compose -f compose/docker-compose.worker.yml pull
             
             # Deploy worker
-            docker compose -f docker-compose.worker.yml up -d
+            docker compose -f compose/docker-compose.worker.yml up -d
             
             # Wait for worker to be healthy
             sleep 30

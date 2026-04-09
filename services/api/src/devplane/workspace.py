@@ -188,6 +188,17 @@ class WorkspaceManager:
                 "problem_brief": engineering_bundle.get("problem_brief"),
                 "engineering_state_ref": engineering_bundle.get("engineering_state_ref"),
                 "engineering_state": engineering_bundle.get("engineering_state"),
+                "knowledge_pool_assessment_ref": engineering_bundle.get(
+                    "knowledge_pool_assessment_ref"
+                ),
+                "knowledge_pool_coverage": engineering_bundle.get("knowledge_pool_coverage"),
+                "knowledge_candidate_refs": engineering_bundle.get("knowledge_candidate_refs", []),
+                "knowledge_role_context_refs": engineering_bundle.get(
+                    "knowledge_role_context_refs",
+                    [],
+                ),
+                "knowledge_gaps": engineering_bundle.get("knowledge_gaps", []),
+                "knowledge_required": bool(engineering_bundle.get("knowledge_required")),
                 "task_queue": engineering_bundle.get("task_queue"),
                 "active_task_queue_item": active_queue_item,
                 "task_packet_refs": engineering_bundle.get("task_packet_refs", []),
@@ -197,6 +208,26 @@ class WorkspaceManager:
                 "active_selected_executor": (
                     ((active_task_packet or {}).get("routing_metadata") or {}).get(
                         "selected_executor"
+                    )
+                ),
+                "active_knowledge_assessment_ref": (
+                    ((active_task_packet or {}).get("knowledge_context") or {}).get(
+                        "assessment_ref"
+                    )
+                ),
+                "active_role_context_ref": (
+                    ((active_task_packet or {}).get("knowledge_context") or {}).get(
+                        "role_context_ref"
+                    )
+                ),
+                "active_preferred_adapter_ref": (
+                    ((active_task_packet or {}).get("knowledge_context") or {}).get(
+                        "preferred_adapter_ref"
+                    )
+                ),
+                "active_preferred_environment_ref": (
+                    ((active_task_packet or {}).get("knowledge_context") or {}).get(
+                        "preferred_environment_ref"
                     )
                 ),
                 "required_gates": engineering_bundle.get("required_gates", []),
@@ -279,7 +310,9 @@ class WorkspaceManager:
                         payload.get("task_packet_id")
                         or payload.get("task_queue_id")
                         or payload.get("problem_brief_id")
-                        or payload.get("engineering_state_id"),
+                        or payload.get("engineering_state_id")
+                        or payload.get("knowledge_pool_assessment_id")
+                        or payload.get("role_context_bundle_id"),
                     )
                 ),
                 artifact_type=artifact_type,
@@ -330,6 +363,53 @@ class WorkspaceManager:
                     input_refs=[engineering_bundle.get("problem_brief_ref")] if engineering_bundle.get("problem_brief_ref") else [],
                 )
             )
+
+        knowledge_pool_assessment = engineering_bundle.get("knowledge_pool_assessment")
+        if isinstance(knowledge_pool_assessment, dict):
+            knowledge_pool_assessment_path = packet_dir / "knowledge-pool-assessment.json"
+            knowledge_pool_assessment_path.write_text(
+                json.dumps(knowledge_pool_assessment, indent=2),
+                encoding="utf-8",
+            )
+            artifacts.append(
+                _typed_record(
+                    name="knowledge-pool-assessment",
+                    file_path=knowledge_pool_assessment_path,
+                    artifact_type="KNOWLEDGE_POOL_ASSESSMENT",
+                    payload=knowledge_pool_assessment,
+                    input_refs=[
+                        ref
+                        for ref in [engineering_bundle.get("problem_brief_ref")]
+                        if ref
+                    ],
+                )
+            )
+
+        knowledge_role_contexts = engineering_bundle.get("knowledge_role_contexts") or {}
+        if isinstance(knowledge_role_contexts, dict) and knowledge_role_contexts:
+            role_context_dir = packet_dir / "knowledge-role-contexts"
+            role_context_dir.mkdir(parents=True, exist_ok=True)
+            for role, payload in knowledge_role_contexts.items():
+                if not isinstance(payload, dict):
+                    continue
+                role_context_path = role_context_dir / f"{role}.json"
+                role_context_path.write_text(
+                    json.dumps(payload, indent=2),
+                    encoding="utf-8",
+                )
+                artifacts.append(
+                    _typed_record(
+                        name=f"role-context-{role}",
+                        file_path=role_context_path,
+                        artifact_type="ROLE_CONTEXT_BUNDLE",
+                        payload=payload,
+                        input_refs=[
+                            ref
+                            for ref in (payload.get("source_artifact_refs") or [])
+                            if ref
+                        ],
+                    )
+                )
 
         task_queue = engineering_bundle.get("task_queue")
         if isinstance(task_queue, dict):

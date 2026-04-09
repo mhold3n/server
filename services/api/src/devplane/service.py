@@ -291,15 +291,95 @@ class DevPlaneService:
             return None
         session = task.dossier.engineering_session
         latest_problem_brief = self._latest_typed_payload(task.dossier, "PROBLEM_BRIEF")
+        latest_knowledge_assessment = self._latest_typed_payload(
+            task.dossier,
+            "KNOWLEDGE_POOL_ASSESSMENT",
+        )
+        latest_role_contexts = {
+            str(payload.get("role")): payload
+            for payload in self._typed_payloads(task.dossier, "ROLE_CONTEXT_BUNDLE")
+            if isinstance(payload.get("role"), str)
+        }
         latest_engineering_state = self._latest_typed_payload(task.dossier, "ENGINEERING_STATE")
         latest_task_queue = self._latest_typed_payload(task.dossier, "TASK_QUEUE")
         latest_task_packets = self._typed_payloads(task.dossier, "TASK_PACKET")
         if session is None and not any(
-            [latest_problem_brief, latest_engineering_state, latest_task_queue, latest_task_packets]
+            [
+                latest_problem_brief,
+                latest_knowledge_assessment,
+                latest_role_contexts,
+                latest_engineering_state,
+                latest_task_queue,
+                latest_task_packets,
+            ]
         ):
             return None
         return {
             "problem_brief": (session.problem_brief if session else None) or latest_problem_brief,
+            "knowledge_pool_assessment": (
+                session.knowledge_pool_assessment if session else None
+            )
+            or latest_knowledge_assessment,
+            "knowledge_pool_assessment_ref": (
+                session.knowledge_pool_assessment_ref if session else None
+            )
+            or task.knowledge_pool_assessment_ref
+            or task.dossier.knowledge_pool_assessment_ref
+            or (
+                f"artifact://knowledge_pool_assessment/{latest_knowledge_assessment['knowledge_pool_assessment_id']}"
+                if latest_knowledge_assessment
+                and latest_knowledge_assessment.get("knowledge_pool_assessment_id")
+                else None
+            ),
+            "knowledge_pool_coverage": (
+                session.knowledge_pool_coverage if session else None
+            )
+            or task.knowledge_pool_coverage
+            or task.dossier.knowledge_pool_coverage
+            or (
+                str(latest_knowledge_assessment.get("coverage_class"))
+                if latest_knowledge_assessment
+                else None
+            ),
+            "knowledge_candidate_refs": (
+                list(session.knowledge_candidate_refs) if session else []
+            )
+            or list(task.knowledge_candidate_refs)
+            or list(task.dossier.knowledge_candidate_refs)
+            or (
+                list(latest_knowledge_assessment.get("candidate_pack_refs", []))
+                if latest_knowledge_assessment
+                else []
+            ),
+            "knowledge_role_contexts": latest_role_contexts,
+            "knowledge_role_context_refs": (
+                list(session.knowledge_role_context_refs) if session else []
+            )
+            or list(task.knowledge_role_context_refs)
+            or list(task.dossier.knowledge_role_context_refs)
+            or [
+                f"artifact://role_context_bundle/{payload['role_context_bundle_id']}"
+                for payload in latest_role_contexts.values()
+                if payload.get("role_context_bundle_id")
+            ],
+            "knowledge_gaps": (
+                list(session.knowledge_gaps) if session else []
+            )
+            or list(task.knowledge_gaps)
+            or list(task.dossier.knowledge_gaps)
+            or (
+                list(latest_knowledge_assessment.get("knowledge_gaps", []))
+                if latest_knowledge_assessment
+                else []
+            ),
+            "knowledge_required": (
+                session.knowledge_required if session else False
+            )
+            or task.knowledge_required
+            or task.dossier.knowledge_required
+            or bool(
+                latest_knowledge_assessment and latest_knowledge_assessment.get("required_for_mode")
+            ),
             "engineering_state": (
                 session.engineering_state if session else None
             ) or latest_engineering_state,
@@ -402,12 +482,71 @@ class DevPlaneService:
         session.run_id = run.run_id if run else session.run_id
         if workflow_result.get("problem_brief") is not None:
             session.problem_brief = workflow_result.get("problem_brief")  # type: ignore[assignment]
+        if workflow_result.get("knowledge_pool_assessment") is not None:
+            session.knowledge_pool_assessment = workflow_result.get(  # type: ignore[assignment]
+                "knowledge_pool_assessment"
+            )
         if workflow_result.get("engineering_state") is not None:
             session.engineering_state = workflow_result.get("engineering_state")  # type: ignore[assignment]
         if workflow_result.get("task_queue") is not None:
             session.task_queue = workflow_result.get("task_queue")  # type: ignore[assignment]
         session.task_packets = [packet for packet in packets if isinstance(packet, dict)]
         session.problem_brief_ref = ref_state.get("problem_brief_ref") or session.problem_brief_ref
+        session.knowledge_pool_assessment_ref = (
+            ref_state.get("knowledge_pool_assessment_ref")
+            or workflow_result.get("knowledge_pool_assessment_ref")
+            or session.knowledge_pool_assessment_ref
+        )
+        if (
+            session.knowledge_pool_assessment_ref is None
+            and isinstance(session.knowledge_pool_assessment, dict)
+            and session.knowledge_pool_assessment.get("knowledge_pool_assessment_id")
+        ):
+            session.knowledge_pool_assessment_ref = (
+                "artifact://knowledge_pool_assessment/"
+                f"{session.knowledge_pool_assessment['knowledge_pool_assessment_id']}"
+            )
+        if workflow_result.get("knowledge_pool_coverage") is not None:
+            session.knowledge_pool_coverage = str(workflow_result.get("knowledge_pool_coverage"))
+        knowledge_candidate_refs = workflow_result.get("knowledge_candidate_refs")
+        if isinstance(knowledge_candidate_refs, list):
+            session.knowledge_candidate_refs = [
+                str(ref) for ref in knowledge_candidate_refs if str(ref).strip()
+            ]
+        elif isinstance(session.knowledge_pool_assessment, dict):
+            session.knowledge_candidate_refs = [
+                str(ref)
+                for ref in session.knowledge_pool_assessment.get("candidate_pack_refs", [])
+                if str(ref).strip()
+            ]
+        knowledge_role_context_refs = workflow_result.get("knowledge_role_context_refs")
+        if isinstance(knowledge_role_context_refs, list):
+            session.knowledge_role_context_refs = [
+                str(ref) for ref in knowledge_role_context_refs if str(ref).strip()
+            ]
+        elif isinstance(workflow_result.get("knowledge_role_contexts"), dict):
+            session.knowledge_role_context_refs = [
+                f"artifact://role_context_bundle/{payload['role_context_bundle_id']}"
+                for payload in workflow_result.get("knowledge_role_contexts", {}).values()
+                if isinstance(payload, dict) and payload.get("role_context_bundle_id")
+            ]
+        knowledge_gaps = workflow_result.get("knowledge_gaps")
+        if isinstance(knowledge_gaps, list):
+            session.knowledge_gaps = [
+                str(gap) for gap in knowledge_gaps if str(gap).strip()
+            ]
+        elif isinstance(session.knowledge_pool_assessment, dict):
+            session.knowledge_gaps = [
+                str(gap)
+                for gap in session.knowledge_pool_assessment.get("knowledge_gaps", [])
+                if str(gap).strip()
+            ]
+        if workflow_result.get("knowledge_required") is not None:
+            session.knowledge_required = bool(workflow_result.get("knowledge_required"))
+        elif isinstance(session.knowledge_pool_assessment, dict):
+            session.knowledge_required = bool(
+                session.knowledge_pool_assessment.get("required_for_mode")
+            )
         session.engineering_state_ref = (
             ref_state.get("engineering_state_ref") or session.engineering_state_ref
         )
@@ -520,6 +659,19 @@ class DevPlaneService:
             pending_mode_change=session.pending_mode_change,
             lifecycle_reason=session.lifecycle_reason,
             lifecycle_detail=session.lifecycle_detail,
+        )
+        self._apply_knowledge_metadata(
+            task=task,
+            dossier=task.dossier,
+            run=run,
+            session=session,
+            knowledge_pool_assessment=session.knowledge_pool_assessment,
+            knowledge_pool_assessment_ref=session.knowledge_pool_assessment_ref,
+            knowledge_pool_coverage=session.knowledge_pool_coverage,
+            knowledge_candidate_refs=session.knowledge_candidate_refs,
+            knowledge_role_context_refs=session.knowledge_role_context_refs,
+            knowledge_gaps=session.knowledge_gaps,
+            knowledge_required=session.knowledge_required,
         )
         task.dossier.state = task.state
         now = utc_now()
@@ -739,6 +891,14 @@ class DevPlaneService:
             pending_mode_change=task.pending_mode_change,
             lifecycle_reason=task.lifecycle_reason,
             lifecycle_detail=dict(task.lifecycle_detail),
+            knowledge_pool_assessment_ref=engineering_bundle.get("knowledge_pool_assessment_ref"),
+            knowledge_pool_coverage=engineering_bundle.get("knowledge_pool_coverage"),
+            knowledge_candidate_refs=list(engineering_bundle.get("knowledge_candidate_refs") or []),
+            knowledge_role_context_refs=list(
+                engineering_bundle.get("knowledge_role_context_refs") or []
+            ),
+            knowledge_gaps=list(engineering_bundle.get("knowledge_gaps") or []),
+            knowledge_required=bool(engineering_bundle.get("knowledge_required")),
             workspace=workspace,
             execution_mode=request.execution_mode,
             agent_session_id=request.agent_session_id,
@@ -779,6 +939,19 @@ class DevPlaneService:
             pending_mode_change=run.pending_mode_change,
             lifecycle_reason=run.lifecycle_reason,
             lifecycle_detail=run.lifecycle_detail,
+        )
+        self._apply_knowledge_metadata(
+            task=task,
+            dossier=task.dossier,
+            run=run,
+            session=task.dossier.engineering_session,
+            knowledge_pool_assessment=engineering_bundle.get("knowledge_pool_assessment"),
+            knowledge_pool_assessment_ref=engineering_bundle.get("knowledge_pool_assessment_ref"),
+            knowledge_pool_coverage=engineering_bundle.get("knowledge_pool_coverage"),
+            knowledge_candidate_refs=engineering_bundle.get("knowledge_candidate_refs"),
+            knowledge_role_context_refs=engineering_bundle.get("knowledge_role_context_refs"),
+            knowledge_gaps=engineering_bundle.get("knowledge_gaps"),
+            knowledge_required=engineering_bundle.get("knowledge_required"),
         )
         self.store.save_run(run)
         self.store.save_task(task)
@@ -1235,6 +1408,56 @@ class DevPlaneService:
                 target.lifecycle_reason = lifecycle_reason
             if lifecycle_detail is not None:
                 target.lifecycle_detail = dict(detail)
+
+    def _apply_knowledge_metadata(
+        self,
+        *,
+        task: TaskRecord,
+        dossier: TaskDossier,
+        run: RunRecord | None = None,
+        session: EngineeringSessionRecord | None = None,
+        knowledge_pool_assessment: dict | None = None,
+        knowledge_pool_assessment_ref: str | None = None,
+        knowledge_pool_coverage: str | None = None,
+        knowledge_candidate_refs: list[str] | None = None,
+        knowledge_role_context_refs: list[str] | None = None,
+        knowledge_gaps: list[str] | None = None,
+        knowledge_required: bool | None = None,
+    ) -> None:
+        candidate_refs = self._coalesce_string_list(
+            knowledge_candidate_refs,
+            task.knowledge_candidate_refs,
+        )
+        role_context_refs = self._coalesce_string_list(
+            knowledge_role_context_refs,
+            task.knowledge_role_context_refs,
+        )
+        gaps = self._coalesce_string_list(knowledge_gaps, task.knowledge_gaps)
+        required = (
+            bool(knowledge_required)
+            if knowledge_required is not None
+            else (
+                session.knowledge_required
+                if session is not None
+                else task.knowledge_required
+            )
+        )
+        targets: list[object] = [task, dossier]
+        if run is not None:
+            targets.append(run)
+        if session is not None:
+            targets.append(session)
+        for target in targets:
+            if hasattr(target, "knowledge_pool_assessment") and knowledge_pool_assessment is not None:
+                target.knowledge_pool_assessment = dict(knowledge_pool_assessment)
+            if knowledge_pool_assessment_ref is not None:
+                target.knowledge_pool_assessment_ref = str(knowledge_pool_assessment_ref)
+            if knowledge_pool_coverage is not None:
+                target.knowledge_pool_coverage = str(knowledge_pool_coverage)
+            target.knowledge_candidate_refs = list(candidate_refs)
+            target.knowledge_role_context_refs = list(role_context_refs)
+            target.knowledge_gaps = list(gaps)
+            target.knowledge_required = required
 
     def _merge_file_changes(
         self,

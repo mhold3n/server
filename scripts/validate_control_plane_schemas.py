@@ -99,6 +99,10 @@ def main() -> int:
             SCHEMA_DIR / "fixtures" / "knowledge-pack" / "valid-minimal.json",
         ),
         (
+            "https://birtha.local/schemas/control-plane/v1/knowledge-pool-assessment.schema.json",
+            SCHEMA_DIR / "fixtures" / "knowledge-pool-assessment" / "valid-minimal.json",
+        ),
+        (
             "https://birtha.local/schemas/control-plane/v1/recipe-object.schema.json",
             SCHEMA_DIR / "fixtures" / "recipe-object" / "valid-minimal.json",
         ),

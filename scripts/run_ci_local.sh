@@ -55,9 +55,9 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
-docker compose -f docker-compose.ci.yml down -v >/dev/null 2>&1 || true
-docker compose -f docker-compose.ci.yml up -d --build
-trap 'docker compose -f docker-compose.ci.yml down -v' EXIT
+docker compose -f compose/docker-compose.ci.yml down -v >/dev/null 2>&1 || true
+docker compose -f compose/docker-compose.ci.yml up -d --build
+trap 'docker compose -f compose/docker-compose.ci.yml down -v' EXIT
 
 wait_http() {
   local name="$1"
@@ -71,8 +71,8 @@ wait_http() {
     sleep 2
   done
   echo "FAIL: $name never became ready ($url)" >&2
-  docker compose -f docker-compose.ci.yml ps
-  docker compose -f docker-compose.ci.yml logs --no-color --tail=80 tempo || true
+  docker compose -f compose/docker-compose.ci.yml ps
+  docker compose -f compose/docker-compose.ci.yml logs --no-color --tail=80 tempo || true
   return 1
 }
 

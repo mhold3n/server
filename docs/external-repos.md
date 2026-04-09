@@ -28,3 +28,7 @@ git submodule status
 ```
 
 That shows the exact commit currently pinned for each external repo in this workspace.
+
+## Interaction model
+
+See [`external-orchestration-interfaces.md`](external-orchestration-interfaces.md) for the control-plane and DevPlane interaction model.

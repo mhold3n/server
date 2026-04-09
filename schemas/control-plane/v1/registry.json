@@ -18,6 +18,11 @@
       "kind": "contract"
     },
     {
+      "id": "https://birtha.local/schemas/control-plane/v1/knowledge-pool-assessment.schema.json",
+      "path": "knowledge-pool-assessment.schema.json",
+      "kind": "contract"
+    },
+    {
       "id": "https://birtha.local/schemas/control-plane/v1/recipe-object.schema.json",
       "path": "recipe-object.schema.json",
       "kind": "contract"

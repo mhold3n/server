@@ -68,7 +68,7 @@
     },
     "deliveryKindEnum": {
       "type": "string",
-      "enum": ["docker_image", "uv_venv", "dotnet_toolchain"]
+      "enum": ["docker_image", "uv_venv", "dotnet_toolchain", "host_app"]
     },
     "quantifiedScalar": {
       "type": "object",
@@ -113,6 +113,7 @@
       "type": "string",
       "enum": [
         "KNOWLEDGE_POOL",
+        "KNOWLEDGE_POOL_ASSESSMENT",
         "KNOWLEDGE_PACK",
         "RECIPE_OBJECT",
         "EXECUTION_ADAPTER_SPEC",

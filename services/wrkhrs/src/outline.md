@@ -83,7 +83,7 @@ TOOLS_PORT=8086
 # LLM
 LLM_BACKEND=ollama          # or vllm
 OLLAMA_MODEL=llama3:8b-instruct
-VLLM_MODEL=/models/Mistral-7B-Instruct
+VLLM_MODEL=/.cache/models/vllm/Mistral-7B-Instruct
 
 # GPU (prod only)
 ENABLE_GPU=false
@@ -109,7 +109,8 @@ networks: { llm_net: {} }
 volumes:
   qdrant_data: {}
   rag_cache: {}
-  models: {}
+  ollama_models: {}
+  vllm_models: {}
   plugins: {}
   mcp_data: {}
   logs: {}
@@ -179,8 +180,9 @@ services:
     ports:
       - "${LLM_BACKEND:-ollama} == 'vllm' ? '8001:8000' : '11434:11434'"
     volumes:
-      - "models:/models"
+      - "ollama_models:/.cache/models/ollama"
     environment:
+      - OLLAMA_MODELS=/.cache/models/ollama
       - OLLAMA_KEEP_ALIVE=24h
     healthcheck:
       test: ["CMD","sh","-c","(curl -sf http://localhost:11434/api/tags || curl -sf http://localhost:8000/health)"]
@@ -257,7 +259,7 @@ services:
         count: all
         capabilities: [gpu]
     volumes:
-      - "models:/models"
+      - "vllm_models:/.cache/models/vllm"
     command: [
       "python",
       "-m", "vllm.entrypoints.openai.api_server",

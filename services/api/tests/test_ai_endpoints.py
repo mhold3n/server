@@ -78,6 +78,8 @@ def test_ai_query_auto_promotes_complex_engineering_prompt():
         payload = json.loads(route.calls[0].request.content.decode("utf-8"))
         assert payload["workflow_name"] == "engineering_workflow"
         assert payload["workflow_config"]["strict_engineering"] is True
+        assert payload["input_data"]["knowledge_pool_assessment_ref"]
+        assert "knowledge_pool_coverage" in payload["input_data"]
 
 
 def test_ai_query_routes_chemistry_plus_engineering_directly_to_strict_mode():
@@ -109,6 +111,8 @@ def test_ai_query_routes_chemistry_plus_engineering_directly_to_strict_mode():
         assert payload["workflow_name"] == "engineering_workflow"
         assert payload["workflow_config"]["engagement_mode"] == "strict_engineering"
         assert payload["workflow_config"]["strict_engineering"] is True
+        assert payload["input_data"]["knowledge_pool_assessment_ref"]
+        assert isinstance(payload["input_data"]["knowledge_candidate_refs"], list)
 
 
 def test_ai_query_routes_bounded_repo_work_to_engineering_task():
@@ -140,6 +144,7 @@ def test_ai_query_routes_bounded_repo_work_to_engineering_task():
         assert payload["workflow_name"] == "engineering_workflow"
         assert payload["workflow_config"]["engagement_mode"] == "engineering_task"
         assert payload["workflow_config"]["strict_engineering"] is False
+        assert payload["input_data"]["knowledge_pool_assessment_ref"]
 
 
 def test_ai_query_routes_quantitative_non_mutating_work_to_napkin_math():
@@ -171,6 +176,7 @@ def test_ai_query_routes_quantitative_non_mutating_work_to_napkin_math():
         assert payload["workflow_name"] == "wrkhrs_chat"
         assert payload["workflow_config"]["engagement_mode"] == "napkin_math"
         assert payload["workflow_config"]["non_mutating_only"] is True
+        assert "knowledge_required" in payload["input_data"]
 
 
 def test_ai_query_routes_open_exploration_to_ideation():
@@ -196,6 +202,7 @@ def test_ai_query_routes_open_exploration_to_ideation():
         payload = json.loads(route.calls[0].request.content.decode("utf-8"))
         assert payload["workflow_name"] == "wrkhrs_chat"
         assert payload["workflow_config"]["engagement_mode"] == "ideation"
+        assert payload["input_data"]["knowledge_pool_assessment_ref"]
 
 
 def test_ai_query_strict_engineering_creates_visible_devplane_session(tmp_path):
@@ -266,13 +273,20 @@ def test_ai_query_strict_engineering_creates_visible_devplane_session(tmp_path):
             assert payload["input_data"]["engineering_session_id"]
             assert payload["input_data"]["task_id"]
             assert payload["input_data"]["run_id"]
+            assert payload["input_data"]["knowledge_pool_assessment_ref"]
 
         session_id = resp.json()["result"]["referential_state"]["engineering_session_id"]
+        result_payload = resp.json()["result"]
+        assert result_payload["knowledge_pool_assessment_ref"]
+        assert "knowledge_pool_coverage" in result_payload
+        assert "knowledge_candidate_refs" in result_payload
+        assert "knowledge_required" in result_payload
         service = get_service()
         task = service.get_task(session_id)
         assert task.current_run_id
         assert task.dossier.engineering_session is not None
         assert task.dossier.engineering_session.problem_brief_ref == "artifact://problem_brief/pb-1"
+        assert task.dossier.engineering_session.knowledge_pool_assessment_ref
         assert (
             task.dossier.engineering_session.active_task_packet_ref
             == f"artifact://task_packet/{task_packet_id}"
@@ -286,6 +300,8 @@ def test_ai_query_strict_engineering_creates_visible_devplane_session(tmp_path):
         assert snapshot is not None
         assert snapshot["verification_report_ref"] == "artifact://verification_report/vr-1"
         assert snapshot["active_selected_executor"] == "coding_model"
+        assert snapshot["knowledge_pool_assessment_ref"]
+        assert "knowledge_pool_coverage" in snapshot
 
         reset_devplane_service_for_tests()
         with respx.mock(assert_all_called=True) as mock:

@@ -397,6 +397,13 @@ class EngineeringSessionRecord(BaseModel):
     lifecycle_detail: dict[str, Any] = Field(default_factory=dict)
     problem_brief: dict[str, Any] | None = None
     problem_brief_ref: str | None = None
+    knowledge_pool_assessment: dict[str, Any] | None = None
+    knowledge_pool_assessment_ref: str | None = None
+    knowledge_pool_coverage: str | None = None
+    knowledge_candidate_refs: list[str] = Field(default_factory=list)
+    knowledge_role_context_refs: list[str] = Field(default_factory=list)
+    knowledge_gaps: list[str] = Field(default_factory=list)
+    knowledge_required: bool = False
     engineering_state: dict[str, Any] | None = None
     engineering_state_ref: str | None = None
     task_queue: dict[str, Any] | None = None
@@ -428,6 +435,12 @@ class TaskDossier(BaseModel):
     pending_mode_change: PendingModeChange | None = None
     lifecycle_reason: str | None = None
     lifecycle_detail: dict[str, Any] = Field(default_factory=dict)
+    knowledge_pool_assessment_ref: str | None = None
+    knowledge_pool_coverage: str | None = None
+    knowledge_candidate_refs: list[str] = Field(default_factory=list)
+    knowledge_role_context_refs: list[str] = Field(default_factory=list)
+    knowledge_gaps: list[str] = Field(default_factory=list)
+    knowledge_required: bool = False
     reasoning_tier: str | None = Field(
         default=None,
         description=(
@@ -488,6 +501,12 @@ class TaskRecord(BaseModel):
     pending_mode_change: PendingModeChange | None = None
     lifecycle_reason: str | None = None
     lifecycle_detail: dict[str, Any] = Field(default_factory=dict)
+    knowledge_pool_assessment_ref: str | None = None
+    knowledge_pool_coverage: str | None = None
+    knowledge_candidate_refs: list[str] = Field(default_factory=list)
+    knowledge_role_context_refs: list[str] = Field(default_factory=list)
+    knowledge_gaps: list[str] = Field(default_factory=list)
+    knowledge_required: bool = False
     request: TaskRequestRecord
     clarifications: TaskClarification = Field(default_factory=TaskClarification)
     plan: TaskPlan | None = None
@@ -513,6 +532,12 @@ class RunRecord(BaseModel):
     pending_mode_change: PendingModeChange | None = None
     lifecycle_reason: str | None = None
     lifecycle_detail: dict[str, Any] = Field(default_factory=dict)
+    knowledge_pool_assessment_ref: str | None = None
+    knowledge_pool_coverage: str | None = None
+    knowledge_candidate_refs: list[str] = Field(default_factory=list)
+    knowledge_role_context_refs: list[str] = Field(default_factory=list)
+    knowledge_gaps: list[str] = Field(default_factory=list)
+    knowledge_required: bool = False
     workspace: WorkspaceRecord | None = None
     execution_mode: ExecutionMode = ExecutionMode.INTERNAL
     execution_backend: str | None = None

@@ -28,6 +28,8 @@ def main() -> int:
     parser.add_argument("--environment-ref", required=True)
     parser.add_argument("--imports", nargs="*", default=[])
     parser.add_argument("--dotnet-probe", action="store_true")
+    parser.add_argument("--container-command", nargs=argparse.REMAINDER, default=[])
+    parser.add_argument("--host-command")
     args = parser.parse_args()
 
     catalog = load_knowledge_pool()
@@ -77,6 +79,23 @@ def main() -> int:
         sys.stderr.write(result.stderr)
         return result.returncode
 
+    if environment.delivery_kind == "host_app":
+        launcher_path = _resolve_path(environment.launcher_ref)
+        if not launcher_path.exists():
+            raise RuntimeError(f"Host application launcher not found: {launcher_path}")
+        host_command = args.host_command or f'"{launcher_path}" --version'
+        result = subprocess.run(
+            host_command,
+            cwd=REPO_ROOT,
+            shell=True,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        sys.stdout.write(result.stdout)
+        sys.stderr.write(result.stderr)
+        return result.returncode
+
     docker_bin = subprocess.run(
         ["which", "docker"],
         cwd=REPO_ROOT,
@@ -86,8 +105,9 @@ def main() -> int:
     )
     if docker_bin.returncode != 0:
         raise RuntimeError("docker CLI is not available in this environment")
+    container_command = args.container_command or ["python", "--version"]
     result = subprocess.run(
-        ["docker", "run", "--rm", environment.runtime_locator, "python", "--version"],
+        ["docker", "run", "--rm", environment.runtime_locator, *container_command],
         cwd=REPO_ROOT,
         text=True,
         capture_output=True,

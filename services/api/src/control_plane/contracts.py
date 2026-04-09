@@ -51,6 +51,7 @@ class Executor(StrEnum):
 
 class ArtifactType(StrEnum):
     KNOWLEDGE_POOL = "KNOWLEDGE_POOL"
+    KNOWLEDGE_POOL_ASSESSMENT = "KNOWLEDGE_POOL_ASSESSMENT"
     KNOWLEDGE_PACK = "KNOWLEDGE_PACK"
     RECIPE_OBJECT = "RECIPE_OBJECT"
     EXECUTION_ADAPTER_SPEC = "EXECUTION_ADAPTER_SPEC"
@@ -122,6 +123,18 @@ class Provenance(BaseModel):
     decision_log_ref: str | None = None
 
 
+class KnowledgeContext(BaseModel):
+    assessment_ref: str = Field(..., min_length=1, pattern=r"^artifact://.+")
+    candidate_pack_refs: list[str] = Field(default_factory=list)
+    role_context_ref: str | None = Field(default=None, pattern=r"^artifact://.+")
+    role_context_summary: str | None = None
+    preferred_adapter_ref: str | None = Field(default=None, pattern=r"^artifact://.+")
+    preferred_environment_ref: str | None = Field(default=None, pattern=r"^artifact://.+")
+    runtime_verification_refs: list[str] = Field(default_factory=list)
+    coverage_class: KnowledgeCoverageClass
+    required: bool = False
+
+
 class TaskPacket(BaseModel):
     """Specialist execution contract."""
 
@@ -136,6 +149,7 @@ class TaskPacket(BaseModel):
     context_summary: str | None = None
     constraints: list[str] = Field(default_factory=list)
     assumptions: list[str] = Field(default_factory=list)
+    knowledge_context: KnowledgeContext | None = None
     code_guidance: CodeGuidance | None = None
     required_outputs: list[RequiredOutputSpec] = Field(..., min_length=1)
     acceptance_criteria: list[str] = Field(..., min_length=1)
@@ -154,6 +168,16 @@ class TaskPacket(BaseModel):
             raise ValueError("ESCALATION_REVIEW requires budget_policy.allow_escalation=true")
         if self.task_type is TaskType.VALIDATION and len(self.validation_requirements) < 1:
             raise ValueError("VALIDATION requires non-empty validation_requirements")
+        if self.knowledge_context and self.knowledge_context.required:
+            if self.knowledge_context.coverage_class in {
+                KnowledgeCoverageClass.NONE,
+                KnowledgeCoverageClass.WEAK,
+            }:
+                raise ValueError(
+                    "knowledge_context.required=true requires partial or strong coverage",
+                )
+            if self.knowledge_context.role_context_ref is None:
+                raise ValueError("knowledge_context.required=true requires role_context_ref")
         return self
 
 
@@ -295,6 +319,14 @@ class KnowledgePoolCoverageStatus(StrEnum):
     COMPLETE = "COMPLETE"
 
 
+class KnowledgeCoverageClass(StrEnum):
+    NOT_APPLICABLE = "not_applicable"
+    NONE = "none"
+    WEAK = "weak"
+    PARTIAL = "partial"
+    STRONG = "strong"
+
+
 class KnowledgeSource(BaseModel):
     source_id: str = Field(..., min_length=1)
     title: str = Field(..., min_length=1)
@@ -369,6 +401,23 @@ class KnowledgePool(BaseModel):
     updated_at: datetime
 
 
+class KnowledgePoolAssessment(BaseModel):
+    """Deterministic knowledge-pool fit assessment for routing and governed execution."""
+
+    knowledge_pool_assessment_id: UUID
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    derived_task_class: str = Field(..., min_length=1)
+    coverage_class: KnowledgeCoverageClass
+    required_for_mode: bool
+    candidate_pack_refs: list[str] = Field(default_factory=list)
+    preferred_adapter_refs: list[str] = Field(default_factory=list)
+    preferred_environment_refs: list[str] = Field(default_factory=list)
+    runtime_verification_refs: list[str] = Field(default_factory=list)
+    knowledge_gaps: list[str] = Field(default_factory=list)
+    rule_matches: list[str] = Field(default_factory=list)
+    created_at: datetime
+
+
 class KnowledgePackScope(BaseModel):
     solves: list[str] = Field(..., min_length=1)
     not_for: list[str] = Field(default_factory=list)
@@ -395,7 +444,7 @@ class EnvironmentSpecPayload(BaseModel):
     environment_spec_id: str = Field(..., min_length=1)
     schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
     runtime_profile: str = Field(..., min_length=1)
-    delivery_kind: str = Field(..., pattern=r"^(docker_image|uv_venv|dotnet_toolchain)$")
+    delivery_kind: str = Field(..., pattern=r"^(docker_image|uv_venv|dotnet_toolchain|host_app)$")
     module_ids: list[str] = Field(..., min_length=1)
     supported_host_platforms: list[str] = Field(..., min_length=1)
     manifest_format: str = Field(
@@ -1031,6 +1080,15 @@ class EngineeringState(BaseModel):
     schema_version: str = Field(..., pattern=r"^[0-9]+\.[0-9]+\.[0-9]+$")
     trace_id: str | None = Field(default=None, min_length=8)
     problem_brief_ref: str = Field(..., min_length=1, pattern=r"^artifact://.+")
+    knowledge_pool_assessment_ref: str | None = Field(
+        default=None,
+        pattern=r"^artifact://.+",
+    )
+    knowledge_pool_coverage: KnowledgeCoverageClass | None = None
+    knowledge_candidate_refs: list[str] = Field(default_factory=list)
+    knowledge_role_context_refs: list[str] = Field(default_factory=list)
+    knowledge_gaps: list[str] = Field(default_factory=list)
+    knowledge_required: bool = False
     evidence_bundle_refs: list[str] = Field(default_factory=list)
     normalized_boundary: NormalizedBoundary
     objectives: list[ObjectiveRecord] = Field(..., min_length=1)

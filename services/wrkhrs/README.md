@@ -76,7 +76,7 @@ QDRANT_PORT=6333
 # LLM Backend
 LLM_BACKEND=ollama          # dev: ollama, prod: vllm
 OLLAMA_MODEL=llama3:8b-instruct
-VLLM_MODEL=/models/Mistral-7B-Instruct
+VLLM_MODEL=/.cache/models/vllm/Mistral-7B-Instruct
 
 # GPU (production)
 ENABLE_GPU=false            # set to true for production
@@ -332,7 +332,7 @@ Ensure production `.env` has:
 ```bash
 ENABLE_GPU=true
 LLM_BACKEND=vllm
-VLLM_MODEL=/models/Mistral-7B-Instruct
+VLLM_MODEL=/.cache/models/vllm/Mistral-7B-Instruct
 ASR_DEVICE=cuda
 ```
 

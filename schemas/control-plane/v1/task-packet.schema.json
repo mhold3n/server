@@ -60,6 +60,66 @@
       "type": "array",
       "items": { "type": "string" }
     },
+    "knowledge_context": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": [
+        "assessment_ref",
+        "candidate_pack_refs",
+        "runtime_verification_refs",
+        "coverage_class",
+        "required"
+      ],
+      "properties": {
+        "assessment_ref": {
+          "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+        },
+        "candidate_pack_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+          }
+        },
+        "role_context_ref": {
+          "anyOf": [
+            {
+              "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+            },
+            { "type": "null" }
+          ]
+        },
+        "role_context_summary": {
+          "type": ["string", "null"]
+        },
+        "preferred_adapter_ref": {
+          "anyOf": [
+            {
+              "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+            },
+            { "type": "null" }
+          ]
+        },
+        "preferred_environment_ref": {
+          "anyOf": [
+            {
+              "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+            },
+            { "type": "null" }
+          ]
+        },
+        "runtime_verification_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+          }
+        },
+        "coverage_class": {
+          "type": "string",
+          "enum": ["not_applicable", "none", "weak", "partial", "strong"]
+        },
+        "required": { "type": "boolean" }
+      }
+    },
     "code_guidance": {
       "type": ["object", "null"],
       "additionalProperties": false,

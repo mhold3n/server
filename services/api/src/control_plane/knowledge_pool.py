@@ -625,7 +625,7 @@ class KnowledgePoolCatalog:
         host_profile = host_profile or {}
         preferred_kinds = host_profile.get(
             "preferred_delivery_kinds",
-            ["uv_venv", "dotnet_toolchain", "docker_image"],
+            ["uv_venv", "dotnet_toolchain", "host_app", "docker_image"],
         )
         platform_tag = host_profile.get("platform", _current_platform_tag())
         verified_only = bool(host_profile.get("verified_only", True))

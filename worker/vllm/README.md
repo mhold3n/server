@@ -284,7 +284,7 @@ curl http://localhost:8000/health
 ### Model Caching
 ```bash
 # Cache models locally
---download-dir /models
+--download-dir /.cache/models/vllm
 --cache-dir /cache
 ```
 
@@ -292,7 +292,7 @@ curl http://localhost:8000/health
 ```bash
 # Backup configuration
 cp .env .env.backup
-cp docker-compose.worker.yml docker-compose.worker.yml.backup
+cp compose/docker-compose.worker.yml compose/docker-compose.worker.yml.backup
 ```
 
 ## Updates
@@ -303,7 +303,7 @@ cp docker-compose.worker.yml docker-compose.worker.yml.backup
 docker pull vllm/vllm-openai:latest
 
 # Restart with new image
-docker compose -f docker-compose.worker.yml up -d --force-recreate
+docker compose -f compose/docker-compose.worker.yml up -d --force-recreate
 ```
 
 ### Model Updates
@@ -312,5 +312,5 @@ docker compose -f docker-compose.worker.yml up -d --force-recreate
 docker volume rm vllm_model_cache
 
 # Restart with new model
-docker compose -f docker-compose.worker.yml up -d
+docker compose -f compose/docker-compose.worker.yml up -d
 ```

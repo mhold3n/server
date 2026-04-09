@@ -9,6 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from src.control_plane import engineering as engineering_module
 from src.control_plane.knowledge_pool import (
     load_knowledge_pool,
     load_minutes_inventory,
@@ -19,6 +20,9 @@ from src.control_plane.knowledge_pool import (
 REPO_ROOT = Path(__file__).resolve().parents[3]
 KNOWLEDGE_ROOT = REPO_ROOT / "knowledge" / "coding-tools"
 EXCLUDED_PATH = REPO_ROOT / "KNOWLEGE MINUTES EXCLUDED.md"
+ACQUISITION_DOSSIERS_JSON_PATH = (
+    REPO_ROOT / "knowledge" / "coding-tools" / "substrate" / "deferred-acquisition-dossiers.json"
+)
 
 
 def _copy_knowledge_root(tmp_path: Path) -> Path:
@@ -41,7 +45,7 @@ def _excluded_names_from_markdown(path: Path) -> set[str]:
         if not line.startswith("|") or line.startswith("| ---") or "reason excluded" in line:
             continue
         parts = [part.strip() for part in line.strip().split("|")]
-        if len(parts) >= 3 and parts[1]:
+        if len(parts) >= 3 and parts[1] and parts[1].lower() != "name":
             names.add(parts[1])
     return names
 
@@ -75,10 +79,120 @@ def test_minutes_inventory_entries_have_runtime_or_exclusion_row() -> None:
             assert entry["knowledge_pack_ref"]
             assert entry["environment_refs"]
             assert entry["excluded_reason"] is None
+            assert entry["phase_state"] == "linked"
             continue
         assert entry["excluded_reason"]
         assert entry["name"] in excluded_names
     assert excluded_names == inventory_excluded_names
+
+
+def test_excluded_inventory_entries_have_recovery_metadata() -> None:
+    inventory = load_minutes_inventory()
+    excluded_entries = [entry for entry in inventory["entries"] if entry["implementation_status"] == "excluded"]
+    assert excluded_entries
+    for entry in excluded_entries:
+        assert entry["module_ref"] == f"minutes-module://{entry['slug']}"
+        assert entry["install_method_category"].startswith("I")
+        assert entry["kb_build_method_category"].startswith("K")
+        assert entry["install_batch"].startswith("phase1_batch")
+        assert entry["kb_build_batch"].startswith("phase2_batch")
+        assert isinstance(entry["parent_runtime_refs"], list)
+        assert isinstance(entry["blocked_by_refs"], list)
+        assert isinstance(entry["manual_acquisition_required"], bool)
+        assert isinstance(entry["cli_install_channel"], str)
+        assert entry["cli_phase1_status"] in {
+            "ready",
+            "installed",
+            "blocked_by_parent_runtime",
+            "knowledge_only",
+            "manual_acquisition_required",
+        }
+        assert entry["user_intervention_class"] in {
+            "not_required",
+            "website_download",
+            "proprietary_license",
+            "proprietary_runtime",
+        }
+        assert entry["phase_state"] in {
+            "planned",
+            "installing",
+            "installed",
+            "kb_linking",
+            "linked",
+            "deferred",
+        }
+        if entry["install_method_category"] == "I6_deferred_external_manual":
+            assert entry["manual_acquisition_required"] is True
+            assert entry["phase_target"] == "next_sprint"
+            assert entry["phase_state"] == "deferred"
+        else:
+            assert entry["phase_target"] == "phase1"
+
+
+def test_recovery_plan_metadata_covers_all_install_and_kb_categories() -> None:
+    inventory = load_minutes_inventory()
+    recovery_plan = inventory["recovery_plan"]
+    install_categories = {item["id"] for item in recovery_plan["install_method_categories"]}
+    kb_categories = {item["id"] for item in recovery_plan["kb_build_method_categories"]}
+    excluded_entries = [entry for entry in inventory["entries"] if entry["implementation_status"] == "excluded"]
+    assert {entry["install_method_category"] for entry in excluded_entries} == install_categories
+    assert {entry["kb_build_method_category"] for entry in excluded_entries} == kb_categories
+
+
+def test_host_companion_dependency_metadata_matches_plan() -> None:
+    inventory = load_minutes_inventory()
+    by_slug = {entry["slug"]: entry for entry in inventory["entries"]}
+    assert by_slug["petsc4py"]["blocked_by_refs"] == ["minutes-module://petsc"]
+    assert by_slug["petsc_ksp"]["blocked_by_refs"] == ["minutes-module://petsc"]
+    assert by_slug["trilinos_belos"]["blocked_by_refs"] == ["minutes-module://trilinos"]
+    assert by_slug["ompython"]["blocked_by_refs"] == ["minutes-module://openmodelica"]
+    assert by_slug["medcoupling"]["blocked_by_refs"] == ["minutes-module://salome"]
+
+
+def test_cli_phase1_metadata_distinguishes_ready_and_manual_modules() -> None:
+    inventory = load_minutes_inventory()
+    by_slug = {entry["slug"]: entry for entry in inventory["entries"]}
+    assert by_slug["picogk_shapekernel"]["install_method_category"] == "I2_containerized_native_backend_family"
+    assert by_slug["picogk_shapekernel"]["cli_install_channel"] == "dotnet_nuget"
+    assert by_slug["picogk_shapekernel"]["manual_acquisition_required"] is False
+    assert by_slug["picogk_shapekernel"]["phase_target"] == "phase1"
+    assert by_slug["picogk_shapekernel"]["phase_state"] == "installed"
+    assert by_slug["picogk_shapekernel"]["environment_refs"] == ["artifact://environment-spec/eng_dotnet_sdk"]
+    assert by_slug["compas"]["phase_state"] == "installed"
+    assert by_slug["compas"]["acquisition_status"] == "verified_in_knowledge_runtime"
+    assert "artifact://environment-spec/eng_geometry_uv" in by_slug["compas"]["environment_refs"]
+    assert by_slug["rhino_common"]["phase_state"] == "installed"
+    assert by_slug["rhino_common"]["cli_install_channel"] == "host_app_cli"
+    assert by_slug["rhino_common"]["environment_refs"] == ["artifact://environment-spec/eng_rhino_host"]
+    assert by_slug["ipopt"]["environment_refs"] == ["artifact://environment-spec/eng_ipopt_onemkl_docker"]
+    assert by_slug["pardiso"]["manual_acquisition_required"] is False
+    assert by_slug["pardiso"]["cli_install_channel"] == "docker_build_with_onemkl"
+    assert by_slug["ompython"]["phase_state"] == "installed"
+    assert by_slug["ompython"]["acquisition_status"] == "verified_in_knowledge_runtime_parent_pending"
+    assert by_slug["femm"]["user_intervention_class"] == "website_download"
+    assert by_slug["femm"]["cli_install_channel"] == "wine_installer_after_download"
+
+
+def test_excluded_markdown_is_grouped_by_install_and_kb_method() -> None:
+    content = EXCLUDED_PATH.read_text(encoding="utf-8")
+    assert "## Remaining User Intervention Required" in content
+    assert "## By Install Method" in content
+    assert "## By Knowledge Build Method" in content
+    assert "### I1 containerized_native_solver_platform -> K1 executable_solver_platform_pack" in content
+    assert "### K6 acquisition_deferred_pack" in content
+    assert "| PicoGK / ShapeKernel | phase1_batch1e_geometry_native_family | phase2_batch_k2_backend_families | dotnet_nuget | installed | phase1 | installed |" in content
+
+
+def test_deferred_acquisition_dossiers_cover_manual_modules() -> None:
+    payload = _read_json(ACQUISITION_DOSSIERS_JSON_PATH)
+    assert isinstance(payload, dict)
+    entries = payload["entries"]
+    assert len(entries) == 3
+    assert {entry["slug"] for entry in entries} == {
+        "femm",
+        "pyleecan",
+        "ma87",
+    }
 
 
 def test_resolve_stack_is_deterministic() -> None:
@@ -140,6 +254,27 @@ def test_compile_role_context_preserves_sources_across_roles() -> None:
     assert general.included_sections != coder.included_sections
     assert reviewer.included_sections != general.included_sections
     assert "environment ref artifact://environment-spec/eng_thermochem_uv" in general.compiled_summary
+
+
+def test_engineering_knowledge_catalog_cache_invalidates_on_file_change(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _copy_knowledge_root(tmp_path)
+    engineering_module.reset_engineering_sessions_for_tests()
+    monkeypatch.setattr(engineering_module, "_knowledge_pool_root", lambda: root)
+    first = engineering_module._knowledge_catalog()
+    second = engineering_module._knowledge_catalog()
+    assert first is second
+
+    path = root / "compiled" / "general-context.json"
+    payload = _read_json(path)
+    assert isinstance(payload, dict)
+    payload["payload"]["compiled_summary"] += "\ncache invalidation marker"
+    _write_json(path, payload)
+
+    third = engineering_module._knowledge_catalog()
+    assert third is not first
 
 
 def test_cross_link_validation_flags_missing_evidence(tmp_path: Path) -> None:

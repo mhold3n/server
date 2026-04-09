@@ -13,6 +13,9 @@ services:
     environment:
       - HF_TOKEN=${HF_TOKEN:-}
       - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
+      - HF_HOME=/.cache/models/hf
+      - TRANSFORMERS_CACHE=/.cache/models/hf
+      - MODEL_CACHE_DIR=/.cache/models/hf
     command:
       [
         "--model", "${MODEL_NAME:-Qwen/Qwen3.5-9B}",
@@ -34,8 +37,8 @@ services:
       start_period: 60s
     volumes:
       - vllm_cache:/root/.cache
-      - vllm_models:/models
+      - ../../.cache/models/hf:/.cache/models/hf
+      - ../../.cache/models/vllm:/.cache/models/vllm
 
 volumes:
   vllm_cache:
-  vllm_models:

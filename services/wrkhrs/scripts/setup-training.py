@@ -78,7 +78,7 @@ def create_training_config():
         "save_steps": 500,
         "eval_steps": 500,
         "logging_steps": 100,
-        "output_dir": "./models/fine-tuned",
+        "output_dir": "./.cache/models/vllm/fine-tuned",
         "use_lora": True,
         "lora_rank": 16,
         "lora_alpha": 32,
