@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 
 from src.control_plane.contracts import (
     ArtifactStatus,
+    KnowledgePackPayload,
     TaskPacketStatus,
     TaskType,
 )
@@ -257,6 +258,19 @@ def test_golden_verification_report_round_trip() -> None:
     )
     report = validate_verification_report_json(data)
     assert report.outcome.value == "PASS"
+
+
+def test_phase2_knowledge_pack_alias_payload_round_trip() -> None:
+    records = _load_fixture("knowledge/coding-tools/substrate/knowledge-packs.json")
+    payload = next(
+        item["payload"]
+        for item in records
+        if item["payload"]["tool_id"] == "onemkl"
+    )
+    pack = KnowledgePackPayload.model_validate(payload)
+    assert pack.alias_names == ["PARDISO"]
+    assert pack.substitution_note is not None
+    assert "PARDISO" in pack.substitution_note
 
 
 def test_cost_ledger_entry_model() -> None:

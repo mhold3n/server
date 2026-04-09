@@ -481,6 +481,8 @@ class KnowledgePackPayload(BaseModel):
     evidence_refs: list[str] = Field(..., min_length=1)
     minutes_source_refs: list[str] = Field(..., min_length=1)
     environment_refs: list[str] = Field(..., min_length=1)
+    alias_names: list[str] = Field(default_factory=list)
+    substitution_note: str | None = None
     excluded_reason: str | None = None
     provenance: KnowledgePackProvenance
 

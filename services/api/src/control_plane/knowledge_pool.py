@@ -103,6 +103,14 @@ class RankedCandidate:
     runtime_verification_refs: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class PackLookupHit:
+    knowledge_pack_ref: str
+    score: int
+    matched_terms: tuple[str, ...]
+    runtime_gated: bool
+
+
 class KnowledgePoolCatalog:
     """Loaded, validated engineering knowledge pool."""
 
@@ -558,6 +566,8 @@ class KnowledgePoolCatalog:
                 [
                     payload.tool_id,
                     payload.tool_name,
+                    *payload.alias_names,
+                    payload.substitution_note or "",
                     payload.module_class,
                     *payload.bindings,
                     *payload.scope.solves,
@@ -615,6 +625,58 @@ class KnowledgePoolCatalog:
                 )
             )
         return sorted(ranked, key=lambda item: (-item.score, item.knowledge_pack_ref))
+
+    def recommendable_pack_refs(self) -> list[str]:
+        refs: list[str] = []
+        for ref, artifact in sorted(self.knowledge_packs.items()):
+            if artifact.record.validation_state is not ArtifactValidationState.VALID:
+                continue
+            payload = artifact.payload
+            assert isinstance(payload, KnowledgePackPayload)
+            runtime_refs = self._runtime_verification_refs_for_pack(payload)
+            if self._pack_has_passing_runtime_verification(payload, runtime_refs):
+                refs.append(ref)
+        return refs
+
+    def lookup_knowledge_packs(
+        self,
+        query: str,
+        *,
+        include_runtime_gated: bool = False,
+    ) -> list[PackLookupHit]:
+        query_terms = _tokenize_text(query)
+        hits: list[PackLookupHit] = []
+        for ref, artifact in sorted(self.knowledge_packs.items()):
+            payload = artifact.payload
+            assert isinstance(payload, KnowledgePackPayload)
+            runtime_refs = self._runtime_verification_refs_for_pack(payload)
+            runtime_gated = not self._pack_has_passing_runtime_verification(payload, runtime_refs)
+            if runtime_gated and not include_runtime_gated:
+                continue
+            searchable_text = " ".join(
+                [
+                    payload.tool_id,
+                    payload.tool_name,
+                    *payload.alias_names,
+                    payload.substitution_note or "",
+                    *payload.scope.solves,
+                    *payload.best_for,
+                    *payload.anti_patterns,
+                ]
+            )
+            searchable_terms = _tokenize_text(searchable_text)
+            matched = sorted(query_terms & searchable_terms)
+            if not matched:
+                continue
+            hits.append(
+                PackLookupHit(
+                    knowledge_pack_ref=ref,
+                    score=len(matched),
+                    matched_terms=tuple(matched),
+                    runtime_gated=runtime_gated,
+                )
+            )
+        return sorted(hits, key=lambda item: (-item.score, item.knowledge_pack_ref))
 
     def resolve_runtime(
         self,
@@ -894,12 +956,37 @@ class KnowledgePoolCatalog:
             f"healthcheck commands {', '.join(evidence.healthcheck_commands)}; "
             f"verification refs {', '.join(runtime_refs)}."
         )
+        alias_text = (
+            f" Aliases: {', '.join(payload.alias_names)}."
+            if payload.alias_names
+            else ""
+        )
+        substitution_text = (
+            f" Substitution: {payload.substitution_note}."
+            if payload.substitution_note
+            else ""
+        )
+        gating_text = ""
+        if runtime_refs:
+            gating_reports = [
+                self.verification_reports[runtime_ref].payload
+                for runtime_ref in runtime_refs
+                if runtime_ref in self.verification_reports
+            ]
+            non_pass = [
+                report
+                for report in gating_reports
+                if isinstance(report, VerificationReportPayload)
+                and report.outcome is not VerificationOutcome.PASS
+            ]
+            if non_pass:
+                gating_text = f" Runtime gate: {non_pass[0].reasons[0]}."
         if role == "general":
             return (
                 f"{payload.tool_name}: solves {', '.join(payload.scope.solves)}. "
                 f"Best for {', '.join(payload.best_for)}. "
                 f"Avoid {', '.join(payload.scope.not_for)}. "
-                f"{runtime_label}"
+                f"{runtime_label}{alias_text}{substitution_text}{gating_text}"
             )
         if role == "coder":
             object_names = ", ".join(obj.name for obj in payload.core_objects)
@@ -909,14 +996,14 @@ class KnowledgePoolCatalog:
                 f"Adapter {adapter.callable_interface.entrypoint} takes {input_names}. "
                 f"Launcher {adapter.launcher_ref}. "
                 f"Recipe {recipe.title} follows {', '.join(recipe.implementation_pattern)}. "
-                f"{runtime_label}"
+                f"{runtime_label}{alias_text}{substitution_text}{gating_text}"
             )
         return (
             f"{payload.tool_name}: review {', '.join(evidence.smoke_tests)}. "
             f"Checklist {', '.join(evidence.reviewer_checklist)}. "
             f"Watch anti-patterns {', '.join(payload.anti_patterns)}. "
             f"Healthcheck commands {', '.join(evidence.healthcheck_commands)}. "
-            f"{runtime_label}"
+            f"{runtime_label}{alias_text}{substitution_text}{gating_text}"
         )
 
 
@@ -934,6 +1021,17 @@ def resolve_stack(
     project_constraints: dict[str, Any],
 ) -> list[RankedCandidate]:
     return load_knowledge_pool().resolve_stack(problem_spec, project_constraints)
+
+
+def lookup_knowledge_packs(
+    query: str,
+    *,
+    include_runtime_gated: bool = False,
+) -> list[PackLookupHit]:
+    return load_knowledge_pool().lookup_knowledge_packs(
+        query,
+        include_runtime_gated=include_runtime_gated,
+    )
 
 
 def resolve_runtime(

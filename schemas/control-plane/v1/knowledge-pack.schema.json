@@ -152,6 +152,13 @@
         "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
       }
     },
+    "alias_names": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "substitution_note": {
+      "type": ["string", "null"]
+    },
     "excluded_reason": {
       "type": ["string", "null"]
     },

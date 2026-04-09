@@ -13,6 +13,7 @@ from src.control_plane import engineering as engineering_module
 from src.control_plane.knowledge_pool import (
     load_knowledge_pool,
     load_minutes_inventory,
+    lookup_knowledge_packs,
     resolve_stack,
 )
 
@@ -50,15 +51,24 @@ def _excluded_names_from_markdown(path: Path) -> set[str]:
     return names
 
 
-def test_seed_catalog_matches_minutes_inventory() -> None:
+def test_seed_catalog_matches_phase2_inventory_and_synthetic_packs() -> None:
     catalog = load_knowledge_pool()
     inventory = load_minutes_inventory()
-    implemented_slugs = {
-        entry["slug"]
+    inventory_pack_refs = {
+        entry["knowledge_pack_ref"]
         for entry in inventory["entries"]
-        if entry["implementation_status"] == "implemented"
+        if entry["knowledge_pack_ref"]
     }
-    assert {ref.split("/")[-1] for ref in catalog.knowledge_packs} == implemented_slugs
+    assert inventory_pack_refs <= set(catalog.knowledge_packs)
+    synthetic_pack_refs = set(catalog.knowledge_packs) - inventory_pack_refs
+    assert synthetic_pack_refs == {
+        "artifact://knowledge-pack/petsc_family",
+        "artifact://knowledge-pack/trilinos_family",
+        "artifact://knowledge-pack/sparse_direct_family",
+        "artifact://knowledge-pack/coinhsl_family",
+        "artifact://knowledge-pack/nlp_time_chem_family",
+        "artifact://knowledge-pack/geometry_native_family",
+    }
     assert {artifact.payload.role for artifact in catalog.role_context_bundles.values()} == {
         "general",
         "coder",
@@ -75,11 +85,19 @@ def test_minutes_inventory_entries_have_runtime_or_exclusion_row() -> None:
         if entry["implementation_status"] == "excluded"
     }
     for entry in inventory["entries"]:
+        assert entry["knowledge_pack_ref"]
+        assert entry["phase2_link_status"] in {
+            "recommendable",
+            "detailed_linked_runtime_gated",
+            "detailed_linked_parent_gated",
+            "detailed_linked_manual",
+        }
         if entry["implementation_status"] == "implemented":
-            assert entry["knowledge_pack_ref"]
             assert entry["environment_refs"]
             assert entry["excluded_reason"] is None
             assert entry["phase_state"] == "linked"
+            assert entry["phase2_link_status"] == "recommendable"
+            assert entry["alias_resolution_kind"] == "self"
             continue
         assert entry["excluded_reason"]
         assert entry["name"] in excluded_names
@@ -92,10 +110,22 @@ def test_excluded_inventory_entries_have_recovery_metadata() -> None:
     assert excluded_entries
     for entry in excluded_entries:
         assert entry["module_ref"] == f"minutes-module://{entry['slug']}"
+        assert entry["knowledge_pack_ref"].startswith("artifact://knowledge-pack/")
         assert entry["install_method_category"].startswith("I")
         assert entry["kb_build_method_category"].startswith("K")
         assert entry["install_batch"].startswith("phase1_batch")
         assert entry["kb_build_batch"].startswith("phase2_batch")
+        assert entry["phase2_link_status"] in {
+            "recommendable",
+            "detailed_linked_runtime_gated",
+            "detailed_linked_parent_gated",
+            "detailed_linked_manual",
+        }
+        assert entry["alias_resolution_kind"] in {
+            "self",
+            "substituted_by_canonical_pack",
+        }
+        assert isinstance(entry["canonical_tool_name"], str)
         assert isinstance(entry["parent_runtime_refs"], list)
         assert isinstance(entry["blocked_by_refs"], list)
         assert isinstance(entry["manual_acquisition_required"], bool)
@@ -125,6 +155,7 @@ def test_excluded_inventory_entries_have_recovery_metadata() -> None:
             assert entry["manual_acquisition_required"] is True
             assert entry["phase_target"] == "next_sprint"
             assert entry["phase_state"] == "deferred"
+            assert entry["phase2_link_status"] == "detailed_linked_manual"
         else:
             assert entry["phase_target"] == "phase1"
 
@@ -157,20 +188,29 @@ def test_cli_phase1_metadata_distinguishes_ready_and_manual_modules() -> None:
     assert by_slug["picogk_shapekernel"]["manual_acquisition_required"] is False
     assert by_slug["picogk_shapekernel"]["phase_target"] == "phase1"
     assert by_slug["picogk_shapekernel"]["phase_state"] == "installed"
+    assert by_slug["picogk_shapekernel"]["phase2_link_status"] == "recommendable"
     assert by_slug["picogk_shapekernel"]["environment_refs"] == ["artifact://environment-spec/eng_dotnet_sdk"]
     assert by_slug["compas"]["phase_state"] == "installed"
     assert by_slug["compas"]["acquisition_status"] == "verified_in_knowledge_runtime"
+    assert by_slug["compas"]["phase2_link_status"] == "recommendable"
     assert "artifact://environment-spec/eng_geometry_uv" in by_slug["compas"]["environment_refs"]
     assert by_slug["rhino_common"]["phase_state"] == "installed"
     assert by_slug["rhino_common"]["cli_install_channel"] == "host_app_cli"
+    assert by_slug["rhino_common"]["phase2_link_status"] == "recommendable"
     assert by_slug["rhino_common"]["environment_refs"] == ["artifact://environment-spec/eng_rhino_host"]
     assert by_slug["ipopt"]["environment_refs"] == ["artifact://environment-spec/eng_ipopt_onemkl_docker"]
+    assert by_slug["ipopt"]["phase2_link_status"] == "detailed_linked_runtime_gated"
     assert by_slug["pardiso"]["manual_acquisition_required"] is False
     assert by_slug["pardiso"]["cli_install_channel"] == "docker_build_with_onemkl"
+    assert by_slug["pardiso"]["phase2_link_status"] == "detailed_linked_runtime_gated"
+    assert by_slug["pardiso"]["knowledge_pack_ref"] == "artifact://knowledge-pack/onemkl"
+    assert by_slug["pardiso"]["alias_resolution_kind"] == "substituted_by_canonical_pack"
     assert by_slug["ompython"]["phase_state"] == "installed"
     assert by_slug["ompython"]["acquisition_status"] == "verified_in_knowledge_runtime_parent_pending"
+    assert by_slug["ompython"]["phase2_link_status"] == "detailed_linked_parent_gated"
     assert by_slug["femm"]["user_intervention_class"] == "website_download"
     assert by_slug["femm"]["cli_install_channel"] == "wine_installer_after_download"
+    assert by_slug["femm"]["phase2_link_status"] == "detailed_linked_manual"
 
 
 def test_excluded_markdown_is_grouped_by_install_and_kb_method() -> None:
@@ -180,7 +220,10 @@ def test_excluded_markdown_is_grouped_by_install_and_kb_method() -> None:
     assert "## By Knowledge Build Method" in content
     assert "### I1 containerized_native_solver_platform -> K1 executable_solver_platform_pack" in content
     assert "### K6 acquisition_deferred_pack" in content
-    assert "| PicoGK / ShapeKernel | phase1_batch1e_geometry_native_family | phase2_batch_k2_backend_families | dotnet_nuget | installed | phase1 | installed |" in content
+    assert "| PicoGK / ShapeKernel |" in content
+    assert "| PARDISO |" in content
+    assert "| RhinoCommon |" in content
+    assert "| FEMM |" in content
 
 
 def test_deferred_acquisition_dossiers_cover_manual_modules() -> None:
@@ -254,6 +297,75 @@ def test_compile_role_context_preserves_sources_across_roles() -> None:
     assert general.included_sections != coder.included_sections
     assert reviewer.included_sections != general.included_sections
     assert "environment ref artifact://environment-spec/eng_thermochem_uv" in general.compiled_summary
+
+
+def test_phase2_alias_rows_resolve_to_canonical_pack() -> None:
+    inventory = load_minutes_inventory()
+    by_slug = {entry["slug"]: entry for entry in inventory["entries"]}
+    pardiso = by_slug["pardiso"]
+    assert pardiso["knowledge_pack_ref"] == "artifact://knowledge-pack/onemkl"
+    assert pardiso["alias_resolution_kind"] == "substituted_by_canonical_pack"
+    assert pardiso["canonical_tool_name"] == "Intel oneMKL"
+
+
+def test_lookup_knowledge_packs_supports_aliases_but_keeps_runtime_gates() -> None:
+    assert lookup_knowledge_packs("pardiso") == []
+    hits = lookup_knowledge_packs("pardiso", include_runtime_gated=True)
+    assert hits
+    first = hits[0]
+    assert first.knowledge_pack_ref == "artifact://knowledge-pack/onemkl"
+    assert first.runtime_gated is True
+    assert first.matched_terms == ("pardiso",)
+
+
+def test_top_level_compiled_context_summaries_exclude_runtime_gated_phase2_packs() -> None:
+    payload = _read_json(KNOWLEDGE_ROOT / "compiled" / "general-context.json")
+    assert isinstance(payload, dict)
+    summary = payload["payload"]["compiled_summary"]
+    assert "RhinoCommon" in summary
+    assert "CGNS" in summary
+    assert "Intel oneMKL" not in summary
+    assert "Geometry Native Family" not in summary
+
+
+def test_phase2_compiled_contexts_include_aliases_and_runtime_gates() -> None:
+    payload = _read_json(
+        KNOWLEDGE_ROOT / "compiled" / "phase2" / "install_phase1_batch1f_onemkl_family_general.json"
+    )
+    assert isinstance(payload, dict)
+    summary = payload["payload"]["compiled_summary"]
+    assert "Intel oneMKL" in summary
+    assert "Aliases: PARDISO." in summary
+    assert "Runtime gate:" in summary
+    assert "canonical Docker build has not been verified in this sprint" in summary
+
+
+def test_phase2_generated_batch_context_files_exist() -> None:
+    phase2_root = KNOWLEDGE_ROOT / "compiled" / "phase2"
+    assert (phase2_root / "family_k2_backend_families_general.json").exists()
+    assert (phase2_root / "install_phase1_batch1f_onemkl_family_general.json").exists()
+    assert (phase2_root / "kb_phase2_batch_k6_deferred_acquisition_reviewer.json").exists()
+
+
+def test_phase2_linked_packs_meet_detail_requirements() -> None:
+    catalog = load_knowledge_pool()
+    inventory = load_minutes_inventory()
+    checked_pack_refs: set[str] = set()
+    for entry in inventory["entries"]:
+        if entry["implementation_status"] != "excluded":
+            continue
+        pack_ref = entry["knowledge_pack_ref"]
+        if pack_ref in checked_pack_refs:
+            continue
+        checked_pack_refs.add(pack_ref)
+        pack = catalog.knowledge_packs[pack_ref].payload
+        recipe = catalog.recipe_objects[pack.recipe_refs[0]].payload
+        evidence = catalog.evidence_bundles[pack.evidence_refs[0]].payload
+        assert len(pack.core_objects) >= 3
+        assert len(pack.anti_patterns) >= 2
+        assert len(recipe.touched_objects) >= 3
+        assert len(recipe.acceptance_tests) >= 3
+        assert len(evidence.reviewer_checklist) >= 3
 
 
 def test_engineering_knowledge_catalog_cache_invalidates_on_file_change(

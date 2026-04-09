@@ -2664,6 +2664,1390 @@ def build_compiled_contexts() -> None:
         )
 
 
+PHASE2_SUBSTITUTIONS = {
+    "pardiso": {
+        "knowledge_pack_slug": "onemkl",
+        "canonical_tool_name": "Intel oneMKL",
+        "substitution_note": "Canonical runtime path replacing the prior PARDISO acquisition lane inside the knowledge base.",
+    }
+}
+
+PHASE2_SYNTHETIC_MODULES = [
+    {
+        "slug": "onemkl",
+        "name": "Intel oneMKL",
+        "category": "solver_backends",
+        "module_class": "runtime_kernel",
+        "bindings": ["C", "C++", "Fortran"],
+        "solves": [
+            "Dense and sparse numerical kernels reused across containerized optimization backends",
+            "Canonical BLAS/LAPACK and sparse backend surface for the Phase 2 nonlinear stack",
+        ],
+        "best_for": [
+            "Canonical substitute runtime for the prior PARDISO lane",
+            "Shared numeric backend support inside the IPOPT plus CoinHSL container path",
+        ],
+        "not_for": [
+            "Treating oneMKL as a standalone engineering solver without a host algorithm",
+        ],
+        "source_refs": ["minutes://solver_table#L731", "minutes://table1#L303"],
+        "environment_refs": ["artifact://environment-spec/eng_ipopt_onemkl_docker"],
+        "preferred_environment_ref": "artifact://environment-spec/eng_ipopt_onemkl_docker",
+        "import_target": "mkl_rt",
+        "related": ["ipopt"],
+        "alias_names": ["PARDISO"],
+        "substitution_note": "Canonical pack used in place of the previously planned PARDISO acquisition path.",
+        "inventory_visible": False,
+        "implementation_status": "implemented",
+        "phase2_link_status": "detailed_linked_runtime_gated",
+        "phase2_gate_mode": "rework",
+        "phase2_gate_reason": PLANNED_ONEMKL_SUBSTITUTE_REASON,
+    },
+    {
+        "slug": "petsc_family",
+        "name": "PETSc Family",
+        "category": "solver_backends",
+        "module_class": "runtime_kernel",
+        "bindings": ["C", "C++", "Fortran", "Python", "MPI"],
+        "solves": [
+            "Canonical family packaging for PETSc-centered linear, nonlinear, and eigensolver backends",
+        ],
+        "best_for": [
+            "Shared backend lineage for PETSc child overlays and wrappers",
+        ],
+        "not_for": ["Treating the family pack as a substitute for a concrete PETSc child module"],
+        "source_refs": ["minutes://table1#L335", "minutes://solver_table#L732"],
+        "environment_refs": ["artifact://environment-spec/eng_petsc_family_docker"],
+        "preferred_environment_ref": "artifact://environment-spec/eng_petsc_family_docker",
+        "import_target": "petsc_family",
+        "related": ["petsc", "petsc_ksp", "petsc_gamg", "slepc", "petsc4py"],
+        "inventory_visible": False,
+        "implementation_status": "implemented",
+        "phase2_link_status": "detailed_linked_runtime_gated",
+        "phase2_gate_mode": "rework",
+        "phase2_gate_reason": "PETSc family manifests are linked, but the canonical backend-family runtime has not been verified in this sprint.",
+    },
+    {
+        "slug": "trilinos_family",
+        "name": "Trilinos Family",
+        "category": "solver_backends",
+        "module_class": "runtime_kernel",
+        "bindings": ["C++", "MPI"],
+        "solves": [
+            "Canonical family packaging for Trilinos solver, preconditioner, and multigrid overlays",
+        ],
+        "best_for": [
+            "Shared backend lineage for Trilinos child overlays",
+        ],
+        "not_for": ["Treating the family pack as a substitute for a concrete Trilinos package"],
+        "source_refs": ["minutes://solver_table#L733", "minutes://solver_table#L853"],
+        "environment_refs": ["artifact://environment-spec/eng_trilinos_family_docker"],
+        "preferred_environment_ref": "artifact://environment-spec/eng_trilinos_family_docker",
+        "import_target": "trilinos_family",
+        "related": ["trilinos", "trilinos_belos", "trilinos_ifpack2", "trilinos_muelu"],
+        "inventory_visible": False,
+        "implementation_status": "implemented",
+        "phase2_link_status": "detailed_linked_runtime_gated",
+        "phase2_gate_mode": "rework",
+        "phase2_gate_reason": "Trilinos family manifests are linked, but the canonical backend-family runtime has not been verified in this sprint.",
+    },
+    {
+        "slug": "sparse_direct_family",
+        "name": "Sparse Direct Family",
+        "category": "solver_backends",
+        "module_class": "runtime_kernel",
+        "bindings": ["C", "C++", "Fortran"],
+        "solves": [
+            "Canonical family packaging for sparse-direct factorization and linear solve backends",
+        ],
+        "best_for": [
+            "Shared lineage for MUMPS, SuperLU, SuiteSparse, and related child overlays",
+        ],
+        "not_for": ["Treating the family pack as a drop-in replacement for a named sparse-direct backend"],
+        "source_refs": ["minutes://solver_table#L729", "minutes://solver_table#L735"],
+        "environment_refs": ["artifact://environment-spec/eng_sparse_direct_family_docker"],
+        "preferred_environment_ref": "artifact://environment-spec/eng_sparse_direct_family_docker",
+        "import_target": "sparse_direct_family",
+        "related": ["mumps", "superlu", "superlu_dist", "suitesparse", "cholmod", "umfpack", "klu", "strumpack"],
+        "inventory_visible": False,
+        "implementation_status": "implemented",
+        "phase2_link_status": "detailed_linked_runtime_gated",
+        "phase2_gate_mode": "rework",
+        "phase2_gate_reason": "Sparse-direct family manifests are linked, but the canonical backend-family runtime has not been verified in this sprint.",
+    },
+    {
+        "slug": "coinhsl_family",
+        "name": "CoinHSL Family",
+        "category": "solver_backends",
+        "module_class": "runtime_kernel",
+        "bindings": ["C", "Fortran"],
+        "solves": [
+            "Canonical family lineage for staged CoinHSL sparse-direct backends inside the IPOPT container path",
+        ],
+        "best_for": [
+            "Shared lineage for MA57, MA77, MA86, MA87, and MA97 overlays",
+        ],
+        "not_for": ["Using the family lineage without respecting per-backend acquisition and packaging constraints"],
+        "source_refs": ["minutes://solver_table#L728", "minutes://solver_table#L821"],
+        "environment_refs": ["artifact://environment-spec/eng_ipopt_onemkl_docker"],
+        "preferred_environment_ref": "artifact://environment-spec/eng_ipopt_onemkl_docker",
+        "import_target": "coinhsl_family",
+        "related": ["ma57", "ma77", "ma86", "ma87", "ma97", "ipopt"],
+        "inventory_visible": False,
+        "implementation_status": "implemented",
+        "phase2_link_status": "detailed_linked_runtime_gated",
+        "phase2_gate_mode": "rework",
+        "phase2_gate_reason": "CoinHSL sources are staged locally, but the canonical IPOPT plus CoinHSL container has not been verified in this sprint.",
+    },
+    {
+        "slug": "nlp_time_chem_family",
+        "name": "NLP Time Chemistry Family",
+        "category": "optimization_uq_backbone",
+        "module_class": "runtime_kernel",
+        "bindings": ["C", "C++", "Fortran"],
+        "solves": [
+            "Canonical family packaging for nonlinear optimization, time integration, and chemistry-side kernels",
+        ],
+        "best_for": [
+            "Shared lineage for IPOPT, SUNDIALS, and TChem child overlays",
+        ],
+        "not_for": ["Treating the family pack as a replacement for a named solver runtime"],
+        "source_refs": ["minutes://table1#L303", "minutes://table1#L316", "minutes://table1#L336"],
+        "environment_refs": ["artifact://environment-spec/eng_nlp_time_chem_family_docker"],
+        "preferred_environment_ref": "artifact://environment-spec/eng_nlp_time_chem_family_docker",
+        "import_target": "nlp_time_chem_family",
+        "related": ["ipopt", "sundials", "tchem"],
+        "inventory_visible": False,
+        "implementation_status": "implemented",
+        "phase2_link_status": "detailed_linked_runtime_gated",
+        "phase2_gate_mode": "rework",
+        "phase2_gate_reason": "NLP, time-integration, and chemistry family manifests are linked, but the canonical family runtime has not been verified in this sprint.",
+    },
+    {
+        "slug": "geometry_native_family",
+        "name": "Geometry Native Family",
+        "category": "geometry_manufacturing",
+        "module_class": "runtime_kernel",
+        "bindings": ["C++", "Python", "CLI"],
+        "solves": [
+            "Canonical family packaging for geometry-native kernels and geometry-adjacent runtime surfaces",
+        ],
+        "best_for": [
+            "Shared lineage for CGAL, OpenCAMLib, and PicoGK/ShapeKernel overlays",
+        ],
+        "not_for": ["Treating the family pack as a substitute for a named geometry kernel"],
+        "source_refs": ["minutes://table1#L308", "minutes://table1#L309", "minutes://table1#L301"],
+        "environment_refs": ["artifact://environment-spec/eng_geometry_native_family_docker"],
+        "preferred_environment_ref": "artifact://environment-spec/eng_geometry_native_family_docker",
+        "import_target": "geometry_native_family",
+        "related": ["cgal", "opencamlib", "picogk_shapekernel"],
+        "inventory_visible": False,
+        "implementation_status": "implemented",
+        "phase2_link_status": "detailed_linked_runtime_gated",
+        "phase2_gate_mode": "rework",
+        "phase2_gate_reason": "Geometry-native family manifests are linked, but the canonical family runtime has not been verified in this sprint.",
+    },
+]
+
+PHASE2_ENV_PROFILE_OVERRIDES = {
+    "eng_ipopt_onemkl_docker": {
+        "runtime_gate_reason": PLANNED_IPOPT_ONEMKL_CONTAINER_REASON,
+    },
+    "eng_rhino_host": {
+        "phase2_verified": True,
+    },
+}
+
+
+def _phase2_slug_label(slug: str) -> str:
+    return slug.replace("_", " ").replace("pp", "++")
+
+
+def _phase2_family_pack_slug(slug: str, metadata: dict[str, object] | None) -> str | None:
+    if slug in {"pardiso", "ipopt", "ma57", "ma77", "ma86", "ma87", "ma97"}:
+        return "coinhsl_family" if slug.startswith("ma") else "nlp_time_chem_family"
+    if slug in {"picogk_shapekernel", "cgal", "opencamlib"}:
+        return "geometry_native_family"
+    if metadata is None:
+        return None
+    install_batch = metadata["install_batch"]
+    return {
+        "phase1_batch1a_petsc_family": "petsc_family",
+        "phase1_batch1b_trilinos_family": "trilinos_family",
+        "phase1_batch1c_sparse_direct_family": "sparse_direct_family",
+        "phase1_batch1d_nlp_time_chem_family": "nlp_time_chem_family",
+        "phase1_batch1e_geometry_native_family": "geometry_native_family",
+    }.get(install_batch)
+
+
+def _phase2_default_bindings(module: dict, metadata: dict[str, object] | None) -> list[str]:
+    if module["slug"] == "rhino_common":
+        return ["C#", "Python", "CLI"]
+    if module["slug"] == "openmodelica":
+        return ["CLI", "Modelica"]
+    if module["module_class"] == "standard":
+        return ["Spec", "Schema"]
+    if metadata and metadata["install_method_category"] == "I3_python_first_venv_package":
+        return ["Python"]
+    if module["module_class"] == "integration_layer":
+        return ["Python", "CLI"]
+    if module["module_class"] == "runtime_kernel":
+        return ["C", "C++", "Fortran"]
+    if module["module_class"] == "framework":
+        return ["Python", "C++"]
+    return ["CLI", "C++"]
+
+
+def _phase2_domain_label(category: str) -> str:
+    return {
+        "seed_stack": "core engineering workflows",
+        "geometry_manufacturing": "geometry and manufacturing workflows",
+        "thermofluids_chemistry": "thermofluids and chemistry workflows",
+        "structures_pde": "structures and PDE workflows",
+        "electrics_dynamics_system": "electrical, dynamic, and system workflows",
+        "optimization_uq_backbone": "optimization, UQ, and numerical-backbone workflows",
+        "workflow_coupling": "workflow coupling and cross-runtime integration",
+        "solver_backends": "solver-backend workflows",
+        "domain_specific": "domain-specific engineering workflows",
+        "reserve": "reserve engineering workflows",
+        "csharp_examples": "host-side C# and scripting workflows",
+    }.get(category, "engineering workflows")
+
+
+def _phase2_scope_for_module(module: dict) -> tuple[list[str], list[str]]:
+    if "solves" in module:
+        return list(module["solves"]), list(module["not_for"])
+    domain = _phase2_domain_label(module["category"])
+    name = module["name"]
+    module_class = module["module_class"]
+    solves = {
+        "application": [
+            f"{name} executable workflows for {domain}",
+            f"{name} case setup, launch, and output capture inside the knowledge runtime",
+        ],
+        "framework": [
+            f"{name} API-driven workflows for {domain}",
+            f"{name} model assembly and orchestration inside a typed runtime boundary",
+        ],
+        "integration_layer": [
+            f"{name} bridges parent runtimes into typed {domain} workflows",
+            f"{name} exchange boundaries and compatibility checks across linked runtimes",
+        ],
+        "runtime_kernel": [
+            f"{name} backend kernels reused by {domain}",
+            f"{name} low-level numeric or geometric primitives inside a linked execution adapter",
+        ],
+        "translator": [
+            f"{name} explicit translation boundaries for {domain}",
+            f"{name} format conversion with auditable runtime provenance",
+        ],
+        "standard": [
+            f"{name} validation and schema mapping for {domain}",
+            f"{name} typed interchange contracts across linked host runtimes",
+        ],
+    }[module_class]
+    not_for = [
+        f"Using {name} as a substitute for unrelated workflows outside {domain}",
+        f"Treating {name} as implicitly verified without its linked runtime and evidence bundle",
+    ]
+    return solves, not_for
+
+
+def _phase2_core_objects(module: dict, preferred_env_ref: str) -> list[dict[str, str]]:
+    name = module["name"]
+    import_target = module.get("import_target", module["slug"])
+    by_class = {
+        "application": [
+            (f"{name} CLI", "cli_surface", "Primary executable entry surface"),
+            (f"{name} case/setup artifact", "case_definition", "Canonical problem/case boundary"),
+            (preferred_env_ref.split("/")[-1], "environment_spec", "Runtime carrier for the executable surface"),
+        ],
+        "framework": [
+            (import_target, "api_surface", "Primary import or API surface"),
+            (f"{name} model object", "model_surface", "Main authored object graph inside the framework"),
+            (preferred_env_ref.split("/")[-1], "environment_spec", "Runtime carrier for the framework surface"),
+        ],
+        "integration_layer": [
+            (import_target, "integration_surface", "Primary integration or wrapper entry surface"),
+            (f"{name} exchange contract", "exchange_boundary", "Typed boundary crossing between runtimes"),
+            (preferred_env_ref.split("/")[-1], "environment_spec", "Runtime carrier for the integration surface"),
+        ],
+        "runtime_kernel": [
+            (import_target, "backend_surface", "Primary backend or shared-library surface"),
+            (f"{name} configuration surface", "runtime_config", "Backend-specific configuration boundary"),
+            (preferred_env_ref.split("/")[-1], "environment_spec", "Runtime carrier for the backend surface"),
+        ],
+        "translator": [
+            (f"{name} reader", "reader_surface", "Declared inbound translation surface"),
+            (f"{name} writer", "writer_surface", "Declared outbound translation surface"),
+            (preferred_env_ref.split("/")[-1], "environment_spec", "Runtime carrier for translation tooling"),
+        ],
+        "standard": [
+            (f"{name} schema", "schema_surface", "Primary schema or specification surface"),
+            (f"{name} validator", "validation_surface", "Deterministic conformance surface"),
+            (preferred_env_ref.split("/")[-1], "environment_spec", "Runtime used to validate or translate the standard"),
+        ],
+    }
+    return [
+        {"name": item[0], "kind": item[1], "role": item[2]}
+        for item in by_class[module["module_class"]]
+    ]
+
+
+def _phase2_anti_patterns(module: dict, preferred_env_ref: str, substitution_note: str | None) -> list[str]:
+    solves, not_for = _phase2_scope_for_module(module)
+    patterns = [
+        f"Using {module['name']} for {not_for[0].lower()}.",
+        f"Skipping the linked health check and provenance capture for {preferred_env_ref}.",
+    ]
+    if substitution_note:
+        patterns.append(
+            f"Treating {module['name']} as a separate runtime from its canonical substitution path."
+        )
+    elif solves:
+        patterns.append(
+            f"Crossing the adapter boundary for {module['name']} without a typed contract tied to {solves[0].lower()}."
+        )
+    return patterns
+
+
+def _phase2_recipe_pattern(module: dict, preferred_env_ref: str, phase2_link_status: str) -> list[str]:
+    gating_step = {
+        "recommendable": "Record the passing verification report before using the module output downstream",
+        "detailed_linked_parent_gated": "Stop if the parent-runtime compatibility gate is still REWORK",
+        "detailed_linked_manual": "Stop at the acquisition gate until the missing external artifact is staged",
+    }.get(
+        phase2_link_status,
+        "Stop if the runtime verification report is still REWORK",
+    )
+    return [
+        f"Resolve {preferred_env_ref} as the canonical runtime surface",
+        f"Run the linked health check for {module['name']}",
+        gating_step,
+        f"Execute {module['name']} only inside its declared capability boundary and record the evidence refs",
+    ]
+
+
+def _phase2_failure_signatures(module: dict, phase2_link_status: str) -> list[str]:
+    signatures = [
+        f"{module['name']} import, linker, or launcher failure in the linked runtime",
+        f"{module['name']} used outside its declared capability boundary",
+    ]
+    if phase2_link_status == "detailed_linked_parent_gated":
+        signatures.append(f"Parent runtime for {module['name']} is still unresolved or incompatible")
+    if phase2_link_status == "detailed_linked_manual":
+        signatures.append(f"External acquisition for {module['name']} is incomplete or staged in the wrong location")
+    return signatures
+
+
+def _phase2_reviewer_checklist(module: dict, phase2_link_status: str) -> list[str]:
+    checklist = [
+        f"{module['name']} pack links to the intended environment spec(s)",
+        f"{module['name']} adapter and evidence bundle reference the same runtime verification report",
+        f"{module['name']} anti-patterns and failure signatures match the module class and runtime path",
+    ]
+    if phase2_link_status == "detailed_linked_parent_gated":
+        checklist.append(f"Parent-runtime gate remains explicit for {module['name']}")
+    if phase2_link_status == "detailed_linked_manual":
+        checklist.append(f"Manual acquisition gate remains explicit for {module['name']}")
+    return checklist
+
+
+def _phase2_link_status_for_module(module: dict, metadata: dict[str, object] | None) -> str:
+    if module["implementation_status"] == "implemented":
+        return "recommendable"
+    slug = module["slug"]
+    if slug in {"cgns", "exodus_ii", "fmi_fmus"}:
+        return "recommendable"
+    if metadata is None:
+        return "recommendable"
+    if metadata["manual_acquisition_required"]:
+        return "detailed_linked_manual"
+    if metadata["cli_phase1_status"] == "blocked_by_parent_runtime":
+        return "detailed_linked_parent_gated"
+    if metadata["cli_phase1_status"] == "installed":
+        return (
+            "detailed_linked_parent_gated"
+            if str(metadata["acquisition_status"]).endswith("parent_pending")
+            else "recommendable"
+        )
+    if metadata["cli_phase1_status"] == "knowledge_only" and metadata["blocked_by_refs"]:
+        return "detailed_linked_parent_gated"
+    return "detailed_linked_runtime_gated"
+
+
+def _phase2_environment_refs_map() -> dict[str, list[str]]:
+    refs = {slug: list(values) for slug, values in EXCLUDED_ENVIRONMENT_REFS.items()}
+    for slug in (
+        "openfoam",
+        "calculix",
+        "code_saturne",
+        "su2",
+        "code_aster",
+        "openwam",
+        "opensmokepp",
+        "openmodelica",
+        "kratos_multiphysics",
+        "moose",
+        "fenicsx",
+        "dealii",
+        "hermes",
+        "dakota",
+        "project_chrono",
+        "mbdyn",
+        "salome",
+        "paraview",
+    ):
+        refs.setdefault(slug, [artifact_ref("environment-spec", f"eng_{slug}_docker")])
+    for slug in ("petsc", "petsc_ksp", "petsc_gamg", "slepc", "hypre", "primme", "petsc4py"):
+        refs.setdefault(slug, ["artifact://environment-spec/eng_petsc_family_docker"])
+    for slug in ("trilinos", "trilinos_belos", "trilinos_ifpack2", "trilinos_muelu"):
+        refs.setdefault(slug, ["artifact://environment-spec/eng_trilinos_family_docker"])
+    for slug in ("mumps", "superlu", "superlu_dist", "suitesparse", "cholmod", "umfpack", "klu", "strumpack"):
+        refs.setdefault(slug, ["artifact://environment-spec/eng_sparse_direct_family_docker"])
+    for slug in ("sundials", "tchem"):
+        refs.setdefault(slug, ["artifact://environment-spec/eng_nlp_time_chem_family_docker"])
+    for slug in ("cgal", "opencamlib"):
+        refs.setdefault(slug, ["artifact://environment-spec/eng_geometry_native_family_docker"])
+    refs.setdefault("pyoptsparse", ["artifact://environment-spec/eng_ipopt_onemkl_docker"])
+    refs.setdefault("precice", ["artifact://environment-spec/eng_openfoam_docker", "artifact://environment-spec/eng_calculix_docker"])
+    refs.setdefault("petsc4py", ["artifact://environment-spec/eng_petsc_family_docker"])
+    refs.setdefault("pyfmi", ["artifact://environment-spec/eng_system_uv", "artifact://environment-spec/eng_openmodelica_docker"])
+    refs.setdefault("medcoupling", ["artifact://environment-spec/eng_salome_docker"])
+    refs.setdefault("pyphs", ["artifact://environment-spec/eng_system_uv", "artifact://environment-spec/eng_system_docker"])
+    refs.setdefault("porepy", ["artifact://environment-spec/eng_structures_uv", "artifact://environment-spec/eng_structures_docker"])
+    refs.setdefault("rmg_py", ["artifact://environment-spec/eng_thermochem_uv", "artifact://environment-spec/eng_thermochem_docker"])
+    refs.setdefault("cgns", ["artifact://environment-spec/eng_geometry_uv", "artifact://environment-spec/eng_backbone_uv"])
+    refs.setdefault("exodus_ii", ["artifact://environment-spec/eng_geometry_uv", "artifact://environment-spec/eng_backbone_uv"])
+    refs.setdefault("fmi_fmus", ["artifact://environment-spec/eng_system_uv"])
+    refs.setdefault("modelica_standard_library", ["artifact://environment-spec/eng_openmodelica_docker"])
+    refs.setdefault("femm", ["artifact://environment-spec/eng_wine_docker"])
+    refs.setdefault("pyleecan", ["artifact://environment-spec/eng_system_uv", "artifact://environment-spec/eng_system_docker"])
+    refs.setdefault("ma87", ["artifact://environment-spec/eng_ipopt_onemkl_docker"])
+    refs.setdefault("rhino_common", ["artifact://environment-spec/eng_rhino_host"])
+    refs.setdefault("pardiso", ["artifact://environment-spec/eng_ipopt_onemkl_docker"])
+    return refs
+
+
+def _phase2_additional_runtime_profiles() -> list[dict]:
+    profiles: list[dict] = []
+
+    def planned_docker_profile(
+        env_id: str,
+        runtime_profile: str,
+        module_ids: list[str],
+        note: str,
+    ) -> dict:
+        return {
+            "id": env_id,
+            "runtime_profile": runtime_profile,
+            "delivery_kind": "docker_image",
+            "module_ids": module_ids,
+            "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
+            "manifest_format": "dockerfile",
+            "manifest_path": f"knowledge/coding-tools/runtime/docker/{env_id}.Dockerfile",
+            "runtime_locator": f"birtha/knowledge-{runtime_profile}:1.0.0",
+            "bootstrap_command": f"python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/{env_id}",
+            "healthcheck_command": f"python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/{env_id}",
+            "launcher_ref": f"knowledge/coding-tools/runtime/launchers/{env_id.replace('_docker', '')}-container.sh",
+            "requirements": [],
+            "verification_enabled": False,
+            "runtime_gate_reason": note,
+            "notes": [note],
+        }
+
+    for slug in (
+        "openfoam",
+        "calculix",
+        "code_saturne",
+        "su2",
+        "code_aster",
+        "openwam",
+        "opensmokepp",
+        "openmodelica",
+        "kratos_multiphysics",
+        "moose",
+        "fenicsx",
+        "dealii",
+        "hermes",
+        "dakota",
+        "project_chrono",
+        "mbdyn",
+        "salome",
+        "paraview",
+    ):
+        profiles.append(
+            planned_docker_profile(
+                f"eng_{slug}_docker",
+                f"eng-{slug.replace('_', '-')}",
+                [slug],
+                f"{_phase2_slug_label(slug).title()} runtime manifest is linked, but the canonical solver-platform runtime has not been verified in this sprint.",
+            )
+        )
+    profiles.extend(
+        [
+            planned_docker_profile(
+                "eng_petsc_family_docker",
+                "eng-petsc-family",
+                ["petsc", "petsc_ksp", "petsc_gamg", "slepc", "hypre", "primme", "petsc4py"],
+                "PETSc family manifest is linked, but the canonical backend-family runtime has not been verified in this sprint.",
+            ),
+            planned_docker_profile(
+                "eng_trilinos_family_docker",
+                "eng-trilinos-family",
+                ["trilinos", "trilinos_belos", "trilinos_ifpack2", "trilinos_muelu"],
+                "Trilinos family manifest is linked, but the canonical backend-family runtime has not been verified in this sprint.",
+            ),
+            planned_docker_profile(
+                "eng_sparse_direct_family_docker",
+                "eng-sparse-direct-family",
+                ["mumps", "superlu", "superlu_dist", "suitesparse", "cholmod", "umfpack", "klu", "strumpack"],
+                "Sparse-direct family manifest is linked, but the canonical backend-family runtime has not been verified in this sprint.",
+            ),
+            planned_docker_profile(
+                "eng_nlp_time_chem_family_docker",
+                "eng-nlp-time-chem-family",
+                ["ipopt", "sundials", "tchem"],
+                "NLP, time-integration, and chemistry family manifest is linked, but the canonical family runtime has not been verified in this sprint.",
+            ),
+            planned_docker_profile(
+                "eng_geometry_native_family_docker",
+                "eng-geometry-native-family",
+                ["cgal", "opencamlib", "picogk_shapekernel"],
+                "Geometry-native family manifest is linked, but the canonical family runtime has not been verified in this sprint.",
+            ),
+        ]
+    )
+    return profiles
+
+
+def _all_runtime_profiles() -> list[dict]:
+    profiles = [dict(item) for item in RUNTIME_PROFILES]
+    seen = {item["id"] for item in profiles}
+    for item in _phase2_additional_runtime_profiles():
+        if item["id"] not in seen:
+            profiles.append(item)
+            seen.add(item["id"])
+    return profiles
+
+
+def _phase2_pack_verification_id(slug: str) -> str:
+    return str(uuid5(NAMESPACE_URL, f"phase2-pack-verification:{slug}"))
+
+
+def _phase2_pack_verification_ref(slug: str) -> str:
+    return artifact_ref("verification-report", _phase2_pack_verification_id(slug))
+
+
+def _phase2_registry_module(module: dict, *, metadata: dict[str, object] | None, inventory_visible: bool) -> dict:
+    link_status = _phase2_link_status_for_module(module, metadata)
+    env_map = _phase2_environment_refs_map()
+    if module["implementation_status"] == "implemented":
+        env_refs = list(
+            module.get(
+                "environment_refs",
+                env_refs_for_module(module) if "runtime_profile" in module else [],
+            )
+        )
+        preferred_env_ref = module.get(
+            "preferred_environment_ref",
+            primary_env_ref(module) if "runtime_profile" in module else env_refs[0],
+        )
+        alias_names = list(module.get("alias_names", []))
+        substitution_note = module.get("substitution_note")
+        bindings = list(module["bindings"])
+    else:
+        env_refs = list(module.get("environment_refs", env_map[module["slug"]]))
+        preferred_env_ref = module.get("preferred_environment_ref", env_refs[0])
+        alias_names = list(module.get("alias_names", []))
+        substitution_note = module.get("substitution_note")
+        bindings = list(module.get("bindings", _phase2_default_bindings(module, metadata)))
+    solves, not_for = _phase2_scope_for_module(module)
+    canonical_pack_slug = PHASE2_SUBSTITUTIONS.get(module["slug"], {}).get("knowledge_pack_slug", module["slug"])
+    return {
+        "slug": module["slug"],
+        "knowledge_pack_slug": canonical_pack_slug,
+        "name": module["name"],
+        "category": module["category"],
+        "module_class": module["module_class"],
+        "source_refs": list(module["source_refs"]),
+        "bindings": bindings,
+        "solves": solves,
+        "best_for": list(module.get("best_for", [f"{module['name']} inside {_phase2_domain_label(module['category'])}"])),
+        "not_for": not_for,
+        "import_target": module.get("import_target", module["slug"]),
+        "related": list(module.get("related", [])),
+        "environment_refs": env_refs,
+        "preferred_environment_ref": preferred_env_ref,
+        "implementation_status": module["implementation_status"],
+        "inventory_visible": inventory_visible,
+        "phase2_link_status": link_status if inventory_visible else module.get("phase2_link_status", "detailed_linked_runtime_gated"),
+        "phase2_gate_mode": (
+            "pass"
+            if (link_status == "recommendable" if inventory_visible else module.get("phase2_gate_mode") == "pass")
+            else "rework"
+        ),
+        "phase2_gate_reason": module.get("phase2_gate_reason") or module.get("excluded_reason"),
+        "alias_names": alias_names,
+        "substitution_note": substitution_note,
+        "family_pack_slug": _phase2_family_pack_slug(module["slug"], metadata),
+        "inventory_alias_resolution_kind": (
+            "substituted_by_canonical_pack"
+            if module["slug"] in PHASE2_SUBSTITUTIONS
+            else "self"
+        ),
+        "inventory_canonical_tool_name": PHASE2_SUBSTITUTIONS.get(module["slug"], {}).get("canonical_tool_name", module["name"]),
+    }
+
+
+def _canonical_module_registry() -> list[dict]:
+    modules: list[dict] = []
+    for module in IMPLEMENTED_MODULES:
+        modules.append(_phase2_registry_module(module, metadata=None, inventory_visible=True))
+    for module in EXCLUDED_MODULES:
+        if module["slug"] == "pardiso":
+            continue
+        modules.append(
+            _phase2_registry_module(
+                module,
+                metadata=recovery_metadata_for_excluded(module),
+                inventory_visible=True,
+            )
+        )
+    for module in PHASE2_SYNTHETIC_MODULES:
+        modules.append(_phase2_registry_module(module, metadata=None, inventory_visible=False))
+    return modules
+
+
+def runtime_profile_map() -> dict[str, dict]:
+    return {item["id"]: item for item in _all_runtime_profiles()}
+
+
+def excluded_environment_refs(module: dict) -> list[str]:
+    return list(_phase2_environment_refs_map().get(module["slug"], []))
+
+
+def build_environment_specs() -> tuple[list[dict], list[dict]]:
+    environment_records: list[dict] = []
+    verification_records: list[dict] = []
+    for profile in _all_runtime_profiles():
+        payload = {
+            "environment_spec_id": profile["id"],
+            "schema_version": "1.0.0",
+            "runtime_profile": profile["runtime_profile"],
+            "delivery_kind": profile["delivery_kind"],
+            "module_ids": profile["module_ids"],
+            "supported_host_platforms": profile["supported_host_platforms"],
+            "manifest_format": profile["manifest_format"],
+            "manifest_path": profile["manifest_path"],
+            "runtime_locator": profile["runtime_locator"],
+            "bootstrap_command": profile["bootstrap_command"],
+            "healthcheck_command": profile["healthcheck_command"],
+            "launcher_ref": profile["launcher_ref"],
+            "notes": profile["notes"],
+        }
+        env_ref = artifact_ref("environment-spec", profile["id"])
+        environment_records.append(
+            typed_record("environment-spec", "ENVIRONMENT_SPEC", profile["id"], payload, [])
+        )
+        verification_id = verification_payload_id(profile["id"])
+        if profile["verification_enabled"]:
+            verification_records.append(
+                typed_record(
+                    "verification-report",
+                    "VERIFICATION_REPORT",
+                    verification_id,
+                    {
+                        "verification_report_id": verification_id,
+                        "schema_version": "1.0.0",
+                        "outcome": "PASS",
+                        "reasons": profile.get(
+                            "verification_reasons",
+                            [f"Seeded runtime profile {profile['runtime_profile']} passed its linked health check during this sprint."],
+                        ),
+                        "gate_results": [
+                            {
+                                "gate_id": "runtime_healthcheck",
+                                "gate_kind": "tests",
+                                "status": "PASS",
+                                "detail": profile.get("verification_detail", profile["healthcheck_command"]),
+                                "artifact_ref": env_ref,
+                            }
+                        ],
+                        "recommended_next_action": "accept_runtime_environment",
+                        "validated_artifact_refs": [env_ref],
+                        "created_at": SEED_TS,
+                    },
+                    [env_ref],
+                )
+            )
+            continue
+        reason = profile.get(
+            "runtime_gate_reason",
+            f"Runtime manifest exists for {profile['runtime_profile']}, but it has not been verified in this sprint.",
+        )
+        verification_records.append(
+            typed_record(
+                "verification-report",
+                "VERIFICATION_REPORT",
+                verification_id,
+                {
+                    "verification_report_id": verification_id,
+                    "schema_version": "1.0.0",
+                    "outcome": "REWORK",
+                    "reasons": [reason],
+                    "blocking_findings": [
+                        {
+                            "code": "runtime_verification_pending",
+                            "severity": "high",
+                            "artifact_ref": env_ref,
+                        }
+                    ],
+                    "gate_results": [
+                        {
+                            "gate_id": "runtime_healthcheck",
+                            "gate_kind": "tests",
+                            "status": "FAIL",
+                            "detail": profile.get("verification_detail", profile["healthcheck_command"]),
+                            "remediation_hint": "Bootstrap or finish the canonical runtime build before promoting this environment.",
+                            "artifact_ref": env_ref,
+                        }
+                    ],
+                    "recommended_next_action": "repair_runtime_environment",
+                    "validated_artifact_refs": [env_ref],
+                    "created_at": SEED_TS,
+                },
+                [env_ref],
+            )
+        )
+    return environment_records, verification_records
+
+
+def _phase2_pack_verification_payload(module: dict, pack_ref: str) -> dict:
+    verification_id = _phase2_pack_verification_id(module["knowledge_pack_slug"])
+    validated_refs = list(module["environment_refs"])
+    if module["phase2_gate_mode"] == "pass":
+        return {
+            "verification_report_id": verification_id,
+            "schema_version": "1.0.0",
+            "outcome": "PASS",
+            "reasons": [f"{module['name']} is fully linked to a passing runtime path in this sprint."],
+            "gate_results": [
+                {
+                    "gate_id": "phase2_pack_gate",
+                    "gate_kind": "tests",
+                    "status": "PASS",
+                    "detail": f"Pack {module['knowledge_pack_slug']} is linked to verified runtime refs {', '.join(validated_refs)}.",
+                    "artifact_ref": pack_ref,
+                }
+            ],
+            "recommended_next_action": "accept_runtime_environment",
+            "validated_artifact_refs": validated_refs,
+            "created_at": SEED_TS,
+        }
+    return {
+        "verification_report_id": verification_id,
+        "schema_version": "1.0.0",
+        "outcome": "REWORK",
+        "reasons": [module["phase2_gate_reason"] or f"{module['name']} remains runtime-gated."],
+        "blocking_findings": [
+            {
+                "code": "phase2_runtime_gate",
+                "severity": "high",
+                "artifact_ref": pack_ref,
+            }
+        ],
+        "gate_results": [
+            {
+                "gate_id": "phase2_pack_gate",
+                "gate_kind": "tests",
+                "status": "FAIL",
+                "detail": module["phase2_gate_reason"] or f"{module['name']} remains runtime-gated.",
+                "remediation_hint": "Satisfy the runtime gate and regenerate the linked verification report.",
+                "artifact_ref": pack_ref,
+            }
+        ],
+        "recommended_next_action": "repair_runtime_environment",
+        "validated_artifact_refs": validated_refs,
+        "created_at": SEED_TS,
+    }
+
+
+def build_seed_files() -> None:
+    packs: list[dict] = []
+    recipes: list[dict] = []
+    adapters: list[dict] = []
+    evidence_bundles: list[dict] = []
+    decisions: list[dict] = []
+
+    excluded_slugs = {module["slug"] for module in EXCLUDED_MODULES}
+    missing_recovery_metadata = sorted(excluded_slugs - set(RECOVERY_METADATA_BY_SLUG))
+    if missing_recovery_metadata:
+        raise ValueError(f"Missing recovery metadata for excluded modules: {missing_recovery_metadata}")
+    deferred_slugs = {
+        slug
+        for slug, metadata in RECOVERY_METADATA_BY_SLUG.items()
+        if metadata["install_method_category"] == "I6_deferred_external_manual"
+    }
+    missing_dossiers = sorted(deferred_slugs - set(DEFERRED_ACQUISITION_DETAILS))
+    if missing_dossiers:
+        raise ValueError(f"Missing deferred acquisition dossiers for modules: {missing_dossiers}")
+
+    env_records, verification_records = build_environment_specs()
+    decision_index = decision_refs_by_slug()
+    modules = _canonical_module_registry()
+
+    for module in modules:
+        slug = module["knowledge_pack_slug"]
+        pack_ref = artifact_ref("knowledge-pack", slug)
+        recipe_id = f"{slug}_{module['category']}"
+        recipe_ref = artifact_ref("recipe-object", recipe_id)
+        adapter_id = f"{slug}_probe"
+        adapter_ref = artifact_ref("execution-adapter-spec", adapter_id)
+        evidence_id = f"{slug}_runtime"
+        evidence_ref = artifact_ref("evidence-bundle", evidence_id)
+        runtime_verification_ref = _phase2_pack_verification_ref(slug)
+        family_pack_slug = module.get("family_pack_slug")
+        integration_refs = sorted(
+            set(
+                [artifact_ref("knowledge-pack", related) for related in module["related"]]
+                + decision_index.get(module["slug"], [])
+                + (
+                    [artifact_ref("knowledge-pack", family_pack_slug)]
+                    if family_pack_slug and family_pack_slug != slug
+                    else []
+                )
+                + (
+                    [artifact_ref("knowledge-pack", "onemkl")]
+                    if module["slug"] == "ipopt"
+                    else []
+                )
+                + (
+                    [artifact_ref("knowledge-pack", "coinhsl_family")]
+                    if module["slug"] in {"ipopt", "ma57", "ma77", "ma86", "ma87", "ma97"}
+                    else []
+                )
+            )
+        )
+        preferred_env_ref = module["preferred_environment_ref"]
+        probe_command = (
+            f"python scripts/verify_knowledge_runtime.py --environment-ref {preferred_env_ref}"
+        )
+        core_objects = _phase2_core_objects(module, preferred_env_ref)
+        anti_patterns = _phase2_anti_patterns(module, preferred_env_ref, module.get("substitution_note"))
+        recipe_pattern = _phase2_recipe_pattern(module, preferred_env_ref, module["phase2_link_status"])
+        failure_signatures = _phase2_failure_signatures(module, module["phase2_link_status"])
+        reviewer_checklist = _phase2_reviewer_checklist(module, module["phase2_link_status"])
+        interfaces_inputs = [
+            f"Typed engineering inputs for {module['name']}",
+            f"Declared runtime target {preferred_env_ref}",
+        ]
+        interfaces_outputs = [
+            f"{module['name']} runtime probe output",
+            f"{module['name']} task artifact with linked evidence refs",
+        ]
+
+        pack_payload = {
+            "knowledge_pack_id": f"{slug}_pack",
+            "schema_version": "1.0.0",
+            "tool_id": slug,
+            "tool_name": module["name"],
+            "module_class": module["module_class"],
+            "library_version": "current-curated",
+            "bindings": module["bindings"],
+            "scope": {
+                "solves": module["solves"],
+                "not_for": module["not_for"],
+            },
+            "core_objects": core_objects,
+            "best_for": module["best_for"],
+            "anti_patterns": anti_patterns,
+            "interfaces": {
+                "inputs": interfaces_inputs,
+                "outputs": interfaces_outputs,
+            },
+            "integration_refs": integration_refs,
+            "recipe_refs": [recipe_ref],
+            "adapter_refs": [adapter_ref],
+            "evidence_refs": [evidence_ref],
+            "minutes_source_refs": module["source_refs"],
+            "environment_refs": module["environment_refs"],
+            "alias_names": module.get("alias_names", []),
+            "substitution_note": module.get("substitution_note"),
+            "excluded_reason": None if module["implementation_status"] == "implemented" else module["phase2_gate_reason"],
+            "provenance": {
+                "sources": module["source_refs"],
+                "examples": module["solves"],
+                "benchmarks": module["best_for"],
+            },
+        }
+        packs.append(
+            typed_record(
+                "knowledge-pack",
+                "KNOWLEDGE_PACK",
+                slug,
+                pack_payload,
+                list(module["environment_refs"]),
+            )
+        )
+
+        recipe_payload = {
+            "recipe_id": recipe_id,
+            "schema_version": "1.0.0",
+            "title": f"{module['name']} phase 2 runtime-linked recipe",
+            "task_class": module["category"],
+            "assumptions": [
+                f"The canonical runtime path for {module['name']} is {preferred_env_ref}.",
+                f"The current Phase 2 link status is {module['phase2_link_status']}.",
+            ],
+            "why_this_stack": f"Use {module['name']} when {module['solves'][0].lower()} is the right fit and the linked runtime path must remain explicit.",
+            "knowledge_pack_ref": pack_ref,
+            "touched_objects": [
+                {
+                    "name": item["name"],
+                    "role": item["role"],
+                    "notes": f"Phase 2 tracks this {module['name']} surface through the linked runtime and evidence path.",
+                }
+                for item in core_objects
+            ],
+            "implementation_pattern": recipe_pattern,
+            "required_inputs": [
+                f"Typed problem inputs for {module['name']}",
+                f"Resolved environment spec {preferred_env_ref}",
+                "Declared units where engineering values cross the adapter boundary",
+            ],
+            "required_outputs": [
+                f"{module['name']} runtime probe output",
+                f"{module['name']} task artifact with provenance and evidence refs",
+            ],
+            "failure_signatures": failure_signatures,
+            "acceptance_tests": [
+                f"{module['name']} pack resolves a concrete environment spec",
+                f"{module['name']} evidence bundle references the Phase 2 runtime verification report",
+                f"{module['name']} recipe preserves explicit provenance and gate status",
+            ],
+            "adapter_refs": [adapter_ref],
+            "evidence_refs": [evidence_ref],
+        }
+        recipes.append(typed_record("recipe-object", "RECIPE_OBJECT", recipe_id, recipe_payload, [pack_ref]))
+
+        adapter_payload = {
+            "adapter_spec_id": adapter_id,
+            "schema_version": "1.0.0",
+            "tool_id": slug,
+            "supported_library_version": "current-curated",
+            "knowledge_pack_ref": pack_ref,
+            "preferred_environment_ref": preferred_env_ref,
+            "environment_refs": module["environment_refs"],
+            "callable_interface": {
+                "kind": "cli" if preferred_env_ref != "artifact://environment-spec/eng_rhino_host" else "dotnet",
+                "entrypoint": probe_command,
+                "signature": f"probe_{slug}() -> verification_report",
+            },
+            "typed_inputs": [
+                {"name": "working_dir", "type": "path", "required": False, "unit": None},
+                {"name": "problem", "type": "object", "required": False, "unit": None},
+            ],
+            "typed_outputs": [
+                {"name": "probe_stdout", "type": "string", "unit": None},
+                {"name": "runtime_gate_state", "type": "string", "unit": None},
+            ],
+            "unit_policy": {
+                "unit_system": "SI",
+                "require_declared_units": True,
+                "notes": f"{module['name']} adapter inputs remain unit-declared whenever engineering values cross the runtime boundary.",
+            },
+            "file_translators": (
+                [{"from": "problem_spec", "to": "runtime_input", "notes": f"Translate typed problem input into the {module['name']} runtime boundary."}]
+                if module["module_class"] in {"integration_layer", "translator", "standard"}
+                else []
+            ),
+            "runtime_requirements": [
+                f"Resolve {preferred_env_ref} before invoking {module['name']}.",
+                f"Honor the Phase 2 gate state {module['phase2_link_status']} before promoting downstream outputs.",
+            ],
+            "healthcheck_refs": [runtime_verification_ref],
+            "safety_limits": [
+                f"Do not promote {module['name']} outputs when the linked verification report outcome is REWORK.",
+                f"Keep {module['name']} inside its declared capability boundary.",
+            ],
+            "emitted_artifact_refs": [runtime_verification_ref],
+            "launcher_ref": runtime_profile_map()[preferred_env_ref.split("/")[-1]]["launcher_ref"],
+        }
+        adapters.append(
+            typed_record(
+                "execution-adapter-spec",
+                "EXECUTION_ADAPTER_SPEC",
+                adapter_id,
+                adapter_payload,
+                [pack_ref, preferred_env_ref],
+            )
+        )
+
+        evidence_payload = {
+            "evidence_bundle_id": evidence_id,
+            "schema_version": "1.0.0",
+            "title": f"{module['name']} phase 2 verification bundle",
+            "tool_id": slug,
+            "knowledge_pack_ref": pack_ref,
+            "recipe_refs": [recipe_ref],
+            "adapter_refs": [adapter_ref],
+            "smoke_tests": [
+                f"Probe {module['name']} through {preferred_env_ref}",
+                f"Confirm the current Phase 2 gate state for {module['name']}",
+            ],
+            "benchmark_cases": module["solves"],
+            "expected_outputs": [
+                f"{module['name']} exposes a concrete runtime path",
+                f"{module['name']} surfaces a deterministic gate state for downstream agents",
+            ],
+            "tolerances": [
+                f"{module['name']} must keep runtime provenance explicit",
+                f"{module['name']} must not hide its current gate state",
+            ],
+            "convergence_criteria": [
+                f"The Phase 2 verification report for {module['name']} is linked and readable",
+            ],
+            "reviewer_checklist": reviewer_checklist,
+            "runtime_verification_refs": [runtime_verification_ref],
+            "healthcheck_commands": [probe_command],
+            "reference_artifact_refs": [runtime_verification_ref],
+            "provenance": {
+                "sources": module["source_refs"],
+                "benchmarks": module["best_for"],
+            },
+        }
+        evidence_bundles.append(
+            typed_record(
+                "evidence-bundle",
+                "EVIDENCE_BUNDLE",
+                evidence_id,
+                evidence_payload,
+                [pack_ref, recipe_ref, adapter_ref, preferred_env_ref],
+            )
+        )
+
+        verification_records.append(
+            typed_record(
+                "verification-report",
+                "VERIFICATION_REPORT",
+                _phase2_pack_verification_id(slug),
+                _phase2_pack_verification_payload(module, pack_ref),
+                [pack_ref, *module["environment_refs"]],
+            )
+        )
+
+    for item in DECISIONS:
+        decisions.append(
+            typed_record(
+                "decision-log",
+                "DECISION_LOG",
+                item["decision_id"],
+                {
+                    "decision_id": item["decision_id"],
+                    "schema_version": "1.0.0",
+                    "title": item["title"],
+                    "statement": item["statement"],
+                    "rationale": item["rationale"],
+                    "chosen_refs": item["chosen_refs"],
+                    "rejected_refs": item["rejected_refs"],
+                    "tradeoffs": item["tradeoffs"],
+                    "status": item["status"],
+                },
+                sorted(set(item["chosen_refs"] + item["rejected_refs"])),
+            )
+        )
+
+    write_json(OUTPUT_ROOT / "substrate" / "knowledge-packs.json", packs)
+    write_json(OUTPUT_ROOT / "substrate" / "recipe-objects.json", recipes)
+    write_json(OUTPUT_ROOT / "substrate" / "decision-logs.json", decisions)
+    write_json(OUTPUT_ROOT / "environments" / "environment-specs.json", env_records)
+    write_json(OUTPUT_ROOT / "adapters" / "execution-adapter-specs.json", adapters)
+    write_json(OUTPUT_ROOT / "evidence" / "evidence-bundles.json", evidence_bundles)
+    write_json(OUTPUT_ROOT / "evidence" / "verification-reports.json", verification_records)
+
+    registry_by_slug = {module["slug"]: module for module in modules if module["inventory_visible"]}
+    registry_by_pack_slug = {module["knowledge_pack_slug"]: module for module in modules}
+    inventory_entries: list[dict] = []
+    for module in IMPLEMENTED_MODULES:
+        entry_module = registry_by_slug[module["slug"]]
+        inventory_entries.append(
+            {
+                "name": module["name"],
+                "slug": module["slug"],
+                "module_ref": minutes_module_ref(module["slug"]),
+                "category": module["category"],
+                "module_class": module["module_class"],
+                "minutes_source_refs": module["source_refs"],
+                "executable": True,
+                "implementation_status": "implemented",
+                "knowledge_pack_ref": artifact_ref("knowledge-pack", entry_module["knowledge_pack_slug"]),
+                "environment_refs": entry_module["environment_refs"],
+                "excluded_reason": None,
+                "phase2_link_status": "recommendable",
+                "alias_resolution_kind": "self",
+                "canonical_tool_name": module["name"],
+                **completed_inventory_metadata(module),
+            }
+        )
+    for module in EXCLUDED_MODULES:
+        alias_data = PHASE2_SUBSTITUTIONS.get(module["slug"])
+        entry_module = registry_by_slug[module["slug"]] if module["slug"] in registry_by_slug else None
+        canonical_module = (
+            registry_by_pack_slug.get(alias_data["knowledge_pack_slug"])
+            if alias_data
+            else entry_module
+        )
+        phase2_link_status = (
+            canonical_module["phase2_link_status"]
+            if canonical_module is not None
+            else "unlinked"
+        )
+        inventory_entries.append(
+            {
+                "name": module["name"],
+                "slug": module["slug"],
+                "module_ref": minutes_module_ref(module["slug"]),
+                "category": module["category"],
+                "module_class": module["module_class"],
+                "minutes_source_refs": module["source_refs"],
+                "executable": module["executable"],
+                "implementation_status": "excluded",
+                "knowledge_pack_ref": (
+                    artifact_ref("knowledge-pack", alias_data["knowledge_pack_slug"])
+                    if alias_data
+                    else artifact_ref("knowledge-pack", module["slug"])
+                ),
+                "environment_refs": excluded_environment_refs(module),
+                "excluded_reason": module["excluded_reason"],
+                "phase2_link_status": phase2_link_status,
+                "alias_resolution_kind": "substituted_by_canonical_pack" if alias_data else "self",
+                "canonical_tool_name": alias_data["canonical_tool_name"] if alias_data else module["name"],
+                **recovery_metadata_for_excluded(module),
+            }
+        )
+    inventory_entries = sorted(inventory_entries, key=lambda item: item["name"].lower())
+    excluded_entries = [
+        entry for entry in inventory_entries if entry["implementation_status"] == "excluded"
+    ]
+    write_json(
+        OUTPUT_ROOT / "substrate" / "minutes-inventory.json",
+        {
+            "schema_version": "1.0.0",
+            "focus_area": "engineering",
+            "source": "Normalized engineering sections from Conversation Minutes; Kimi/Gemma sections excluded.",
+            "recovery_plan": build_recovery_plan_metadata(),
+            "entries": inventory_entries,
+        },
+    )
+    write_text(EXCLUDED_PATH, render_excluded_ledger(excluded_entries))
+    acquisition_dossiers_json, acquisition_dossiers_markdown = build_deferred_acquisition_dossiers(
+        excluded_entries
+    )
+    write_json(ACQUISITION_DOSSIERS_JSON_PATH, acquisition_dossiers_json)
+    write_text(ACQUISITION_DOSSIERS_MD_PATH, acquisition_dossiers_markdown)
+
+
+def build_runtime_manifests() -> None:
+    profile_by_id = runtime_profile_map()
+    for profile in [item for item in _all_runtime_profiles() if item["delivery_kind"] == "uv_venv"]:
+        requirement_lines = "\n".join(profile["requirements"]) + "\n"
+        write_text(REPO_ROOT / profile["manifest_path"], requirement_lines)
+
+    for profile in [item for item in _all_runtime_profiles() if item["delivery_kind"] == "docker_image"]:
+        if "dockerfile_lines" in profile:
+            dockerfile = "\n".join(profile["dockerfile_lines"])
+        else:
+            uv_peer_id = profile["id"].replace("_docker", "_uv")
+            uv_peer = profile_by_id.get(uv_peer_id)
+            if uv_peer is not None:
+                dockerfile = "\n".join(
+                    [
+                        "FROM python:3.11-slim",
+                        "WORKDIR /workspace",
+                        f"COPY {uv_peer['manifest_path']} /tmp/requirements.txt",
+                        "RUN python -m pip install --upgrade pip && python -m pip install -r /tmp/requirements.txt",
+                        'ENTRYPOINT ["python"]',
+                        "",
+                    ]
+                )
+            else:
+                dockerfile = "\n".join(
+                    [
+                        "FROM ubuntu:24.04",
+                        "SHELL [\"/bin/bash\", \"-lc\"]",
+                        "WORKDIR /workspace",
+                        "RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends bash ca-certificates && rm -rf /var/lib/apt/lists/*",
+                        "CMD [\"bash\"]",
+                        "",
+                    ]
+                )
+        write_text(REPO_ROOT / profile["manifest_path"], dockerfile)
+
+    for profile in _all_runtime_profiles():
+        if profile["delivery_kind"] == "uv_venv":
+            launcher = "\n".join(
+                [
+                    "#!/usr/bin/env bash",
+                    "set -euo pipefail",
+                    'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"',
+                    f'ENV_DIR="$ROOT/{profile["runtime_locator"]}"',
+                    'exec "$ENV_DIR/bin/python" "$@"',
+                    "",
+                ]
+            )
+            write_text(REPO_ROOT / profile["launcher_ref"], launcher, executable=True)
+            continue
+        if profile["delivery_kind"] == "docker_image":
+            launcher = "\n".join(
+                [
+                    "#!/usr/bin/env bash",
+                    "set -euo pipefail",
+                    'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"',
+                    f'exec docker run --rm -v "$ROOT:$ROOT" -w "$ROOT" {profile["runtime_locator"]} "$@"',
+                    "",
+                ]
+            )
+            write_text(REPO_ROOT / profile["launcher_ref"], launcher, executable=True)
+            continue
+        if profile["delivery_kind"] == "host_app" and profile["id"] == "eng_rhino_host":
+            rhino_manifest = "\n".join(
+                [
+                    "runtime_path=/Applications/Rhino 8.app",
+                    "rhinocode_path=/Applications/Rhino 8.app/Contents/Resources/bin/rhinocode",
+                    "yak_path=/Applications/Rhino 8.app/Contents/Resources/bin/yak",
+                    "scripting_docs=https://www.rhino3d.com/features/developer/scripting/",
+                    "gh_python_docs=https://developer.rhino3d.com/guides/scripting/scripting-gh-python/",
+                    "gh_csharp_docs=https://developer.rhino3d.com/guides/scripting/scripting-gh-csharp/",
+                    "",
+                ]
+            )
+            write_text(REPO_ROOT / profile["manifest_path"], rhino_manifest)
+            rhino_launcher = "\n".join(
+                [
+                    "#!/usr/bin/env bash",
+                    "set -euo pipefail",
+                    'exec "/Applications/Rhino 8.app/Contents/Resources/bin/rhinocode" "$@"',
+                    "",
+                ]
+            )
+            write_text(REPO_ROOT / profile["launcher_ref"], rhino_launcher, executable=True)
+
+    dotnet_csproj = "\n".join(
+        [
+            "<Project Sdk=\"Microsoft.NET.Sdk\">",
+            "  <PropertyGroup>",
+            "    <OutputType>Exe</OutputType>",
+            "    <TargetFramework>net9.0</TargetFramework>",
+            "    <RollForward>Major</RollForward>",
+            "    <ImplicitUsings>enable</ImplicitUsings>",
+            "    <Nullable>enable</Nullable>",
+            "  </PropertyGroup>",
+            "  <ItemGroup>",
+            "    <PackageReference Include=\"UnitsNet\" Version=\"5.75.0\" />",
+            "    <PackageReference Include=\"MathNet.Numerics\" Version=\"5.0.0\" />",
+            "    <PackageReference Include=\"PicoGK\" Version=\"1.7.7.5\" />",
+            "  </ItemGroup>",
+            "</Project>",
+            "",
+        ]
+    )
+    dotnet_program = "\n".join(
+        [
+            "using MathNet.Numerics;",
+            "using System.Reflection;",
+            "using UnitsNet;",
+            "",
+            "var length = Length.FromMeters(1.0);",
+            "var gamma = SpecialFunctions.Gamma(5);",
+            'var picoAssembly = Assembly.Load("PicoGK");',
+            'Console.WriteLine($"UnitsNet:{length.Meters};MathNet:{gamma};PicoGK:{picoAssembly.GetName().Version}");',
+            "",
+        ]
+    )
+    write_text(
+        RUNTIME_ROOT / "dotnet" / "eng-dotnet" / "KnowledgeDotnetRuntime.csproj",
+        dotnet_csproj,
+    )
+    write_text(
+        RUNTIME_ROOT / "dotnet" / "eng-dotnet" / "Program.cs",
+        dotnet_program,
+    )
+    dotnet_launcher = "\n".join(
+        [
+            "#!/usr/bin/env bash",
+            "set -euo pipefail",
+            'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"',
+            'export DOTNET_ROLL_FORWARD="${DOTNET_ROLL_FORWARD:-Major}"',
+            'exec dotnet run --project "$ROOT/knowledge/coding-tools/runtime/dotnet/eng-dotnet/KnowledgeDotnetRuntime.csproj" -c Release -- "$@"',
+            "",
+        ]
+    )
+    write_text(RUNTIME_ROOT / "launchers" / "eng-dotnet.sh", dotnet_launcher, executable=True)
+
+
+def build_compiled_contexts() -> None:
+    sys.path.insert(0, str(REPO_ROOT / "services" / "api"))
+    from src.control_plane.knowledge_pool import load_knowledge_pool  # noqa: WPS433
+
+    catalog = load_knowledge_pool()
+    top_level_candidate_refs = catalog.recommendable_pack_refs()
+    project_constraints = {
+        "languages": ["python", "c++", "c#", "cli"],
+        "scope": "engineering_minutes_runtime_link",
+        "exclude_draft": True,
+        "verified_runtime_only": True,
+    }
+    for role, filename in (
+        ("general", "general-context.json"),
+        ("coder", "coder-context.json"),
+        ("reviewer", "reviewer-context.json"),
+    ):
+        record = catalog.compile_role_context_record(
+            role=role,
+            candidate_refs=top_level_candidate_refs,
+            task_class="engineering_minutes_runtime_link",
+            project_constraints=project_constraints,
+        )
+        write_json(
+            OUTPUT_ROOT / "compiled" / filename,
+            record.model_dump(mode="json", by_alias=True),
+        )
+
+    inventory = load_knowledge_pool().minutes_inventory
+    grouped_candidate_refs: dict[str, list[str]] = {}
+    for entry in inventory["entries"]:
+        if not entry["knowledge_pack_ref"]:
+            continue
+        grouped_candidate_refs.setdefault(f"kb:{entry['kb_build_batch']}", []).append(entry["knowledge_pack_ref"])
+        grouped_candidate_refs.setdefault(f"install:{entry['install_batch']}", []).append(entry["knowledge_pack_ref"])
+    grouped_candidate_refs["family:k2_backend_families"] = [
+        artifact_ref("knowledge-pack", slug)
+        for slug in ("petsc_family", "trilinos_family", "sparse_direct_family", "coinhsl_family", "nlp_time_chem_family", "geometry_native_family", "onemkl")
+    ]
+
+    phase2_root = OUTPUT_ROOT / "compiled" / "phase2"
+    for group_name, candidate_refs in grouped_candidate_refs.items():
+        refs = sorted(dict.fromkeys(candidate_refs))
+        if not refs:
+            continue
+        safe_name = group_name.replace(":", "_")
+        for role in ("general", "coder", "reviewer"):
+            record = catalog.compile_role_context_record(
+                role=role,
+                candidate_refs=refs,
+                task_class=f"phase2_{safe_name}",
+                project_constraints={
+                    "include_runtime_gated": True,
+                    "phase2_group": group_name,
+                },
+            )
+            write_json(
+                phase2_root / f"{safe_name}_{role}.json",
+                record.model_dump(mode="json", by_alias=True),
+            )
+
+
 def main() -> int:
     build_runtime_manifests()
     build_seed_files()
