@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process"
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises"
+import { chmod, mkdtemp, mkdir, rm, writeFile } from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
 import { describe, expect, it, vi } from "vitest"
@@ -38,6 +38,35 @@ describe("agent-platform server", () => {
     expect(body.choices[0]?.message.content).toContain("Echo")
   })
 
+  it("POST /v1/agents/run preserves the direct-agent envelope through OrchestrationEngine", async () => {
+    process.env.LLM_BACKEND = "mock"
+    const app = buildServer()
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/agents/run",
+      payload: {
+        agent: {
+          name: "researcher",
+          model: "mock-model",
+          systemPrompt: "You are a researcher.",
+        },
+        prompt: "Summarize the current task.",
+      },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = JSON.parse(res.body) as {
+      success: boolean
+      output: string
+      tokenUsage: { input_tokens: number; output_tokens: number }
+      toolCalls: unknown[]
+    }
+    expect(body.success).toBe(true)
+    expect(body.output).toContain("Echo")
+    expect(typeof body.tokenUsage.input_tokens).toBe("number")
+    expect(typeof body.tokenUsage.output_tokens).toBe("number")
+    expect(Array.isArray(body.toolCalls)).toBe(true)
+  })
+
   it("GET /v1/workflows lists workflows", async () => {
     const app = buildServer()
     const res = await app.inject({ method: "GET", url: "/v1/workflows" })
@@ -45,6 +74,82 @@ describe("agent-platform server", () => {
     const body = JSON.parse(res.body) as { workflows: string[] }
     expect(body.workflows).toContain("wrkhrs_chat")
     expect(body.workflows).not.toContain("engineering_physics_v1")
+  })
+
+  it("POST /v1/teams/run preserves the team envelope through OrchestrationEngine", async () => {
+    process.env.LLM_BACKEND = "mock"
+    const app = buildServer()
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/teams/run",
+      payload: {
+        team: {
+          name: "research-team",
+          agents: [
+            {
+              name: "planner",
+              model: "mock-model",
+              systemPrompt: "You plan work.",
+            },
+            {
+              name: "writer",
+              model: "mock-model",
+              systemPrompt: "You write summaries.",
+            },
+          ],
+        },
+        goal: "Produce a short status update.",
+      },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = JSON.parse(res.body) as {
+      success: boolean
+      totalTokenUsage: { input_tokens: number; output_tokens: number }
+      agentResults: Record<string, { output: string }>
+    }
+    expect(body.success).toBe(true)
+    expect(typeof body.totalTokenUsage.input_tokens).toBe("number")
+    expect(typeof body.totalTokenUsage.output_tokens).toBe("number")
+    expect(body.agentResults.planner?.output).toContain("Echo")
+    expect(body.agentResults.writer?.output).toContain("Echo")
+  })
+
+  it("POST /v1/tasks/run preserves the task envelope through OrchestrationEngine", async () => {
+    process.env.LLM_BACKEND = "mock"
+    const app = buildServer()
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/tasks/run",
+      payload: {
+        team: {
+          name: "task-team",
+          agents: [
+            {
+              name: "executor",
+              model: "mock-model",
+              systemPrompt: "You execute assigned tasks.",
+            },
+          ],
+        },
+        tasks: [
+          {
+            title: "Inspect state",
+            description: "Inspect the current task state and summarize it.",
+            assignee: "executor",
+          },
+        ],
+      },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = JSON.parse(res.body) as {
+      success: boolean
+      totalTokenUsage: { input_tokens: number; output_tokens: number }
+      agentResults: Record<string, { output: string }>
+    }
+    expect(body.success).toBe(true)
+    expect(typeof body.totalTokenUsage.input_tokens).toBe("number")
+    expect(typeof body.totalTokenUsage.output_tokens).toBe("number")
+    expect(body.agentResults.executor?.output).toContain("Echo")
   })
 
   it("legacy engineering_physics_v1 workflow returns 410", async () => {
@@ -153,10 +258,12 @@ describe("agent-platform server", () => {
     delete process.env.ORCHESTRATOR_API_URL
   })
 
-  it("POST /v1/workflows/execute engineering_workflow dispatches coding_model packets via model-runtime", async () => {
+  it("POST /v1/workflows/execute engineering_workflow dispatches coding_model packets via Claw Code", async () => {
     process.env.LLM_BACKEND = "mock"
     process.env.ORCHESTRATOR_API_URL = "http://127.0.0.1:7777"
-    process.env.MODEL_RUNTIME_URL = "http://127.0.0.1:8765"
+    const workspaceRoot = await mkdtemp(path.join(os.tmpdir(), "agent-platform-claw-workflow-"))
+    const fakeClaw = await createFakeClawBinary("generated governed patch")
+    process.env.CLAW_CODE_BINARY = fakeClaw
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string | URL) => {
@@ -169,6 +276,26 @@ describe("agent-platform server", () => {
               engineering_session_id: "sess-2",
               problem_brief: { problem_brief_id: "pb-1", title: "Strict task" },
               problem_brief_ref: "artifact://problem_brief/pb-1",
+              knowledge_pool_assessment: {
+                knowledge_pool_assessment_id: "kpa-1",
+                schema_version: "1.0.0",
+                coverage_class: "strong",
+                required_for_mode: true,
+                candidate_pack_refs: ["artifact://knowledge-pack/demo-pack"],
+              },
+              knowledge_pool_assessment_ref: "artifact://knowledge_pool_assessment/kpa-1",
+              knowledge_pool_coverage: "strong",
+              knowledge_candidate_refs: ["artifact://knowledge-pack/demo-pack"],
+              knowledge_role_contexts: {
+                coder: {
+                  role_context_bundle_id: "coder_ctx_1",
+                  role: "coder",
+                  source_artifact_refs: ["artifact://knowledge-pack/demo-pack"],
+                  compiled_summary: "Use the verified demo pack and runtime.",
+                },
+              },
+              knowledge_role_context_refs: ["artifact://role_context_bundle/coder_ctx_1"],
+              knowledge_required: true,
               engineering_state: {
                 engineering_state_id: "es-1",
                 open_issues: [],
@@ -188,6 +315,17 @@ describe("agent-platform server", () => {
                   required_outputs: [{ artifact_type: "CODE_PATCH" }],
                   acceptance_criteria: ["Emit a patch artifact"],
                   constraints: ["Honor the governed packet"],
+                  knowledge_context: {
+                    assessment_ref: "artifact://knowledge_pool_assessment/kpa-1",
+                    candidate_pack_refs: ["artifact://knowledge-pack/demo-pack"],
+                    role_context_ref: "artifact://role_context_bundle/coder_ctx_1",
+                    role_context_summary: "Use the verified demo pack and runtime.",
+                    preferred_adapter_ref: "artifact://execution-adapter/demo-adapter",
+                    preferred_environment_ref: "artifact://environment-spec/demo-env",
+                    runtime_verification_refs: ["artifact://verification-report/demo-runtime"],
+                    coverage_class: "strong",
+                    required: true,
+                  },
                   routing_metadata: { selected_executor: "coding_model" },
                   budget_policy: { allow_escalation: false },
                 },
@@ -212,16 +350,6 @@ describe("agent-platform server", () => {
             { status: 200 },
           )
         }
-        if (u.includes("/infer/coding")) {
-          return new Response(
-            JSON.stringify({
-              usage: { prompt_tokens: 5, completion_tokens: 8, latency_ms: 2 },
-              model_id_resolved: "mock-coding-model",
-              text: "generated governed patch",
-            }),
-            { status: 200 },
-          )
-        }
         return new Response("nf", { status: 404 })
       }),
     )
@@ -236,6 +364,11 @@ describe("agent-platform server", () => {
           engagement_mode: "strict_engineering",
           engagement_mode_source: "explicit",
           minimum_engagement_mode: "strict_engineering",
+          context: {
+            workspace: {
+              worktree_path: workspaceRoot,
+            },
+          },
           messages: [
             {
               role: "user",
@@ -267,13 +400,103 @@ describe("agent-platform server", () => {
     expect(body.result?.referential_state?.selected_executor).toBe("coding_model")
     vi.unstubAllGlobals()
     delete process.env.ORCHESTRATOR_API_URL
-    delete process.env.MODEL_RUNTIME_URL
+    delete process.env.CLAW_CODE_BINARY
+    await rm(workspaceRoot, { recursive: true, force: true })
+    await rm(path.dirname(fakeClaw), { recursive: true, force: true })
+  })
+
+  it("POST /v1/workflows/execute engineering_workflow blocks when required knowledge role context is missing", async () => {
+    process.env.LLM_BACKEND = "mock"
+    process.env.ORCHESTRATOR_API_URL = "http://127.0.0.1:7777"
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string | URL) => {
+        const u = typeof url === "string" ? url : url.toString()
+        if (u.includes("/api/control-plane/engineering/intake")) {
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              status: "READY",
+              engineering_session_id: "sess-knowledge-blocked",
+              problem_brief: { problem_brief_id: "pb-1", title: "Strict task" },
+              problem_brief_ref: "artifact://problem_brief/pb-1",
+              knowledge_pool_assessment_ref: "artifact://knowledge_pool_assessment/kpa-1",
+              knowledge_pool_coverage: "strong",
+              knowledge_candidate_refs: ["artifact://knowledge-pack/demo-pack"],
+              knowledge_required: true,
+              engineering_state: {
+                engineering_state_id: "es-1",
+                open_issues: [],
+                conflicts: [],
+              },
+              engineering_state_ref: "artifact://engineering_state/es-1",
+              task_queue: { task_queue_id: "queue-1", items: [] },
+              task_packets: [
+                {
+                  task_packet_id: "55555555-5555-4555-8555-555555555555",
+                  task_type: "CODEGEN",
+                  objective: "Implement the governed patch",
+                  input_artifact_refs: [
+                    "artifact://problem_brief/pb-1",
+                    "artifact://engineering_state/es-1",
+                  ],
+                  required_outputs: [{ artifact_type: "CODE_PATCH" }],
+                  acceptance_criteria: ["Emit a patch artifact"],
+                  constraints: ["Honor the governed packet"],
+                  knowledge_context: {
+                    assessment_ref: "artifact://knowledge_pool_assessment/kpa-1",
+                    candidate_pack_refs: ["artifact://knowledge-pack/demo-pack"],
+                    coverage_class: "strong",
+                    required: true,
+                  },
+                  routing_metadata: { selected_executor: "coding_model" },
+                  budget_policy: { allow_escalation: false },
+                },
+              ],
+              ready_for_task_decomposition: true,
+              required_gates: [],
+              clarification_questions: [],
+            }),
+            { status: 200 },
+          )
+        }
+        return new Response("nf", { status: 404 })
+      }),
+    )
+
+    const app = buildServer()
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/workflows/execute",
+      payload: {
+        workflow_name: "engineering_workflow",
+        input_data: {
+          messages: [
+            {
+              role: "user",
+              content: "Implement the governed patch with required knowledge context.",
+            },
+          ],
+        },
+      },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = JSON.parse(res.body) as {
+      status: string
+      result: { final_response?: string; verification_outcome?: string; lifecycle_reason?: string }
+    }
+    expect(body.status).toBe("completed")
+    expect(body.result?.final_response).toContain("knowledge_context.role_context_ref")
+    expect(body.result?.verification_outcome).toBe("BLOCKED")
+    expect(body.result?.lifecycle_reason).toBe("governance_gate")
+    vi.unstubAllGlobals()
+    delete process.env.ORCHESTRATOR_API_URL
   })
 
   it("POST /v1/workflows/execute engineering_workflow fails closed when coding_model is unavailable", async () => {
     process.env.LLM_BACKEND = "mock"
     process.env.ORCHESTRATOR_API_URL = "http://127.0.0.1:7777"
-    delete process.env.MODEL_RUNTIME_URL
+    delete process.env.CLAW_CODE_BINARY
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string | URL) => {
@@ -355,7 +578,7 @@ describe("agent-platform server", () => {
       result: { final_response?: string; verification_outcome?: string; lifecycle_reason?: string }
     }
     expect(body.status).toBe("completed")
-    expect(body.result?.final_response).toContain("requires MODEL_RUNTIME_URL")
+    expect(body.result?.final_response).toContain("requires a governed workspaceRoot")
     expect(body.result?.verification_outcome).toBe("BLOCKED")
     expect(body.result?.lifecycle_reason).toBe("executor_unavailable")
     vi.unstubAllGlobals()
@@ -532,6 +755,151 @@ async function initGitRepo(): Promise<string> {
   run(["git", "add", "."], repo)
   run(["git", "commit", "-m", "Initial commit"], repo)
   return repo
+}
+
+async function createFakeClawBinary(outputText: string): Promise<string> {
+  const root = await mkdtemp(path.join(os.tmpdir(), "fake-claw-"))
+  const scriptPath = path.join(root, "claw")
+  const script = `#!/usr/bin/env node
+const fs = require("node:fs");
+const path = require("node:path");
+const outputText = process.env.CLAW_TEST_OUTPUT_TEXT || ${JSON.stringify(outputText)};
+
+function send(message) {
+  const payload = Buffer.from(JSON.stringify(message), "utf8");
+  process.stdout.write(Buffer.from("Content-Length: " + payload.length + "\\r\\n\\r\\n", "utf8"));
+  process.stdout.write(payload);
+}
+
+function toolResult(id, payload) {
+  send({
+    jsonrpc: "2.0",
+    id,
+    result: {
+      content: [{ type: "text", text: JSON.stringify(payload) }],
+    },
+  });
+}
+
+function writeWorkerState(cwd, state) {
+  const stateDir = path.join(cwd, ".claw");
+  fs.mkdirSync(stateDir, { recursive: true });
+  fs.writeFileSync(path.join(stateDir, "worker-state.json"), JSON.stringify(state, null, 2));
+}
+
+function parseFrames(chunkBuffer) {
+  const messages = [];
+  while (true) {
+    const headerEnd = chunkBuffer.indexOf("\\r\\n\\r\\n");
+    if (headerEnd === -1) break;
+    const header = chunkBuffer.slice(0, headerEnd).toString("utf8");
+    const match = header.match(/content-length:\\s*(\\d+)/i);
+    if (!match) break;
+    const length = Number(match[1]);
+    const frameStart = headerEnd + 4;
+    const frameEnd = frameStart + length;
+    if (chunkBuffer.length < frameEnd) break;
+    messages.push(JSON.parse(chunkBuffer.slice(frameStart, frameEnd).toString("utf8")));
+    chunkBuffer = chunkBuffer.slice(frameEnd);
+  }
+  return { messages, rest: chunkBuffer };
+}
+
+if (process.argv[2] !== "mcp" || process.argv[3] !== "serve") {
+  process.exit(0);
+}
+
+let buffer = Buffer.alloc(0);
+process.stdin.on("data", (chunk) => {
+  buffer = Buffer.concat([buffer, chunk]);
+  const parsed = parseFrames(buffer);
+  buffer = parsed.rest;
+  for (const message of parsed.messages) {
+    if (message.method === "initialize") {
+      send({
+        jsonrpc: "2.0",
+        id: message.id,
+        result: {
+          protocolVersion: message.params.protocolVersion,
+          capabilities: {},
+          serverInfo: { name: "fake-claw", version: "0.1.0" },
+        },
+      });
+      continue;
+    }
+    if (message.method === "tools/list") {
+      send({
+        jsonrpc: "2.0",
+        id: message.id,
+        result: {
+          tools: [
+            { name: "RunTaskPacket" },
+            { name: "WorkerCreate" },
+            { name: "WorkerObserve" },
+            { name: "WorkerResolveTrust" },
+            { name: "WorkerRestart" },
+            { name: "Agent" },
+          ],
+        },
+      });
+      continue;
+    }
+    if (message.method !== "tools/call") {
+      continue;
+    }
+    const name = message.params.name;
+    const args = message.params.arguments || {};
+    if (name === "RunTaskPacket") {
+      toolResult(message.id, { task_id: "task-1", status: "created" });
+      continue;
+    }
+    if (name === "WorkerCreate") {
+      writeWorkerState(args.cwd, {
+        worker_id: "worker-1",
+        status: "spawning",
+        is_ready: false,
+        trust_gate_cleared: true,
+        seconds_since_update: 0,
+      });
+      toolResult(message.id, { worker_id: "worker-1", trust_auto_resolve: true });
+      continue;
+    }
+    if (name === "WorkerObserve") {
+      writeWorkerState(process.cwd(), {
+        worker_id: "worker-1",
+        status: "ready_for_prompt",
+        is_ready: true,
+        trust_gate_cleared: true,
+        seconds_since_update: 0,
+      });
+      toolResult(message.id, { worker_id: "worker-1", status: "ready_for_prompt" });
+      continue;
+    }
+    if (name === "WorkerResolveTrust" || name === "WorkerRestart") {
+      toolResult(message.id, { worker_id: "worker-1", status: "spawning" });
+      continue;
+    }
+    if (name === "Agent") {
+      const agentStore = process.env.CLAWD_AGENT_STORE || path.join(process.cwd(), ".clawd-agents");
+      fs.mkdirSync(agentStore, { recursive: true });
+      const manifestFile = path.join(agentStore, "agent-test.json");
+      const outputFile = path.join(agentStore, "agent-test.md");
+      const manifest = {
+        agentId: "agent-test",
+        status: "completed",
+        manifestFile,
+        outputFile,
+      };
+      fs.writeFileSync(outputFile, outputText);
+      fs.writeFileSync(manifestFile, JSON.stringify(manifest, null, 2));
+      toolResult(message.id, manifest);
+    }
+  }
+});
+`
+  await writeFile(scriptPath, script, "utf8")
+  await chmod(scriptPath, 0o755)
+  return scriptPath
 }
 
 function run(command: string[], cwd: string): void {

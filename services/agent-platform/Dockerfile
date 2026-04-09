@@ -1,11 +1,11 @@
-# Monorepo: @server/open-multi-agent + @server/agent-platform-server
+# Monorepo: merged OMA workspace + @server/agent-platform-server
 FROM node:22-bookworm-slim AS builder
 
 WORKDIR /build
 
 COPY package.json package-lock.json ./
-COPY open-multi-agent ./open-multi-agent
-COPY server ./server
+COPY services/agent-platform/server ./services/agent-platform/server
+COPY ["merged claude leak/packages/open-multi-agent", "./merged claude leak/packages/open-multi-agent"]
 
 RUN npm ci
 RUN npm run build -w @server/open-multi-agent && npm run build -w @server/agent-platform-server
@@ -19,10 +19,10 @@ WORKDIR /app
 
 COPY --from=builder /build/package.json /build/package-lock.json ./
 COPY --from=builder /build/node_modules ./node_modules
-COPY --from=builder /build/open-multi-agent ./open-multi-agent
-COPY --from=builder /build/server ./server
+COPY --from=builder /build/services/agent-platform/server ./services/agent-platform/server
+COPY --from=builder ["/build/merged claude leak", "./merged claude leak"]
 
-WORKDIR /app/server
+WORKDIR /app/services/agent-platform/server
 
 ENV NODE_ENV=production
 EXPOSE 8000

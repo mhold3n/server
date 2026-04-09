@@ -12,7 +12,7 @@
   "dependencies": {
     "@langchain/core": "^0.3.40",
     "@langchain/langgraph": "^0.2.74",
-    "@server/open-multi-agent": "file:../open-multi-agent",
+    "@server/open-multi-agent": "file:../../../merged claude leak/packages/open-multi-agent",
     "fastify": "^5.1.0",
     "zod": "^3.23.8"
   },

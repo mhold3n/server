@@ -1,9 +1,9 @@
 import { spawn } from "node:child_process"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
-import { OpenMultiAgent } from "@server/open-multi-agent"
 import type { PlatformConfig } from "../config.js"
-import { postInferMultimodal } from "../llm/model-runtime-client.js"
+import { LLMManager } from "../llm/manager.js"
+import { OrchestrationEngine } from "../orchestration/engine.js"
 import {
   appendCallbackError,
   completeBackendRun,
@@ -26,8 +26,6 @@ const CALLBACK_TIMEOUT_MS = 150
 
 interface ExecuteRunOptions {
   cfg: PlatformConfig
-  defaultModel: string
-  defaultProvider: "anthropic" | "openai"
 }
 
 interface ExecutionAccumulator {
@@ -53,6 +51,17 @@ interface ActiveTaskPacket {
     implementation_hints?: string[]
     target_paths?: string[]
   }
+  knowledge_context?: {
+    assessment_ref?: string
+    candidate_pack_refs?: string[]
+    role_context_ref?: string
+    role_context_summary?: string
+    preferred_adapter_ref?: string
+    preferred_environment_ref?: string
+    runtime_verification_refs?: string[]
+    coverage_class?: string
+    required?: boolean
+  }
 }
 
 interface TaskPacketManifest {
@@ -60,6 +69,16 @@ interface TaskPacketManifest {
   active_task_packet_ref?: string
   problem_brief_ref?: string
   engineering_state_ref?: string
+  knowledge_pool_assessment_ref?: string
+  knowledge_pool_coverage?: string
+  knowledge_candidate_refs?: string[]
+  knowledge_role_context_refs?: string[]
+  knowledge_gaps?: string[]
+  knowledge_required?: boolean
+  active_knowledge_assessment_ref?: string
+  active_role_context_ref?: string
+  active_preferred_adapter_ref?: string
+  active_preferred_environment_ref?: string
   task_queue?: Record<string, unknown>
   task_packets_path?: string
   escalation_packets?: Array<Record<string, unknown>>
@@ -179,9 +198,37 @@ async function executeImplementationPhase(
   if (!selectedExecutor) {
     throw new Error("Active governed task packet is missing routing_metadata.selected_executor.")
   }
+  const knowledge = activeTaskPacket.knowledge_context
+  const knowledgeRequired = knowledge?.required === true || manifest?.knowledge_required === true
+  if (knowledgeRequired) {
+    if (!knowledge) {
+      throw new Error(
+        "Active governed task packet requires knowledge_context before execution.",
+      )
+    }
+    if (!knowledge.assessment_ref) {
+      throw new Error(
+        "Active governed task packet requires knowledge_context.assessment_ref before execution.",
+      )
+    }
+    if (!knowledge.role_context_ref) {
+      throw new Error(
+        "Active governed task packet requires knowledge_context.role_context_ref before execution.",
+      )
+    }
+    if (
+      knowledge.preferred_environment_ref &&
+      (!Array.isArray(knowledge.runtime_verification_refs) ||
+        knowledge.runtime_verification_refs.length === 0)
+    ) {
+      throw new Error(
+        "Active governed task packet requires runtime_verification_refs for the preferred environment.",
+      )
+    }
+  }
   const effectiveObjective = activeTaskPacket.objective ?? record.request.plan.objective
 
-  if (shouldUseMockExecutor(options.defaultProvider, options.cfg.llmBackend)) {
+  if (shouldUseMockExecutor(options.cfg.llmBackend)) {
     const notePath = path.join(workspaceRoot, ".birtha", "mock-agent-notes.md")
     await mkdir(path.dirname(notePath), { recursive: true })
     await writeFile(
@@ -485,16 +532,13 @@ async function runCommand(
 }
 
 function shouldUseMockExecutor(
-  defaultProvider: "anthropic" | "openai",
   llmBackend: string,
 ): boolean {
-  if (llmBackend === "mock" || llmBackend === "none" || llmBackend === "disabled") {
-    return true
-  }
-  if (defaultProvider === "openai") {
-    return !process.env.OPENAI_API_KEY
-  }
-  return !process.env.ANTHROPIC_API_KEY
+  return llmBackend === "mock" || llmBackend === "none" || llmBackend === "disabled"
+}
+
+function createRuntimeEngine(cfg: PlatformConfig): OrchestrationEngine {
+  return new OrchestrationEngine(cfg, new LLMManager(cfg))
 }
 
 function buildCodingSystemPrompt(workspaceRoot: string): string {
@@ -542,6 +586,7 @@ function buildImplementationTask(
     activeTaskPacket.code_guidance.implementation_hints.length > 0
       ? activeTaskPacket.code_guidance.implementation_hints
       : []
+  const knowledge = activeTaskPacket.knowledge_context
   return [
     `Objective: ${objective}`,
     activeTaskPacket?.context_summary
@@ -555,6 +600,34 @@ function buildImplementationTask(
       : "Acceptance criteria: satisfy the task packet and preserve workspace safety.",
     implementationHints.length > 0
       ? `Implementation outline:\n- ${implementationHints.join("\n- ")}`
+      : "",
+    knowledge?.assessment_ref
+      ? `Knowledge pool assessment ref: ${knowledge.assessment_ref}`
+      : manifest?.knowledge_pool_assessment_ref
+        ? `Knowledge pool assessment ref: ${manifest.knowledge_pool_assessment_ref}`
+        : "",
+    knowledge?.coverage_class
+      ? `Knowledge coverage: ${knowledge.coverage_class}`
+      : manifest?.knowledge_pool_coverage
+        ? `Knowledge coverage: ${manifest.knowledge_pool_coverage}`
+        : "",
+    knowledge?.candidate_pack_refs && knowledge.candidate_pack_refs.length > 0
+      ? `Knowledge candidate packs:\n- ${knowledge.candidate_pack_refs.join("\n- ")}`
+      : manifest?.knowledge_candidate_refs && manifest.knowledge_candidate_refs.length > 0
+        ? `Knowledge candidate packs:\n- ${manifest.knowledge_candidate_refs.join("\n- ")}`
+        : "",
+    knowledge?.role_context_ref ? `Role context ref: ${knowledge.role_context_ref}` : "",
+    knowledge?.role_context_summary
+      ? `Role context summary:\n${knowledge.role_context_summary}`
+      : "",
+    knowledge?.preferred_adapter_ref
+      ? `Preferred adapter ref: ${knowledge.preferred_adapter_ref}`
+      : "",
+    knowledge?.preferred_environment_ref
+      ? `Preferred environment ref: ${knowledge.preferred_environment_ref}`
+      : "",
+    knowledge?.runtime_verification_refs && knowledge.runtime_verification_refs.length > 0
+      ? `Runtime verification refs:\n- ${knowledge.runtime_verification_refs.join("\n- ")}`
       : "",
     manifest?.active_task_packet_ref
       ? `Active governed task packet: ${manifest.active_task_packet_ref}`
@@ -576,6 +649,7 @@ function buildReadOnlyTask(
   manifest?: TaskPacketManifest,
 ): string {
   const objective = manifest?.active_task_packet?.objective ?? "governed engineering task"
+  const knowledge = manifest?.active_task_packet?.knowledge_context
   return [
     `${title}: ${objective}`,
     manifest?.active_task_packet_ref
@@ -586,6 +660,27 @@ function buildReadOnlyTask(
       : "",
     manifest?.engineering_state_ref
       ? `Engineering state ref: ${manifest.engineering_state_ref}`
+      : "",
+    knowledge?.assessment_ref
+      ? `Knowledge pool assessment ref: ${knowledge.assessment_ref}`
+      : manifest?.knowledge_pool_assessment_ref
+        ? `Knowledge pool assessment ref: ${manifest.knowledge_pool_assessment_ref}`
+        : "",
+    knowledge?.role_context_ref
+      ? `Role context ref: ${knowledge.role_context_ref}`
+      : manifest?.active_role_context_ref
+        ? `Role context ref: ${manifest.active_role_context_ref}`
+        : "",
+    knowledge?.role_context_summary
+      ? `Role context summary:\n${knowledge.role_context_summary}`
+      : "",
+    knowledge?.preferred_environment_ref
+      ? `Preferred environment ref: ${knowledge.preferred_environment_ref}`
+      : manifest?.active_preferred_environment_ref
+        ? `Preferred environment ref: ${manifest.active_preferred_environment_ref}`
+        : "",
+    knowledge?.runtime_verification_refs && knowledge.runtime_verification_refs.length > 0
+      ? `Runtime verification refs:\n- ${knowledge.runtime_verification_refs.join("\n- ")}`
       : "",
     "Treat the governed manifest and active task packet as authoritative.",
   ]
@@ -598,44 +693,49 @@ async function executeCodingModelRun(
   options: ExecuteRunOptions,
   accumulator: ExecutionAccumulator,
   manifest: TaskPacketManifest | undefined,
-  onCommand: (command: CommandExecution) => void,
+  _onCommand: (command: CommandExecution) => void,
 ): Promise<void> {
   const workspaceRoot = record.request.workspace.worktree_path
-  const tools = createWorkspaceTools(workspaceRoot, { onCommand })
-  const orchestration = new OpenMultiAgent({
-    defaultModel: options.defaultModel,
-    defaultProvider: options.defaultProvider,
-    enableBuiltInTools: false,
-    extraTools: tools,
-  })
-  const toolNames = tools.map((tool) => tool.name)
-  const team = orchestration.createTeam(`devplane-${record.request.task_id}`, {
-    name: "devplane-coding-model",
-    sharedMemory: true,
-    maxConcurrency: 1,
-    agents: [
-      {
-        name: "implementation_executor",
-        model: options.defaultModel,
-        provider: options.defaultProvider,
-        systemPrompt: buildCodingSystemPrompt(workspaceRoot),
-        tools: toolNames,
-        maxTurns: 10,
-      },
-    ],
-  })
-  const result = await orchestration.runTasks(team, [
-    {
-      title: "Implement governed task packet",
-      description: buildImplementationTask(record.request, manifest),
-      assignee: "implementation_executor",
+  const engine = createRuntimeEngine(options.cfg)
+  const packet = manifest?.active_task_packet
+  if (!packet) {
+    throw new Error("coding_model requires an active governed task packet.")
+  }
+  const prompt = buildImplementationTask(record.request, manifest)
+  const result = await engine.runGovernedEngineering({
+    selectedExecutor: "coding_model",
+    title: String(packet.objective ?? record.request.plan.objective),
+    prompt,
+    systemPrompt: buildCodingSystemPrompt(workspaceRoot),
+    workspaceRoot,
+    claw: {
+      workspaceRoot,
+      objective: String(packet.objective ?? record.request.plan.objective),
+      scope:
+        packet.context_summary ??
+        packet.code_guidance?.target_paths?.join(", ") ??
+        record.request.plan.objective,
+      repo: record.request.workspace.canonical_repo_path,
+      branchPolicy: `${record.request.workspace.branch_name} on ${record.request.workspace.base_branch}`,
+      acceptanceTests:
+        record.request.plan.verification_blocks.length > 0
+          ? record.request.plan.verification_blocks.map((block) => block.command)
+          : record.request.plan.verification_plan,
+      commitPolicy: "leave changes ready for deterministic verification",
+      reportingContract:
+        "Persist execution through Claw manifest/output files and summarize changed files only.",
+      escalationPolicy:
+        "Stop on destructive ambiguity, trust issues, or broken transport and surface blockers in the manifest.",
+      prompt,
+      agentName: `devplane-${record.request.task_id}`,
     },
-  ])
+  })
+  accumulator.artifacts.push(...(result.artifacts ?? []))
   await writeExecutorSummaryArtifact(
     workspaceRoot,
     "coding-model-output.md",
     "# Coding Model Output\n\n" +
-      (result.agentResults.get("implementation_executor")?.output ?? "(no executor output)\n"),
+      (result.output || "(no executor output)\n"),
     accumulator,
     {
       name: "coding-model-output",
@@ -653,54 +753,42 @@ async function executeLegacyImplementationRun(
 ): Promise<void> {
   const workspaceRoot = record.request.workspace.worktree_path
   const tools = createWorkspaceTools(workspaceRoot, { onCommand })
-  const orchestration = new OpenMultiAgent({
-    defaultModel: options.defaultModel,
-    defaultProvider: options.defaultProvider,
-    enableBuiltInTools: false,
+  const engine = createRuntimeEngine(options.cfg)
+  const taskDescription = [
+    `Objective: ${record.request.plan.objective}`,
+    record.request.plan.constraints.length > 0
+      ? `Constraints:\n- ${record.request.plan.constraints.join("\n- ")}`
+      : "",
+    record.request.plan.acceptance_criteria.length > 0
+      ? `Acceptance criteria:\n- ${record.request.plan.acceptance_criteria.join("\n- ")}`
+      : "",
+    record.request.plan.implementation_outline.length > 0
+      ? `Implementation outline:\n- ${record.request.plan.implementation_outline.join("\n- ")}`
+      : "",
+    "Legacy dev-plane run: no governed packet is present, so use the plan as the primary execution contract.",
+    "Use workspace_git_status before and after meaningful edits.",
+  ]
+    .filter(Boolean)
+    .join("\n\n")
+  const result = await engine.runGovernedTaskGraph({
+    teamName: `devplane-${record.request.task_id}-legacy`,
     extraTools: tools,
-  })
-  const team = orchestration.createTeam(`devplane-${record.request.task_id}`, {
-    name: "devplane-legacy-code-task",
-    sharedMemory: true,
-    maxConcurrency: 1,
-    agents: [
+    tasks: [
       {
-        name: "implementation_executor",
-        model: options.defaultModel,
-        provider: options.defaultProvider,
+        title: "Implement requested changes",
+        description: taskDescription,
+        assignee: "implementation_executor",
         systemPrompt: buildCodingSystemPrompt(workspaceRoot),
-        tools: tools.map((tool) => tool.name),
+        toolNames: tools.map((tool) => tool.name),
         maxTurns: 10,
       },
     ],
   })
-  const result = await orchestration.runTasks(team, [
-    {
-      title: "Implement requested changes",
-      description: [
-        `Objective: ${record.request.plan.objective}`,
-        record.request.plan.constraints.length > 0
-          ? `Constraints:\n- ${record.request.plan.constraints.join("\n- ")}`
-          : "",
-        record.request.plan.acceptance_criteria.length > 0
-          ? `Acceptance criteria:\n- ${record.request.plan.acceptance_criteria.join("\n- ")}`
-          : "",
-        record.request.plan.implementation_outline.length > 0
-          ? `Implementation outline:\n- ${record.request.plan.implementation_outline.join("\n- ")}`
-          : "",
-        "Legacy dev-plane run: no governed packet is present, so use the plan as the primary execution contract.",
-        "Use workspace_git_status before and after meaningful edits.",
-      ]
-        .filter(Boolean)
-        .join("\n\n"),
-      assignee: "implementation_executor",
-    },
-  ])
   await writeExecutorSummaryArtifact(
     workspaceRoot,
     "legacy-agent-platform-output.md",
     "# Legacy Agent Platform Output\n\n" +
-      (result.agentResults.get("implementation_executor")?.output ?? "(no executor output)\n"),
+      (result.output || "(no executor output)\n"),
     accumulator,
     {
       name: "legacy-agent-platform-output",
@@ -722,39 +810,20 @@ async function executeLocalGeneralRun(
   const allowedTools = allTools.filter((tool) =>
     ["workspace_find_files", "workspace_file_read", "workspace_git_status"].includes(tool.name),
   )
-  const orchestration = new OpenMultiAgent({
-    defaultModel: options.defaultModel,
-    defaultProvider: options.defaultProvider,
-    enableBuiltInTools: false,
+  const engine = createRuntimeEngine(options.cfg)
+  const result = await engine.runGovernedEngineering({
+    selectedExecutor: "local_general_model",
+    title: "Summarize governed engineering state",
+    prompt: buildReadOnlyTask("Summarize governed engineering state", manifest),
+    systemPrompt: buildLocalGeneralSystemPrompt(workspaceRoot),
     extraTools: allowedTools,
+    toolNames: allowedTools.map((tool) => tool.name),
   })
-  const team = orchestration.createTeam(`devplane-${record.request.task_id}`, {
-    name: "devplane-local-general",
-    sharedMemory: true,
-    maxConcurrency: 1,
-    agents: [
-      {
-        name: "local_general_executor",
-        model: options.defaultModel,
-        provider: options.defaultProvider,
-        systemPrompt: buildLocalGeneralSystemPrompt(workspaceRoot),
-        tools: allowedTools.map((tool) => tool.name),
-        maxTurns: 6,
-      },
-    ],
-  })
-  const result = await orchestration.runTasks(team, [
-    {
-      title: "Summarize governed engineering state",
-      description: buildReadOnlyTask("Summarize governed engineering state", manifest),
-      assignee: "local_general_executor",
-    },
-  ])
   await writeExecutorSummaryArtifact(
     workspaceRoot,
     "local-general-output.md",
     "# Local General Model Output\n\n" +
-      (result.agentResults.get("local_general_executor")?.output ?? "(no executor output)\n"),
+      (result.output || "(no executor output)\n"),
     accumulator,
     {
       name: "local-general-output",
@@ -777,10 +846,15 @@ async function executeMultimodalRun(
   if (!packet) {
     throw new Error("multimodal_model requires an active governed task packet.")
   }
-  const response = await postInferMultimodal(
-    options.cfg,
-    packet as unknown as Record<string, unknown>,
-  )
+  const engine = createRuntimeEngine(options.cfg)
+  const response = await engine.runGovernedEngineering({
+    selectedExecutor: "multimodal_model",
+    title: "Extract multimodal structured output",
+    prompt: buildReadOnlyTask("Extract multimodal structured output", manifest),
+    systemPrompt:
+      "You are dispatching a governed multimodal extraction task. Return only packet-scoped structured output.",
+    packet: packet as unknown as Record<string, unknown>,
+  })
   const workspaceRoot = record.request.workspace.worktree_path
   const outputPath = path.join(workspaceRoot, ".birtha", "multimodal-output.json")
   await mkdir(path.dirname(outputPath), { recursive: true })
@@ -790,10 +864,10 @@ async function executeMultimodalRun(
       {
         selected_executor: "multimodal_model",
         task_packet_ref: manifest?.active_task_packet_ref,
-        model_id_resolved: response.model_id_resolved,
+        model_id_resolved: response.model,
         usage: response.usage,
-        structured_output: response.structured_output ?? {},
-        text: response.text ?? "",
+        structured_output: response.structuredOutput ?? {},
+        text: response.output ?? "",
       },
       null,
       2,
@@ -849,39 +923,20 @@ async function executeStrategicReviewerRun(
   const allowedTools = allTools.filter((tool) =>
     ["workspace_find_files", "workspace_file_read", "workspace_git_status"].includes(tool.name),
   )
-  const orchestration = new OpenMultiAgent({
-    defaultModel: options.defaultModel,
-    defaultProvider: options.defaultProvider,
-    enableBuiltInTools: false,
+  const engine = createRuntimeEngine(options.cfg)
+  const result = await engine.runGovernedEngineering({
+    selectedExecutor: "strategic_reviewer",
+    title: "Review typed escalation packet",
+    prompt: buildReadOnlyTask("Review typed escalation packet", manifest),
+    systemPrompt: buildStrategicReviewSystemPrompt(workspaceRoot),
     extraTools: allowedTools,
+    toolNames: allowedTools.map((tool) => tool.name),
   })
-  const team = orchestration.createTeam(`devplane-${record.request.task_id}`, {
-    name: "devplane-strategic-review",
-    sharedMemory: true,
-    maxConcurrency: 1,
-    agents: [
-      {
-        name: "strategic_reviewer",
-        model: options.defaultModel,
-        provider: options.defaultProvider,
-        systemPrompt: buildStrategicReviewSystemPrompt(workspaceRoot),
-        tools: allowedTools.map((tool) => tool.name),
-        maxTurns: 6,
-      },
-    ],
-  })
-  const result = await orchestration.runTasks(team, [
-    {
-      title: "Review typed escalation packet",
-      description: buildReadOnlyTask("Review typed escalation packet", manifest),
-      assignee: "strategic_reviewer",
-    },
-  ])
   await writeExecutorSummaryArtifact(
     workspaceRoot,
     "strategic-review-output.md",
     "# Strategic Review Output\n\n" +
-      (result.agentResults.get("strategic_reviewer")?.output ?? "(no reviewer output)\n"),
+      (result.output || "(no reviewer output)\n"),
     accumulator,
     {
       name: "strategic-review-output",

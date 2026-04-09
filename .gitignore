@@ -50,6 +50,15 @@ Thumbs.db
 # Local-only scratch / exports (never commit)
 CLAUDE RIP/
 
+# Vendored donor orchestration package: track only the open-multi-agent package,
+# ignore the surrounding donor snapshot and preserved upstream git metadata.
+/merged claude leak/*
+!/merged claude leak/packages/
+/merged claude leak/packages/*
+!/merged claude leak/packages/open-multi-agent/
+!/merged claude leak/packages/open-multi-agent/**
+/merged claude leak/packages/open-multi-agent/.git.upstream.backup/
+
 # Docker
 .dockerignore
 

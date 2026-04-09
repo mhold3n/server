@@ -6,7 +6,7 @@
     "node": ">=18.0.0"
   },
   "workspaces": [
-    "services/agent-platform/open-multi-agent",
+    "merged claude leak/packages/open-multi-agent",
     "services/agent-platform/server",
     "services/topology-viewer"
   ],

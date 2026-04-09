@@ -1,0 +1,66 @@
+{
+  "name": "@server/open-multi-agent",
+  "version": "1.0.1",
+  "description": "TypeScript multi-agent framework — one runTeam() call from goal to result. Auto task decomposition, parallel execution. 3 dependencies, deploys anywhere Node.js runs.",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "test:e2e": "RUN_E2E=1 vitest run tests/e2e/",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "multi-agent",
+    "orchestration",
+    "llm",
+    "claude",
+    "openai",
+    "mcp",
+    "tool-use",
+    "agent-framework"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "openai": "^4.73.0",
+    "zod": "^3.23.0"
+  },
+  "peerDependencies": {
+    "@google/genai": "^1.48.0"
+  },
+  "peerDependenciesMeta": {
+    "@google/genai": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@google/genai": "^1.48.0",
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
+    "tsx": "^4.21.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

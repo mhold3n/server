@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import type { PlatformConfig } from "../config.js"
 import { LLMManager } from "../llm/manager.js"
+import { OrchestrationEngine } from "../orchestration/engine.js"
 import { createChatWorkflow } from "./graph.js"
 
 function baseCfg(): PlatformConfig {
@@ -17,8 +18,19 @@ function baseCfg(): PlatformConfig {
     apiBrainMaxEscalationsPerTask: 1,
     apiBrainProvider: "openai",
     apiBrainModel: "brain-model",
+    orchestrationDefaultModel: "mock-llm",
+    orchestrationDefaultProvider: "openai",
+    orchestrationDefaultBaseUrl: undefined,
+    orchestrationDefaultApiKey: undefined,
+    orchestrationMaxTokenBudget: undefined,
     orchestratorApiUrl: "",
     modelRuntimeBaseUrl: "",
+    clawCodeBinary: "claw",
+    clawCodeModel: undefined,
+    clawCodeTrustedRoots: [],
+    clawCodePollIntervalMs: 10,
+    clawCodeTimeoutMs: 200,
+    clawCodeMaxConcurrentLanes: 1,
   }
 }
 
@@ -26,8 +38,9 @@ describe("hybrid escalation routing", () => {
   it("does not call api brain unless allowed in workflow_config", async () => {
     const cfg = baseCfg()
     const llm = new LLMManager(cfg)
+    const engine = new OrchestrationEngine(cfg, llm)
     let called = 0
-    const wf = createChatWorkflow(cfg, llm, async () => {
+    const wf = createChatWorkflow(cfg, engine, async () => {
       called += 1
       return "PLAN\n..."
     })
@@ -47,8 +60,9 @@ describe("hybrid escalation routing", () => {
   it("calls api brain once when allowed and heuristic triggers hit", async () => {
     const cfg = baseCfg()
     const llm = new LLMManager(cfg)
+    const engine = new OrchestrationEngine(cfg, llm)
     let called = 0
-    const wf = createChatWorkflow(cfg, llm, async (packet) => {
+    const wf = createChatWorkflow(cfg, engine, async (packet) => {
       called += 1
       expect(packet).toContain("\"type\": \"CODE_STATE\"")
       return "PLAN\ngoal:\nrecommended_strategy:\nordered_steps:\n1.\nstop_condition:"
@@ -72,8 +86,9 @@ describe("hybrid escalation routing", () => {
     const cfg = baseCfg()
     cfg.apiBrainMaxEscalationsPerTask = 0
     const llm = new LLMManager(cfg)
+    const engine = new OrchestrationEngine(cfg, llm)
     let called = 0
-    const wf = createChatWorkflow(cfg, llm, async () => {
+    const wf = createChatWorkflow(cfg, engine, async () => {
       called += 1
       return "PLAN\n..."
     })
@@ -90,4 +105,3 @@ describe("hybrid escalation routing", () => {
     expect(called).toBe(0)
   })
 })
-

@@ -2,14 +2,6 @@ import crypto from "node:crypto"
 import { pathToFileURL } from "node:url"
 import Fastify from "fastify"
 import { z } from "zod"
-import {
-  Agent,
-  OpenMultiAgent,
-  ToolExecutor,
-  ToolRegistry,
-  type AgentConfig,
-  type TeamConfig,
-} from "@server/open-multi-agent"
 import { loadConfig } from "./config.js"
 import { executeBackendRun } from "./devplane/runner.js"
 import {
@@ -20,6 +12,7 @@ import {
 import { devPlaneRunCreateSchema } from "./devplane/types.js"
 import { LLMManager } from "./llm/manager.js"
 import { createWrkhrsOmaTools } from "./oma/wrkhrs-tools.js"
+import { OrchestrationEngine } from "./orchestration/engine.js"
 import type { ChatMessage } from "./tools/wrkhrs.js"
 import { createChatWorkflow } from "./workflow/graph.js"
 import { createEngineeringWorkflow } from "./workflow/engineering-graph.js"
@@ -41,53 +34,48 @@ const WORKFLOW_NAMES = [
   "devplane_code_task",
 ] as const
 
+const providerSchema = z.enum(["anthropic", "copilot", "grok", "openai", "gemini"])
+
 export function buildServer() {
   const cfg = loadConfig()
   const llm = new LLMManager(cfg)
   const omaTools = createWrkhrsOmaTools(cfg)
+  const engine = new OrchestrationEngine(cfg, llm)
+  const defaultModel = cfg.orchestrationDefaultModel
+  const defaultProvider = cfg.orchestrationDefaultProvider
 
-  const defaultModel = process.env.OMA_DEFAULT_MODEL ?? "claude-sonnet-4-20250514"
-  const defaultProvider =
-    (process.env.OMA_DEFAULT_PROVIDER as "anthropic" | "openai" | undefined) ??
-    "anthropic"
-
-  function createOma(): OpenMultiAgent {
-    return new OpenMultiAgent({
-      defaultModel,
-      defaultProvider,
-      enableBuiltInTools: false,
-      extraTools: [...omaTools],
-    })
+  function toTokenUsage(
+    usage?: {
+      prompt_tokens: number
+      completion_tokens: number
+    },
+  ): { input_tokens: number; output_tokens: number } {
+    return {
+      input_tokens: usage?.prompt_tokens ?? 0,
+      output_tokens: usage?.completion_tokens ?? 0,
+    }
   }
 
   async function callApiBrain(packet: string): Promise<string> {
     if (!cfg.apiBrainEnabled) {
       return "API brain disabled."
     }
-    const model = cfg.apiBrainModel || defaultModel
-    const provider = cfg.apiBrainProvider || defaultProvider
-    const registry = new ToolRegistry()
-    for (const t of omaTools) {
-      registry.register(t)
-    }
-    const executor = new ToolExecutor(registry)
-    const agentConfig: AgentConfig = {
+    const result = await engine.runDirectAgent({
       name: "api_brain",
-      model,
-      provider,
+      prompt: packet,
       systemPrompt:
         "You are the hosted API brain. Return a compact PLAN/REVIEW/DECISION/PATCH_GUIDANCE. " +
         "Do not ask questions. Do not include raw logs. Use only the provided packet.",
-      tools: [],
+      model: cfg.apiBrainModel || defaultModel,
+      provider: cfg.apiBrainProvider || defaultProvider,
       maxTurns: 4,
-    }
-    const agent = new Agent(agentConfig, registry, executor)
-    const result = await agent.run(packet)
-    return result.output ?? ""
+      toolNames: [],
+    })
+    return result.output
   }
 
-  const chatWorkflow = createChatWorkflow(cfg, llm, callApiBrain)
-  const engineeringWorkflow = createEngineeringWorkflow(cfg, llm, callApiBrain)
+  const chatWorkflow = createChatWorkflow(cfg, engine, callApiBrain)
+  const engineeringWorkflow = createEngineeringWorkflow(cfg, engine, callApiBrain)
 
   const app = Fastify({ logger: true })
 
@@ -448,8 +436,6 @@ export function buildServer() {
     const backendRun = createBackendRun(parsed.data)
     void executeBackendRun(backendRun.run_id, {
       cfg,
-      defaultModel,
-      defaultProvider,
     }).catch((error) => {
       app.log.error(error)
     })
@@ -533,7 +519,7 @@ export function buildServer() {
     agent: z.object({
       name: z.string(),
       model: z.string(),
-      provider: z.enum(["anthropic", "openai"]).optional(),
+      provider: providerSchema.optional(),
       systemPrompt: z.string().optional(),
       tools: z.array(z.string()).optional(),
       maxTurns: z.number().optional(),
@@ -547,26 +533,21 @@ export function buildServer() {
       return reply.status(400).send({ detail: parsed.error.flatten() })
     }
     const { agent: agentSpec, prompt } = parsed.data
-    const registry = new ToolRegistry()
-    for (const t of omaTools) {
-      registry.register(t)
-    }
-    const executor = new ToolExecutor(registry)
-    const agentConfig: AgentConfig = {
+    const result = await engine.runDirectAgent({
       name: agentSpec.name,
+      prompt,
+      systemPrompt: agentSpec.systemPrompt,
       model: agentSpec.model,
       provider: agentSpec.provider ?? defaultProvider,
-      systemPrompt: agentSpec.systemPrompt,
-      tools: agentSpec.tools ?? ["search_knowledge_base", "get_domain_data"],
+      extraTools: omaTools,
+      toolNames: agentSpec.tools ?? ["search_knowledge_base", "get_domain_data"],
       maxTurns: agentSpec.maxTurns ?? 8,
-    }
-    const agent = new Agent(agentConfig, registry, executor)
-    const result = await agent.run(prompt)
+    })
     return {
       success: result.success,
       output: result.output,
-      tokenUsage: result.tokenUsage,
-      toolCalls: result.toolCalls,
+      tokenUsage: toTokenUsage(result.usage),
+      toolCalls: result.toolCalls ?? [],
     }
   })
 
@@ -578,7 +559,7 @@ export function buildServer() {
       z.object({
         name: z.string(),
         model: z.string(),
-        provider: z.enum(["anthropic", "openai"]).optional(),
+        provider: providerSchema.optional(),
         systemPrompt: z.string().optional(),
         tools: z.array(z.string()).optional(),
         maxTurns: z.number().optional(),
@@ -597,27 +578,26 @@ export function buildServer() {
       return reply.status(400).send({ detail: parsed.error.flatten() })
     }
     const body = parsed.data
-    const teamConfig: TeamConfig = {
-      name: body.team.name,
-      sharedMemory: body.team.sharedMemory ?? true,
-      maxConcurrency: body.team.maxConcurrency,
-      agents: body.team.agents.map((a) => ({
-        name: a.name,
-        model: a.model,
-        provider: a.provider ?? defaultProvider,
-        systemPrompt: a.systemPrompt,
-        tools: a.tools ?? ["search_knowledge_base", "get_domain_data"],
-        maxTurns: a.maxTurns ?? 6,
-      })),
-    }
     try {
-      const oma = createOma()
-      const team = oma.createTeam(`${body.team.name}-${crypto.randomUUID()}`, teamConfig)
-      const result = await oma.runTeam(team, body.goal)
+      const result = await engine.runGoalTeam({
+        teamName: `${body.team.name}-${crypto.randomUUID()}`,
+        goal: body.goal,
+        sharedMemory: body.team.sharedMemory ?? true,
+        maxConcurrency: body.team.maxConcurrency,
+        extraTools: omaTools,
+        agents: body.team.agents.map((agent) => ({
+          name: agent.name,
+          model: agent.model,
+          provider: agent.provider ?? defaultProvider,
+          systemPrompt: agent.systemPrompt,
+          toolNames: agent.tools ?? ["search_knowledge_base", "get_domain_data"],
+          maxTurns: agent.maxTurns ?? 6,
+        })),
+      })
       return {
         success: result.success,
-        totalTokenUsage: result.totalTokenUsage,
-        agentResults: Object.fromEntries(result.agentResults),
+        totalTokenUsage: toTokenUsage(result.usage),
+        agentResults: result.agentResults ?? {},
       }
     } catch (e) {
       request.log.error(e)
@@ -645,27 +625,43 @@ export function buildServer() {
       return reply.status(400).send({ detail: parsed.error.flatten() })
     }
     const body = parsed.data
-    const teamConfig: TeamConfig = {
-      name: body.team.name,
-      sharedMemory: body.team.sharedMemory ?? true,
-      maxConcurrency: body.team.maxConcurrency,
-      agents: body.team.agents.map((a) => ({
-        name: a.name,
-        model: a.model,
-        provider: a.provider ?? defaultProvider,
-        systemPrompt: a.systemPrompt,
-        tools: a.tools ?? ["search_knowledge_base", "get_domain_data"],
-        maxTurns: a.maxTurns ?? 6,
-      })),
-    }
     try {
-      const oma = createOma()
-      const team = oma.createTeam(`${body.team.name}-tasks-${crypto.randomUUID()}`, teamConfig)
-      const result = await oma.runTasks(team, body.tasks)
+      const fallbackAgent = body.team.agents[0]
+      if (!fallbackAgent) {
+        return reply.status(400).send({
+          detail: "team.agents must include at least one agent for /v1/tasks/run",
+        })
+      }
+
+      const agentByName = new Map(body.team.agents.map((agent) => [agent.name, agent]))
+      const result = await engine.runGovernedTaskGraph({
+        teamName: `${body.team.name}-tasks-${crypto.randomUUID()}`,
+        sharedMemory: body.team.sharedMemory ?? true,
+        maxConcurrency: body.team.maxConcurrency,
+        extraTools: omaTools,
+        tasks: body.tasks.map((task) => {
+          const assignee = task.assignee ?? fallbackAgent.name
+          const agent = agentByName.get(assignee)
+          if (!agent) {
+            throw new Error(`Task assignee ${assignee} is not defined in team.agents.`)
+          }
+          return {
+            title: task.title,
+            description: task.description,
+            assignee,
+            dependsOn: task.dependsOn,
+            systemPrompt: agent.systemPrompt ?? "",
+            toolNames: agent.tools ?? ["search_knowledge_base", "get_domain_data"],
+            maxTurns: agent.maxTurns ?? 6,
+            model: agent.model,
+            provider: agent.provider ?? defaultProvider,
+          }
+        }),
+      })
       return {
         success: result.success,
-        totalTokenUsage: result.totalTokenUsage,
-        agentResults: Object.fromEntries(result.agentResults),
+        totalTokenUsage: toTokenUsage(result.usage),
+        agentResults: result.agentResults ?? {},
       }
     } catch (e) {
       request.log.error(e)

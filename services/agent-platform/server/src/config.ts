@@ -12,10 +12,28 @@ export interface PlatformConfig {
   apiBrainMaxEscalationsPerTask: number
   apiBrainProvider: "anthropic" | "openai"
   apiBrainModel: string
+  orchestrationDefaultModel: string
+  orchestrationDefaultProvider: "anthropic" | "copilot" | "grok" | "openai" | "gemini"
+  orchestrationDefaultBaseUrl?: string
+  orchestrationDefaultApiKey?: string
+  orchestrationMaxTokenBudget?: number
   /** Base URL of FastAPI control plane (for structure classify + contract gates). */
   orchestratorApiUrl: string
   /** Python model-runtime (`/infer/*`, `/solve/*`); empty disables physics harness HTTP. */
   modelRuntimeBaseUrl: string
+  clawCodeBinary: string
+  clawCodeModel?: string
+  clawCodeTrustedRoots: string[]
+  clawCodePollIntervalMs: number
+  clawCodeTimeoutMs: number
+  clawCodeMaxConcurrentLanes: number
+}
+
+function parseCsv(value: string | undefined): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
 }
 
 export function loadConfig(): PlatformConfig {
@@ -39,9 +57,31 @@ export function loadConfig(): PlatformConfig {
       ((process.env.API_BRAIN_PROVIDER as "anthropic" | "openai" | undefined) ??
         "anthropic"),
     apiBrainModel: process.env.API_BRAIN_MODEL ?? "",
+    orchestrationDefaultModel:
+      process.env.OMA_DEFAULT_MODEL ?? process.env.API_BRAIN_MODEL ?? "claude-sonnet-4-20250514",
+    orchestrationDefaultProvider:
+      ((process.env.OMA_DEFAULT_PROVIDER as
+        | "anthropic"
+        | "copilot"
+        | "grok"
+        | "openai"
+        | "gemini"
+        | undefined) ?? "anthropic"),
+    orchestrationDefaultBaseUrl: (process.env.OMA_DEFAULT_BASE_URL ?? "").trim() || undefined,
+    orchestrationDefaultApiKey: (process.env.OMA_DEFAULT_API_KEY ?? "").trim() || undefined,
+    orchestrationMaxTokenBudget:
+      process.env.OMA_MAX_TOKEN_BUDGET !== undefined
+        ? Number(process.env.OMA_MAX_TOKEN_BUDGET)
+        : undefined,
     orchestratorApiUrl: (
       process.env.ORCHESTRATOR_API_URL ?? process.env.DEVPLANE_PUBLIC_BASE_URL ?? ""
     ).replace(/\/$/, ""),
     modelRuntimeBaseUrl: (process.env.MODEL_RUNTIME_URL ?? "").replace(/\/$/, ""),
+    clawCodeBinary: process.env.CLAW_CODE_BINARY ?? "claw",
+    clawCodeModel: (process.env.CLAW_CODE_MODEL ?? "").trim() || undefined,
+    clawCodeTrustedRoots: parseCsv(process.env.CLAW_CODE_TRUSTED_ROOTS),
+    clawCodePollIntervalMs: Number(process.env.CLAW_CODE_POLL_INTERVAL_MS ?? "1000"),
+    clawCodeTimeoutMs: Number(process.env.CLAW_CODE_TIMEOUT_MS ?? "120000"),
+    clawCodeMaxConcurrentLanes: Number(process.env.CLAW_CODE_MAX_CONCURRENT_LANES ?? "4"),
   }
 }

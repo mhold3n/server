@@ -9,11 +9,8 @@
 import { randomUUID } from "node:crypto"
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph"
 import type { PlatformConfig } from "../config.js"
-import { LLMBackendError, LLMManager } from "../llm/manager.js"
-import {
-  postInferCoding,
-  postInferMultimodal,
-} from "../llm/model-runtime-client.js"
+import { LLMBackendError } from "../llm/manager.js"
+import { OrchestrationEngine } from "../orchestration/engine.js"
 import type { ChatMessage } from "../tools/wrkhrs.js"
 
 export const EngineeringWorkflowAnnotation = Annotation.Root({
@@ -61,6 +58,23 @@ export const EngineeringWorkflowAnnotation = Annotation.Root({
   }),
   problem_brief: Annotation<Record<string, unknown> | undefined>(),
   problem_brief_ref: Annotation<string | undefined>(),
+  knowledge_pool_assessment: Annotation<Record<string, unknown> | undefined>(),
+  knowledge_pool_assessment_ref: Annotation<string | undefined>(),
+  knowledge_pool_coverage: Annotation<string | undefined>(),
+  knowledge_candidate_refs: Annotation<string[]>({
+    reducer: (_left, right) => right,
+    default: () => [],
+  }),
+  knowledge_role_contexts: Annotation<Record<string, Record<string, unknown>> | undefined>(),
+  knowledge_role_context_refs: Annotation<string[]>({
+    reducer: (_left, right) => right,
+    default: () => [],
+  }),
+  knowledge_gaps: Annotation<string[]>({
+    reducer: (_left, right) => right,
+    default: () => [],
+  }),
+  knowledge_required: Annotation<boolean | undefined>(),
   engineering_state: Annotation<Record<string, unknown> | undefined>(),
   engineering_state_ref: Annotation<string | undefined>(),
   clarification_questions: Annotation<string[]>({
@@ -183,8 +197,12 @@ function typedArtifact(
   const artifactId =
     typeof payload.problem_brief_id === "string"
       ? payload.problem_brief_id
+      : typeof payload.knowledge_pool_assessment_id === "string"
+        ? payload.knowledge_pool_assessment_id
       : typeof payload.engineering_state_id === "string"
         ? payload.engineering_state_id
+        : typeof payload.role_context_bundle_id === "string"
+          ? payload.role_context_bundle_id
         : typeof payload.task_queue_id === "string"
           ? payload.task_queue_id
           : typeof payload.task_packet_id === "string"
@@ -240,6 +258,13 @@ function packetExecutor(packet: Record<string, unknown> | undefined): string | u
   return selected || undefined
 }
 
+function packetKnowledgeContext(
+  packet: Record<string, unknown> | undefined,
+): Record<string, unknown> | undefined {
+  const knowledge = packet?.knowledge_context as Record<string, unknown> | undefined
+  return knowledge && typeof knowledge === "object" ? knowledge : undefined
+}
+
 function packetPrompt(
   packet: Record<string, unknown>,
   state: EngineeringWorkflowStateType,
@@ -249,8 +274,15 @@ function packetPrompt(
     ? (packet.acceptance_criteria as string[])
     : []
   const guidance = (packet.code_guidance as Record<string, unknown> | undefined) ?? {}
+  const knowledge = (packet.knowledge_context as Record<string, unknown> | undefined) ?? {}
   const implementationHints = Array.isArray(guidance.implementation_hints)
     ? (guidance.implementation_hints as string[])
+    : []
+  const candidatePackRefs = Array.isArray(knowledge.candidate_pack_refs)
+    ? (knowledge.candidate_pack_refs as string[])
+    : []
+  const runtimeVerificationRefs = Array.isArray(knowledge.runtime_verification_refs)
+    ? (knowledge.runtime_verification_refs as string[])
     : []
   const toolResults = state.required_tool_results && state.required_tool_results.length > 0
     ? `Required tool results:\n${JSON.stringify(state.required_tool_results, null, 2)}`
@@ -263,11 +295,49 @@ function packetPrompt(
     implementationHints.length > 0
       ? `Implementation hints:\n- ${implementationHints.join("\n- ")}`
       : "",
+    knowledge.assessment_ref
+      ? `Knowledge assessment ref: ${String(knowledge.assessment_ref)}`
+      : "",
+    knowledge.role_context_ref
+      ? `Role context ref: ${String(knowledge.role_context_ref)}`
+      : "",
+    knowledge.role_context_summary
+      ? `Role context summary:\n${String(knowledge.role_context_summary)}`
+      : "",
+    knowledge.preferred_adapter_ref
+      ? `Preferred adapter ref: ${String(knowledge.preferred_adapter_ref)}`
+      : "",
+    knowledge.preferred_environment_ref
+      ? `Preferred environment ref: ${String(knowledge.preferred_environment_ref)}`
+      : "",
+    candidatePackRefs.length > 0
+      ? `Candidate knowledge packs:\n- ${candidatePackRefs.join("\n- ")}`
+      : "",
+    runtimeVerificationRefs.length > 0
+      ? `Runtime verification refs:\n- ${runtimeVerificationRefs.join("\n- ")}`
+      : "",
     toolResults,
     "Use only the task packet and artifact refs as governing context.",
   ]
     .filter(Boolean)
     .join("\n\n")
+}
+
+function workspaceRootFromState(
+  state: EngineeringWorkflowStateType,
+): string | undefined {
+  const context = state.request_context
+  const workspace = (context?.workspace as Record<string, unknown> | undefined) ?? undefined
+  if (typeof workspace?.worktree_path === "string" && workspace.worktree_path.trim().length > 0) {
+    return workspace.worktree_path
+  }
+  if (typeof context?.workspace_root === "string" && context.workspace_root.trim().length > 0) {
+    return context.workspace_root
+  }
+  if (typeof context?.cwd === "string" && context.cwd.trim().length > 0) {
+    return context.cwd
+  }
+  return undefined
 }
 
 function intakeEngineering(): Partial<EngineeringWorkflowStateType> {
@@ -371,8 +441,52 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
       intake.pending_mode_change && typeof intake.pending_mode_change === "object"
         ? (intake.pending_mode_change as Record<string, unknown>)
         : state.pending_mode_change
+    const knowledgePoolAssessment =
+      intake.knowledge_pool_assessment && typeof intake.knowledge_pool_assessment === "object"
+        ? (intake.knowledge_pool_assessment as Record<string, unknown>)
+        : undefined
+    const knowledgeRoleContexts =
+      intake.knowledge_role_contexts && typeof intake.knowledge_role_contexts === "object"
+        ? (intake.knowledge_role_contexts as Record<string, Record<string, unknown>>)
+        : undefined
+    const knowledgePoolAssessmentRef =
+      typeof intake.knowledge_pool_assessment_ref === "string"
+        ? intake.knowledge_pool_assessment_ref
+        : undefined
+    const knowledgePoolCoverage =
+      typeof intake.knowledge_pool_coverage === "string"
+        ? intake.knowledge_pool_coverage
+        : undefined
+    const knowledgeCandidateRefs = Array.isArray(intake.knowledge_candidate_refs)
+      ? (intake.knowledge_candidate_refs as string[])
+      : []
+    const knowledgeRoleContextRefs = Array.isArray(intake.knowledge_role_context_refs)
+      ? (intake.knowledge_role_context_refs as string[])
+      : []
+    const knowledgeGaps = Array.isArray(intake.knowledge_gaps)
+      ? (intake.knowledge_gaps as string[])
+      : []
+    const knowledgeRequired =
+      typeof intake.knowledge_required === "boolean"
+        ? intake.knowledge_required
+        : undefined
+    const escalationPacket =
+      intake.escalation_packet && typeof intake.escalation_packet === "object"
+        ? (intake.escalation_packet as Record<string, unknown>)
+        : undefined
 
     const artifacts: Array<Record<string, unknown>> = []
+    if (knowledgePoolAssessment) {
+      artifacts.push(
+        typedArtifact(
+          "KNOWLEDGE_POOL_ASSESSMENT",
+          knowledgePoolAssessment,
+          [],
+          "agent_platform.engineering_graph.intake",
+          "local_general_model",
+        ),
+      )
+    }
     if (problemBrief) {
       artifacts.push(
         typedArtifact(
@@ -419,6 +533,34 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         ),
       )
     }
+    if (knowledgeRoleContexts) {
+      for (const payload of Object.values(knowledgeRoleContexts)) {
+        artifacts.push(
+          typedArtifact(
+            "ROLE_CONTEXT_BUNDLE",
+            payload,
+            Array.isArray(payload.source_artifact_refs)
+              ? (payload.source_artifact_refs as string[])
+              : [],
+            "agent_platform.engineering_graph.intake",
+            "local_general_model",
+          ),
+        )
+      }
+    }
+    if (escalationPacket) {
+      artifacts.push(
+        typedArtifact(
+          "ESCALATION_RECORD",
+          escalationPacket,
+          Array.isArray(escalationPacket.supporting_artifact_refs)
+            ? (escalationPacket.supporting_artifact_refs as string[])
+            : [],
+          "agent_platform.engineering_graph.intake",
+          "strategic_reviewer",
+        ),
+      )
+    }
     if (artifacts.length > 0) {
       await persistRunEvent(cfg, state, {
         message: "engineering_workflow:intake",
@@ -441,6 +583,14 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         engagement_mode_reasons: engagementModeReasons,
         minimum_engagement_mode: minimumEngagementMode,
         pending_mode_change: pendingModeChange,
+        knowledge_pool_assessment: knowledgePoolAssessment,
+        knowledge_pool_assessment_ref: knowledgePoolAssessmentRef,
+        knowledge_pool_coverage: knowledgePoolCoverage,
+        knowledge_candidate_refs: knowledgeCandidateRefs,
+        knowledge_role_contexts: knowledgeRoleContexts,
+        knowledge_role_context_refs: knowledgeRoleContextRefs,
+        knowledge_gaps: knowledgeGaps,
+        knowledge_required: knowledgeRequired,
         lifecycle_reason: "clarification_required",
         lifecycle_detail: { clarification_questions: clarificationQuestions.length },
         problem_brief: problemBrief,
@@ -471,6 +621,14 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         engagement_mode_reasons: engagementModeReasons,
         minimum_engagement_mode: minimumEngagementMode,
         pending_mode_change: pendingModeChange,
+        knowledge_pool_assessment: knowledgePoolAssessment,
+        knowledge_pool_assessment_ref: knowledgePoolAssessmentRef,
+        knowledge_pool_coverage: knowledgePoolCoverage,
+        knowledge_candidate_refs: knowledgeCandidateRefs,
+        knowledge_role_contexts: knowledgeRoleContexts,
+        knowledge_role_context_refs: knowledgeRoleContextRefs,
+        knowledge_gaps: knowledgeGaps,
+        knowledge_required: knowledgeRequired,
         lifecycle_reason: "governance_gate",
         lifecycle_detail: { required_gates: requiredGates.length },
         problem_brief: problemBrief,
@@ -488,6 +646,46 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
       }
     }
 
+    if (status === "ESCALATED") {
+      const finalResponse =
+        escalationPacket && Array.isArray(escalationPacket.unresolved_items)
+          ? `Engineering escalation required:\n- ${(
+              escalationPacket.unresolved_items as string[]
+            ).join("\n- ")}`
+          : "Engineering escalation required before governed execution can continue."
+      return {
+        dossier_snapshot: dossierSnapshot,
+        engineering_session_id: intake.engineering_session_id as string | undefined,
+        engagement_mode: engagementMode,
+        engagement_mode_source: engagementModeSource,
+        engagement_mode_confidence: engagementModeConfidence,
+        engagement_mode_reasons: engagementModeReasons,
+        minimum_engagement_mode: minimumEngagementMode,
+        pending_mode_change: pendingModeChange,
+        knowledge_pool_assessment: knowledgePoolAssessment,
+        knowledge_pool_assessment_ref: knowledgePoolAssessmentRef,
+        knowledge_pool_coverage: knowledgePoolCoverage,
+        knowledge_candidate_refs: knowledgeCandidateRefs,
+        knowledge_role_contexts: knowledgeRoleContexts,
+        knowledge_role_context_refs: knowledgeRoleContextRefs,
+        knowledge_gaps: knowledgeGaps,
+        knowledge_required: knowledgeRequired,
+        lifecycle_reason: "awaiting_strategic_review",
+        lifecycle_detail: { knowledge_gaps: knowledgeGaps.length },
+        problem_brief: problemBrief,
+        problem_brief_ref: intake.problem_brief_ref as string | undefined,
+        engineering_state: engineeringState,
+        engineering_state_ref: intake.engineering_state_ref as string | undefined,
+        escalation_packet: escalationPacket,
+        required_gates: requiredGates,
+        clarification_questions: clarificationQuestions,
+        ready_for_task_decomposition: false,
+        final_response: finalResponse,
+        verification_outcome: "ESCALATE",
+        current_step: "complete",
+      }
+    }
+
     if (!activeTaskPacket || !selectedExecutor) {
       return {
         dossier_snapshot: dossierSnapshot,
@@ -498,6 +696,14 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         engagement_mode_reasons: engagementModeReasons,
         minimum_engagement_mode: minimumEngagementMode,
         pending_mode_change: pendingModeChange,
+        knowledge_pool_assessment: knowledgePoolAssessment,
+        knowledge_pool_assessment_ref: knowledgePoolAssessmentRef,
+        knowledge_pool_coverage: knowledgePoolCoverage,
+        knowledge_candidate_refs: knowledgeCandidateRefs,
+        knowledge_role_contexts: knowledgeRoleContexts,
+        knowledge_role_context_refs: knowledgeRoleContextRefs,
+        knowledge_gaps: knowledgeGaps,
+        knowledge_required: knowledgeRequired,
         lifecycle_reason: "executor_unavailable",
         lifecycle_detail: { reason: "active_task_packet_missing" },
         problem_brief: problemBrief,
@@ -510,7 +716,7 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         ready_for_task_decomposition: true,
         final_response:
           "Strict engineering intake succeeded, but no active governed task packet is available for execution.",
-        verification_outcome: "FAILED",
+        verification_outcome: "BLOCKED",
         current_step: "complete",
       }
     }
@@ -524,6 +730,14 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
       engagement_mode_reasons: engagementModeReasons,
       minimum_engagement_mode: minimumEngagementMode,
       pending_mode_change: pendingModeChange,
+      knowledge_pool_assessment: knowledgePoolAssessment,
+      knowledge_pool_assessment_ref: knowledgePoolAssessmentRef,
+      knowledge_pool_coverage: knowledgePoolCoverage,
+      knowledge_candidate_refs: knowledgeCandidateRefs,
+      knowledge_role_contexts: knowledgeRoleContexts,
+      knowledge_role_context_refs: knowledgeRoleContextRefs,
+      knowledge_gaps: knowledgeGaps,
+      knowledge_required: knowledgeRequired,
       problem_brief: problemBrief,
       problem_brief_ref: intake.problem_brief_ref as string | undefined,
       engineering_state: engineeringState,
@@ -542,7 +756,7 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
   }
 }
 
-function buildExecuteTaskPacket(cfg: PlatformConfig, llm: LLMManager) {
+function buildExecuteTaskPacket(cfg: PlatformConfig, engine: OrchestrationEngine) {
   return async function executeTaskPacket(
     state: EngineeringWorkflowStateType,
   ): Promise<Partial<EngineeringWorkflowStateType>> {
@@ -566,181 +780,74 @@ function buildExecuteTaskPacket(cfg: PlatformConfig, llm: LLMManager) {
         current_step: "complete",
       }
     }
+    const knowledge = packetKnowledgeContext(packet)
+    const knowledgeRequired = knowledge?.required === true || state.knowledge_required === true
+    const runtimeVerificationRefs = Array.isArray(knowledge?.runtime_verification_refs)
+      ? (knowledge?.runtime_verification_refs as string[])
+      : []
+    if (knowledgeRequired && !knowledge) {
+      return {
+        final_response:
+          "Strict engineering execution blocked: active packet is missing required knowledge_context.",
+        verification_outcome: "BLOCKED",
+        lifecycle_reason: "governance_gate",
+        lifecycle_detail: {
+          reason: "knowledge_context_missing",
+          active_task_packet_ref: state.active_task_packet_ref,
+        },
+        current_step: "complete",
+      }
+    }
+    if (knowledgeRequired && !knowledge?.assessment_ref) {
+      return {
+        final_response:
+          "Strict engineering execution blocked: active packet is missing knowledge_context.assessment_ref.",
+        verification_outcome: "BLOCKED",
+        lifecycle_reason: "governance_gate",
+        lifecycle_detail: {
+          reason: "knowledge_assessment_missing",
+          active_task_packet_ref: state.active_task_packet_ref,
+        },
+        current_step: "complete",
+      }
+    }
+    if (knowledgeRequired && !knowledge?.role_context_ref) {
+      return {
+        final_response:
+          "Strict engineering execution blocked: active packet is missing knowledge_context.role_context_ref.",
+        verification_outcome: "BLOCKED",
+        lifecycle_reason: "governance_gate",
+        lifecycle_detail: {
+          reason: "knowledge_role_context_missing",
+          active_task_packet_ref: state.active_task_packet_ref,
+        },
+        current_step: "complete",
+      }
+    }
+    if (
+      knowledgeRequired &&
+      knowledge?.preferred_environment_ref &&
+      runtimeVerificationRefs.length === 0
+    ) {
+      return {
+        final_response:
+          "Strict engineering execution blocked: preferred environment is pinned without runtime verification refs.",
+        verification_outcome: "BLOCKED",
+        lifecycle_reason: "validator_unavailable",
+        lifecycle_detail: {
+          reason: "knowledge_runtime_verification_missing",
+          preferred_environment_ref: knowledge.preferred_environment_ref,
+        },
+        current_step: "complete",
+      }
+    }
 
     const inputRefs = packetInputRefs(packet)
     const artifactType = packetOutputArtifactType(packet)
     const prompt = packetPrompt(packet, state)
+    const workspaceRoot = workspaceRootFromState(state)
 
     try {
-      if (selectedExecutor === "coding_model") {
-        if (!cfg.modelRuntimeBaseUrl) {
-          return {
-            final_response:
-              "Strict engineering execution blocked: coding_model requires MODEL_RUNTIME_URL.",
-            verification_outcome: "BLOCKED",
-            lifecycle_reason: "executor_unavailable",
-            lifecycle_detail: { executor: selectedExecutor, dependency: "MODEL_RUNTIME_URL" },
-            current_step: "complete",
-          }
-        }
-        const response = await postInferCoding(cfg, packet)
-        const payload = {
-          schema_version: "1.0.0",
-          generated_from_task_packet_id: packet.task_packet_id,
-          selected_executor: selectedExecutor,
-          text: response.text ?? "",
-          model_id_resolved: response.model_id_resolved,
-          usage: response.usage,
-          created_at: new Date().toISOString(),
-        }
-        const artifact = typedArtifact(
-          artifactType,
-          payload,
-          inputRefs,
-          "agent_platform.engineering_graph.execute.coding",
-          selectedExecutor,
-        )
-        await persistRunEvent(cfg, state, {
-          message: "engineering_workflow:execute_packet",
-          details: {
-            selected_executor: selectedExecutor,
-            active_task_packet_ref: state.active_task_packet_ref,
-          },
-          artifacts: [artifact],
-        })
-        return {
-          final_response: response.text ?? "",
-          generated_artifacts: [artifact],
-          generated_artifact_refs: [artifactRefFromEnvelope(artifact)].filter(
-            Boolean,
-          ) as string[],
-          cost_ledger_entries: [
-            {
-              component: "engineering_workflow.execute_packet",
-              model: response.model_id_resolved,
-              tokens_in: response.usage.prompt_tokens,
-              tokens_out: response.usage.completion_tokens,
-              duration_ms: response.usage.latency_ms,
-              task_packet_id: state.active_task_packet_id,
-            },
-          ],
-          current_step: "verification",
-        }
-      }
-
-      if (selectedExecutor === "multimodal_model") {
-        if (!cfg.modelRuntimeBaseUrl) {
-          return {
-            final_response:
-              "Strict engineering execution blocked: multimodal_model requires MODEL_RUNTIME_URL.",
-            verification_outcome: "BLOCKED",
-            lifecycle_reason: "executor_unavailable",
-            lifecycle_detail: { executor: selectedExecutor, dependency: "MODEL_RUNTIME_URL" },
-            current_step: "complete",
-          }
-        }
-        const response = await postInferMultimodal(cfg, packet)
-        const payload = {
-          schema_version: "1.0.0",
-          generated_from_task_packet_id: packet.task_packet_id,
-          selected_executor: selectedExecutor,
-          text: response.text ?? "",
-          structured_output: response.structured_output ?? {},
-          model_id_resolved: response.model_id_resolved,
-          usage: response.usage,
-          created_at: new Date().toISOString(),
-        }
-        const artifact = typedArtifact(
-          artifactType,
-          payload,
-          inputRefs,
-          "agent_platform.engineering_graph.execute.multimodal",
-          selectedExecutor,
-        )
-        await persistRunEvent(cfg, state, {
-          message: "engineering_workflow:execute_packet",
-          details: {
-            selected_executor: selectedExecutor,
-            active_task_packet_ref: state.active_task_packet_ref,
-          },
-          artifacts: [artifact],
-        })
-        return {
-          final_response: response.text ?? "Structured multimodal extraction complete.",
-          generated_artifacts: [artifact],
-          generated_artifact_refs: [artifactRefFromEnvelope(artifact)].filter(
-            Boolean,
-          ) as string[],
-          cost_ledger_entries: [
-            {
-              component: "engineering_workflow.execute_packet",
-              model: response.model_id_resolved,
-              tokens_in: response.usage.prompt_tokens,
-              tokens_out: response.usage.completion_tokens,
-              duration_ms: response.usage.latency_ms,
-              task_packet_id: state.active_task_packet_id,
-            },
-          ],
-          current_step: "verification",
-        }
-      }
-
-      if (selectedExecutor === "local_general_model") {
-        const result = await llm.chatCompletion(
-          [
-            {
-              role: "system",
-              content:
-                "You are the local general-model executor for a governed engineering packet. " +
-                "Summarize or synthesize only; do not mutate repositories or invent missing evidence.",
-            },
-            { role: "user", content: prompt },
-          ],
-          { temperature: 0.2, max_tokens: 900 },
-        )
-        const content = result.choices[0]?.message?.content ?? "No response generated"
-        const payload = {
-          schema_version: "1.0.0",
-          generated_from_task_packet_id: packet.task_packet_id,
-          selected_executor: selectedExecutor,
-          text: content,
-          created_at: new Date().toISOString(),
-        }
-        const artifact = typedArtifact(
-          artifactType,
-          payload,
-          inputRefs,
-          "agent_platform.engineering_graph.execute.local_general",
-          selectedExecutor,
-        )
-        await persistRunEvent(cfg, state, {
-          message: "engineering_workflow:execute_packet",
-          details: {
-            selected_executor: selectedExecutor,
-            active_task_packet_ref: state.active_task_packet_ref,
-          },
-          artifacts: [artifact],
-        })
-        return {
-          final_response: content,
-          generated_artifacts: [artifact],
-          generated_artifact_refs: [artifactRefFromEnvelope(artifact)].filter(
-            Boolean,
-          ) as string[],
-          cost_ledger_entries: [
-            {
-              component: "engineering_workflow.execute_packet",
-              model: "local_general_model",
-              tokens_in: 0,
-              tokens_out: 0,
-              duration_ms: 0,
-              task_packet_id: state.active_task_packet_id,
-            },
-          ],
-          current_step: "verification",
-        }
-      }
-
       if (selectedExecutor === "deterministic_validator") {
         return {
           final_response:
@@ -760,32 +867,119 @@ function buildExecuteTaskPacket(cfg: PlatformConfig, llm: LLMManager) {
             current_step: "complete",
           }
         }
-        const packetText = JSON.stringify(state.escalation_packet, null, 2)
-        const result = await llm.chatCompletion(
-          [
-            {
-              role: "system",
-              content:
-                "You are the strategic reviewer for a typed engineering escalation packet. " +
-                "Return compact decision guidance only.",
-            },
-            { role: "user", content: packetText },
-          ],
-          { temperature: 0.2, max_tokens: 700 },
-        )
-        const content = result.choices[0]?.message?.content ?? "No response generated"
+      }
+
+      const systemPrompt =
+        selectedExecutor === "local_general_model"
+          ? "You are the governed local-general executor. Synthesize only from the packet and referenced artifacts; do not invent missing evidence or mutate repositories."
+          : "You are the strategic reviewer for a typed engineering escalation packet. Return compact decision guidance only."
+
+      const execution = await engine.runGovernedEngineering({
+        selectedExecutor,
+        title: String(packet.objective ?? latestUserContent(state.messages)),
+        prompt:
+          selectedExecutor === "strategic_reviewer" && state.escalation_packet
+            ? JSON.stringify(
+                {
+                  type: "ESCALATION_PACKET",
+                  escalation_packet: state.escalation_packet,
+                  knowledge_pool_assessment_ref: state.knowledge_pool_assessment_ref,
+                  knowledge_role_context_refs: state.knowledge_role_context_refs,
+                },
+                null,
+                2,
+              )
+            : prompt,
+        systemPrompt,
+        workspaceRoot,
+        packet,
+        toolNames: [],
+        claw:
+          selectedExecutor === "coding_model"
+            ? {
+                workspaceRoot,
+                objective: String(packet.objective ?? latestUserContent(state.messages)),
+                scope: String(
+                  packet.context_summary ??
+                    ((packet.code_guidance as Record<string, unknown> | undefined)?.target_paths ??
+                      []).toString() ??
+                    "governed engineering task",
+                ),
+                repo:
+                  workspaceRoot?.split("/").filter(Boolean).at(-1) ??
+                  String(packet.task_packet_id ?? "workspace"),
+                branchPolicy: "use the governed worktree only",
+                acceptanceTests: Array.isArray(packet.validation_requirements)
+                  ? (packet.validation_requirements as string[])
+                  : [],
+                commitPolicy: "leave changes ready for deterministic verification",
+                reportingContract:
+                  "Persist execution through Claw manifest/output files and summarize changes only.",
+                escalationPolicy:
+                  "Stop on destructive ambiguity and surface blockers through the Claw manifest.",
+                prompt,
+              }
+            : undefined,
+      })
+
+      if (selectedExecutor === "deterministic_validator") {
         return {
-          final_response: content,
+          final_response: execution.output,
           current_step: "verification",
         }
       }
 
+      const payload = {
+        schema_version: "1.0.0",
+        generated_from_task_packet_id: packet.task_packet_id,
+        selected_executor: selectedExecutor,
+        text: execution.output,
+        model_id_resolved: execution.model,
+        usage: execution.usage,
+        structured_output: execution.structuredOutput ?? {},
+        execution_artifacts: execution.artifacts?.map((artifact) => ({
+          name: artifact.name,
+          path: artifact.path,
+          kind: artifact.kind,
+        })),
+        created_at: new Date().toISOString(),
+      }
+      const artifact = typedArtifact(
+        artifactType,
+        payload,
+        inputRefs,
+        `agent_platform.engineering_graph.execute.${selectedExecutor}`,
+        selectedExecutor,
+      )
+      await persistRunEvent(cfg, state, {
+        message: "engineering_workflow:execute_packet",
+        details: {
+          selected_executor: selectedExecutor,
+          active_task_packet_ref: state.active_task_packet_ref,
+          runtime: execution.runtime,
+        },
+        artifacts: [artifact],
+      })
       return {
-        final_response: `Strict engineering execution blocked: unsupported executor '${selectedExecutor}'.`,
-        verification_outcome: "BLOCKED",
-        lifecycle_reason: "executor_unavailable",
-        lifecycle_detail: { executor: selectedExecutor },
-        current_step: "complete",
+        final_response: execution.output,
+        generated_artifacts: [artifact],
+        generated_artifact_refs: [artifactRefFromEnvelope(artifact)].filter(
+          Boolean,
+        ) as string[],
+        cost_ledger_entries:
+          execution.usage && execution.model
+            ? [
+                {
+                  component: "engineering_workflow.execute_packet",
+                  model: execution.model,
+                  tokens_in: execution.usage.prompt_tokens,
+                  tokens_out: execution.usage.completion_tokens,
+                  duration_ms: execution.usage.latency_ms ?? 0,
+                  task_packet_id: state.active_task_packet_id,
+                },
+              ]
+            : [],
+        current_step: "verification",
       }
     } catch (error) {
       const msg =
@@ -822,18 +1016,82 @@ function buildVerificationEngineering(cfg: PlatformConfig) {
         : randomUUID()
     const generatedArtifacts = state.generated_artifacts ?? []
     const generatedArtifactRefs = (state.generated_artifact_refs ?? []).filter(Boolean)
+    const activeKnowledge = packetKnowledgeContext(state.task_packet)
     const validatedRefs = Array.from(
       new Set(
         [
           ...packetInputRefs(sourcePacket),
           ...generatedArtifactRefs,
           state.problem_brief_ref,
+          state.knowledge_pool_assessment_ref,
+          ...(state.knowledge_role_context_refs ?? []),
           state.engineering_state_ref,
         ].filter(Boolean) as string[],
       ),
     )
     const gateResults: Array<Record<string, unknown>> = []
     const blockingFindings: Array<Record<string, unknown>> = []
+    const knowledgeRequired =
+      activeKnowledge?.required === true || state.knowledge_required === true
+
+    if (knowledgeRequired) {
+      const hasAssessmentRef = Boolean(
+        activeKnowledge?.assessment_ref || state.knowledge_pool_assessment_ref,
+      )
+      gateResults.push({
+        gate_id: "knowledge_assessment_present",
+        gate_kind: "policy",
+        status: hasAssessmentRef ? "PASS" : "FAIL",
+        detail: hasAssessmentRef
+          ? "Knowledge pool assessment ref is present."
+          : "Knowledge pool assessment ref is missing for a knowledge-required packet.",
+      })
+      if (!hasAssessmentRef) {
+        blockingFindings.push({
+          code: "KNOWLEDGE_ASSESSMENT_MISSING",
+          severity: "high",
+          artifact_ref: state.active_task_packet_ref ?? null,
+        })
+      }
+
+      const hasRoleContextRef = Boolean(activeKnowledge?.role_context_ref)
+      gateResults.push({
+        gate_id: "knowledge_role_context_present",
+        gate_kind: "policy",
+        status: hasRoleContextRef ? "PASS" : "FAIL",
+        detail: hasRoleContextRef
+          ? "Role context ref is present for the active packet."
+          : "Role context ref is missing for a knowledge-required packet.",
+      })
+      if (!hasRoleContextRef) {
+        blockingFindings.push({
+          code: "KNOWLEDGE_ROLE_CONTEXT_MISSING",
+          severity: "high",
+          artifact_ref: state.active_task_packet_ref ?? null,
+        })
+      }
+
+      const runtimeVerificationRefs = Array.isArray(activeKnowledge?.runtime_verification_refs)
+        ? (activeKnowledge?.runtime_verification_refs as string[])
+        : []
+      const runtimeOk =
+        !activeKnowledge?.preferred_environment_ref || runtimeVerificationRefs.length > 0
+      gateResults.push({
+        gate_id: "knowledge_runtime_verification_present",
+        gate_kind: "tests",
+        status: runtimeOk ? "PASS" : "FAIL",
+        detail: runtimeOk
+          ? "Runtime verification refs satisfy the preferred environment policy."
+          : "Preferred environment is pinned without runtime verification refs.",
+      })
+      if (!runtimeOk) {
+        blockingFindings.push({
+          code: "KNOWLEDGE_RUNTIME_VERIFICATION_MISSING",
+          severity: "high",
+          artifact_ref: state.active_task_packet_ref ?? null,
+        })
+      }
+    }
 
     if (!validationPacket) {
       gateResults.push({
@@ -1064,6 +1322,8 @@ function buildTypedEscalation(
       engineering_state: state.engineering_state,
       verification_report: state.verification_report,
       problem_brief_ref: state.problem_brief_ref,
+      knowledge_pool_assessment_ref: state.knowledge_pool_assessment_ref,
+      knowledge_role_context_refs: state.knowledge_role_context_refs,
       verification_report_ref:
         state.verification_report &&
         typeof state.verification_report.verification_report_id === "string"
@@ -1161,11 +1421,11 @@ function synthesizeEngineering(
 
 export function createEngineeringWorkflow(
   cfg: PlatformConfig,
-  llm: LLMManager,
+  engine: OrchestrationEngine,
   apiBrainCall?: (packet: string) => Promise<string>,
 ) {
   const engineeringIntake = buildEngineeringIntake(cfg)
-  const executeTaskPacket = buildExecuteTaskPacket(cfg, llm)
+  const executeTaskPacket = buildExecuteTaskPacket(cfg, engine)
   const verification = buildVerificationEngineering(cfg)
   const typedEscalation = buildTypedEscalation(cfg, apiBrainCall)
 

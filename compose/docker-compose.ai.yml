@@ -61,8 +61,8 @@ services:
   # TypeScript agent-platform (Open Multi-Agent + LangGraph JS) — default orchestrator
   wrkhrs-agent-platform:
     build:
-      context: ./services/agent-platform
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: services/agent-platform/Dockerfile
     ports:
       - "${WRKHRS_AGENT_PLATFORM_PORT:-8087}:8000"
     environment:
