@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process"
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { buildServer } from "./server.js"
 
 interface DevplaneRunSnapshot {
@@ -44,110 +44,34 @@ describe("agent-platform server", () => {
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.body) as { workflows: string[] }
     expect(body.workflows).toContain("wrkhrs_chat")
-    expect(body.workflows).toContain("engineering_physics_v1")
+    expect(body.workflows).not.toContain("engineering_physics_v1")
   })
 
-  describe("engineering_physics_v1", () => {
-    beforeEach(() => {
-      process.env.MODEL_RUNTIME_URL = "http://127.0.0.1:8765"
-      vi.stubGlobal(
-        "fetch",
-        vi.fn(async (url: string | URL) => {
-          const u = typeof url === "string" ? url : url.toString()
-          if (u.includes("infer/general") && u.includes("workflow_root=true")) {
-            return new Response(
-              JSON.stringify({
-                usage: { prompt_tokens: 1, completion_tokens: 1, latency_ms: 1 },
-                model_id_resolved: "Qwen/Qwen3-4B",
-                structured_output: {
-                  block_material_id: "steel_7850",
-                  surface_material_id: "concrete_rough",
-                  applied_force_N: 40000,
-                  cube_side_m: 1.0,
-                },
-              }),
-              { status: 200 },
-            )
-          }
-          if (u.includes("solve/mechanics")) {
-            const rep = {
-              schema_version: "1.0.0",
-              problem_brief: { summary: "t" },
-              assumptions: ["a"],
-              inputs: {},
-              derived_quantities: {
-                mass_kg: 7850,
-                kinetic_friction_coefficient: 0.45,
-                friction_force_N: 1,
-              },
-              results: {
-                acceleration_mps2: 1,
-                normal_force_N: 1,
-                reaction_force_N: 1,
-                resisting_force_N: 1,
-                heat_dissipation_J: 1,
-              },
-              energy_balance: {
-                work_in_J: 1,
-                kinetic_energy_change_J: 0,
-                dissipated_J: 1,
-                residual_J: 0,
-              },
-              model_limits: [],
-              comparison_case: {},
-            }
-            return new Response(JSON.stringify(rep), { status: 200 })
-          }
-          if (u.includes("solve/verify")) {
-            return new Response(
-              JSON.stringify({
-                status: "PASS",
-                checks: [],
-                blocking_issues: [],
-                tolerance_results: {},
-              }),
-              { status: 200 },
-            )
-          }
-          if (u.includes("workflow_root=false")) {
-            return new Response(
-              JSON.stringify({
-                usage: { prompt_tokens: 1, completion_tokens: 1, latency_ms: 1 },
-                model_id_resolved: "Qwen/Qwen3-4B",
-                text: "Done.",
-              }),
-              { status: 200 },
-            )
-          }
-          return new Response("nf", { status: 404 })
-        }),
-      )
+  it("legacy engineering_physics_v1 workflow returns 410", async () => {
+    const app = buildServer()
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/workflows/execute",
+      payload: {
+        workflow_name: "engineering_physics_v1",
+        input_data: { user_prompt: "Sliding steel cube" },
+      },
     })
-    afterEach(() => {
-      vi.unstubAllGlobals()
-      delete process.env.MODEL_RUNTIME_URL
-    })
+    expect(res.statusCode).toBe(410)
+    const body = JSON.parse(res.body) as { detail: string }
+    expect(body.detail).toContain("archived")
+    expect(body.detail).toContain("server-local-archive")
+  })
 
-    it("POST /v1/workflows/execute completes with mocked model-runtime", async () => {
-      process.env.LLM_BACKEND = "mock"
-      const app = buildServer()
-      const res = await app.inject({
-        method: "POST",
-        url: "/v1/workflows/execute",
-        payload: {
-          workflow_name: "engineering_physics_v1",
-          input_data: { user_prompt: "Sliding steel cube" },
-        },
-      })
-      expect(res.statusCode).toBe(200)
-      const body = JSON.parse(res.body) as {
-        status: string
-        result: { verification_outcome?: { status: string }; final_response?: string }
-      }
-      expect(body.status).toBe("completed")
-      expect(body.result?.verification_outcome?.status).toBe("PASS")
-      expect(body.result?.final_response).toContain("Done")
+  it("legacy engineering_physics_v1 schema returns 410", async () => {
+    const app = buildServer()
+    const res = await app.inject({
+      method: "GET",
+      url: "/v1/workflows/engineering_physics_v1/schema",
     })
+    expect(res.statusCode).toBe(410)
+    const body = JSON.parse(res.body) as { detail: string }
+    expect(body.detail).toContain("archived")
   })
 
   it("POST /v1/workflows/execute wrkhrs_chat returns completed + envelope", async () => {
@@ -225,6 +149,295 @@ describe("agent-platform server", () => {
     expect(body.status).toBe("completed")
     expect(body.result?.final_response).toContain("Engineering clarification required")
     expect(body.result?.referential_state?.engineering_session_id).toBe("sess-1")
+    vi.unstubAllGlobals()
+    delete process.env.ORCHESTRATOR_API_URL
+  })
+
+  it("POST /v1/workflows/execute engineering_workflow dispatches coding_model packets via model-runtime", async () => {
+    process.env.LLM_BACKEND = "mock"
+    process.env.ORCHESTRATOR_API_URL = "http://127.0.0.1:7777"
+    process.env.MODEL_RUNTIME_URL = "http://127.0.0.1:8765"
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string | URL) => {
+        const u = typeof url === "string" ? url : url.toString()
+        if (u.includes("/api/control-plane/engineering/intake")) {
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              status: "READY",
+              engineering_session_id: "sess-2",
+              problem_brief: { problem_brief_id: "pb-1", title: "Strict task" },
+              problem_brief_ref: "artifact://problem_brief/pb-1",
+              engineering_state: {
+                engineering_state_id: "es-1",
+                open_issues: [],
+                conflicts: [],
+              },
+              engineering_state_ref: "artifact://engineering_state/es-1",
+              task_queue: { task_queue_id: "queue-1", items: [] },
+              task_packets: [
+                {
+                  task_packet_id: "11111111-1111-4111-8111-111111111111",
+                  task_type: "CODEGEN",
+                  objective: "Implement the governed patch",
+                  input_artifact_refs: [
+                    "artifact://problem_brief/pb-1",
+                    "artifact://engineering_state/es-1",
+                  ],
+                  required_outputs: [{ artifact_type: "CODE_PATCH" }],
+                  acceptance_criteria: ["Emit a patch artifact"],
+                  constraints: ["Honor the governed packet"],
+                  routing_metadata: { selected_executor: "coding_model" },
+                  budget_policy: { allow_escalation: false },
+                },
+                {
+                  task_packet_id: "22222222-2222-4222-8222-222222222222",
+                  task_type: "VALIDATION",
+                  input_artifact_refs: [
+                    "artifact://problem_brief/pb-1",
+                    "artifact://engineering_state/es-1",
+                  ],
+                  required_outputs: [{ artifact_type: "VERIFICATION_REPORT" }],
+                  acceptance_criteria: ["Verification report emitted"],
+                  validation_requirements: ["criterion_1:test:target 1 pass"],
+                  routing_metadata: { selected_executor: "deterministic_validator" },
+                  budget_policy: { allow_escalation: true },
+                },
+              ],
+              ready_for_task_decomposition: true,
+              required_gates: [],
+              clarification_questions: [],
+            }),
+            { status: 200 },
+          )
+        }
+        if (u.includes("/infer/coding")) {
+          return new Response(
+            JSON.stringify({
+              usage: { prompt_tokens: 5, completion_tokens: 8, latency_ms: 2 },
+              model_id_resolved: "mock-coding-model",
+              text: "generated governed patch",
+            }),
+            { status: 200 },
+          )
+        }
+        return new Response("nf", { status: 404 })
+      }),
+    )
+
+    const app = buildServer()
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/workflows/execute",
+      payload: {
+        workflow_name: "engineering_workflow",
+        input_data: {
+          engagement_mode: "strict_engineering",
+          engagement_mode_source: "explicit",
+          minimum_engagement_mode: "strict_engineering",
+          messages: [
+            {
+              role: "user",
+              content: "Implement the governed patch for the strict engineering workflow.",
+            },
+          ],
+        },
+      },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = JSON.parse(res.body) as {
+      status: string
+      result: {
+        final_response?: string
+        verification_outcome?: string
+        engagement_mode?: string
+        ready_for_task_decomposition?: boolean
+        referential_state?: { active_task_packet_ref?: string; selected_executor?: string }
+      }
+    }
+    expect(body.status).toBe("completed")
+    expect(body.result?.final_response).toContain("generated governed patch")
+    expect(body.result?.verification_outcome).toBe("PASS")
+    expect(body.result?.engagement_mode).toBe("strict_engineering")
+    expect(body.result?.ready_for_task_decomposition).toBe(true)
+    expect(body.result?.referential_state?.active_task_packet_ref).toBe(
+      "artifact://task_packet/11111111-1111-4111-8111-111111111111",
+    )
+    expect(body.result?.referential_state?.selected_executor).toBe("coding_model")
+    vi.unstubAllGlobals()
+    delete process.env.ORCHESTRATOR_API_URL
+    delete process.env.MODEL_RUNTIME_URL
+  })
+
+  it("POST /v1/workflows/execute engineering_workflow fails closed when coding_model is unavailable", async () => {
+    process.env.LLM_BACKEND = "mock"
+    process.env.ORCHESTRATOR_API_URL = "http://127.0.0.1:7777"
+    delete process.env.MODEL_RUNTIME_URL
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string | URL) => {
+        const u = typeof url === "string" ? url : url.toString()
+        if (u.includes("/api/control-plane/engineering/intake")) {
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              status: "READY",
+              engineering_session_id: "sess-3",
+              problem_brief: { problem_brief_id: "pb-1", title: "Strict task" },
+              problem_brief_ref: "artifact://problem_brief/pb-1",
+              engineering_state: {
+                engineering_state_id: "es-1",
+                open_issues: [],
+                conflicts: [],
+              },
+              engineering_state_ref: "artifact://engineering_state/es-1",
+              task_queue: { task_queue_id: "queue-1", items: [] },
+              task_packets: [
+                {
+                  task_packet_id: "11111111-1111-4111-8111-111111111111",
+                  task_type: "CODEGEN",
+                  objective: "Implement the governed patch",
+                  input_artifact_refs: [
+                    "artifact://problem_brief/pb-1",
+                    "artifact://engineering_state/es-1",
+                  ],
+                  required_outputs: [{ artifact_type: "CODE_PATCH" }],
+                  acceptance_criteria: ["Emit a patch artifact"],
+                  constraints: ["Honor the governed packet"],
+                  routing_metadata: { selected_executor: "coding_model" },
+                  budget_policy: { allow_escalation: false },
+                },
+                {
+                  task_packet_id: "22222222-2222-4222-8222-222222222222",
+                  task_type: "VALIDATION",
+                  input_artifact_refs: [
+                    "artifact://problem_brief/pb-1",
+                    "artifact://engineering_state/es-1",
+                  ],
+                  required_outputs: [{ artifact_type: "VERIFICATION_REPORT" }],
+                  acceptance_criteria: ["Verification report emitted"],
+                  validation_requirements: ["criterion_1:test:target 1 pass"],
+                  routing_metadata: { selected_executor: "deterministic_validator" },
+                  budget_policy: { allow_escalation: true },
+                },
+              ],
+              ready_for_task_decomposition: true,
+              required_gates: [],
+              clarification_questions: [],
+            }),
+            { status: 200 },
+          )
+        }
+        return new Response("nf", { status: 404 })
+      }),
+    )
+
+    const app = buildServer()
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/workflows/execute",
+      payload: {
+        workflow_name: "engineering_workflow",
+        input_data: {
+          messages: [
+            {
+              role: "user",
+              content: "Implement the governed patch for the strict engineering workflow.",
+            },
+          ],
+        },
+      },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = JSON.parse(res.body) as {
+      status: string
+      result: { final_response?: string; verification_outcome?: string; lifecycle_reason?: string }
+    }
+    expect(body.status).toBe("completed")
+    expect(body.result?.final_response).toContain("requires MODEL_RUNTIME_URL")
+    expect(body.result?.verification_outcome).toBe("BLOCKED")
+    expect(body.result?.lifecycle_reason).toBe("executor_unavailable")
+    vi.unstubAllGlobals()
+    delete process.env.ORCHESTRATOR_API_URL
+  })
+
+  it("POST /v1/workflows/execute engineering_workflow blocks strategic_reviewer before typed escalation", async () => {
+    process.env.LLM_BACKEND = "mock"
+    process.env.ORCHESTRATOR_API_URL = "http://127.0.0.1:7777"
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string | URL) => {
+        const u = typeof url === "string" ? url : url.toString()
+        if (u.includes("/api/control-plane/engineering/intake")) {
+          return new Response(
+            JSON.stringify({
+              ok: true,
+              status: "READY",
+              engineering_session_id: "sess-4",
+              problem_brief: { problem_brief_id: "pb-1", title: "Strict task" },
+              problem_brief_ref: "artifact://problem_brief/pb-1",
+              engineering_state: {
+                engineering_state_id: "es-1",
+                open_issues: [],
+                conflicts: [],
+              },
+              engineering_state_ref: "artifact://engineering_state/es-1",
+              task_queue: { task_queue_id: "queue-1", items: [] },
+              task_packets: [
+                {
+                  task_packet_id: "33333333-3333-4333-8333-333333333333",
+                  task_type: "REVIEW",
+                  objective: "Review the governed execution decision",
+                  input_artifact_refs: [
+                    "artifact://problem_brief/pb-1",
+                    "artifact://engineering_state/es-1",
+                  ],
+                  required_outputs: [{ artifact_type: "DECISION_LOG" }],
+                  acceptance_criteria: ["Emit a strategic review note"],
+                  constraints: ["Only run after typed escalation"],
+                  routing_metadata: { selected_executor: "strategic_reviewer" },
+                  budget_policy: { allow_escalation: true },
+                },
+              ],
+              ready_for_task_decomposition: true,
+              required_gates: [],
+              clarification_questions: [],
+            }),
+            { status: 200 },
+          )
+        }
+        return new Response("nf", { status: 404 })
+      }),
+    )
+
+    const app = buildServer()
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/workflows/execute",
+      payload: {
+        workflow_name: "engineering_workflow",
+        input_data: {
+          messages: [
+            {
+              role: "user",
+              content: "Request strategic review before any typed escalation exists.",
+            },
+          ],
+        },
+      },
+    })
+    expect(res.statusCode).toBe(200)
+    const body = JSON.parse(res.body) as {
+      status: string
+      result: { final_response?: string; verification_outcome?: string; lifecycle_reason?: string }
+    }
+    expect(body.status).toBe("completed")
+    expect(body.result?.final_response).toContain(
+      "strategic_reviewer may only run after typed escalation",
+    )
+    expect(body.result?.verification_outcome).toBe("BLOCKED")
+    expect(body.result?.lifecycle_reason).toBe("awaiting_strategic_review")
     vi.unstubAllGlobals()
     delete process.env.ORCHESTRATOR_API_URL
   })

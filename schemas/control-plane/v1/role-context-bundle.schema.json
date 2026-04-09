@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/role-context-bundle.schema.json",
+  "title": "role_context_bundle — compiled role-specific context",
+  "description": "For agents: the role-specific context compilation emitted from the shared substrate. The source_artifact_refs and source_hashes must stay consistent across general/coder/reviewer compilations for the same candidate set.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "role_context_bundle_id",
+    "schema_version",
+    "role",
+    "task_class",
+    "source_artifact_refs",
+    "source_hashes",
+    "compiled_summary",
+    "included_sections",
+    "excluded_sections",
+    "retrieval_keys"
+  ],
+  "properties": {
+    "role_context_bundle_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "role": {
+      "type": "string",
+      "enum": ["general", "coder", "reviewer"]
+    },
+    "task_class": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "source_artifact_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "source_hashes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["artifact_ref", "sha256"],
+        "properties": {
+          "artifact_ref": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+          },
+          "sha256": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/sha256Hex"
+          }
+        }
+      }
+    },
+    "compiled_summary": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "included_sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "excluded_sections": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "retrieval_keys": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

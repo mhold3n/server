@@ -1,6 +1,0 @@
-# Review ownership; auto-requests happen on PRs to these paths
-/docs/                  @your-org/tech-writers
-/src/python/            @your-org/backend
-/src/js/                @your-org/frontend
-/.github/               @your-org/devops
-*                       @your-org/maintainers

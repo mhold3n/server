@@ -1,6 +1,0 @@
-name: "slack"
-enabled: false
-auth_reference: "slack_bot_token"
-allowed_channels: []
-limits: {}
-logging_policy: "strict"

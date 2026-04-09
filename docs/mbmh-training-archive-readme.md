@@ -5,9 +5,9 @@ When you archive [mhold3n/MBMH-Training](https://github.com/mhold3n/MBMH-Trainin
 ```markdown
 # Moved
 
-MBMH training and local runtime now live in **[server](https://github.com/mhold3n/server)** under the [`mbmh/`](https://github.com/mhold3n/server/tree/main/mbmh) directory.
+The active engineering orchestration platform continues in **[server](https://github.com/mhold3n/server)**.
 
-See [docs/mbmh.md](https://github.com/mhold3n/server/blob/main/docs/mbmh.md) in that repository for orientation.
+The historical MBMH training and local runtime tree has been archived out of the active repo and is no longer maintained as part of the current platform source tree.
 ```
 
 Then archive the repo in GitHub: **Settings → General → Archive this repository**.

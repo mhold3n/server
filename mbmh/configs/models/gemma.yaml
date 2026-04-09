@@ -1,9 +1,0 @@
-family: "gemma"
-base_model: "google/gemma-7b"
-tokenizer: "google/gemma-7b"
-model_type: "causal_lm"
-max_context: 8192
-chat_template_mode: "default"
-default_lora_target_modules: ["q_proj", "v_proj", "k_proj", "o_proj"]
-supported_tasks: ["sft"]
-allow_full_finetune: false

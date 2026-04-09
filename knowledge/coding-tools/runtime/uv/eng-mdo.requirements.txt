@@ -1,0 +1,11 @@
+casadi
+pymoo
+ortools
+pyomo
+openturns
+smt
+SALib
+openmdao
+cvxpy
+jmetalpy
+enoppy

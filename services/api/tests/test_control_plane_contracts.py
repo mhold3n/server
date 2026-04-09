@@ -29,6 +29,7 @@ from src.control_plane.lifecycle import (
     assert_task_packet_transition,
 )
 from src.control_plane.validation import (
+    validate_environment_spec_json,
     get_schema_store,
     validate_engineering_state_json,
     validate_problem_brief_json,
@@ -36,6 +37,7 @@ from src.control_plane.validation import (
     validate_task_packet_json,
     validate_task_queue_json,
     validate_typed_artifact_json,
+    validate_verification_report_json,
 )
 from src.devplane.models import ArtifactRecord, CostLedgerEntry
 
@@ -213,6 +215,22 @@ def test_golden_routing_policy_round_trip() -> None:
         "schemas/control-plane/v1/fixtures/routing-policy/valid-minimal.json"
     )
     validate_routing_policy_json(data)
+
+
+def test_golden_environment_spec_round_trip() -> None:
+    data = _load_fixture(
+        "schemas/control-plane/v1/fixtures/environment-spec/valid-minimal.json"
+    )
+    spec = validate_environment_spec_json(data)
+    assert spec.environment_spec_id == "eng_mdo_uv"
+
+
+def test_golden_verification_report_round_trip() -> None:
+    data = _load_fixture(
+        "schemas/control-plane/v1/fixtures/verification-report/valid-minimal.json"
+    )
+    report = validate_verification_report_json(data)
+    assert report.outcome.value == "PASS"
 
 
 def test_cost_ledger_entry_model() -> None:

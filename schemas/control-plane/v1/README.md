@@ -14,6 +14,13 @@ identifiers for cross-ref gates and documentation.
 | `registry.json` | Machine-readable manifest: `$id`, relative path, contract kind |
 | `common.schema.json` | Shared `$defs` (enums, primitives, reusable objects) |
 | `problem-brief.schema.json` | Stage 0 root intent: scope, deliverables, acceptance tests |
+| `knowledge-pack.schema.json` | Shared external knowledge substrate artifact |
+| `recipe-object.schema.json` | Task-class recipe object linked from packs |
+| `execution-adapter-spec.schema.json` | Typed execution adapter/tool contract |
+| `evidence-bundle.schema.json` | Validation/evidence harness artifact |
+| `role-context-bundle.schema.json` | Role-specific context compilation artifact |
+| `environment-spec.schema.json` | Manifest-backed runtime environment contract |
+| `decision-log.schema.json` | Stack selection and tradeoff record |
 | `task-packet.schema.json` | Specialist execution contract |
 | `task-queue.schema.json` | DAG of `task_packet` refs + approvals |
 | `engineering-state.schema.json` | Canonical merged variables, evidence, conflicts, staleness |

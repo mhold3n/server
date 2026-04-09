@@ -1,6 +1,0 @@
-name: "filesystem"
-enabled: false
-auth_reference: null
-allowed_paths: ["/tmp/workspace"]
-limits: {"max_file_size_mb": 10}
-logging_policy: "strict"

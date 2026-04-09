@@ -55,6 +55,21 @@
       "type": "string",
       "enum": ["SI", "US_CUSTOMARY", "MIXED_DECLARED"]
     },
+    "knowledgeModuleClassEnum": {
+      "type": "string",
+      "enum": [
+        "application",
+        "framework",
+        "integration_layer",
+        "runtime_kernel",
+        "translator",
+        "standard"
+      ]
+    },
+    "deliveryKindEnum": {
+      "type": "string",
+      "enum": ["docker_image", "uv_venv", "dotnet_toolchain"]
+    },
     "quantifiedScalar": {
       "type": "object",
       "additionalProperties": false,
@@ -97,6 +112,13 @@
     "artifactTypeEnum": {
       "type": "string",
       "enum": [
+        "KNOWLEDGE_POOL",
+        "KNOWLEDGE_PACK",
+        "RECIPE_OBJECT",
+        "EXECUTION_ADAPTER_SPEC",
+        "EVIDENCE_BUNDLE",
+        "ROLE_CONTEXT_BUNDLE",
+        "ENVIRONMENT_SPEC",
         "PROBLEM_BRIEF",
         "REQUIREMENTS_SET",
         "CONSTRAINTS_REGISTER",

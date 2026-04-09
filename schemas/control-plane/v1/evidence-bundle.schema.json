@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/evidence-bundle.schema.json",
+  "title": "evidence_bundle — validation and reviewer evidence",
+  "description": "For agents: the validation/evidence harness for one tool or recipe, including smoke tests, benchmark cases, convergence expectations, and reviewer checklists.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evidence_bundle_id",
+    "schema_version",
+    "title",
+    "tool_id",
+    "knowledge_pack_ref",
+    "recipe_refs",
+    "adapter_refs",
+    "smoke_tests",
+    "benchmark_cases",
+    "expected_outputs",
+    "tolerances",
+    "convergence_criteria",
+    "reviewer_checklist",
+    "runtime_verification_refs",
+    "healthcheck_commands",
+    "reference_artifact_refs",
+    "provenance"
+  ],
+  "properties": {
+    "evidence_bundle_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "title": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "tool_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "knowledge_pack_ref": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+    },
+    "recipe_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "adapter_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "smoke_tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "benchmark_cases": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "expected_outputs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "tolerances": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "convergence_criteria": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "reviewer_checklist": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "runtime_verification_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "healthcheck_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "reference_artifact_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sources"],
+      "properties": {
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "benchmarks": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

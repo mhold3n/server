@@ -319,3 +319,93 @@ def test_devplane_external_legacy_callbacks_still_work(tmp_path: Path) -> None:
         settings.devplane_root = original_root
         settings.devplane_db_path = original_db
         reset_devplane_service_for_tests()
+
+
+def test_devplane_blocked_and_escalated_states_round_trip(tmp_path: Path) -> None:
+    repo = tmp_path / "project-gamma"
+    _init_git_repo(repo)
+
+    original_root = settings.devplane_root
+    original_db = settings.devplane_db_path
+    settings.devplane_root = str(tmp_path / "devplane")
+    settings.devplane_db_path = str(tmp_path / "devplane.sqlite3")
+    reset_devplane_service_for_tests()
+    client = TestClient(app)
+
+    try:
+        project_id = client.post(
+            "/api/dev/projects",
+            json={"name": "project-gamma", "canonical_repo_path": str(repo)},
+        ).json()["project_id"]
+        task = client.post(
+            "/api/dev/tasks",
+            json={
+                "project_id": project_id,
+                "user_intent": "Capture blocked and escalated lifecycle states",
+                "engagement_mode": "engineering_task",
+                "context": {
+                    "acceptance_criteria": ["Expose blocked/escalated through the dossier"],
+                    "constraints": ["Use the external callback flow"],
+                },
+            },
+        ).json()
+        if task["state"] == "pending_clarification":
+            task = client.post(
+                f"/api/dev/tasks/{task['task_id']}/answer",
+                json=[{"question_id": "objective_scope", "answer": "Track lifecycle states"}],
+            ).json()
+
+        run = client.post(
+            f"/api/dev/tasks/{task['task_id']}/resume",
+            json={"execution_mode": "external"},
+        ).json()
+
+        blocked = client.post(
+            f"/api/dev/runs/{run['run_id']}/events",
+            json={
+                "status": "blocked",
+                "message": "Awaiting validator availability",
+                "lifecycle_reason": "validator_unavailable",
+                "lifecycle_detail": {"validator": "deterministic_validator"},
+            },
+        )
+        assert blocked.status_code == 200
+        blocked_run = blocked.json()
+        assert blocked_run["phase"] == "blocked"
+        task_after_block = client.get(f"/api/dev/tasks/{task['task_id']}").json()
+        assert task_after_block["state"] == "blocked"
+        assert task_after_block["lifecycle_reason"] == "validator_unavailable"
+
+        escalated = client.post(
+            f"/api/dev/runs/{run['run_id']}/events",
+            json={
+                "status": "escalated",
+                "message": "Awaiting strategic review",
+                "lifecycle_reason": "awaiting_strategic_review",
+                "lifecycle_detail": {"packet": "artifact://escalation_record/esc-1"},
+            },
+        )
+        assert escalated.status_code == 200
+        escalated_run = escalated.json()
+        assert escalated_run["phase"] == "escalated"
+        assert escalated_run["lifecycle_reason"] == "awaiting_strategic_review"
+        dossier = client.get(f"/api/dev/tasks/{task['task_id']}/dossier").json()
+        assert dossier["state"] == "escalated"
+        assert dossier["lifecycle_reason"] == "awaiting_strategic_review"
+
+        invalid_complete = client.post(
+            f"/api/dev/runs/{run['run_id']}/complete",
+            json={"status": "blocked", "summary": "Should be rejected"},
+        )
+        assert invalid_complete.status_code == 400
+
+        resumed = client.post(
+            f"/api/dev/tasks/{task['task_id']}/resume",
+            json={"execution_mode": "external"},
+        )
+        assert resumed.status_code == 200
+        assert resumed.json()["run_id"] == run["run_id"]
+    finally:
+        settings.devplane_root = original_root
+        settings.devplane_db_path = original_db
+        reset_devplane_service_for_tests()

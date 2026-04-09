@@ -23,6 +23,8 @@ class TaskState(StrEnum):
     PLANNING = "planning"
     IMPLEMENTING = "implementing"
     VERIFYING = "verifying"
+    BLOCKED = "blocked"
+    ESCALATED = "escalated"
     READY_TO_PUBLISH = "ready_to_publish"
     PUBLISHED = "published"
     FAILED = "failed"
@@ -35,10 +37,31 @@ class RunPhase(StrEnum):
     PLANNING = "planning"
     IMPLEMENTING = "implementing"
     VERIFYING = "verifying"
+    BLOCKED = "blocked"
+    ESCALATED = "escalated"
     READY_TO_PUBLISH = "ready_to_publish"
     PUBLISHED = "published"
     FAILED = "failed"
     CANCELLED = "cancelled"
+
+
+class EngagementMode(StrEnum):
+    """Ordered engagement strictness for routed work."""
+
+    CASUAL_CHAT = "casual_chat"
+    IDEATION = "ideation"
+    NAPKIN_MATH = "napkin_math"
+    ENGINEERING_TASK = "engineering_task"
+    STRICT_ENGINEERING = "strict_engineering"
+
+
+class EngagementModeSource(StrEnum):
+    """How the current engagement mode was chosen."""
+
+    EXPLICIT = "explicit"
+    INFERRED = "inferred"
+    RESUMED_SESSION = "resumed_session"
+    CONFIRMED_DEESCALATION = "confirmed_deescalation"
 
 
 class VerificationStatus(StrEnum):
@@ -123,6 +146,14 @@ class ClarificationAnswer(BaseModel):
 
     question_id: str
     answer: str = Field(..., min_length=1)
+
+
+class PendingModeChange(BaseModel):
+    """Pending lower-strictness mode proposal awaiting explicit confirmation."""
+
+    proposed_mode: EngagementMode
+    reason: str = Field(..., min_length=1)
+    prompt: str = Field(..., min_length=1)
 
 
 class PublishIntent(BaseModel):
@@ -348,12 +379,55 @@ class TaskClarification(BaseModel):
     answers: list[ClarificationAnswer] = Field(default_factory=list)
 
 
+class EngineeringSessionRecord(BaseModel):
+    """Durable strict-engineering session state backed by DevPlane records."""
+
+    engineering_session_id: str
+    origin: str = "chat_strict_engineering"
+    promotion_reason: str | None = None
+    run_id: str | None = None
+    status: str = "pending"
+    engagement_mode: EngagementMode = EngagementMode.STRICT_ENGINEERING
+    engagement_mode_source: EngagementModeSource | None = None
+    engagement_mode_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    engagement_mode_reasons: list[str] = Field(default_factory=list)
+    minimum_engagement_mode: EngagementMode | None = None
+    pending_mode_change: PendingModeChange | None = None
+    lifecycle_reason: str | None = None
+    lifecycle_detail: dict[str, Any] = Field(default_factory=dict)
+    problem_brief: dict[str, Any] | None = None
+    problem_brief_ref: str | None = None
+    engineering_state: dict[str, Any] | None = None
+    engineering_state_ref: str | None = None
+    task_queue: dict[str, Any] | None = None
+    task_packets: list[dict[str, Any]] = Field(default_factory=list)
+    active_task_packet: dict[str, Any] | None = None
+    active_task_packet_ref: str | None = None
+    active_selected_executor: str | None = None
+    clarification_questions: list[str] = Field(default_factory=list)
+    required_gates: list[dict[str, Any]] = Field(default_factory=list)
+    verification_outcome: str | None = None
+    verification_report: dict[str, Any] | None = None
+    verification_report_ref: str | None = None
+    escalation_packet: dict[str, Any] | None = None
+    escalation_packet_ref: str | None = None
+    updated_at: datetime = Field(default_factory=utc_now)
+
+
 class TaskDossier(BaseModel):
     """The final dossier and running audit log for a task."""
 
     task_id: str
     project_id: str
     state: TaskState
+    engagement_mode: EngagementMode = EngagementMode.ENGINEERING_TASK
+    engagement_mode_source: EngagementModeSource | None = None
+    engagement_mode_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    engagement_mode_reasons: list[str] = Field(default_factory=list)
+    minimum_engagement_mode: EngagementMode | None = None
+    pending_mode_change: PendingModeChange | None = None
+    lifecycle_reason: str | None = None
+    lifecycle_detail: dict[str, Any] = Field(default_factory=dict)
     reasoning_tier: str | None = Field(
         default=None,
         description=(
@@ -363,6 +437,7 @@ class TaskDossier(BaseModel):
     )
     request: TaskRequestRecord
     clarifications: TaskClarification = Field(default_factory=TaskClarification)
+    engineering_session: EngineeringSessionRecord | None = None
     plan: TaskPlan | None = None
     patch_plan: PatchPlanRecord | None = None
     workspace: WorkspaceRecord | None = None
@@ -405,6 +480,14 @@ class TaskRecord(BaseModel):
     task_id: str
     project_id: str
     state: TaskState
+    engagement_mode: EngagementMode = EngagementMode.ENGINEERING_TASK
+    engagement_mode_source: EngagementModeSource | None = None
+    engagement_mode_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    engagement_mode_reasons: list[str] = Field(default_factory=list)
+    minimum_engagement_mode: EngagementMode | None = None
+    pending_mode_change: PendingModeChange | None = None
+    lifecycle_reason: str | None = None
+    lifecycle_detail: dict[str, Any] = Field(default_factory=dict)
     request: TaskRequestRecord
     clarifications: TaskClarification = Field(default_factory=TaskClarification)
     plan: TaskPlan | None = None
@@ -422,6 +505,14 @@ class RunRecord(BaseModel):
     task_id: str
     project_id: str
     phase: RunPhase = RunPhase.PLANNING
+    engagement_mode: EngagementMode = EngagementMode.ENGINEERING_TASK
+    engagement_mode_source: EngagementModeSource | None = None
+    engagement_mode_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    engagement_mode_reasons: list[str] = Field(default_factory=list)
+    minimum_engagement_mode: EngagementMode | None = None
+    pending_mode_change: PendingModeChange | None = None
+    lifecycle_reason: str | None = None
+    lifecycle_detail: dict[str, Any] = Field(default_factory=dict)
     workspace: WorkspaceRecord | None = None
     execution_mode: ExecutionMode = ExecutionMode.INTERNAL
     execution_backend: str | None = None
@@ -445,6 +536,7 @@ class TaskCreateRequest(BaseModel):
 
     project_id: str
     user_intent: str = Field(..., min_length=1)
+    engagement_mode: EngagementMode = EngagementMode.ENGINEERING_TASK
     repo_ref_hint: str | None = None
     context: dict[str, Any] = Field(default_factory=dict)
     risk_hints: list[str] = Field(default_factory=list)
@@ -454,6 +546,7 @@ class TaskRunLaunchRequest(BaseModel):
     """Launch or resume a task execution run."""
 
     execution_mode: ExecutionMode = ExecutionMode.INTERNAL
+    engagement_mode: EngagementMode | None = None
     agent_session_id: str | None = None
     force_new_run: bool = False
 
@@ -462,6 +555,15 @@ class RunEventRequest(BaseModel):
     """Run event update from an external operator or agent session."""
 
     phase: RunPhase | None = None
+    status: TaskState | None = None
+    engagement_mode: EngagementMode | None = None
+    engagement_mode_source: EngagementModeSource | None = None
+    engagement_mode_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    engagement_mode_reasons: list[str] = Field(default_factory=list)
+    minimum_engagement_mode: EngagementMode | None = None
+    pending_mode_change: PendingModeChange | None = None
+    lifecycle_reason: str | None = None
+    lifecycle_detail: dict[str, Any] = Field(default_factory=dict)
     message: str | None = None
     level: str = "info"
     details: dict[str, Any] = Field(default_factory=dict)
@@ -478,6 +580,8 @@ class RunCompleteRequest(BaseModel):
     status: TaskState
     summary: str | None = None
     phase: RunPhase | None = None
+    lifecycle_reason: str | None = None
+    lifecycle_detail: dict[str, Any] = Field(default_factory=dict)
     files_changed: list[FileChangeRecord] = Field(default_factory=list)
     verification_results: list[VerificationResult] = Field(default_factory=list)
     artifacts: list[ArtifactRecord] = Field(default_factory=list)

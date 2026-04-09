@@ -1,6 +1,0 @@
-name: "http"
-enabled: false
-auth_reference: null
-allowed_hosts: ["api.github.com", "example.com"]
-limits: {"timeout_sec": 10}
-logging_policy: "standard"

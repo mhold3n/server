@@ -24,6 +24,7 @@ from ..control_plane.validation import (
     validate_problem_brief_json,
     validate_task_packet_json,
 )
+from .devplane import get_service
 
 router = APIRouter(prefix="/api/control-plane", tags=["control-plane"])
 
@@ -44,9 +45,17 @@ class EngineeringIntakeRequest(BaseModel):
     messages: list[dict[str, Any]] | None = None
     context: dict[str, Any] | None = None
     session_id: str | None = None
+    task_id: str | None = None
+    run_id: str | None = None
     task_packet: dict[str, Any] | None = None
     task_plan: dict[str, Any] | None = None
     project_context: dict[str, Any] | None = None
+    engagement_mode: str | None = None
+    engagement_mode_source: str | None = None
+    engagement_mode_confidence: float | None = None
+    engagement_mode_reasons: list[str] | None = None
+    minimum_engagement_mode: str | None = None
+    pending_mode_change: dict[str, Any] | None = None
 
 
 class DeriveEngineeringStateRequest(BaseModel):
@@ -98,14 +107,25 @@ async def structure_classify(req: StructureClassifyRequest) -> dict[str, Any]:
 async def engineering_intake(req: EngineeringIntakeRequest) -> dict[str, Any]:
     """Bridge chat/task-plan/task-packet inputs into governing engineering artifacts."""
     try:
+        persisted_snapshot = get_service().load_engineering_session_snapshot(
+            session_id=req.session_id,
+            task_id=req.task_id,
+        )
         return intake_engineering_request(
             user_input=req.user_input,
             messages=req.messages,
             context=req.context,
             session_id=req.session_id,
+            persisted_snapshot=persisted_snapshot,
             task_packet=req.task_packet,
             task_plan=req.task_plan,
             project_context=req.project_context,
+            engagement_mode=req.engagement_mode,
+            engagement_mode_source=req.engagement_mode_source,
+            engagement_mode_confidence=req.engagement_mode_confidence,
+            engagement_mode_reasons=req.engagement_mode_reasons,
+            minimum_engagement_mode=req.minimum_engagement_mode,
+            pending_mode_change=req.pending_mode_change,
         )
     except ContractValidationError as e:
         raise HTTPException(status_code=422, detail=e.to_envelope()) from e

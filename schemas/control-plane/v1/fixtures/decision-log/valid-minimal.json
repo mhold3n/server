@@ -1,0 +1,11 @@
+{
+  "decision_id": "stack_openfoam_over_custom_cfd",
+  "schema_version": "1.0.0",
+  "title": "Prefer OpenFOAM for baseline CFD",
+  "statement": "Use OpenFOAM as the default CFD stack for seeded coding-tool knowledge.",
+  "rationale": "It offers a mature open-source case structure and rich integration patterns.",
+  "chosen_refs": ["artifact://knowledge-pack/openfoam"],
+  "rejected_refs": ["artifact://knowledge-pack/custom-cfd"],
+  "tradeoffs": ["Higher setup overhead than reduced-order tools"],
+  "status": "accepted"
+}

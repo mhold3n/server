@@ -1,4 +1,0 @@
-agent_type: "automation"
-temperature: 0.2
-max_tokens: 2048
-tools_allowed: ["filesystem", "github"]

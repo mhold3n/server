@@ -9,8 +9,9 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from ..config import get_worker_settings, settings
-from ..control_plane.engineering import should_auto_promote_engineering
+from ..control_plane.engineering import evaluate_engagement_mode
 from ..orchestrator_client import OrchestratorClient
+from .devplane import get_service
 from ..workflows import (
     build_tool_args_for_card,
     get_task_card,
@@ -21,6 +22,17 @@ router = APIRouter(prefix="/api/ai", tags=["AI"])
 
 _worker_settings = get_worker_settings(settings)
 DEFAULT_LLM_MODEL = _worker_settings.default_model
+
+
+def _latest_user_prompt(req: QueryRequest) -> str:
+    if req.prompt:
+        return req.prompt
+    if req.messages:
+        for message in reversed(req.messages):
+            if message.get("role") == "user":
+                return message.get("content", "")
+        return req.messages[-1]["content"]
+    return ""
 
 
 async def _call_router_mcp_tool(
@@ -127,6 +139,13 @@ class QueryRequest(BaseModel):
             "ignore unknown values."
         ),
     )
+    engagement_mode: str | None = Field(
+        default=None,
+        description=(
+            "Optional routing strictness override. Supported values: "
+            "casual_chat, ideation, napkin_math, engineering_task, strict_engineering."
+        ),
+    )
 
 
 @router.post("/query")
@@ -176,23 +195,89 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
     }
     workflow_config: dict[str, Any] = {}
     workflow_name = "wrkhrs_chat"
+    engineering_task_id: str | None = None
+    engineering_run_id: str | None = None
+    service = get_service()
+    persisted_mode_snapshot: dict[str, Any] | None = None
+    if req.context and req.context.get("engineering_session_id"):
+        persisted_mode_snapshot = service.load_engineering_session_snapshot(
+            session_id=str(req.context.get("engineering_session_id")),
+        )
     if req.provider:
         workflow_config["provider_preference"] = req.provider
     if req.tools:
         # Tools passed by the caller are treated as required intent for orchestration.
         # The LangGraph workflow decides how to satisfy them.
         workflow_config["strict_tools"] = True
-    promotion = should_auto_promote_engineering(
+    mode_decision = evaluate_engagement_mode(
         prompt=req.prompt,
         messages=messages,
-        context=req.context,
+        context={
+            **dict(req.context or {}),
+            "active_engagement_mode": (
+                persisted_mode_snapshot.get("engagement_mode")
+                if isinstance(persisted_mode_snapshot, dict)
+                else None
+            ),
+            "minimum_engagement_mode": (
+                persisted_mode_snapshot.get("minimum_engagement_mode")
+                if isinstance(persisted_mode_snapshot, dict)
+                else None
+            ),
+        },
+        requested_mode=req.engagement_mode,
     )
-    if promotion["promote"]:
+    selected_mode = str(mode_decision["engagement_mode"])
+    input_data["engagement_mode"] = selected_mode
+    input_data["engagement_mode_source"] = mode_decision["engagement_mode_source"]
+    input_data["engagement_mode_confidence"] = mode_decision["engagement_mode_confidence"]
+    input_data["engagement_mode_reasons"] = mode_decision["engagement_mode_reasons"]
+    input_data["minimum_engagement_mode"] = mode_decision["minimum_engagement_mode"]
+    input_data["pending_mode_change"] = mode_decision.get("pending_mode_change")
+    workflow_config["engagement_mode"] = selected_mode
+    workflow_config["engagement_mode_source"] = mode_decision["engagement_mode_source"]
+    workflow_config["engagement_mode_confidence"] = mode_decision["engagement_mode_confidence"]
+    workflow_config["engagement_mode_reasons"] = mode_decision["engagement_mode_reasons"]
+    workflow_config["minimum_engagement_mode"] = mode_decision["minimum_engagement_mode"]
+    if mode_decision.get("pending_mode_change") is not None:
+        workflow_config["pending_mode_change"] = mode_decision["pending_mode_change"]
+    if selected_mode in {"engineering_task", "strict_engineering"}:
         workflow_name = "engineering_workflow"
-        workflow_config["strict_engineering"] = True
-        workflow_config["engineering_promotion_reason"] = promotion["reason"]
-        if req.context and req.context.get("engineering_session_id"):
-            input_data["engineering_session_id"] = req.context["engineering_session_id"]
+        workflow_config["strict_engineering"] = selected_mode == "strict_engineering"
+        workflow_config["engineering_promotion_reason"] = (
+            mode_decision["engagement_mode_reasons"][0]
+            if mode_decision["engagement_mode_reasons"]
+            else "engineering_mode_selected"
+        )
+        task, run = service.ensure_engineering_chat_session(
+            user_intent=_latest_user_prompt(req),
+            context=req.context,
+            session_id=(
+                str(req.context.get("engineering_session_id"))
+                if req.context and req.context.get("engineering_session_id")
+                else None
+            ),
+            promotion_reason=str(workflow_config["engineering_promotion_reason"]),
+            engagement_mode=selected_mode,
+            engagement_mode_source=str(mode_decision["engagement_mode_source"]),
+            engagement_mode_confidence=mode_decision["engagement_mode_confidence"],
+            engagement_mode_reasons=list(mode_decision["engagement_mode_reasons"]),
+            minimum_engagement_mode=str(mode_decision["minimum_engagement_mode"]),
+            pending_mode_change=mode_decision.get("pending_mode_change"),
+        )
+        engineering_task_id = task.task_id
+        engineering_run_id = run.run_id
+        input_data["engineering_session_id"] = task.task_id
+        input_data["task_id"] = task.task_id
+        input_data["run_id"] = run.run_id
+        input_data["project_context"] = {
+            "project_id": task.project_id,
+            "project_name": service.get_project(task.project_id).name,
+            "session_origin": "chat_strict_engineering",
+        }
+    elif selected_mode == "napkin_math":
+        workflow_config["analytical_mode"] = True
+        workflow_config["non_mutating_only"] = True
 
     async with OrchestratorClient() as client:
         try:
@@ -204,8 +289,112 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
         except Exception as exc:  # pragma: no cover - network I/O
             raise HTTPException(
                 status_code=502,
-                detail=f"Orchestrator workflow 'wrkhrs_chat' failed: {exc}",
+                detail=f"Orchestrator workflow '{workflow_name}' failed: {exc}",
             ) from exc
+
+    if selected_mode in {"engineering_task", "strict_engineering"} and engineering_task_id and engineering_run_id:
+        result_payload = result.get("result", {}) if isinstance(result, dict) else {}
+        if isinstance(result_payload, dict):
+            synced = service.sync_engineering_chat_session(
+                task_id=engineering_task_id,
+                run_id=engineering_run_id,
+                workflow_result=result_payload,
+            )
+            session = synced.dossier.engineering_session
+            referential_state = result_payload.setdefault("referential_state", {})
+            if isinstance(referential_state, dict):
+                referential_state.setdefault("task_id", engineering_task_id)
+                referential_state.setdefault("run_id", engineering_run_id)
+                referential_state.setdefault("engineering_session_id", engineering_task_id)
+                if session is not None:
+                    referential_state.setdefault("problem_brief_ref", session.problem_brief_ref)
+                    referential_state.setdefault(
+                        "engineering_state_ref",
+                        session.engineering_state_ref,
+                    )
+                    referential_state.setdefault(
+                        "active_task_packet_ref",
+                        session.active_task_packet_ref,
+                    )
+                    referential_state.setdefault(
+                        "verification_report_ref",
+                        session.verification_report_ref,
+                    )
+                    referential_state.setdefault(
+                        "escalation_packet_ref",
+                        session.escalation_packet_ref,
+                    )
+                    referential_state.setdefault(
+                        "selected_executor",
+                        session.active_selected_executor,
+                    )
+            result_payload.setdefault(
+                "required_gates",
+                session.required_gates if session is not None else [],
+            )
+            result_payload.setdefault(
+                "ready_for_task_decomposition",
+                bool(session and not session.required_gates),
+            )
+            result_payload.setdefault("engagement_mode", selected_mode)
+            result_payload.setdefault(
+                "engagement_mode_source",
+                mode_decision["engagement_mode_source"],
+            )
+            result_payload.setdefault(
+                "engagement_mode_confidence",
+                mode_decision["engagement_mode_confidence"],
+            )
+            result_payload.setdefault(
+                "engagement_mode_reasons",
+                mode_decision["engagement_mode_reasons"],
+            )
+            result_payload.setdefault(
+                "minimum_engagement_mode",
+                mode_decision["minimum_engagement_mode"],
+            )
+            result_payload.setdefault(
+                "pending_mode_change",
+                mode_decision.get("pending_mode_change"),
+            )
+            pending = mode_decision.get("pending_mode_change")
+            if isinstance(pending, dict) and pending.get("prompt"):
+                existing = str(result_payload.get("final_response") or "").strip()
+                prompt_text = str(pending["prompt"]).strip()
+                result_payload["final_response"] = (
+                    f"{existing}\n\n{prompt_text}" if existing else prompt_text
+                )
+    elif isinstance(result, dict):
+        result_payload = result.get("result", {})
+        if isinstance(result_payload, dict):
+            result_payload.setdefault("engagement_mode", selected_mode)
+            result_payload.setdefault(
+                "engagement_mode_source",
+                mode_decision["engagement_mode_source"],
+            )
+            result_payload.setdefault(
+                "engagement_mode_confidence",
+                mode_decision["engagement_mode_confidence"],
+            )
+            result_payload.setdefault(
+                "engagement_mode_reasons",
+                mode_decision["engagement_mode_reasons"],
+            )
+            result_payload.setdefault(
+                "minimum_engagement_mode",
+                mode_decision["minimum_engagement_mode"],
+            )
+            result_payload.setdefault(
+                "pending_mode_change",
+                mode_decision.get("pending_mode_change"),
+            )
+            pending = mode_decision.get("pending_mode_change")
+            if isinstance(pending, dict) and pending.get("prompt"):
+                existing = str(result_payload.get("final_response") or "").strip()
+                prompt_text = str(pending["prompt"]).strip()
+                result_payload["final_response"] = (
+                    f"{existing}\n\n{prompt_text}" if existing else prompt_text
+                )
 
     return result
 

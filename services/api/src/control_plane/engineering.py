@@ -10,11 +10,13 @@ governing artifacts are valid and ready.
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from hashlib import sha256
-from typing import Any
+from typing import Any, Protocol
 from uuid import uuid4
 
+from ..wrkhrs.domain_classifier import DomainClassifier
 from .contracts import (
     AnalysisPathway,
     ArtifactType,
@@ -70,8 +72,6 @@ from .validation import (
     validate_task_queue_json,
 )
 
-_ENGINEERING_SESSIONS: dict[str, dict[str, Any]] = {}
-
 _ENGINEERING_HINTS = (
     "architecture",
     "workflow",
@@ -93,10 +93,452 @@ _ENGINEERING_HINTS = (
     "engineering",
 )
 
+_MODE_ORDER = (
+    "casual_chat",
+    "ideation",
+    "napkin_math",
+    "engineering_task",
+    "strict_engineering",
+)
+_MODE_RANK = {mode: index for index, mode in enumerate(_MODE_ORDER)}
+_ENGINEERING_MODES = {"engineering_task", "strict_engineering"}
+_QUANTITATIVE_HINTS = (
+    "calculate",
+    "derive",
+    "estimate",
+    "equation",
+    "formula",
+    "quantitative",
+    "backlash",
+    "phase accuracy",
+    "thermal growth",
+    "tolerance",
+    "stress",
+    "strain",
+    "torque",
+)
+_IDEATION_HINTS = (
+    "brainstorm",
+    "ideas",
+    "concept",
+    "explore",
+    "what if",
+    "possible approaches",
+    "tradeoffs",
+)
+_CODING_HINTS = (
+    "implement",
+    "code",
+    "refactor",
+    "patch",
+    "edit",
+    "fix",
+    "test",
+    "repository",
+    "repo",
+    "file",
+    "module",
+    "service",
+)
+_MULTIMODAL_HINTS = (
+    "pdf",
+    "drawing",
+    "diagram",
+    "image",
+    "screenshot",
+    "multimodal",
+    "ocr",
+    "callout",
+)
+_SIMULATION_HINTS = (
+    "simulate",
+    "simulation",
+    "solver",
+    "parser",
+    "cad",
+    "cae",
+    "doe",
+)
+_CHEMISTRY_HINTS = (
+    "chemistry",
+    "chemical",
+    "catalyst",
+    "reaction",
+    "kinetics",
+    "stoichiometry",
+    "molecule",
+    "compound",
+)
+_MECHANICAL_HINTS = (
+    "mechanical",
+    "transmission",
+    "torque",
+    "tolerance",
+    "gear",
+    "shaft",
+    "bearing",
+    "actuator",
+)
+
+
+@dataclass(frozen=True)
+class ModeSignal:
+    minimum_mode: str
+    confidence: float
+    reason: str
+    source: str = "inferred"
+
+
+@dataclass(frozen=True)
+class ModeEvaluationContext:
+    text: str
+    context: dict[str, Any]
+    requested_mode: str | None = None
+    active_mode: str | None = None
+    minimum_mode: str | None = None
+
+
+class ModeSignalProvider(Protocol):
+    def collect(self, evaluation: ModeEvaluationContext) -> list[ModeSignal]:
+        ...
+
+
+def _normalize_mode(mode: Any) -> str | None:
+    if mode is None:
+        return None
+    value = str(mode).strip().lower()
+    if value == "strict":
+        value = "strict_engineering"
+    if value in _MODE_RANK:
+        return value
+    return None
+
+
+def _mode_max(*modes: str | None) -> str:
+    best = "casual_chat"
+    for mode in modes:
+        normalized = _normalize_mode(mode)
+        if normalized and _MODE_RANK[normalized] > _MODE_RANK[best]:
+            best = normalized
+    return best
+
+
+def _mode_is_lower(left: str | None, right: str | None) -> bool:
+    left_norm = _normalize_mode(left)
+    right_norm = _normalize_mode(right)
+    if left_norm is None or right_norm is None:
+        return False
+    return _MODE_RANK[left_norm] < _MODE_RANK[right_norm]
+
+
+class ExplicitModeSignalProvider:
+    def collect(self, evaluation: ModeEvaluationContext) -> list[ModeSignal]:
+        requested = _normalize_mode(evaluation.requested_mode)
+        if requested is None:
+            return []
+        return [
+            ModeSignal(
+                minimum_mode=requested,
+                confidence=1.0,
+                reason=f"explicit_requested_mode:{requested}",
+                source="explicit",
+            )
+        ]
+
+
+class SessionModeSignalProvider:
+    def collect(self, evaluation: ModeEvaluationContext) -> list[ModeSignal]:
+        signals: list[ModeSignal] = []
+        active = _normalize_mode(evaluation.active_mode)
+        if active is not None:
+            signals.append(
+                ModeSignal(
+                    minimum_mode=active,
+                    confidence=0.95,
+                    reason=f"active_session_mode_floor:{active}",
+                    source="resumed_session",
+                )
+            )
+        minimum = _normalize_mode(evaluation.minimum_mode)
+        if minimum is not None:
+            signals.append(
+                ModeSignal(
+                    minimum_mode=minimum,
+                    confidence=0.9,
+                    reason=f"persisted_minimum_mode:{minimum}",
+                    source="resumed_session",
+                )
+            )
+        return signals
+
+
+class DomainClassifierSignalProvider:
+    def __init__(self) -> None:
+        self.classifier = DomainClassifier()
+
+    def collect(self, evaluation: ModeEvaluationContext) -> list[ModeSignal]:
+        scores = self.classifier.classify(evaluation.text, threshold=0.08)
+        if not scores:
+            return []
+        top_domains = sorted(scores.items(), key=lambda item: item[1], reverse=True)
+        signals: list[ModeSignal] = []
+        chemistry = scores.get("chemistry", 0.0)
+        engineering = max(scores.get("mechanical", 0.0), scores.get("materials", 0.0))
+        software = scores.get("software_engineering", 0.0)
+        if chemistry >= 0.15 and (engineering >= 0.12 or software >= 0.12):
+            signals.append(
+                ModeSignal(
+                    minimum_mode="strict_engineering",
+                    confidence=min(1.0, chemistry + max(engineering, software)),
+                    reason="hard_rule:chemistry_plus_engineering_domain",
+                )
+            )
+        elif engineering >= 0.18 and software >= 0.14:
+            signals.append(
+                ModeSignal(
+                    minimum_mode="engineering_task",
+                    confidence=min(1.0, engineering + software),
+                    reason="domain_signal:cross_engineering_software_work",
+                )
+            )
+        elif chemistry >= 0.16 or engineering >= 0.18:
+            signals.append(
+                ModeSignal(
+                    minimum_mode="napkin_math",
+                    confidence=max(chemistry, engineering),
+                    reason=f"domain_signal:{top_domains[0][0]}",
+                )
+            )
+        return signals
+
+
+class WorkScopeSignalProvider:
+    def collect(self, evaluation: ModeEvaluationContext) -> list[ModeSignal]:
+        ctx = evaluation.context
+        lower = evaluation.text.lower()
+        signals: list[ModeSignal] = []
+        target_paths = ctx.get("target_paths")
+        target_count = len(target_paths) if isinstance(target_paths, list) else 0
+        expected_file_count = int(ctx.get("expected_file_count", 0) or 0)
+        likely_multi_file = bool(ctx.get("likely_multi_file"))
+        mentions_repo = any(hint in lower for hint in _CODING_HINTS)
+        mentions_quant = any(hint in lower for hint in _QUANTITATIVE_HINTS)
+        mentions_multimodal = any(hint in lower for hint in _MULTIMODAL_HINTS)
+        mentions_simulation = any(hint in lower for hint in _SIMULATION_HINTS)
+        mentions_ideation = any(hint in lower for hint in _IDEATION_HINTS)
+        acceptance_hints = (
+            "acceptance criteria" in lower
+            or "verify" in lower
+            or "verification" in lower
+            or "tests" in lower
+            or "deterministic" in lower
+        )
+        if mentions_multimodal and (mentions_repo or mentions_simulation):
+            signals.append(
+                ModeSignal(
+                    minimum_mode="strict_engineering",
+                    confidence=0.95,
+                    reason="hard_rule:multimodal_plus_coding_or_simulation",
+                )
+            )
+        if (
+            expected_file_count > 1
+            or target_count > 1
+            or likely_multi_file
+            or "cross-subsystem" in lower
+            or "multi-file" in lower
+            or "multiple files" in lower
+        ) and mentions_repo:
+            mode = "strict_engineering" if acceptance_hints or "artifact" in lower else "engineering_task"
+            signals.append(
+                ModeSignal(
+                    minimum_mode=mode,
+                    confidence=0.9 if mode == "strict_engineering" else 0.82,
+                    reason=(
+                        "hard_rule:multifile_mutation_with_governance"
+                        if mode == "strict_engineering"
+                        else "scope_signal:multifile_repo_work"
+                    ),
+                )
+            )
+        elif mentions_repo and acceptance_hints:
+            signals.append(
+                ModeSignal(
+                    minimum_mode="engineering_task",
+                    confidence=0.8,
+                    reason="hard_rule:bounded_repo_work_with_verification",
+                )
+            )
+        elif mentions_quant and not mentions_repo:
+            signals.append(
+                ModeSignal(
+                    minimum_mode="napkin_math",
+                    confidence=0.72,
+                    reason="hard_rule:quantitative_reasoning_without_repo_mutation",
+                )
+            )
+        elif mentions_ideation and not mentions_repo:
+            signals.append(
+                ModeSignal(
+                    minimum_mode="ideation",
+                    confidence=0.66,
+                    reason="hard_rule:open_ended_concept_exploration",
+                )
+            )
+        return signals
+
+
+class HardRuleSignalProvider:
+    def collect(self, evaluation: ModeEvaluationContext) -> list[ModeSignal]:
+        lower = evaluation.text.lower()
+        signals: list[ModeSignal] = []
+        has_ideation = any(hint in lower for hint in _IDEATION_HINTS)
+        has_repo_work = any(hint in lower for hint in _CODING_HINTS)
+        has_quant = any(hint in lower for hint in _QUANTITATIVE_HINTS)
+        has_chemistry = any(hint in lower for hint in _CHEMISTRY_HINTS)
+        has_mechanical = any(hint in lower for hint in _MECHANICAL_HINTS)
+        if has_chemistry and (has_mechanical or "engineering" in lower):
+            signals.append(
+                ModeSignal(
+                    minimum_mode="strict_engineering",
+                    confidence=0.96,
+                    reason="hard_rule:chemistry_plus_engineering_keywords",
+                )
+            )
+        if has_ideation and not has_repo_work and not has_quant:
+            signals.append(
+                ModeSignal(
+                    minimum_mode="ideation",
+                    confidence=0.78,
+                    reason="hard_rule:open_ended_concept_exploration",
+                )
+            )
+            return signals
+        if any(hint in lower for hint in _ENGINEERING_HINTS):
+            signals.append(
+                ModeSignal(
+                    minimum_mode="engineering_task",
+                    confidence=0.68,
+                    reason="heuristic:engineering_keyword_density",
+                )
+            )
+        if "strict engineering" in lower or "artifact-governed" in lower:
+            signals.append(
+                ModeSignal(
+                    minimum_mode="strict_engineering",
+                    confidence=0.92,
+                    reason="heuristic:explicit_strict_engineering_language",
+                )
+            )
+        if not signals and len(evaluation.text.split()) >= 20:
+            signals.append(
+                ModeSignal(
+                    minimum_mode="ideation",
+                    confidence=0.4,
+                    reason="heuristic:long_form_nontrivial_request",
+                )
+            )
+        return signals
+
+
+class KnowledgePoolSignalProvider:
+    def collect(self, evaluation: ModeEvaluationContext) -> list[ModeSignal]:
+        _ = evaluation
+        return []
+
 
 def reset_engineering_sessions_for_tests() -> None:
-    """Clear in-memory strict-engineering session state (test helper)."""
-    _ENGINEERING_SESSIONS.clear()
+    """Strict-engineering sessions are now durably persisted via DevPlane."""
+    return None
+
+
+def evaluate_engagement_mode(
+    *,
+    prompt: str | None = None,
+    messages: list[dict[str, Any]] | None = None,
+    context: dict[str, Any] | None = None,
+    requested_mode: str | None = None,
+    active_mode: str | None = None,
+    minimum_mode: str | None = None,
+) -> dict[str, Any]:
+    """Infer the required engagement mode directly from current evidence."""
+    ctx = context or {}
+    text = (prompt or _latest_user_content(messages)).strip()
+    requested = _normalize_mode(
+        requested_mode
+        or ctx.get("engagement_mode")
+        or ("strict_engineering" if ctx.get("strict_engineering") is True else None)
+    )
+    persisted_floor = _normalize_mode(
+        active_mode
+        or ctx.get("active_engagement_mode")
+        or ctx.get("session_engagement_mode")
+        or ("strict_engineering" if ctx.get("engineering_session_id") else None)
+    )
+    persisted_minimum = _normalize_mode(
+        minimum_mode or ctx.get("minimum_engagement_mode")
+    )
+    evaluation = ModeEvaluationContext(
+        text=text,
+        context=ctx,
+        requested_mode=requested,
+        active_mode=persisted_floor,
+        minimum_mode=persisted_minimum,
+    )
+    providers: tuple[ModeSignalProvider, ...] = (
+        ExplicitModeSignalProvider(),
+        SessionModeSignalProvider(),
+        DomainClassifierSignalProvider(),
+        WorkScopeSignalProvider(),
+        HardRuleSignalProvider(),
+        KnowledgePoolSignalProvider(),
+    )
+    signals = [signal for provider in providers for signal in provider.collect(evaluation)]
+    inferred_mode = _mode_max(*(signal.minimum_mode for signal in signals))
+    minimum_required = _mode_max(inferred_mode, persisted_floor, persisted_minimum)
+    downward_request = requested is not None and _mode_is_lower(requested, minimum_required)
+    chosen_mode = minimum_required
+    source = (
+        "resumed_session"
+        if _normalize_mode(persisted_floor) == minimum_required
+        else "inferred"
+    )
+    if requested is not None and not downward_request:
+        chosen_mode = _mode_max(requested, minimum_required)
+        source = "explicit" if chosen_mode == requested else source
+    relevant_signals = [
+        signal.reason
+        for signal in signals
+        if _MODE_RANK[_normalize_mode(signal.minimum_mode) or "casual_chat"]
+        >= _MODE_RANK[minimum_required]
+    ]
+    if not relevant_signals:
+        relevant_signals = ["default:ordinary_assistance"]
+    pending_mode_change: dict[str, Any] | None = None
+    if downward_request and requested is not None:
+        pending_mode_change = {
+            "proposed_mode": requested,
+            "reason": (
+                f"Current mode floor is {minimum_required}; automatic de-escalation is disabled."
+            ),
+            "prompt": (
+                f"This session is currently governed at '{minimum_required}'. "
+                f"If you want to de-escalate to '{requested}', please confirm explicitly."
+            ),
+        }
+        chosen_mode = minimum_required
+        source = "resumed_session" if persisted_floor else "inferred"
+    confidence = max((signal.confidence for signal in signals), default=0.35)
+    return {
+        "engagement_mode": chosen_mode,
+        "engagement_mode_source": source,
+        "engagement_mode_confidence": round(min(confidence, 1.0), 3),
+        "engagement_mode_reasons": relevant_signals,
+        "minimum_engagement_mode": minimum_required,
+        "pending_mode_change": pending_mode_change,
+        "requires_confirmation": pending_mode_change is not None,
+        "rule_matches": [signal.reason for signal in signals],
+    }
 
 
 def should_auto_promote_engineering(
@@ -104,29 +546,28 @@ def should_auto_promote_engineering(
     prompt: str | None = None,
     messages: list[dict[str, Any]] | None = None,
     context: dict[str, Any] | None = None,
+    requested_mode: str | None = None,
+    active_mode: str | None = None,
+    minimum_mode: str | None = None,
 ) -> dict[str, Any]:
-    """Return strict-mode routing decision for a chat request."""
-    ctx = context or {}
-    if ctx.get("strict_engineering") is True or ctx.get("engineering_mode") is True:
-        return {"promote": True, "reason": "explicit_context_flag"}
-    if ctx.get("expected_file_count", 0) and int(ctx["expected_file_count"]) > 1:
-        return {"promote": True, "reason": "expected_multi_file_impact"}
-
-    text = (prompt or _latest_user_content(messages)).strip()
-    lower = text.lower()
-    keyword_hits = [hint for hint in _ENGINEERING_HINTS if hint in lower]
-    word_count = len(text.split())
-    promote = bool(keyword_hits) and (
-        word_count >= 16
-        or "multi-file" in lower
-        or "multiple files" in lower
-        or ctx.get("likely_multi_file") is True
+    """Compatibility helper for callers that still expect binary promotion."""
+    decision = evaluate_engagement_mode(
+        prompt=prompt,
+        messages=messages,
+        context=context,
+        requested_mode=requested_mode,
+        active_mode=active_mode,
+        minimum_mode=minimum_mode,
     )
+    mode = str(decision["engagement_mode"])
     return {
-        "promote": promote,
-        "reason": "heuristic_engineering_prompt" if promote else "default_chat_path",
-        "matched_hints": keyword_hits,
-        "word_count": word_count,
+        **decision,
+        "promote": mode in _ENGINEERING_MODES,
+        "reason": (
+            decision["engagement_mode_reasons"][0]
+            if decision["engagement_mode_reasons"]
+            else "default_chat_path"
+        ),
     }
 
 
@@ -136,15 +577,22 @@ def intake_engineering_request(
     messages: list[dict[str, Any]] | None = None,
     context: dict[str, Any] | None = None,
     session_id: str | None = None,
+    persisted_snapshot: dict[str, Any] | None = None,
     task_packet: dict[str, Any] | None = None,
     task_plan: dict[str, Any] | None = None,
     project_context: dict[str, Any] | None = None,
+    engagement_mode: str | None = None,
+    engagement_mode_source: str | None = None,
+    engagement_mode_confidence: float | None = None,
+    engagement_mode_reasons: list[str] | None = None,
+    minimum_engagement_mode: str | None = None,
+    pending_mode_change: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Bridge legacy inputs into governing artifacts and enforce gates."""
     ctx = deepcopy(context or {})
     project_ctx = deepcopy(project_context or {})
     engineering_session_id = session_id or str(uuid4())
-    snapshot = deepcopy(_ENGINEERING_SESSIONS.get(engineering_session_id, {}))
+    snapshot = deepcopy(persisted_snapshot or {})
     bridged = _draft_problem_brief(
         base=snapshot.get("problem_brief"),
         user_input=user_input,
@@ -160,6 +608,27 @@ def intake_engineering_request(
     result: dict[str, Any] = {
         "ok": True,
         "engineering_session_id": engineering_session_id,
+        "engagement_mode": _normalize_mode(engagement_mode)
+        or _normalize_mode(snapshot.get("engagement_mode"))
+        or "strict_engineering",
+        "engagement_mode_source": (
+            engagement_mode_source or snapshot.get("engagement_mode_source") or "inferred"
+        ),
+        "engagement_mode_confidence": (
+            engagement_mode_confidence
+            if engagement_mode_confidence is not None
+            else snapshot.get("engagement_mode_confidence")
+        ),
+        "engagement_mode_reasons": list(
+            engagement_mode_reasons
+            or snapshot.get("engagement_mode_reasons")
+            or []
+        ),
+        "minimum_engagement_mode": _normalize_mode(minimum_engagement_mode)
+        or _normalize_mode(snapshot.get("minimum_engagement_mode"))
+        or _normalize_mode(engagement_mode)
+        or "strict_engineering",
+        "pending_mode_change": pending_mode_change or snapshot.get("pending_mode_change"),
         "problem_brief": bridged,
         "problem_brief_ref": _artifact_ref("problem_brief", bridged["problem_brief_id"]),
         "problem_brief_valid": False,
@@ -177,7 +646,6 @@ def intake_engineering_request(
     }
 
     if missing_fields:
-        _ENGINEERING_SESSIONS[engineering_session_id] = result
         return result
 
     pb_model = validate_problem_brief_json(bridged)
@@ -215,8 +683,6 @@ def intake_engineering_request(
         )
     else:
         result["status"] = "BLOCKED"
-
-    _ENGINEERING_SESSIONS[engineering_session_id] = result
     return result
 
 

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/environment-spec.schema.json",
+  "title": "environment_spec — manifest-backed runtime environment contract",
+  "description": "For agents: direct link between a knowledge-module runtime and the checked-in manifest/bootstrap/healthcheck surfaces that make it repeatably available.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "environment_spec_id",
+    "schema_version",
+    "runtime_profile",
+    "delivery_kind",
+    "module_ids",
+    "supported_host_platforms",
+    "manifest_format",
+    "manifest_path",
+    "runtime_locator",
+    "bootstrap_command",
+    "healthcheck_command",
+    "launcher_ref"
+  ],
+  "properties": {
+    "environment_spec_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "runtime_profile": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "delivery_kind": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/deliveryKindEnum"
+    },
+    "module_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+      }
+    },
+    "supported_host_platforms": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+      }
+    },
+    "manifest_format": {
+      "type": "string",
+      "enum": ["dockerfile", "requirements_txt", "csproj", "script", "other"]
+    },
+    "manifest_path": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "runtime_locator": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "bootstrap_command": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "healthcheck_command": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "launcher_ref": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

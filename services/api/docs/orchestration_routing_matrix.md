@@ -22,7 +22,7 @@ service at `settings.agent_platform_url`:
 
 - `POST /v1/workflows/execute`
   - `workflow_name="wrkhrs_chat"` for chat and task card workflows.
-  - `workflow_name="engineering_workflow"` for **unified control-plane** runs: requires `input_data.task_packet`, calls `ORCHESTRATOR_API_URL` (or `DEVPLANE_PUBLIC_BASE_URL`) for structure classify, optional `task_id` dossier hydrate and `run_id` verification persistence via `POST /api/dev/runs/{run_id}/events`.
+  - `workflow_name="engineering_workflow"` for **unified control-plane** runs: accepts chat-originated or artifact-originated engineering requests, derives and persists `problem_brief -> engineering_state -> task_queue -> task_packet`, and uses `ORCHESTRATOR_API_URL` (or `DEVPLANE_PUBLIC_BASE_URL`) for control-plane intake plus DevPlane dossier/run-event persistence.
   - `workflow_name="rag_retrieval"` for low-level RAG utility flows.
   - `workflow_name="devplane_code_task"` (future) for DevPlane backend runs.
 
@@ -34,7 +34,6 @@ new integrations:
 - Python router `/route` in `services/router/src/router.py` (**returns 410 Gone**; tool-only adapter now)
 - Direct `services/structure` imports from non-API callers for **ingress** (use `POST /api/control-plane/structure/classify` or in-process graph nodes that share the same contract)
 - Direct AI stack prompts via `/llm/prompt`
-- MBMH control-plane style `/v1/chat/completions` (non-provider usage)
+- Legacy MBMH / `engineering_physics_v1` surfaces (archived out of the active repo)
 
 They will be removed once the LangGraph workflows fully cover all use cases.
-

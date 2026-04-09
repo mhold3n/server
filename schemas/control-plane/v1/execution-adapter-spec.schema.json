@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/execution-adapter-spec.schema.json",
+  "title": "execution_adapter_spec — typed runtime adapter contract",
+  "description": "For agents: the typed execution adapter/tool surface for one tool recipe. Defines the callable entrypoint, typed inputs/outputs, translation boundaries, and runtime/safety constraints.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "adapter_spec_id",
+    "schema_version",
+    "tool_id",
+    "supported_library_version",
+    "knowledge_pack_ref",
+    "preferred_environment_ref",
+    "environment_refs",
+    "callable_interface",
+    "typed_inputs",
+    "typed_outputs",
+    "unit_policy",
+    "file_translators",
+    "runtime_requirements",
+    "healthcheck_refs",
+    "safety_limits",
+    "emitted_artifact_refs",
+    "launcher_ref"
+  ],
+  "properties": {
+    "adapter_spec_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "tool_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "supported_library_version": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "knowledge_pack_ref": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+    },
+    "preferred_environment_ref": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+    },
+    "environment_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "callable_interface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "entrypoint"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["python_function", "python_module", "cli", "dotnet", "cxx_binding"]
+        },
+        "entrypoint": {
+          "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+        },
+        "signature": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "typed_inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "type", "required"],
+        "properties": {
+          "name": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "type": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "unit": {
+            "type": ["string", "null"]
+          }
+        }
+      }
+    },
+    "typed_outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "type"],
+        "properties": {
+          "name": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "type": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+          },
+          "unit": {
+            "type": ["string", "null"]
+          }
+        }
+      }
+    },
+    "unit_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unit_system", "require_declared_units"],
+      "properties": {
+        "unit_system": {
+          "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/unitSystemEnum"
+        },
+        "require_declared_units": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "file_translators": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to", "notes"],
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "runtime_requirements": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "healthcheck_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "safety_limits": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "emitted_artifact_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "launcher_ref": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    }
+  }
+}

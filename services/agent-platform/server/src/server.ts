@@ -23,7 +23,6 @@ import { createWrkhrsOmaTools } from "./oma/wrkhrs-tools.js"
 import type { ChatMessage } from "./tools/wrkhrs.js"
 import { createChatWorkflow } from "./workflow/graph.js"
 import { createEngineeringWorkflow } from "./workflow/engineering-graph.js"
-import { createPhysicsHarnessWorkflow } from "./workflow/physics-harness-graph.js"
 import {
   completeWorkflowRun,
   createWorkflowRun,
@@ -35,7 +34,6 @@ import {
 const WORKFLOW_NAMES = [
   "wrkhrs_chat",
   "engineering_workflow",
-  "engineering_physics_v1",
   "rag_retrieval",
   "tool_execution",
   "github_integration",
@@ -90,7 +88,6 @@ export function buildServer() {
 
   const chatWorkflow = createChatWorkflow(cfg, llm, callApiBrain)
   const engineeringWorkflow = createEngineeringWorkflow(cfg, llm, callApiBrain)
-  const physicsHarnessWorkflow = createPhysicsHarnessWorkflow(cfg)
 
   const app = Fastify({ logger: true })
 
@@ -200,8 +197,14 @@ export function buildServer() {
 
   app.get<{ Params: { name: string } }>(
     "/v1/workflows/:name/schema",
-    async (request) => {
+    async (request, reply) => {
       const name = request.params.name
+      if (name === "engineering_physics_v1") {
+        return reply.status(410).send({
+          detail:
+            "engineering_physics_v1 was archived to ../server-local-archive/2026-04-08/server and is no longer part of the active orchestration surface.",
+        })
+      }
       return {
         name,
         input: { type: "object" },
@@ -218,6 +221,12 @@ export function buildServer() {
     }
     const workflowName = body.workflow_name ?? "wrkhrs_chat"
     const inputData = body.input_data ?? {}
+    if (workflowName === "engineering_physics_v1") {
+      return reply.status(410).send({
+        detail:
+          "engineering_physics_v1 was archived to ../server-local-archive/2026-04-08/server and is no longer part of the active orchestration surface.",
+      })
+    }
     const id = crypto.randomUUID()
     const started = Date.now()
     createWorkflowRun(id, workflowName)
@@ -242,6 +251,17 @@ export function buildServer() {
         output = {
           final_response: result.final_response,
           tool_results: result.tool_results,
+          engagement_mode: (workflowConfig as Record<string, unknown> | undefined)?.engagement_mode,
+          engagement_mode_source: (workflowConfig as Record<string, unknown> | undefined)
+            ?.engagement_mode_source,
+          engagement_mode_confidence: (workflowConfig as Record<string, unknown> | undefined)
+            ?.engagement_mode_confidence,
+          engagement_mode_reasons: (workflowConfig as Record<string, unknown> | undefined)
+            ?.engagement_mode_reasons,
+          minimum_engagement_mode: (workflowConfig as Record<string, unknown> | undefined)
+            ?.minimum_engagement_mode,
+          pending_mode_change: (workflowConfig as Record<string, unknown> | undefined)
+            ?.pending_mode_change,
           api_brain: {
             escalation_count: (result as any).escalation_count ?? 0,
             packet: (result as any).api_brain_packet,
@@ -292,6 +312,15 @@ export function buildServer() {
             (inputData.engineering_state as Record<string, unknown> | undefined) ?? undefined,
           engineering_state_ref:
             (inputData.engineering_state_ref as string | undefined) ?? undefined,
+          engagement_mode: inputData.engagement_mode as string | undefined,
+          engagement_mode_source: inputData.engagement_mode_source as string | undefined,
+          engagement_mode_confidence: inputData.engagement_mode_confidence as number | undefined,
+          engagement_mode_reasons:
+            (inputData.engagement_mode_reasons as string[] | undefined) ?? [],
+          minimum_engagement_mode:
+            (inputData.minimum_engagement_mode as string | undefined) ?? undefined,
+          pending_mode_change:
+            (inputData.pending_mode_change as Record<string, unknown> | undefined) ?? undefined,
           cost_ledger_entries: [],
         } as any)
         output = {
@@ -305,47 +334,47 @@ export function buildServer() {
             problem_brief_ref: result.problem_brief_ref,
             engineering_state_ref: result.engineering_state_ref,
             active_task_packet_id: result.active_task_packet_id,
+            active_task_packet_ref: (result as { active_task_packet_ref?: unknown })
+              .active_task_packet_ref,
+            selected_executor: (result as { active_selected_executor?: unknown })
+              .active_selected_executor,
             dossier_snapshot: (result as { dossier_snapshot?: unknown })
               .dossier_snapshot,
+            engagement_mode: (result as { engagement_mode?: unknown }).engagement_mode,
+            minimum_engagement_mode:
+              (result as { minimum_engagement_mode?: unknown }).minimum_engagement_mode,
           },
           problem_brief: (result as { problem_brief?: unknown }).problem_brief,
           engineering_state: (result as { engineering_state?: unknown }).engineering_state,
           task_queue: (result as { task_queue?: unknown }).task_queue,
           task_packets: (result as { task_packets?: unknown }).task_packets,
+          required_gates: (result as { required_gates?: unknown }).required_gates,
+          ready_for_task_decomposition: (result as { ready_for_task_decomposition?: unknown })
+            .ready_for_task_decomposition,
           clarification_questions: (result as { clarification_questions?: unknown })
             .clarification_questions,
-          structure_route: result.structure_route,
           verification_outcome: result.verification_outcome,
           verification_report: result.verification_report,
           escalation_packet: (result as { escalation_packet?: unknown }).escalation_packet,
+          engagement_mode: (result as { engagement_mode?: unknown }).engagement_mode,
+          engagement_mode_source:
+            (result as { engagement_mode_source?: unknown }).engagement_mode_source,
+          engagement_mode_confidence:
+            (result as { engagement_mode_confidence?: unknown }).engagement_mode_confidence,
+          engagement_mode_reasons:
+            (result as { engagement_mode_reasons?: unknown }).engagement_mode_reasons,
+          minimum_engagement_mode:
+            (result as { minimum_engagement_mode?: unknown }).minimum_engagement_mode,
+          pending_mode_change:
+            (result as { pending_mode_change?: unknown }).pending_mode_change,
+          lifecycle_reason: (result as { lifecycle_reason?: unknown }).lifecycle_reason,
+          lifecycle_detail: (result as { lifecycle_detail?: unknown }).lifecycle_detail,
           cost_ledger_entries: result.cost_ledger_entries,
           api_brain: {
             escalation_count: (result as any).escalation_count ?? 0,
             packet: (result as any).api_brain_packet,
             output: (result as any).api_brain_output,
           },
-        }
-      } else if (workflowName === "engineering_physics_v1") {
-        const prompt = String(inputData.user_prompt ?? inputData.prompt ?? "")
-        if (!prompt.trim()) {
-          return reply.status(422).send({
-            detail: "engineering_physics_v1 requires input_data.user_prompt",
-          })
-        }
-        const result = await physicsHarnessWorkflow.invoke({
-          user_prompt: prompt,
-          current_step: "intake",
-        })
-        const syn = result.synthesis_infer as { text?: string } | undefined
-        output = {
-          root_packet_id: result.root_packet_id,
-          intake_infer: result.intake_infer,
-          solve_request: result.solve_request,
-          engineering_report: result.engineering_report,
-          verification_outcome: result.verification_outcome,
-          synthesis_infer: result.synthesis_infer,
-          harness_error: result.harness_error,
-          final_response: syn?.text ?? result.harness_error ?? "",
         }
       } else if (workflowName === "rag_retrieval") {
         const { searchKnowledgeBase } = await import("./tools/wrkhrs.js")
@@ -429,6 +458,14 @@ export function buildServer() {
       control_run_id: backendRun.control_run_id,
       status: backendRun.status,
       phase: backendRun.phase,
+      engagement_mode: backendRun.engagement_mode,
+      engagement_mode_source: backendRun.engagement_mode_source,
+      engagement_mode_confidence: backendRun.engagement_mode_confidence,
+      engagement_mode_reasons: backendRun.engagement_mode_reasons,
+      minimum_engagement_mode: backendRun.minimum_engagement_mode,
+      pending_mode_change: backendRun.pending_mode_change,
+      lifecycle_reason: backendRun.lifecycle_reason,
+      lifecycle_detail: backendRun.lifecycle_detail,
       summary: backendRun.summary,
       files_changed: backendRun.files_changed,
       verification_results: backendRun.verification_results,
@@ -448,6 +485,14 @@ export function buildServer() {
         control_run_id: backendRun.control_run_id,
         status: backendRun.status,
         phase: backendRun.phase,
+        engagement_mode: backendRun.engagement_mode,
+        engagement_mode_source: backendRun.engagement_mode_source,
+        engagement_mode_confidence: backendRun.engagement_mode_confidence,
+        engagement_mode_reasons: backendRun.engagement_mode_reasons,
+        minimum_engagement_mode: backendRun.minimum_engagement_mode,
+        pending_mode_change: backendRun.pending_mode_change,
+        lifecycle_reason: backendRun.lifecycle_reason,
+        lifecycle_detail: backendRun.lifecycle_detail,
         summary: backendRun.summary,
         files_changed: backendRun.files_changed,
         verification_results: backendRun.verification_results,
@@ -468,6 +513,14 @@ export function buildServer() {
         control_run_id: backendRun.control_run_id,
         status: backendRun.status,
         phase: backendRun.phase,
+        engagement_mode: backendRun.engagement_mode,
+        engagement_mode_source: backendRun.engagement_mode_source,
+        engagement_mode_confidence: backendRun.engagement_mode_confidence,
+        engagement_mode_reasons: backendRun.engagement_mode_reasons,
+        minimum_engagement_mode: backendRun.minimum_engagement_mode,
+        pending_mode_change: backendRun.pending_mode_change,
+        lifecycle_reason: backendRun.lifecycle_reason,
+        lifecycle_detail: backendRun.lifecycle_detail,
         summary: backendRun.summary,
         files_changed: backendRun.files_changed,
         verification_results: backendRun.verification_results,

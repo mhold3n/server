@@ -86,7 +86,6 @@ def process_exports(input_dir: str, output_dir: str):
     rag_keywords = [
         "Birtha",
         "Claw",
-        "mbmh",
         "OpenFOAM",
         "DOE",
         "architecture",

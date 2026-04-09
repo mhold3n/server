@@ -4,6 +4,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+WRKHRS_ROOT="$ROOT/services/wrkhrs"
+WRKHRS_GATEWAY_APP="$WRKHRS_ROOT/services/gateway/app.py"
+WRKHRS_GATEWAY_TEST="$WRKHRS_ROOT/tests/test_gateway.py"
+WRKHRS_MODULE_LOADER_TEST="$WRKHRS_ROOT/tests/_module_loader.py"
 
 PYTHON="${PYTHON:-python3.11}"
 # shellcheck source=/dev/null
@@ -12,11 +16,22 @@ source "$ROOT/scripts/workspace_env.sh"
 echo "==> Using Python: $($PYTHON --version)"
 echo "==> Workspace env: $ROOT/.venv"
 
+if [[ ! -f "$WRKHRS_GATEWAY_APP" ]]; then
+  echo "ERROR: expected WrkHrs gateway app at $WRKHRS_GATEWAY_APP" >&2
+  exit 1
+fi
+if [[ ! -f "$WRKHRS_GATEWAY_TEST" ]]; then
+  echo "ERROR: expected WrkHrs gateway test at $WRKHRS_GATEWAY_TEST" >&2
+  exit 1
+fi
+
 uv sync --python "$PYTHON"
 
 echo "==> Lint (ruff + black)"
 uv run ruff check services/ mcp/servers/
 uv run black --check services/ mcp/servers/
+# WrkHrs uses its own package root. These paths are relative to services/wrkhrs/,
+# not the repo-level services/ tree.
 (cd services/wrkhrs && uv run --package wrkhrs ruff check \
   services/gateway/app.py \
   tests/_module_loader.py \

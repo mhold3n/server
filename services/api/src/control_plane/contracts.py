@@ -50,6 +50,13 @@ class Executor(StrEnum):
 
 
 class ArtifactType(StrEnum):
+    KNOWLEDGE_POOL = "KNOWLEDGE_POOL"
+    KNOWLEDGE_PACK = "KNOWLEDGE_PACK"
+    RECIPE_OBJECT = "RECIPE_OBJECT"
+    EXECUTION_ADAPTER_SPEC = "EXECUTION_ADAPTER_SPEC"
+    EVIDENCE_BUNDLE = "EVIDENCE_BUNDLE"
+    ROLE_CONTEXT_BUNDLE = "ROLE_CONTEXT_BUNDLE"
+    ENVIRONMENT_SPEC = "ENVIRONMENT_SPEC"
     PROBLEM_BRIEF = "PROBLEM_BRIEF"
     REQUIREMENTS_SET = "REQUIREMENTS_SET"
     CONSTRAINTS_REGISTER = "CONSTRAINTS_REGISTER"
@@ -279,6 +286,289 @@ class EscalationPacket(BaseModel):
     requested_by: str = Field(..., min_length=1)
     parent_verification_report_id: UUID | None = None
     created_at: datetime
+
+
+class KnowledgePoolCoverageStatus(StrEnum):
+    SEEDED = "SEEDED"
+    PARTIAL = "PARTIAL"
+    PLANNED = "PLANNED"
+    COMPLETE = "COMPLETE"
+
+
+class KnowledgeSource(BaseModel):
+    source_id: str = Field(..., min_length=1)
+    title: str = Field(..., min_length=1)
+    kind: str = Field(
+        ...,
+        pattern=r"^(codebase|contract_registry|tool_catalog|documentation|runbook|artifact|other)$",
+    )
+    location: str | None = None
+    access_pattern: str = Field(..., min_length=1)
+    trust_notes: str | None = None
+    refresh_policy: str | None = None
+    tags: list[str] = Field(default_factory=list)
+
+
+class ExecutionAdapter(BaseModel):
+    adapter_id: str = Field(..., min_length=1)
+    name: str = Field(..., min_length=1)
+    kind: str = Field(
+        ...,
+        pattern=r"^(mcp_server|cli|http_api|runtime|workflow|other)$",
+    )
+    interface_contract: str = Field(..., min_length=1)
+    execution_backend: str = Field(..., min_length=1)
+    primary_uses: list[str] = Field(default_factory=list)
+    constraints: list[str] = Field(default_factory=list)
+
+
+class ValidationHarnessSpec(BaseModel):
+    harness_id: str = Field(..., min_length=1)
+    name: str = Field(..., min_length=1)
+    kind: str = Field(
+        ...,
+        pattern=r"^(schema|deterministic_command|artifact_audit|verification_report|policy_gate|other)$",
+    )
+    trigger: str = Field(..., min_length=1)
+    evidence_emitted: list[str] = Field(default_factory=list)
+    blocking_conditions: list[str] = Field(default_factory=list)
+
+
+class RoleSpecificContextCompilation(BaseModel):
+    role_id: str = Field(..., min_length=1)
+    role_label: str = Field(..., min_length=1)
+    applies_to_executor: Executor | None = None
+    knowledge_source_ids: list[str] = Field(default_factory=list)
+    adapter_ids: list[str] = Field(default_factory=list)
+    validation_harness_ids: list[str] = Field(default_factory=list)
+    summary: str = Field(..., min_length=1)
+    compiled_context: str = Field(..., min_length=1)
+
+
+class KnowledgePool(BaseModel):
+    """Reusable focus-scoped knowledge substrate for engineering workflows."""
+
+    knowledge_pool_id: UUID
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    focus_area: str = Field(
+        ...,
+        pattern=r"^(engineering|general_engineering|chemistry|physics|other)$",
+    )
+    domain: str = Field(..., min_length=1)
+    summary: str = Field(..., min_length=1)
+    coverage_status: KnowledgePoolCoverageStatus = KnowledgePoolCoverageStatus.SEEDED
+    planned_expansion_domains: list[str] = Field(default_factory=list)
+    shared_external_knowledge_substrate: list[KnowledgeSource] = Field(..., min_length=1)
+    typed_execution_adapters: list[ExecutionAdapter] = Field(..., min_length=1)
+    validation_evidence_harness: list[ValidationHarnessSpec] = Field(..., min_length=1)
+    role_specific_context_compilation: list[RoleSpecificContextCompilation] = Field(
+        ...,
+        min_length=1,
+    )
+    created_at: datetime
+    updated_at: datetime
+
+
+class KnowledgePackScope(BaseModel):
+    solves: list[str] = Field(..., min_length=1)
+    not_for: list[str] = Field(default_factory=list)
+
+
+class KnowledgeCoreObject(BaseModel):
+    name: str = Field(..., min_length=1)
+    kind: str = Field(..., min_length=1)
+    role: str = Field(..., min_length=1)
+
+
+class KnowledgePackInterfaces(BaseModel):
+    inputs: list[str] = Field(default_factory=list)
+    outputs: list[str] = Field(default_factory=list)
+
+
+class KnowledgePackProvenance(BaseModel):
+    sources: list[str] = Field(..., min_length=1)
+    examples: list[str] = Field(default_factory=list)
+    benchmarks: list[str] = Field(default_factory=list)
+
+
+class EnvironmentSpecPayload(BaseModel):
+    environment_spec_id: str = Field(..., min_length=1)
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    runtime_profile: str = Field(..., min_length=1)
+    delivery_kind: str = Field(..., pattern=r"^(docker_image|uv_venv|dotnet_toolchain)$")
+    module_ids: list[str] = Field(..., min_length=1)
+    supported_host_platforms: list[str] = Field(..., min_length=1)
+    manifest_format: str = Field(
+        ...,
+        pattern=r"^(dockerfile|requirements_txt|csproj|script|other)$",
+    )
+    manifest_path: str = Field(..., min_length=1)
+    runtime_locator: str = Field(..., min_length=1)
+    bootstrap_command: str = Field(..., min_length=1)
+    healthcheck_command: str = Field(..., min_length=1)
+    launcher_ref: str = Field(..., min_length=1)
+    notes: list[str] = Field(default_factory=list)
+
+
+class KnowledgePackPayload(BaseModel):
+    knowledge_pack_id: str = Field(..., min_length=1)
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    tool_id: str = Field(..., min_length=1)
+    tool_name: str = Field(..., min_length=1)
+    module_class: str = Field(
+        ...,
+        pattern=r"^(application|framework|integration_layer|runtime_kernel|translator|standard)$",
+    )
+    library_version: str = Field(..., min_length=1)
+    bindings: list[str] = Field(..., min_length=1)
+    scope: KnowledgePackScope
+    core_objects: list[KnowledgeCoreObject] = Field(..., min_length=1)
+    best_for: list[str] = Field(..., min_length=1)
+    anti_patterns: list[str] = Field(default_factory=list)
+    interfaces: KnowledgePackInterfaces
+    integration_refs: list[str] = Field(default_factory=list)
+    recipe_refs: list[str] = Field(..., min_length=1)
+    adapter_refs: list[str] = Field(..., min_length=1)
+    evidence_refs: list[str] = Field(..., min_length=1)
+    minutes_source_refs: list[str] = Field(..., min_length=1)
+    environment_refs: list[str] = Field(..., min_length=1)
+    excluded_reason: str | None = None
+    provenance: KnowledgePackProvenance
+
+
+class RecipeTouchedObject(BaseModel):
+    name: str = Field(..., min_length=1)
+    role: str = Field(..., min_length=1)
+    notes: str | None = None
+
+
+class RecipeObjectPayload(BaseModel):
+    recipe_id: str = Field(..., min_length=1)
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    title: str = Field(..., min_length=1)
+    task_class: str = Field(..., min_length=1)
+    assumptions: list[str] = Field(default_factory=list)
+    why_this_stack: str = Field(..., min_length=1)
+    knowledge_pack_ref: str = Field(..., pattern=r"^artifact://.+")
+    touched_objects: list[RecipeTouchedObject] = Field(..., min_length=1)
+    implementation_pattern: list[str] = Field(..., min_length=1)
+    required_inputs: list[str] = Field(default_factory=list)
+    required_outputs: list[str] = Field(default_factory=list)
+    failure_signatures: list[str] = Field(default_factory=list)
+    acceptance_tests: list[str] = Field(..., min_length=1)
+    adapter_refs: list[str] = Field(..., min_length=1)
+    evidence_refs: list[str] = Field(..., min_length=1)
+
+
+class AdapterIOField(BaseModel):
+    name: str = Field(..., min_length=1)
+    type: str = Field(..., min_length=1)
+    required: bool | None = None
+    unit: str | None = None
+
+
+class CallableInterfaceSpec(BaseModel):
+    kind: str = Field(
+        ...,
+        pattern=r"^(python_function|python_module|cli|dotnet|cxx_binding)$",
+    )
+    entrypoint: str = Field(..., min_length=1)
+    signature: str | None = None
+
+
+class UnitPolicySpec(BaseModel):
+    unit_system: str = Field(..., pattern=r"^(SI|US_CUSTOMARY|MIXED_DECLARED)$")
+    require_declared_units: bool
+    notes: str | None = None
+
+
+class FileTranslatorSpec(BaseModel):
+    from_: str = Field(..., alias="from", min_length=1)
+    to: str = Field(..., min_length=1)
+    notes: str = Field(..., min_length=1)
+
+
+class ExecutionAdapterSpecPayload(BaseModel):
+    adapter_spec_id: str = Field(..., min_length=1)
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    tool_id: str = Field(..., min_length=1)
+    supported_library_version: str = Field(..., min_length=1)
+    knowledge_pack_ref: str = Field(..., pattern=r"^artifact://.+")
+    preferred_environment_ref: str = Field(..., pattern=r"^artifact://.+")
+    environment_refs: list[str] = Field(..., min_length=1)
+    callable_interface: CallableInterfaceSpec
+    typed_inputs: list[AdapterIOField] = Field(..., min_length=1)
+    typed_outputs: list[AdapterIOField] = Field(..., min_length=1)
+    unit_policy: UnitPolicySpec
+    file_translators: list[FileTranslatorSpec] = Field(default_factory=list)
+    runtime_requirements: list[str] = Field(default_factory=list)
+    healthcheck_refs: list[str] = Field(..., min_length=1)
+    safety_limits: list[str] = Field(default_factory=list)
+    emitted_artifact_refs: list[str] = Field(default_factory=list)
+    launcher_ref: str = Field(..., min_length=1)
+
+
+class EvidenceBundleProvenance(BaseModel):
+    sources: list[str] = Field(..., min_length=1)
+    benchmarks: list[str] = Field(default_factory=list)
+
+
+class EvidenceBundlePayload(BaseModel):
+    evidence_bundle_id: str = Field(..., min_length=1)
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    title: str = Field(..., min_length=1)
+    tool_id: str = Field(..., min_length=1)
+    knowledge_pack_ref: str = Field(..., pattern=r"^artifact://.+")
+    recipe_refs: list[str] = Field(..., min_length=1)
+    adapter_refs: list[str] = Field(..., min_length=1)
+    smoke_tests: list[str] = Field(..., min_length=1)
+    benchmark_cases: list[str] = Field(default_factory=list)
+    expected_outputs: list[str] = Field(default_factory=list)
+    tolerances: list[str] = Field(default_factory=list)
+    convergence_criteria: list[str] = Field(default_factory=list)
+    reviewer_checklist: list[str] = Field(..., min_length=1)
+    runtime_verification_refs: list[str] = Field(..., min_length=1)
+    healthcheck_commands: list[str] = Field(..., min_length=1)
+    reference_artifact_refs: list[str] = Field(default_factory=list)
+    provenance: EvidenceBundleProvenance
+
+
+class SourceHashRecord(BaseModel):
+    artifact_ref: str = Field(..., pattern=r"^artifact://.+")
+    sha256: str = Field(..., pattern=r"^[a-f0-9]{64}$")
+
+
+class RoleContextBundlePayload(BaseModel):
+    role_context_bundle_id: str = Field(..., min_length=1)
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    role: str = Field(..., pattern=r"^(general|coder|reviewer)$")
+    task_class: str = Field(..., min_length=1)
+    source_artifact_refs: list[str] = Field(..., min_length=1)
+    source_hashes: list[SourceHashRecord] = Field(..., min_length=1)
+    compiled_summary: str = Field(..., min_length=1)
+    included_sections: list[str] = Field(..., min_length=1)
+    excluded_sections: list[str] = Field(default_factory=list)
+    retrieval_keys: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _source_hash_refs_match(self) -> RoleContextBundlePayload:
+        source_refs = set(self.source_artifact_refs)
+        hash_refs = {item.artifact_ref for item in self.source_hashes}
+        if source_refs != hash_refs:
+            raise ValueError("source_hashes must cover exactly the source_artifact_refs")
+        return self
+
+
+class DecisionLogPayload(BaseModel):
+    decision_id: str = Field(..., min_length=1)
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    title: str = Field(..., min_length=1)
+    statement: str = Field(..., min_length=1)
+    rationale: str = Field(..., min_length=1)
+    chosen_refs: list[str] = Field(..., min_length=1)
+    rejected_refs: list[str] = Field(default_factory=list)
+    tradeoffs: list[str] = Field(default_factory=list)
+    status: str = Field(..., pattern=r"^(accepted|proposed|superseded)$")
 
 
 # --- problem_brief (see problem-brief.schema.json) ---

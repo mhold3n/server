@@ -1,4 +1,0 @@
-agent_type: "retrieval"
-temperature: 0.0
-max_tokens: 1024
-tools_allowed: ["http"]

@@ -2,6 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Build context is services/wrkhrs/, so the live gateway source is under
+# services/gateway/ within that subtree.
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
@@ -20,6 +23,7 @@ RUN pip install --no-cache-dir \
 
 # Copy application code
 COPY services/gateway/ ./
+RUN test -f /app/app.py
 
 EXPOSE 8000
 

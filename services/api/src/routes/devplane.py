@@ -99,7 +99,7 @@ def _sync_run_snapshot(
 ) -> RunRecord:
     """Apply an execution-backend snapshot to the local control-plane run."""
     phase = snapshot.phase
-    status = snapshot.terminal_task_state()
+    status = snapshot.task_state()
     if (
         phase is None
         and status is None

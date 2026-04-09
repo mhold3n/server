@@ -8,10 +8,16 @@
 - **Workstation (RTX 4070 Ti):** vLLM/Ollama LLM runners in Docker with `nvidia-container-toolkit`, exposed only to the server via LAN/mTLS.
 - **Dev flow:** Remote dev via VS Code Dev Containers → CI builds → Deploy to server → Server routes AI requests to WrkHrs services → WrkHrs orchestrator routes LLM inference to GPU worker.
 
-### MBMH vs platform scaffolding
+### Active vs archived code
 
-- **`mbmh/`** — Authoritative **multi-platform LLM training** (SFT, PEFT, continued pretraining) and **local OpenAI-compatible runtime** (`serve_local.py`), runtime bundles under `mbmh/outputs/`, and OpenClaw-oriented docs under `mbmh/deploy/openclaw/`. Work here when training models or running the local inference adapter.
-- **Rest of the repo** — **Production scaffolding**: Birtha API, router, WrkHrs services, worker compose, MCP servers, observability, and deployment glue. See [`docs/mbmh.md`](docs/mbmh.md) for a short orientation.
+- **This repo** — Active platform and orchestration code: Birtha API, router, WrkHrs services, agent-platform, DevPlane, MCP servers, observability, and deployment glue.
+- **Legacy archive** — The historical MBMH training/runtime tree and the retired `engineering_physics_v1` harness were moved out of this repo into the sibling legacy archive at `../server-local-archive/2026-04-08/server/`.
+
+### External GitHub repos
+
+- **`claw-code-main/`** — Git submodule tracking [`ultraworkers/claw-code`](https://github.com/ultraworkers/claw-code) on `main`.
+- **`openclaw/`** — Git submodule tracking [`openclaw/openclaw`](https://github.com/openclaw/openclaw) on `main`.
+- Refresh both with `npm run deps:external`. See [`docs/external-repos.md`](docs/external-repos.md) for the rationale and workflow.
 
 ## Project Management
 
@@ -47,6 +53,7 @@ Use the appropriate issue template:
 ### 1) Bootstrap the workspace
 
 ```bash
+npm run deps:external
 uv sync --python 3.11
 npm install
 ```
@@ -372,7 +379,6 @@ server/   # repository root (suggested clone folder name)
 │   │   └── compose/            # WrkHrs Docker Compose stacks
 │   ├── mcp-registry/           # MCP registry service
 │   └── queue/                  # Redis configuration
-├── mbmh/                       # MBMH: training + local OpenAI-compat runtime
 ├── mcp/                        # MCP servers
 │   ├── servers/                # Global and per-repo MCP servers
 │   │   ├── github-mcp/         # GitHub MCP with Projects integration

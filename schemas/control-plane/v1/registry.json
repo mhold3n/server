@@ -13,6 +13,41 @@
       "kind": "contract"
     },
     {
+      "id": "https://birtha.local/schemas/control-plane/v1/knowledge-pack.schema.json",
+      "path": "knowledge-pack.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/recipe-object.schema.json",
+      "path": "recipe-object.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/execution-adapter-spec.schema.json",
+      "path": "execution-adapter-spec.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/evidence-bundle.schema.json",
+      "path": "evidence-bundle.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/role-context-bundle.schema.json",
+      "path": "role-context-bundle.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/environment-spec.schema.json",
+      "path": "environment-spec.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/decision-log.schema.json",
+      "path": "decision-log.schema.json",
+      "kind": "contract"
+    },
+    {
       "id": "https://birtha.local/schemas/control-plane/v1/task-packet.schema.json",
       "path": "task-packet.schema.json",
       "kind": "contract"

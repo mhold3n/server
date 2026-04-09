@@ -7,7 +7,7 @@ After **`mhold3n/server`** is the active remote and CI is green, archive the old
 ```markdown
 # Moved
 
-This project continues as **[server](https://github.com/mhold3n/server)** — the Birtha + WrkHrs + MBMH monorepo.
+This project continues as **[server](https://github.com/mhold3n/server)** — the active Birtha + WrkHrs orchestration repo.
 
 Clone: `git clone https://github.com/mhold3n/server.git`
 ```

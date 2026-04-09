@@ -148,11 +148,37 @@ class WorkspaceManager:
                 ),
                 task_packets[0] if task_packets else None,
             )
+            active_task_packet_ref = (
+                f"artifact://task_packet/{active_task_packet['task_packet_id']}"
+                if active_task_packet
+                else None
+            )
+            active_queue_item = next(
+                (
+                    item
+                    for item in (engineering_bundle.get("task_queue", {}) or {}).get("items", [])
+                    if item.get("task_packet_ref") == active_task_packet_ref
+                ),
+                None,
+            )
             manifest = {
                 "task_id": task.task_id,
                 "project_id": task.project_id,
                 "state": task.state,
+                "engagement_mode": task.engagement_mode,
+                "engagement_mode_source": task.engagement_mode_source,
+                "engagement_mode_confidence": task.engagement_mode_confidence,
+                "engagement_mode_reasons": task.engagement_mode_reasons,
+                "minimum_engagement_mode": task.minimum_engagement_mode,
+                "pending_mode_change": (
+                    task.pending_mode_change.model_dump(mode="json")
+                    if task.pending_mode_change is not None
+                    else None
+                ),
+                "lifecycle_reason": task.lifecycle_reason,
+                "lifecycle_detail": task.lifecycle_detail,
                 "reasoning_tier": getattr(task.dossier, "reasoning_tier", None),
+                "task_plan_informational": True,
                 "plan": task.plan.model_dump(mode="json") if task.plan else None,
                 "patch_plan": (
                     task.patch_plan.model_dump(mode="json") if task.patch_plan else None
@@ -163,14 +189,16 @@ class WorkspaceManager:
                 "engineering_state_ref": engineering_bundle.get("engineering_state_ref"),
                 "engineering_state": engineering_bundle.get("engineering_state"),
                 "task_queue": engineering_bundle.get("task_queue"),
+                "active_task_queue_item": active_queue_item,
                 "task_packet_refs": engineering_bundle.get("task_packet_refs", []),
                 "task_packets_path": str(packet_dir / "task-packets"),
-                "active_task_packet_ref": (
-                    f"artifact://task_packet/{active_task_packet['task_packet_id']}"
-                    if active_task_packet
-                    else None
-                ),
+                "active_task_packet_ref": active_task_packet_ref,
                 "active_task_packet": active_task_packet,
+                "active_selected_executor": (
+                    ((active_task_packet or {}).get("routing_metadata") or {}).get(
+                        "selected_executor"
+                    )
+                ),
                 "required_gates": engineering_bundle.get("required_gates", []),
                 "ready_for_task_decomposition": engineering_bundle.get(
                     "ready_for_task_decomposition", False
@@ -184,6 +212,18 @@ class WorkspaceManager:
                 "task_id": task.task_id,
                 "project_id": task.project_id,
                 "state": task.state,
+                "engagement_mode": task.engagement_mode,
+                "engagement_mode_source": task.engagement_mode_source,
+                "engagement_mode_confidence": task.engagement_mode_confidence,
+                "engagement_mode_reasons": task.engagement_mode_reasons,
+                "minimum_engagement_mode": task.minimum_engagement_mode,
+                "pending_mode_change": (
+                    task.pending_mode_change.model_dump(mode="json")
+                    if task.pending_mode_change is not None
+                    else None
+                ),
+                "lifecycle_reason": task.lifecycle_reason,
+                "lifecycle_detail": task.lifecycle_detail,
                 "reasoning_tier": getattr(task.dossier, "reasoning_tier", None),
                 "plan": task.plan.model_dump(mode="json") if task.plan else None,
                 "patch_plan": (

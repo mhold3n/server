@@ -33,6 +33,14 @@ export function createBackendRun(request: DevPlaneRunCreatePayload): BackendRunR
     control_run_id: request.control_run_id,
     status: "queued",
     phase: "planning",
+    engagement_mode: request.engagement_mode,
+    engagement_mode_source: request.engagement_mode_source,
+    engagement_mode_confidence: request.engagement_mode_confidence,
+    engagement_mode_reasons: request.engagement_mode_reasons ?? [],
+    minimum_engagement_mode: request.minimum_engagement_mode,
+    pending_mode_change: request.pending_mode_change,
+    lifecycle_reason: request.lifecycle_reason,
+    lifecycle_detail: request.lifecycle_detail ?? {},
     summary: undefined,
     files_changed: [],
     verification_results: [],
@@ -59,6 +67,14 @@ export function updateBackendRun(
       BackendRunRecord,
       | "status"
       | "phase"
+      | "engagement_mode"
+      | "engagement_mode_source"
+      | "engagement_mode_confidence"
+      | "engagement_mode_reasons"
+      | "minimum_engagement_mode"
+      | "pending_mode_change"
+      | "lifecycle_reason"
+      | "lifecycle_detail"
       | "summary"
       | "files_changed"
       | "verification_results"
@@ -91,6 +107,7 @@ export function markRunCancelled(runId: string): BackendRunRecord | undefined {
     status: "cancelled",
     phase: "cancelled",
     summary: "Cancellation requested by control plane.",
+    lifecycle_reason: "cancel_requested",
   })
 }
 

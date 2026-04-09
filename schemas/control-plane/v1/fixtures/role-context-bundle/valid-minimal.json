@@ -1,0 +1,24 @@
+{
+  "role_context_bundle_id": "general_openfoam_bundle",
+  "schema_version": "1.0.0",
+  "role": "general",
+  "task_class": "steady_internal_flow",
+  "source_artifact_refs": [
+    "artifact://knowledge-pack/openfoam",
+    "artifact://recipe-object/openfoam/steady_internal_flow"
+  ],
+  "source_hashes": [
+    {
+      "artifact_ref": "artifact://knowledge-pack/openfoam",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "artifact_ref": "artifact://recipe-object/openfoam/steady_internal_flow",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ],
+  "compiled_summary": "OpenFOAM is appropriate for steady internal CFD when mesh and residual discipline are explicit.",
+  "included_sections": ["capability boundaries", "tradeoffs"],
+  "excluded_sections": ["low-level adapter call details"],
+  "retrieval_keys": ["openfoam", "steady internal flow"]
+}

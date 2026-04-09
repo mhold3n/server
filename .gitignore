@@ -264,28 +264,6 @@ docker-compose.local.yml
 *.swo
 *~
 
-# -----------------------------------------------------------------------------
-# MBMH (mbmh/) — training + local runtime
-# -----------------------------------------------------------------------------
-mbmh/.venv/
-mbmh/**/__pycache__/
-mbmh/.pytest_cache/
-mbmh/.mypy_cache/
-mbmh/.ruff_cache/
-mbmh/outputs/runs/
-mbmh/outputs/checkpoints/
-mbmh/outputs/evals/
-mbmh/outputs/packaged/
-mbmh/*.db
-mbmh/logs/
-
-# MBMH tracked config/source exceptions (repo-wide *.yaml / *.yml / *.json ignores above)
-!mbmh/configs/**/*.yaml
-!mbmh/configs/**/*.yml
-!mbmh/deploy/**/*.yaml
-!mbmh/deploy/**/*.yml
-!mbmh/**/*.json
-
 # OS-specific files
 Thumbs.db
 .DS_Store

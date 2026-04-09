@@ -9,14 +9,19 @@ from ..control_plane.engineering import intake_engineering_request
 from .models import (
     ArtifactRecord,
     ClarificationAnswer,
+    ClarificationQuestion,
+    CostLedgerEntry,
+    EngagementMode,
+    EngagementModeSource,
+    EngineeringSessionRecord,
     ExecutionMode,
     FileChangeRecord,
+    PendingModeChange,
     ProjectCreateRequest,
     ProjectRecord,
     PublishRequest,
     RunCompleteRequest,
     RunEventRequest,
-    CostLedgerEntry,
     RunLogEntry,
     RunPhase,
     RunRecord,
@@ -41,6 +46,10 @@ class DevPlaneError(RuntimeError):
     def __init__(self, message: str, *, status_code: int = 400):
         super().__init__(message)
         self.status_code = status_code
+
+
+_ENGINEERING_CHAT_PROJECT_ID = "proj_engineering_chat"
+_ENGINEERING_CHAT_PROJECT_NAME = "Engineering Chat Sessions"
 
 
 class DevPlaneService:
@@ -123,6 +132,417 @@ class DevPlaneService:
             raise DevPlaneError(f"Unknown project: {project_id}", status_code=404)
         return project
 
+    def ensure_engineering_chat_session(
+        self,
+        *,
+        user_intent: str,
+        context: dict | None = None,
+        session_id: str | None = None,
+        promotion_reason: str | None = None,
+        engagement_mode: str | EngagementMode | None = None,
+        engagement_mode_source: str | EngagementModeSource | None = None,
+        engagement_mode_confidence: float | None = None,
+        engagement_mode_reasons: list[str] | None = None,
+        minimum_engagement_mode: str | EngagementMode | None = None,
+        pending_mode_change: dict | PendingModeChange | None = None,
+    ) -> tuple[TaskRecord, RunRecord]:
+        """Create or resume a visible DevPlane-backed strict-engineering session."""
+        project = self._ensure_engineering_chat_project()
+        normalized_mode = self._normalize_engagement_mode(
+            engagement_mode,
+            default=EngagementMode.STRICT_ENGINEERING,
+        )
+        normalized_source = self._normalize_engagement_mode_source(engagement_mode_source)
+        normalized_minimum_mode = self._normalize_engagement_mode(
+            minimum_engagement_mode,
+            default=normalized_mode,
+        )
+        pending_change = self._normalize_pending_mode_change(pending_mode_change)
+        task = self.store.get_task(session_id) if session_id else None
+        if task is None:
+            task_id = session_id or str(uuid4())
+            request_record = TaskRequestRecord(
+                task_id=task_id,
+                project_id=project.project_id,
+                user_intent=user_intent.strip(),
+                context=dict(context or {}),
+            )
+            dossier = TaskDossier(
+                task_id=task_id,
+                project_id=project.project_id,
+                state=TaskState.PLANNING,
+                engagement_mode=normalized_mode,
+                engagement_mode_source=normalized_source,
+                engagement_mode_confidence=engagement_mode_confidence,
+                engagement_mode_reasons=list(engagement_mode_reasons or []),
+                minimum_engagement_mode=normalized_minimum_mode,
+                pending_mode_change=pending_change,
+                reasoning_tier="engineering_control_plane",
+                request=request_record,
+                clarifications=TaskClarification(),
+                engineering_session=EngineeringSessionRecord(
+                    engineering_session_id=task_id,
+                    promotion_reason=promotion_reason,
+                    status="pending",
+                    engagement_mode=normalized_mode,
+                    engagement_mode_source=normalized_source,
+                    engagement_mode_confidence=engagement_mode_confidence,
+                    engagement_mode_reasons=list(engagement_mode_reasons or []),
+                    minimum_engagement_mode=normalized_minimum_mode,
+                    pending_mode_change=pending_change,
+                ),
+            )
+            task = TaskRecord(
+                task_id=task_id,
+                project_id=project.project_id,
+                state=TaskState.PLANNING,
+                engagement_mode=normalized_mode,
+                engagement_mode_source=normalized_source,
+                engagement_mode_confidence=engagement_mode_confidence,
+                engagement_mode_reasons=list(engagement_mode_reasons or []),
+                minimum_engagement_mode=normalized_minimum_mode,
+                pending_mode_change=pending_change,
+                request=request_record,
+                clarifications=TaskClarification(),
+                dossier=dossier,
+            )
+        else:
+            task.request.user_intent = user_intent.strip() or task.request.user_intent
+            task.request.context = {**task.request.context, **dict(context or {})}
+            if task.dossier.engineering_session is None:
+                task.dossier.engineering_session = EngineeringSessionRecord(
+                    engineering_session_id=task.task_id,
+                    promotion_reason=promotion_reason,
+                    status="pending",
+                    engagement_mode=normalized_mode,
+                    engagement_mode_source=normalized_source,
+                    engagement_mode_confidence=engagement_mode_confidence,
+                    engagement_mode_reasons=list(engagement_mode_reasons or []),
+                    minimum_engagement_mode=normalized_minimum_mode,
+                    pending_mode_change=pending_change,
+                )
+
+        run = self.get_run(task.current_run_id) if task.current_run_id else None
+        if run is None:
+            run = RunRecord(
+                run_id=str(uuid4()),
+                task_id=task.task_id,
+                project_id=task.project_id,
+                phase=RunPhase.PLANNING,
+                engagement_mode=normalized_mode,
+                engagement_mode_source=normalized_source,
+                engagement_mode_confidence=engagement_mode_confidence,
+                engagement_mode_reasons=list(engagement_mode_reasons or []),
+                minimum_engagement_mode=normalized_minimum_mode,
+                pending_mode_change=pending_change,
+                execution_mode=ExecutionMode.EXTERNAL,
+                logs=[
+                    RunLogEntry(
+                        phase=RunPhase.PLANNING,
+                        message="Strict engineering chat session created.",
+                        details={"promotion_reason": promotion_reason},
+                    )
+                ],
+            )
+            task.current_run_id = run.run_id
+            if run.run_id not in task.dossier.run_ids:
+                task.dossier.run_ids.append(run.run_id)
+
+        session = task.dossier.engineering_session or EngineeringSessionRecord(
+            engineering_session_id=task.task_id,
+            promotion_reason=promotion_reason,
+            status="pending",
+        )
+        session.run_id = run.run_id
+        session.promotion_reason = promotion_reason or session.promotion_reason
+        session.updated_at = utc_now()
+        task.dossier.engineering_session = session
+        task.dossier.reasoning_tier = "engineering_control_plane"
+        self._apply_mode_metadata(
+            task=task,
+            dossier=task.dossier,
+            run=run,
+            session=session,
+            engagement_mode=normalized_mode,
+            engagement_mode_source=normalized_source,
+            engagement_mode_confidence=engagement_mode_confidence,
+            engagement_mode_reasons=engagement_mode_reasons or [],
+            minimum_engagement_mode=normalized_minimum_mode,
+            pending_mode_change=pending_change,
+        )
+        task.dossier.updated_at = utc_now()
+        task.updated_at = task.dossier.updated_at
+        self.store.save_run(run)
+        self.store.save_task(task)
+        return task, run
+
+    def load_engineering_session_snapshot(
+        self,
+        *,
+        session_id: str | None = None,
+        task_id: str | None = None,
+    ) -> dict[str, object] | None:
+        """Return the durable strict-engineering artifact snapshot for a session/task."""
+        target = session_id or task_id
+        if not target:
+            return None
+        task = self.store.get_task(target)
+        if task is None:
+            return None
+        session = task.dossier.engineering_session
+        latest_problem_brief = self._latest_typed_payload(task.dossier, "PROBLEM_BRIEF")
+        latest_engineering_state = self._latest_typed_payload(task.dossier, "ENGINEERING_STATE")
+        latest_task_queue = self._latest_typed_payload(task.dossier, "TASK_QUEUE")
+        latest_task_packets = self._typed_payloads(task.dossier, "TASK_PACKET")
+        if session is None and not any(
+            [latest_problem_brief, latest_engineering_state, latest_task_queue, latest_task_packets]
+        ):
+            return None
+        return {
+            "problem_brief": (session.problem_brief if session else None) or latest_problem_brief,
+            "engineering_state": (
+                session.engineering_state if session else None
+            ) or latest_engineering_state,
+            "task_queue": (session.task_queue if session else None) or latest_task_queue,
+            "task_packets": (session.task_packets if session else []) or latest_task_packets,
+            "active_task_packet": session.active_task_packet if session else None,
+            "active_task_packet_ref": session.active_task_packet_ref if session else None,
+            "active_selected_executor": session.active_selected_executor if session else None,
+            "clarification_questions": session.clarification_questions if session else [],
+            "required_gates": session.required_gates if session else [],
+            "verification_outcome": session.verification_outcome if session else None,
+            "verification_report": session.verification_report if session else None,
+            "verification_report_ref": session.verification_report_ref if session else None,
+            "escalation_packet": session.escalation_packet if session else None,
+            "escalation_packet_ref": session.escalation_packet_ref if session else None,
+            "status": session.status if session else None,
+            "engagement_mode": task.engagement_mode.value,
+            "engagement_mode_source": (
+                task.engagement_mode_source.value if task.engagement_mode_source else None
+            ),
+            "engagement_mode_confidence": task.engagement_mode_confidence,
+            "engagement_mode_reasons": list(task.engagement_mode_reasons),
+            "minimum_engagement_mode": (
+                task.minimum_engagement_mode.value if task.minimum_engagement_mode else None
+            ),
+            "pending_mode_change": (
+                task.pending_mode_change.model_dump(mode="json")
+                if task.pending_mode_change is not None
+                else None
+            ),
+            "lifecycle_reason": session.lifecycle_reason if session else task.lifecycle_reason,
+            "lifecycle_detail": dict(
+                session.lifecycle_detail if session else task.lifecycle_detail
+            ),
+        }
+
+    def sync_engineering_chat_session(
+        self,
+        *,
+        task_id: str,
+        run_id: str | None,
+        workflow_result: dict[str, object],
+    ) -> TaskRecord:
+        """Persist strict-engineering workflow refs/state into the visible DevPlane dossier."""
+        task = self.get_task(task_id)
+        run = self.get_run(run_id) if run_id else None
+        referential_state = workflow_result.get("referential_state", {})
+        ref_state = referential_state if isinstance(referential_state, dict) else {}
+        task_packets = workflow_result.get("task_packets", [])
+        packets = task_packets if isinstance(task_packets, list) else []
+        active_packet_id = ref_state.get("active_task_packet_id")
+        active_packet_ref = ref_state.get("active_task_packet_ref")
+        active_packet = next(
+            (
+                packet
+                for packet in packets
+                if isinstance(packet, dict) and packet.get("task_packet_id") == active_packet_id
+            ),
+            None,
+        )
+        if active_packet is None and packets:
+            active_packet = packets[0] if isinstance(packets[0], dict) else None
+        active_selected_executor = ref_state.get("selected_executor")
+        if not active_selected_executor and isinstance(active_packet, dict):
+            routing = active_packet.get("routing_metadata")
+            if isinstance(routing, dict):
+                selected = routing.get("selected_executor")
+                if isinstance(selected, str) and selected.strip():
+                    active_selected_executor = selected.strip()
+
+        session = task.dossier.engineering_session or EngineeringSessionRecord(
+            engineering_session_id=task.task_id,
+            run_id=run.run_id if run else None,
+            promotion_reason=None,
+        )
+        session.engagement_mode = self._normalize_engagement_mode(
+            workflow_result.get("engagement_mode"),
+            default=session.engagement_mode,
+        )
+        session.engagement_mode_source = self._normalize_engagement_mode_source(
+            workflow_result.get("engagement_mode_source"),
+            default=session.engagement_mode_source,
+        )
+        session.engagement_mode_confidence = self._coalesce_optional_float(
+            workflow_result.get("engagement_mode_confidence"),
+            session.engagement_mode_confidence,
+        )
+        session.engagement_mode_reasons = self._coalesce_string_list(
+            workflow_result.get("engagement_mode_reasons"),
+            session.engagement_mode_reasons,
+        )
+        session.minimum_engagement_mode = self._normalize_engagement_mode(
+            workflow_result.get("minimum_engagement_mode"),
+            default=session.minimum_engagement_mode or session.engagement_mode,
+        )
+        session.pending_mode_change = self._normalize_pending_mode_change(
+            workflow_result.get("pending_mode_change"),
+            default=session.pending_mode_change,
+        )
+        session.run_id = run.run_id if run else session.run_id
+        if workflow_result.get("problem_brief") is not None:
+            session.problem_brief = workflow_result.get("problem_brief")  # type: ignore[assignment]
+        if workflow_result.get("engineering_state") is not None:
+            session.engineering_state = workflow_result.get("engineering_state")  # type: ignore[assignment]
+        if workflow_result.get("task_queue") is not None:
+            session.task_queue = workflow_result.get("task_queue")  # type: ignore[assignment]
+        session.task_packets = [packet for packet in packets if isinstance(packet, dict)]
+        session.problem_brief_ref = ref_state.get("problem_brief_ref") or session.problem_brief_ref
+        session.engineering_state_ref = (
+            ref_state.get("engineering_state_ref") or session.engineering_state_ref
+        )
+        session.active_task_packet = active_packet
+        session.active_task_packet_ref = active_packet_ref or (
+            f"artifact://task_packet/{active_packet_id}" if active_packet_id else None
+        )
+        session.active_selected_executor = (
+            str(active_selected_executor).strip() if active_selected_executor else None
+        )
+        clarification_questions = workflow_result.get("clarification_questions", [])
+        session.clarification_questions = [
+            str(question)
+            for question in clarification_questions
+            if isinstance(question, str) and question.strip()
+        ]
+        required_gates = workflow_result.get("required_gates", [])
+        session.required_gates = [
+            gate for gate in required_gates if isinstance(gate, dict)
+        ]
+        session.verification_outcome = (
+            workflow_result.get("verification_outcome")  # type: ignore[assignment]
+            if workflow_result.get("verification_outcome") is not None
+            else session.verification_outcome
+        )
+        if workflow_result.get("verification_report") is not None:
+            session.verification_report = workflow_result.get("verification_report")  # type: ignore[assignment]
+        session.verification_report_ref = ref_state.get("verification_report_ref") or (
+            f"artifact://verification_report/{session.verification_report.get('verification_report_id')}"
+            if isinstance(session.verification_report, dict)
+            and session.verification_report.get("verification_report_id")
+            else session.verification_report_ref
+        )
+        if workflow_result.get("escalation_packet") is not None:
+            session.escalation_packet = workflow_result.get("escalation_packet")  # type: ignore[assignment]
+        session.escalation_packet_ref = ref_state.get("escalation_packet_ref") or (
+            f"artifact://escalation_record/{session.escalation_packet.get('escalation_packet_id')}"
+            if isinstance(session.escalation_packet, dict)
+            and session.escalation_packet.get("escalation_packet_id")
+            else session.escalation_packet_ref
+        )
+        if workflow_result.get("lifecycle_reason") is not None:
+            session.lifecycle_reason = str(workflow_result.get("lifecycle_reason"))
+        if isinstance(workflow_result.get("lifecycle_detail"), dict):
+            session.lifecycle_detail = dict(workflow_result.get("lifecycle_detail") or {})
+        verification_outcome = str(session.verification_outcome or "").upper()
+        if session.clarification_questions:
+            session.status = "clarification_required"
+            session.lifecycle_reason = session.lifecycle_reason or "clarification_required"
+        elif session.required_gates and not ref_state.get("ready_for_task_decomposition"):
+            session.status = "blocked"
+            session.lifecycle_reason = session.lifecycle_reason or "governance_gate"
+        elif verification_outcome == "PASS":
+            session.status = "ready"
+            session.lifecycle_reason = None
+            session.lifecycle_detail = {}
+        elif verification_outcome == "ESCALATE":
+            session.status = "escalated"
+            session.lifecycle_reason = session.lifecycle_reason or "awaiting_strategic_review"
+        elif verification_outcome == "BLOCKED":
+            session.status = "blocked"
+            session.lifecycle_reason = session.lifecycle_reason or "governance_gate"
+        elif verification_outcome in {"REWORK", "FAILED"}:
+            session.status = "blocked"
+            session.lifecycle_reason = session.lifecycle_reason or "verification_rework_required"
+        elif session.active_task_packet_ref:
+            session.status = "executing"
+        else:
+            session.status = "ready"
+        session.updated_at = utc_now()
+        task.dossier.engineering_session = session
+        task.clarifications.questions = [
+            ClarificationQuestion(
+                question_id=f"engineering_{index}",
+                prompt=question,
+                field="engineering_session",
+                required=True,
+            )
+            for index, question in enumerate(session.clarification_questions, start=1)
+        ]
+        task.clarifications.answers = [
+            answer
+            for answer in task.clarifications.answers
+            if answer.question_id not in {q.question_id for q in task.clarifications.questions}
+        ]
+        if session.status == "clarification_required":
+            task.state = TaskState.PENDING_CLARIFICATION
+        elif session.active_task_packet_ref:
+            task.state = TaskState.IMPLEMENTING
+        elif session.status == "ready":
+            task.state = TaskState.READY
+        elif session.status == "blocked":
+            task.state = TaskState.BLOCKED
+        elif session.status == "escalated":
+            task.state = TaskState.ESCALATED
+        elif session.verification_report is not None:
+            task.state = TaskState.VERIFYING
+        else:
+            task.state = TaskState.PLANNING
+        self._apply_mode_metadata(
+            task=task,
+            dossier=task.dossier,
+            run=run,
+            session=session,
+            engagement_mode=session.engagement_mode,
+            engagement_mode_source=session.engagement_mode_source,
+            engagement_mode_confidence=session.engagement_mode_confidence,
+            engagement_mode_reasons=session.engagement_mode_reasons,
+            minimum_engagement_mode=session.minimum_engagement_mode,
+            pending_mode_change=session.pending_mode_change,
+            lifecycle_reason=session.lifecycle_reason,
+            lifecycle_detail=session.lifecycle_detail,
+        )
+        task.dossier.state = task.state
+        now = utc_now()
+        task.updated_at = now
+        task.dossier.updated_at = now
+        if run is not None:
+            if task.state == TaskState.PENDING_CLARIFICATION:
+                run.phase = RunPhase.PLANNING
+            elif task.state == TaskState.VERIFYING:
+                run.phase = RunPhase.VERIFYING
+            elif task.state == TaskState.IMPLEMENTING:
+                run.phase = RunPhase.IMPLEMENTING
+            elif task.state == TaskState.BLOCKED:
+                run.phase = RunPhase.BLOCKED
+            elif task.state == TaskState.ESCALATED:
+                run.phase = RunPhase.ESCALATED
+            else:
+                run.phase = RunPhase.PLANNING
+            run.updated_at = now
+            self.store.save_run(run)
+        self.store.save_task(task)
+        return task
+
     def submit_task(self, request: TaskCreateRequest) -> TaskRecord:
         """Create a task, optionally blocking for clarification."""
         project = self.get_project(request.project_id)
@@ -160,6 +580,7 @@ class DevPlaneService:
             task_id=task_id,
             project_id=project.project_id,
             state=state,
+            engagement_mode=request.engagement_mode,
             request=request_record,
             clarifications=clarifications,
             plan=plan,
@@ -169,6 +590,7 @@ class DevPlaneService:
             task_id=task_id,
             project_id=project.project_id,
             state=state,
+            engagement_mode=request.engagement_mode,
             request=request_record,
             clarifications=clarifications,
             plan=plan,
@@ -267,6 +689,24 @@ class DevPlaneService:
                 "project_id": project.project_id,
                 "project_name": project.name,
             },
+            engagement_mode=(
+                request.engagement_mode.value
+                if request.engagement_mode is not None
+                else task.engagement_mode.value
+            ),
+            engagement_mode_source=(
+                task.engagement_mode_source.value if task.engagement_mode_source else None
+            ),
+            engagement_mode_confidence=task.engagement_mode_confidence,
+            engagement_mode_reasons=task.engagement_mode_reasons,
+            minimum_engagement_mode=(
+                task.minimum_engagement_mode.value if task.minimum_engagement_mode else None
+            ),
+            pending_mode_change=(
+                task.pending_mode_change.model_dump(mode="json")
+                if task.pending_mode_change is not None
+                else None
+            ),
         )
         if not engineering_bundle.get("problem_brief_valid"):
             prompts = engineering_bundle.get("clarification_questions", [])
@@ -291,6 +731,14 @@ class DevPlaneService:
             task_id=task.task_id,
             project_id=task.project_id,
             phase=RunPhase.PLANNING,
+            engagement_mode=request.engagement_mode or task.engagement_mode,
+            engagement_mode_source=task.engagement_mode_source,
+            engagement_mode_confidence=task.engagement_mode_confidence,
+            engagement_mode_reasons=list(task.engagement_mode_reasons),
+            minimum_engagement_mode=task.minimum_engagement_mode,
+            pending_mode_change=task.pending_mode_change,
+            lifecycle_reason=task.lifecycle_reason,
+            lifecycle_detail=dict(task.lifecycle_detail),
             workspace=workspace,
             execution_mode=request.execution_mode,
             agent_session_id=request.agent_session_id,
@@ -319,6 +767,19 @@ class DevPlaneService:
         task.dossier.logs.extend(run.logs)
         task.dossier.state = task.state
         task.dossier.updated_at = task.updated_at
+        self._apply_mode_metadata(
+            task=task,
+            dossier=task.dossier,
+            run=run,
+            engagement_mode=run.engagement_mode,
+            engagement_mode_source=run.engagement_mode_source,
+            engagement_mode_confidence=run.engagement_mode_confidence,
+            engagement_mode_reasons=run.engagement_mode_reasons,
+            minimum_engagement_mode=run.minimum_engagement_mode,
+            pending_mode_change=run.pending_mode_change,
+            lifecycle_reason=run.lifecycle_reason,
+            lifecycle_detail=run.lifecycle_detail,
+        )
         self.store.save_run(run)
         self.store.save_task(task)
         return run
@@ -382,6 +843,7 @@ class DevPlaneService:
                 run_id,
                 RunEventRequest(
                     phase=phase,
+                    status=status,
                     message=summary,
                     files_changed=files_changed or [],
                     verification_results=verification_results or [],
@@ -394,9 +856,54 @@ class DevPlaneService:
         """Merge an incremental run update into the run and task dossier."""
         run = self.get_run(run_id)
         task = self.get_task(run.task_id)
+        if request.status is not None:
+            task.state = request.status
+        elif request.phase is not None:
+            task.state = self._task_state_for_phase(request.phase)
         if request.phase is not None:
             run.phase = request.phase
-            task.state = self._task_state_for_phase(request.phase)
+        elif request.status is not None:
+            run.phase = self._phase_for_nonterminal_state(request.status, default=run.phase)
+        if request.engagement_mode is not None or request.minimum_engagement_mode is not None:
+            self._apply_mode_metadata(
+                task=task,
+                dossier=task.dossier,
+                run=run,
+                session=task.dossier.engineering_session,
+                engagement_mode=request.engagement_mode or run.engagement_mode,
+                engagement_mode_source=request.engagement_mode_source or run.engagement_mode_source,
+                engagement_mode_confidence=(
+                    request.engagement_mode_confidence
+                    if request.engagement_mode_confidence is not None
+                    else run.engagement_mode_confidence
+                ),
+                engagement_mode_reasons=(
+                    request.engagement_mode_reasons or run.engagement_mode_reasons
+                ),
+                minimum_engagement_mode=(
+                    request.minimum_engagement_mode or run.minimum_engagement_mode
+                ),
+                pending_mode_change=(
+                    request.pending_mode_change or run.pending_mode_change
+                ),
+                lifecycle_reason=request.lifecycle_reason,
+                lifecycle_detail=request.lifecycle_detail,
+            )
+        elif request.lifecycle_reason is not None or request.lifecycle_detail:
+            self._apply_mode_metadata(
+                task=task,
+                dossier=task.dossier,
+                run=run,
+                session=task.dossier.engineering_session,
+                engagement_mode=run.engagement_mode,
+                engagement_mode_source=run.engagement_mode_source,
+                engagement_mode_confidence=run.engagement_mode_confidence,
+                engagement_mode_reasons=run.engagement_mode_reasons,
+                minimum_engagement_mode=run.minimum_engagement_mode,
+                pending_mode_change=run.pending_mode_change,
+                lifecycle_reason=request.lifecycle_reason,
+                lifecycle_detail=request.lifecycle_detail,
+            )
         if request.message:
             log = RunLogEntry(
                 phase=request.phase or run.phase,
@@ -443,6 +950,20 @@ class DevPlaneService:
         run = self.get_run(run_id)
         task = self.get_task(run.task_id)
         run.phase = request.phase or self._phase_for_state(request.status)
+        self._apply_mode_metadata(
+            task=task,
+            dossier=task.dossier,
+            run=run,
+            session=task.dossier.engineering_session,
+            engagement_mode=run.engagement_mode,
+            engagement_mode_source=run.engagement_mode_source,
+            engagement_mode_confidence=run.engagement_mode_confidence,
+            engagement_mode_reasons=run.engagement_mode_reasons,
+            minimum_engagement_mode=run.minimum_engagement_mode,
+            pending_mode_change=run.pending_mode_change,
+            lifecycle_reason=request.lifecycle_reason,
+            lifecycle_detail=request.lifecycle_detail,
+        )
         if request.summary:
             log = RunLogEntry(
                 phase=run.phase,
@@ -559,6 +1080,8 @@ class DevPlaneService:
             RunPhase.PLANNING: TaskState.PLANNING,
             RunPhase.IMPLEMENTING: TaskState.IMPLEMENTING,
             RunPhase.VERIFYING: TaskState.VERIFYING,
+            RunPhase.BLOCKED: TaskState.BLOCKED,
+            RunPhase.ESCALATED: TaskState.ESCALATED,
             RunPhase.READY_TO_PUBLISH: TaskState.READY_TO_PUBLISH,
             RunPhase.PUBLISHED: TaskState.PUBLISHED,
             RunPhase.FAILED: TaskState.FAILED,
@@ -575,6 +1098,144 @@ class DevPlaneService:
         }
         return mapping[state]
 
+    def _phase_for_nonterminal_state(
+        self,
+        state: TaskState,
+        *,
+        default: RunPhase,
+    ) -> RunPhase:
+        mapping = {
+            TaskState.PENDING_CLARIFICATION: RunPhase.PLANNING,
+            TaskState.PLANNING: RunPhase.PLANNING,
+            TaskState.IMPLEMENTING: RunPhase.IMPLEMENTING,
+            TaskState.VERIFYING: RunPhase.VERIFYING,
+            TaskState.BLOCKED: RunPhase.BLOCKED,
+            TaskState.ESCALATED: RunPhase.ESCALATED,
+            TaskState.READY: RunPhase.PLANNING,
+        }
+        return mapping.get(state, default)
+
+    def _normalize_engagement_mode(
+        self,
+        mode: str | EngagementMode | None,
+        *,
+        default: EngagementMode,
+    ) -> EngagementMode:
+        if isinstance(mode, EngagementMode):
+            return mode
+        if isinstance(mode, str) and mode.strip():
+            try:
+                return EngagementMode(mode.strip().lower())
+            except ValueError:
+                return default
+        return default
+
+    def _normalize_engagement_mode_source(
+        self,
+        source: str | EngagementModeSource | None,
+        *,
+        default: EngagementModeSource | None = None,
+    ) -> EngagementModeSource | None:
+        if isinstance(source, EngagementModeSource):
+            return source
+        if isinstance(source, str) and source.strip():
+            try:
+                return EngagementModeSource(source.strip().lower())
+            except ValueError:
+                return default
+        return default
+
+    def _normalize_pending_mode_change(
+        self,
+        value: dict | PendingModeChange | None,
+        *,
+        default: PendingModeChange | None = None,
+    ) -> PendingModeChange | None:
+        if isinstance(value, PendingModeChange):
+            return value
+        if isinstance(value, dict) and value:
+            return PendingModeChange.model_validate(value)
+        return default
+
+    def _coalesce_optional_float(
+        self,
+        value: object,
+        fallback: float | None,
+    ) -> float | None:
+        if value is None:
+            return fallback
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            return fallback
+        return max(0.0, min(1.0, numeric))
+
+    def _coalesce_string_list(
+        self,
+        value: object,
+        fallback: list[str],
+    ) -> list[str]:
+        if isinstance(value, list):
+            return [str(item).strip() for item in value if str(item).strip()]
+        return list(fallback)
+
+    def _apply_mode_metadata(
+        self,
+        *,
+        task: TaskRecord,
+        dossier: TaskDossier,
+        run: RunRecord | None = None,
+        session: EngineeringSessionRecord | None = None,
+        engagement_mode: str | EngagementMode,
+        engagement_mode_source: str | EngagementModeSource | None = None,
+        engagement_mode_confidence: float | None = None,
+        engagement_mode_reasons: list[str] | None = None,
+        minimum_engagement_mode: str | EngagementMode | None = None,
+        pending_mode_change: dict | PendingModeChange | None = None,
+        lifecycle_reason: str | None = None,
+        lifecycle_detail: dict | None = None,
+    ) -> None:
+        normalized_mode = self._normalize_engagement_mode(
+            engagement_mode,
+            default=task.engagement_mode,
+        )
+        normalized_source = self._normalize_engagement_mode_source(
+            engagement_mode_source,
+            default=task.engagement_mode_source,
+        )
+        normalized_minimum = self._normalize_engagement_mode(
+            minimum_engagement_mode,
+            default=normalized_mode,
+        )
+        normalized_pending = self._normalize_pending_mode_change(
+            pending_mode_change,
+            default=task.pending_mode_change,
+        )
+        reasons = self._coalesce_string_list(
+            engagement_mode_reasons,
+            task.engagement_mode_reasons,
+        )
+        detail = dict(lifecycle_detail or {})
+        targets: list[object] = [task, dossier]
+        if run is not None:
+            targets.append(run)
+        if session is not None:
+            targets.append(session)
+        for target in targets:
+            target.engagement_mode = normalized_mode
+            target.engagement_mode_source = normalized_source
+            target.engagement_mode_confidence = self._coalesce_optional_float(
+                engagement_mode_confidence,
+                getattr(target, "engagement_mode_confidence", None),
+            )
+            target.engagement_mode_reasons = list(reasons)
+            target.minimum_engagement_mode = normalized_minimum
+            target.pending_mode_change = normalized_pending
+            if lifecycle_reason is not None:
+                target.lifecycle_reason = lifecycle_reason
+            if lifecycle_detail is not None:
+                target.lifecycle_detail = dict(detail)
+
     def _merge_file_changes(
         self,
         current: list[FileChangeRecord],
@@ -584,3 +1245,48 @@ class DevPlaneService:
         for record in incoming:
             merged[record.path] = record
         return list(merged.values())
+
+    def _ensure_engineering_chat_project(self) -> ProjectRecord:
+        existing = self.store.get_project(_ENGINEERING_CHAT_PROJECT_ID)
+        project_root = (self.devplane_root / _ENGINEERING_CHAT_PROJECT_ID).resolve()
+        project_root.mkdir(parents=True, exist_ok=True)
+        if existing is not None:
+            if Path(existing.canonical_repo_path) != project_root:
+                existing.canonical_repo_path = str(project_root)
+                existing.workspace_root = str(project_root)
+                existing.updated_at = utc_now()
+                self.store.save_project(existing)
+            return existing
+        project = ProjectRecord(
+            project_id=_ENGINEERING_CHAT_PROJECT_ID,
+            name=_ENGINEERING_CHAT_PROJECT_NAME,
+            canonical_repo_path=str(project_root),
+            default_branch="main",
+            remote_name="origin",
+            remote_url=None,
+            workspace_root=str(project_root),
+            created_at=utc_now(),
+            updated_at=utc_now(),
+        )
+        self.store.save_project(project)
+        return project
+
+    def _typed_payloads(self, dossier: TaskDossier, artifact_type: str) -> list[dict[str, object]]:
+        payloads: list[dict[str, object]] = []
+        for artifact in dossier.typed_artifacts:
+            if not isinstance(artifact, dict):
+                continue
+            if artifact.get("artifact_type") != artifact_type:
+                continue
+            payload = artifact.get("payload")
+            if isinstance(payload, dict):
+                payloads.append(payload)
+        return payloads
+
+    def _latest_typed_payload(
+        self,
+        dossier: TaskDossier,
+        artifact_type: str,
+    ) -> dict[str, object] | None:
+        payloads = self._typed_payloads(dossier, artifact_type)
+        return payloads[-1] if payloads else None

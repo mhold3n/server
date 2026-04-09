@@ -41,6 +41,14 @@ class BackendRunCreateRequest(BaseModel):
     control_run_id: str
     task_id: str
     project_id: str
+    engagement_mode: str | None = None
+    engagement_mode_source: str | None = None
+    engagement_mode_confidence: float | None = None
+    engagement_mode_reasons: list[str] = Field(default_factory=list)
+    minimum_engagement_mode: str | None = None
+    pending_mode_change: dict[str, object] | None = None
+    lifecycle_reason: str | None = None
+    lifecycle_detail: dict[str, object] = Field(default_factory=dict)
     workspace: WorkspaceRecord
     plan: TaskPlan
     patch_plan: PatchPlanRecord | None = None
@@ -53,16 +61,26 @@ class BackendRunSnapshot(BaseModel):
 
     run_id: str
     control_run_id: str
-    status: Literal["queued", "running", "ready_to_publish", "failed", "cancelled"]
+    status: Literal[
+        "queued",
+        "running",
+        "blocked",
+        "escalated",
+        "ready_to_publish",
+        "failed",
+        "cancelled",
+    ]
     phase: RunPhase | None = None
     summary: str | None = None
     files_changed: list[FileChangeRecord] = Field(default_factory=list)
     verification_results: list[VerificationResult] = Field(default_factory=list)
     artifacts: list[ArtifactRecord] = Field(default_factory=list)
 
-    def terminal_task_state(self) -> TaskState | None:
-        """Return the terminal task state represented by this snapshot, if any."""
+    def task_state(self) -> TaskState | None:
+        """Return the task state represented by this snapshot, if any."""
         mapping = {
+            "blocked": TaskState.BLOCKED,
+            "escalated": TaskState.ESCALATED,
             "ready_to_publish": TaskState.READY_TO_PUBLISH,
             "failed": TaskState.FAILED,
             "cancelled": TaskState.CANCELLED,
@@ -93,6 +111,14 @@ class DevPlaneExecutionClient:
             control_run_id=run.run_id,
             task_id=run.task_id,
             project_id=run.project_id,
+            engagement_mode=run.engagement_mode,
+            engagement_mode_source=run.engagement_mode_source,
+            engagement_mode_confidence=run.engagement_mode_confidence,
+            engagement_mode_reasons=run.engagement_mode_reasons,
+            minimum_engagement_mode=run.minimum_engagement_mode,
+            pending_mode_change=run.pending_mode_change,
+            lifecycle_reason=run.lifecycle_reason,
+            lifecycle_detail=run.lifecycle_detail,
             workspace=run.workspace,
             plan=plan,
             patch_plan=patch_plan,

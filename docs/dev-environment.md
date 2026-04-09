@@ -2,7 +2,7 @@
 
 ## Single clone (recommended)
 
-Work from one repository checkout: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. The monorepo holds the Birtha control plane, the WrkHrs AI stack under [`services/wrkhrs/`](../services/wrkhrs/), MCP servers, MBMH, and shared CI.
+Work from one repository checkout: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. The active repo holds the Birtha control plane, the WrkHrs AI stack under [`services/wrkhrs/`](../services/wrkhrs/), MCP servers, and shared CI. Legacy MBMH training/runtime materials now live in the sibling local archive at `../server-local-archive/2026-04-08/server/`.
 
 Cloning additional “legacy” projects **inside** this repository root increases confusion (two trees, two sets of commands, easy to edit the wrong copy). Prefer:
 
@@ -13,7 +13,7 @@ Cloning additional “legacy” projects **inside** this repository root increas
 
 - Main Python workspace: `uv sync --python 3.11`
 - Main Node workspace: `npm install`
-- Focused tool envs: `scripts/bootstrap_tool_env.sh marker-pdf|whisper-asr|qwen-runtime|mbmh|larrak-audio`
+- Focused tool envs: `scripts/bootstrap_tool_env.sh marker-pdf|whisper-asr|qwen-runtime|larrak-audio`
 - Shared local caches and model state live under `./.cache/`
 
 ## Root `.gitignore` and sibling folders

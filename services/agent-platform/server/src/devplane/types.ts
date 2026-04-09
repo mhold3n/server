@@ -4,6 +4,8 @@ export const runPhaseSchema = z.enum([
   "planning",
   "implementing",
   "verifying",
+  "blocked",
+  "escalated",
   "ready_to_publish",
   "published",
   "failed",
@@ -13,10 +15,33 @@ export const runPhaseSchema = z.enum([
 export const backendRunStatusSchema = z.enum([
   "queued",
   "running",
+  "blocked",
+  "escalated",
   "ready_to_publish",
   "failed",
   "cancelled",
 ])
+
+export const engagementModeSchema = z.enum([
+  "casual_chat",
+  "ideation",
+  "napkin_math",
+  "engineering_task",
+  "strict_engineering",
+])
+
+export const engagementModeSourceSchema = z.enum([
+  "explicit",
+  "inferred",
+  "resumed_session",
+  "confirmed_deescalation",
+])
+
+export const pendingModeChangeSchema = z.object({
+  proposed_mode: engagementModeSchema,
+  reason: z.string(),
+  prompt: z.string(),
+})
 
 export const workspaceSchema = z.object({
   canonical_repo_path: z.string(),
@@ -68,6 +93,14 @@ export const devPlaneRunCreateSchema = z.object({
   control_run_id: z.string(),
   task_id: z.string(),
   project_id: z.string(),
+  engagement_mode: engagementModeSchema.optional(),
+  engagement_mode_source: engagementModeSourceSchema.nullable().optional(),
+  engagement_mode_confidence: z.number().min(0).max(1).nullable().optional(),
+  engagement_mode_reasons: z.array(z.string()).default([]),
+  minimum_engagement_mode: engagementModeSchema.nullable().optional(),
+  pending_mode_change: pendingModeChangeSchema.nullable().optional(),
+  lifecycle_reason: z.string().nullable().optional(),
+  lifecycle_detail: z.record(z.string(), z.unknown()).default({}),
   workspace: workspaceSchema,
   plan: taskPlanSchema,
   patch_plan: patchPlanSchema.nullable().optional(),
@@ -111,6 +144,14 @@ export const backendRunSnapshotSchema = z.object({
   control_run_id: z.string(),
   status: backendRunStatusSchema,
   phase: runPhaseSchema.nullable().optional(),
+  engagement_mode: engagementModeSchema.nullable().optional(),
+  engagement_mode_source: engagementModeSourceSchema.nullable().optional(),
+  engagement_mode_confidence: z.number().min(0).max(1).nullable().optional(),
+  engagement_mode_reasons: z.array(z.string()).default([]),
+  minimum_engagement_mode: engagementModeSchema.nullable().optional(),
+  pending_mode_change: pendingModeChangeSchema.nullable().optional(),
+  lifecycle_reason: z.string().nullable().optional(),
+  lifecycle_detail: z.record(z.string(), z.unknown()).default({}),
   summary: z.string().nullable().optional(),
   files_changed: z.array(fileChangeSchema).default([]),
   verification_results: z.array(verificationResultSchema).default([]),
@@ -119,6 +160,8 @@ export const backendRunSnapshotSchema = z.object({
 
 export type RunPhase = z.infer<typeof runPhaseSchema>
 export type BackendRunStatus = z.infer<typeof backendRunStatusSchema>
+export type EngagementMode = z.infer<typeof engagementModeSchema>
+export type EngagementModeSource = z.infer<typeof engagementModeSourceSchema>
 export type WorkspacePayload = z.infer<typeof workspaceSchema>
 export type VerificationBlock = z.infer<typeof verificationBlockSchema>
 export type TaskPlanPayload = z.infer<typeof taskPlanSchema>
@@ -129,3 +172,4 @@ export type FileChange = z.infer<typeof fileChangeSchema>
 export type VerificationResult = z.infer<typeof verificationResultSchema>
 export type ArtifactRecord = z.infer<typeof artifactSchema>
 export type BackendRunSnapshot = z.infer<typeof backendRunSnapshotSchema>
+export type PendingModeChange = z.infer<typeof pendingModeChangeSchema>

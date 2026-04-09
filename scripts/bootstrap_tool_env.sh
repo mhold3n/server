@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+LEGACY_ARCHIVE_ROOT="${LEGACY_ARCHIVE_ROOT:-$ROOT/../server-local-archive/2026-04-08/server}"
 # shellcheck source=/dev/null
 source "$ROOT/scripts/workspace_env.sh"
 
@@ -19,8 +20,10 @@ Supported tools:
   marker-pdf
   whisper-asr
   qwen-runtime
-  mbmh
   larrak-audio
+
+Archived compatibility alias:
+  mbmh
 EOF
   exit 1
 fi
@@ -59,8 +62,10 @@ case "$TOOL_NAME" in
       "uvicorn[standard]>=0.27"
     ;;
   mbmh)
-    ensure_env
-    install_into_env -e "$ROOT/mbmh[dev,eval]"
+    echo "mbmh has been archived out of this repo." >&2
+    echo "Legacy files now live under: $LEGACY_ARCHIVE_ROOT/mbmh" >&2
+    echo "Use the archived tree directly if you need the historical training/runtime environment." >&2
+    exit 1
     ;;
   larrak-audio)
     ensure_env

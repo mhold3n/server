@@ -95,6 +95,38 @@ def main() -> int:
     # Additional contracts: validate golden fixtures compile against registry
     extra_fixtures: list[tuple[str, Path]] = [
         (
+            "https://birtha.local/schemas/control-plane/v1/knowledge-pack.schema.json",
+            SCHEMA_DIR / "fixtures" / "knowledge-pack" / "valid-minimal.json",
+        ),
+        (
+            "https://birtha.local/schemas/control-plane/v1/recipe-object.schema.json",
+            SCHEMA_DIR / "fixtures" / "recipe-object" / "valid-minimal.json",
+        ),
+        (
+            "https://birtha.local/schemas/control-plane/v1/execution-adapter-spec.schema.json",
+            SCHEMA_DIR / "fixtures" / "execution-adapter-spec" / "valid-minimal.json",
+        ),
+        (
+            "https://birtha.local/schemas/control-plane/v1/evidence-bundle.schema.json",
+            SCHEMA_DIR / "fixtures" / "evidence-bundle" / "valid-minimal.json",
+        ),
+        (
+            "https://birtha.local/schemas/control-plane/v1/role-context-bundle.schema.json",
+            SCHEMA_DIR / "fixtures" / "role-context-bundle" / "valid-minimal.json",
+        ),
+        (
+            "https://birtha.local/schemas/control-plane/v1/environment-spec.schema.json",
+            SCHEMA_DIR / "fixtures" / "environment-spec" / "valid-minimal.json",
+        ),
+        (
+            "https://birtha.local/schemas/control-plane/v1/decision-log.schema.json",
+            SCHEMA_DIR / "fixtures" / "decision-log" / "valid-minimal.json",
+        ),
+        (
+            "https://birtha.local/schemas/control-plane/v1/verification-report.schema.json",
+            SCHEMA_DIR / "fixtures" / "verification-report" / "valid-minimal.json",
+        ),
+        (
             "https://birtha.local/schemas/control-plane/v1/problem-brief.schema.json",
             SCHEMA_DIR / "fixtures" / "problem-brief" / "valid-minimal.json",
         ),

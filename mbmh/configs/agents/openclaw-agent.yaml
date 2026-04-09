@@ -1,4 +1,0 @@
-agent_type: "openclaw"
-temperature: 0.5
-max_tokens: 96
-tools_allowed: ["filesystem", "http"]

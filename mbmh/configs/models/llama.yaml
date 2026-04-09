@@ -1,9 +1,0 @@
-family: "llama"
-base_model: "meta-llama/Llama-2-7b-hf"
-tokenizer: "meta-llama/Llama-2-7b-hf"
-model_type: "causal_lm"
-max_context: 4096
-chat_template_mode: "default"
-default_lora_target_modules: ["q_proj", "v_proj", "k_proj", "o_proj"]
-supported_tasks: ["sft", "clm"]
-allow_full_finetune: true

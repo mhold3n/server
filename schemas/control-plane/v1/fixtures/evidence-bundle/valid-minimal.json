@@ -1,0 +1,24 @@
+{
+  "evidence_bundle_id": "openfoam_default",
+  "schema_version": "1.0.0",
+  "title": "OpenFOAM default evidence",
+  "tool_id": "openfoam",
+  "knowledge_pack_ref": "artifact://knowledge-pack/openfoam",
+  "recipe_refs": ["artifact://recipe-object/openfoam/steady_internal_flow"],
+  "adapter_refs": ["artifact://execution-adapter-spec/openfoam/default"],
+  "smoke_tests": ["motorBike mesh check"],
+  "benchmark_cases": ["lidDrivenCavity"],
+  "expected_outputs": ["Residual history file"],
+  "tolerances": ["Mass imbalance below project threshold"],
+  "convergence_criteria": ["Residual plateau review recorded"],
+  "reviewer_checklist": ["Verify mesh quality", "Verify solver residual trend"],
+  "runtime_verification_refs": ["artifact://verification-report/eng_cfd_uv"],
+  "healthcheck_commands": [
+    "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_cfd_uv"
+  ],
+  "reference_artifact_refs": ["artifact://verification-report/openfoam/default"],
+  "provenance": {
+    "sources": ["https://www.openfoam.com/"],
+    "benchmarks": ["lidDrivenCavity"]
+  }
+}

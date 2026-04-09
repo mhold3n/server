@@ -1,9 +1,0 @@
-family: "qwen"
-base_model: "Qwen/Qwen1.5-7B"
-tokenizer: "Qwen/Qwen1.5-7B"
-model_type: "causal_lm"
-max_context: 32768
-chat_template_mode: "chatml"
-default_lora_target_modules: ["c_attn", "c_proj", "w1", "w2"]
-supported_tasks: ["sft"]
-allow_full_finetune: false

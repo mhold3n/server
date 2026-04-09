@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { OpenMultiAgent } from "@server/open-multi-agent"
 import type { PlatformConfig } from "../config.js"
+import { postInferMultimodal } from "../llm/model-runtime-client.js"
 import {
   appendCallbackError,
   completeBackendRun,
@@ -36,10 +37,18 @@ interface ExecutionAccumulator {
 }
 
 interface ActiveTaskPacket {
+  task_packet_id?: string
   objective?: string
   constraints?: string[]
   acceptance_criteria?: string[]
   context_summary?: string
+  routing_metadata?: {
+    selected_executor?: string
+  }
+  required_outputs?: Array<{
+    artifact_type?: string
+  }>
+  validation_requirements?: string[]
   code_guidance?: {
     implementation_hints?: string[]
     target_paths?: string[]
@@ -51,6 +60,9 @@ interface TaskPacketManifest {
   active_task_packet_ref?: string
   problem_brief_ref?: string
   engineering_state_ref?: string
+  task_queue?: Record<string, unknown>
+  task_packets_path?: string
+  escalation_packets?: Array<Record<string, unknown>>
 }
 
 export async function executeBackendRun(
@@ -157,7 +169,17 @@ async function executeImplementationPhase(
     accumulator.commands.push(command)
   }
   const manifest = await readTaskPacketManifest(record.request.task_packet_path)
-  const effectiveObjective = manifest?.active_task_packet?.objective ?? record.request.plan.objective
+  const activeTaskPacket = manifest?.active_task_packet
+  if (!activeTaskPacket) {
+    await executeLegacyImplementationRun(record, options, accumulator, onCommand)
+    return
+  }
+  const selectedExecutor =
+    activeTaskPacket.routing_metadata?.selected_executor ?? ""
+  if (!selectedExecutor) {
+    throw new Error("Active governed task packet is missing routing_metadata.selected_executor.")
+  }
+  const effectiveObjective = activeTaskPacket.objective ?? record.request.plan.objective
 
   if (shouldUseMockExecutor(options.defaultProvider, options.cfg.llmBackend)) {
     const notePath = path.join(workspaceRoot, ".birtha", "mock-agent-notes.md")
@@ -170,6 +192,7 @@ async function executeImplementationPhase(
         "The agent-platform run executed in mock mode.",
         "",
         `Objective: ${effectiveObjective}`,
+        `Selected executor: ${selectedExecutor}`,
       ].join("\n"),
       "utf8",
     )
@@ -182,80 +205,28 @@ async function executeImplementationPhase(
     return
   }
 
-  const tools = createWorkspaceTools(workspaceRoot, { onCommand })
-  const orchestration = new OpenMultiAgent({
-    defaultModel: options.defaultModel,
-    defaultProvider: options.defaultProvider,
-    enableBuiltInTools: false,
-    extraTools: tools,
-  })
-  const toolNames = tools.map((tool) => tool.name)
-  const team = orchestration.createTeam(`devplane-${record.request.task_id}`, {
-    name: "devplane-code-task",
-    sharedMemory: true,
-    maxConcurrency: 2,
-    agents: [
-      {
-        name: "lead_executor",
-        model: options.defaultModel,
-        provider: options.defaultProvider,
-        systemPrompt: buildLeadSystemPrompt(record.request.workspace.worktree_path),
-        tools: toolNames,
-        maxTurns: 10,
-      },
-      {
-        name: "reviewer",
-        model: options.defaultModel,
-        provider: options.defaultProvider,
-        systemPrompt: buildReviewerSystemPrompt(record.request.workspace.worktree_path),
-        tools: [
-          "workspace_find_files",
-          "workspace_file_read",
-          "workspace_git_status",
-          "workspace_bash",
-        ],
-        maxTurns: 6,
-      },
-    ],
-  })
+  if (selectedExecutor === "coding_model") {
+    await executeCodingModelRun(record, options, accumulator, manifest, onCommand)
+    return
+  }
+  if (selectedExecutor === "local_general_model") {
+    await executeLocalGeneralRun(record, options, accumulator, manifest, onCommand)
+    return
+  }
+  if (selectedExecutor === "multimodal_model") {
+    await executeMultimodalRun(record, options, accumulator, manifest)
+    return
+  }
+  if (selectedExecutor === "deterministic_validator") {
+    await executeValidatorNoop(record, accumulator, manifest)
+    return
+  }
+  if (selectedExecutor === "strategic_reviewer") {
+    await executeStrategicReviewerRun(record, options, accumulator, manifest, onCommand)
+    return
+  }
 
-  const result = await orchestration.runTasks(team, [
-      {
-        title: "Implement requested changes",
-        description: buildImplementationTask(record.request, manifest),
-        assignee: "lead_executor",
-      },
-      {
-        title: "Review workspace readiness",
-        description: buildReviewTask(record.request, manifest),
-        assignee: "reviewer",
-        dependsOn: ["Implement requested changes"],
-      },
-  ])
-
-  const summaryPath = path.join(workspaceRoot, ".birtha", "agent-platform-output.md")
-  await mkdir(path.dirname(summaryPath), { recursive: true })
-  await writeFile(
-    summaryPath,
-    [
-      "# Agent Platform Output",
-      "",
-      "## Lead Executor",
-      "",
-      result.agentResults.get("lead_executor")?.output ?? "(no lead output)",
-      "",
-      "## Reviewer",
-      "",
-      result.agentResults.get("reviewer")?.output ?? "(no reviewer output)",
-    ].join("\n"),
-    "utf8",
-  )
-  accumulator.artifacts.push({
-    name: "agent-platform-output",
-    path: summaryPath,
-    kind: "run_summary",
-    description: "Combined agent outputs from the internal task-agent runtime.",
-  })
+  throw new Error(`Unsupported strict engineering executor: ${selectedExecutor}`)
 }
 
 async function runVerification(
@@ -278,10 +249,11 @@ async function runVerification(
       {
         name: "verification",
         command: null,
-        status: "skipped",
+        status: "failed",
         exit_code: null,
-        stdout_excerpt: "No verification commands were provided.",
-        stderr_excerpt: null,
+        stdout_excerpt: null,
+        stderr_excerpt:
+          "Strict engineering execution requires deterministic verification commands.",
       },
     ]
   }
@@ -525,9 +497,9 @@ function shouldUseMockExecutor(
   return !process.env.ANTHROPIC_API_KEY
 }
 
-function buildLeadSystemPrompt(workspaceRoot: string): string {
+function buildCodingSystemPrompt(workspaceRoot: string): string {
   return [
-    "You are the internal implementation agent for a controlled dev-plane run.",
+    "You are the coding-model executor for a governed dev-plane run.",
     `Only operate inside this workspace: ${workspaceRoot}`,
     "Use only the provided workspace_* tools.",
     "Do not publish, push, open pull requests, or reference files outside the workspace.",
@@ -535,12 +507,22 @@ function buildLeadSystemPrompt(workspaceRoot: string): string {
   ].join(" ")
 }
 
-function buildReviewerSystemPrompt(workspaceRoot: string): string {
+function buildLocalGeneralSystemPrompt(workspaceRoot: string): string {
   return [
-    "You are the non-authoritative reviewer for an internal dev-plane run.",
+    "You are the local general-model executor for a governed dev-plane run.",
     `You may inspect only this workspace: ${workspaceRoot}`,
-    "Do not edit files unless absolutely necessary; prefer reporting risks and readiness.",
-    "Do not publish or push changes.",
+    "Use only read-only workspace tools.",
+    "Do not edit files, publish changes, or invoke repository mutations.",
+  ].join(" ")
+}
+
+function buildStrategicReviewSystemPrompt(workspaceRoot: string): string {
+  return [
+    "You are the strategic reviewer for a governed dev-plane escalation.",
+    `You may inspect only this workspace: ${workspaceRoot}`,
+    "Use only read-only workspace tools.",
+    "Do not edit files, publish changes, or invoke repository mutations.",
+    "Return compact decision guidance tied to the escalation packet only.",
   ].join(" ")
 }
 
@@ -549,20 +531,17 @@ function buildImplementationTask(
   manifest?: TaskPacketManifest,
 ): string {
   const activeTaskPacket = manifest?.active_task_packet
-  const objective = activeTaskPacket?.objective ?? request.plan.objective
-  const constraints =
-    activeTaskPacket?.constraints && activeTaskPacket.constraints.length > 0
-      ? activeTaskPacket.constraints
-      : request.plan.constraints
-  const acceptanceCriteria =
-    activeTaskPacket?.acceptance_criteria && activeTaskPacket.acceptance_criteria.length > 0
-      ? activeTaskPacket.acceptance_criteria
-      : request.plan.acceptance_criteria
+  if (!activeTaskPacket) {
+    return "Strict engineering manifest is missing the active task packet."
+  }
+  const objective = activeTaskPacket.objective ?? request.plan.objective
+  const constraints = activeTaskPacket.constraints ?? []
+  const acceptanceCriteria = activeTaskPacket.acceptance_criteria ?? []
   const implementationHints =
     activeTaskPacket?.code_guidance?.implementation_hints &&
     activeTaskPacket.code_guidance.implementation_hints.length > 0
       ? activeTaskPacket.code_guidance.implementation_hints
-      : request.plan.implementation_outline
+      : []
   return [
     `Objective: ${objective}`,
     activeTaskPacket?.context_summary
@@ -574,40 +553,358 @@ function buildImplementationTask(
     acceptanceCriteria.length > 0
       ? `Acceptance criteria:\n- ${acceptanceCriteria.join("\n- ")}`
       : "Acceptance criteria: satisfy the task packet and preserve workspace safety.",
-    request.plan.delegation_hints.length > 0
-      ? `Delegation hints:\n- ${request.plan.delegation_hints.join("\n- ")}`
-      : "Delegation hints: keep implementation ownership with the lead executor.",
     implementationHints.length > 0
       ? `Implementation outline:\n- ${implementationHints.join("\n- ")}`
       : "",
     manifest?.active_task_packet_ref
       ? `Active governed task packet: ${manifest.active_task_packet_ref}`
       : "",
+    manifest?.problem_brief_ref ? `Problem brief ref: ${manifest.problem_brief_ref}` : "",
+    manifest?.engineering_state_ref
+      ? `Engineering state ref: ${manifest.engineering_state_ref}`
+      : "",
     "Use workspace_git_status before and after meaningful edits.",
+    "Treat task.plan as supplemental only; the governed packet is authoritative.",
     "Leave the branch ready for deterministic verification by the control plane.",
   ]
     .filter(Boolean)
     .join("\n\n")
 }
 
-function buildReviewTask(
-  request: DevPlaneRunCreatePayload,
+function buildReadOnlyTask(
+  title: string,
   manifest?: TaskPacketManifest,
 ): string {
-  const objective = manifest?.active_task_packet?.objective ?? request.plan.objective
+  const objective = manifest?.active_task_packet?.objective ?? "governed engineering task"
   return [
-    `Review the workspace for task objective: ${objective}`,
-    "Confirm whether the current state appears ready for deterministic verification and publish handoff.",
-    "Summarize any remaining risk, missing tests, or suspicious file changes.",
+    `${title}: ${objective}`,
     manifest?.active_task_packet_ref
       ? `Active governed task packet: ${manifest.active_task_packet_ref}`
       : "",
-    request.task_packet_path
-      ? `Task packet path: ${request.task_packet_path}`
+    manifest?.problem_brief_ref
+      ? `Problem brief ref: ${manifest.problem_brief_ref}`
       : "",
+    manifest?.engineering_state_ref
+      ? `Engineering state ref: ${manifest.engineering_state_ref}`
+      : "",
+    "Treat the governed manifest and active task packet as authoritative.",
   ]
     .filter(Boolean)
     .join("\n\n")
+}
+
+async function executeCodingModelRun(
+  record: BackendRunRecord,
+  options: ExecuteRunOptions,
+  accumulator: ExecutionAccumulator,
+  manifest: TaskPacketManifest | undefined,
+  onCommand: (command: CommandExecution) => void,
+): Promise<void> {
+  const workspaceRoot = record.request.workspace.worktree_path
+  const tools = createWorkspaceTools(workspaceRoot, { onCommand })
+  const orchestration = new OpenMultiAgent({
+    defaultModel: options.defaultModel,
+    defaultProvider: options.defaultProvider,
+    enableBuiltInTools: false,
+    extraTools: tools,
+  })
+  const toolNames = tools.map((tool) => tool.name)
+  const team = orchestration.createTeam(`devplane-${record.request.task_id}`, {
+    name: "devplane-coding-model",
+    sharedMemory: true,
+    maxConcurrency: 1,
+    agents: [
+      {
+        name: "implementation_executor",
+        model: options.defaultModel,
+        provider: options.defaultProvider,
+        systemPrompt: buildCodingSystemPrompt(workspaceRoot),
+        tools: toolNames,
+        maxTurns: 10,
+      },
+    ],
+  })
+  const result = await orchestration.runTasks(team, [
+    {
+      title: "Implement governed task packet",
+      description: buildImplementationTask(record.request, manifest),
+      assignee: "implementation_executor",
+    },
+  ])
+  await writeExecutorSummaryArtifact(
+    workspaceRoot,
+    "coding-model-output.md",
+    "# Coding Model Output\n\n" +
+      (result.agentResults.get("implementation_executor")?.output ?? "(no executor output)\n"),
+    accumulator,
+    {
+      name: "coding-model-output",
+      kind: "run_summary",
+      description: "Packet-scoped coding-model output for the strict engineering run.",
+    },
+  )
+}
+
+async function executeLegacyImplementationRun(
+  record: BackendRunRecord,
+  options: ExecuteRunOptions,
+  accumulator: ExecutionAccumulator,
+  onCommand: (command: CommandExecution) => void,
+): Promise<void> {
+  const workspaceRoot = record.request.workspace.worktree_path
+  const tools = createWorkspaceTools(workspaceRoot, { onCommand })
+  const orchestration = new OpenMultiAgent({
+    defaultModel: options.defaultModel,
+    defaultProvider: options.defaultProvider,
+    enableBuiltInTools: false,
+    extraTools: tools,
+  })
+  const team = orchestration.createTeam(`devplane-${record.request.task_id}`, {
+    name: "devplane-legacy-code-task",
+    sharedMemory: true,
+    maxConcurrency: 1,
+    agents: [
+      {
+        name: "implementation_executor",
+        model: options.defaultModel,
+        provider: options.defaultProvider,
+        systemPrompt: buildCodingSystemPrompt(workspaceRoot),
+        tools: tools.map((tool) => tool.name),
+        maxTurns: 10,
+      },
+    ],
+  })
+  const result = await orchestration.runTasks(team, [
+    {
+      title: "Implement requested changes",
+      description: [
+        `Objective: ${record.request.plan.objective}`,
+        record.request.plan.constraints.length > 0
+          ? `Constraints:\n- ${record.request.plan.constraints.join("\n- ")}`
+          : "",
+        record.request.plan.acceptance_criteria.length > 0
+          ? `Acceptance criteria:\n- ${record.request.plan.acceptance_criteria.join("\n- ")}`
+          : "",
+        record.request.plan.implementation_outline.length > 0
+          ? `Implementation outline:\n- ${record.request.plan.implementation_outline.join("\n- ")}`
+          : "",
+        "Legacy dev-plane run: no governed packet is present, so use the plan as the primary execution contract.",
+        "Use workspace_git_status before and after meaningful edits.",
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
+      assignee: "implementation_executor",
+    },
+  ])
+  await writeExecutorSummaryArtifact(
+    workspaceRoot,
+    "legacy-agent-platform-output.md",
+    "# Legacy Agent Platform Output\n\n" +
+      (result.agentResults.get("implementation_executor")?.output ?? "(no executor output)\n"),
+    accumulator,
+    {
+      name: "legacy-agent-platform-output",
+      kind: "run_summary",
+      description: "Legacy single-executor output for non-governed dev-plane runs.",
+    },
+  )
+}
+
+async function executeLocalGeneralRun(
+  record: BackendRunRecord,
+  options: ExecuteRunOptions,
+  accumulator: ExecutionAccumulator,
+  manifest: TaskPacketManifest | undefined,
+  onCommand: (command: CommandExecution) => void,
+): Promise<void> {
+  const workspaceRoot = record.request.workspace.worktree_path
+  const allTools = createWorkspaceTools(workspaceRoot, { onCommand })
+  const allowedTools = allTools.filter((tool) =>
+    ["workspace_find_files", "workspace_file_read", "workspace_git_status"].includes(tool.name),
+  )
+  const orchestration = new OpenMultiAgent({
+    defaultModel: options.defaultModel,
+    defaultProvider: options.defaultProvider,
+    enableBuiltInTools: false,
+    extraTools: allowedTools,
+  })
+  const team = orchestration.createTeam(`devplane-${record.request.task_id}`, {
+    name: "devplane-local-general",
+    sharedMemory: true,
+    maxConcurrency: 1,
+    agents: [
+      {
+        name: "local_general_executor",
+        model: options.defaultModel,
+        provider: options.defaultProvider,
+        systemPrompt: buildLocalGeneralSystemPrompt(workspaceRoot),
+        tools: allowedTools.map((tool) => tool.name),
+        maxTurns: 6,
+      },
+    ],
+  })
+  const result = await orchestration.runTasks(team, [
+    {
+      title: "Summarize governed engineering state",
+      description: buildReadOnlyTask("Summarize governed engineering state", manifest),
+      assignee: "local_general_executor",
+    },
+  ])
+  await writeExecutorSummaryArtifact(
+    workspaceRoot,
+    "local-general-output.md",
+    "# Local General Model Output\n\n" +
+      (result.agentResults.get("local_general_executor")?.output ?? "(no executor output)\n"),
+    accumulator,
+    {
+      name: "local-general-output",
+      kind: "run_summary",
+      description: "Read-only local general model output for the strict engineering run.",
+    },
+  )
+}
+
+async function executeMultimodalRun(
+  record: BackendRunRecord,
+  options: ExecuteRunOptions,
+  accumulator: ExecutionAccumulator,
+  manifest: TaskPacketManifest | undefined,
+): Promise<void> {
+  if (!options.cfg.modelRuntimeBaseUrl) {
+    throw new Error("multimodal_model requires MODEL_RUNTIME_URL for strict engineering runs.")
+  }
+  const packet = manifest?.active_task_packet
+  if (!packet) {
+    throw new Error("multimodal_model requires an active governed task packet.")
+  }
+  const response = await postInferMultimodal(
+    options.cfg,
+    packet as unknown as Record<string, unknown>,
+  )
+  const workspaceRoot = record.request.workspace.worktree_path
+  const outputPath = path.join(workspaceRoot, ".birtha", "multimodal-output.json")
+  await mkdir(path.dirname(outputPath), { recursive: true })
+  await writeFile(
+    outputPath,
+    JSON.stringify(
+      {
+        selected_executor: "multimodal_model",
+        task_packet_ref: manifest?.active_task_packet_ref,
+        model_id_resolved: response.model_id_resolved,
+        usage: response.usage,
+        structured_output: response.structured_output ?? {},
+        text: response.text ?? "",
+      },
+      null,
+      2,
+    ),
+    "utf8",
+  )
+  accumulator.artifacts.push({
+    name: "multimodal-output",
+    path: outputPath,
+    kind: "run_summary",
+    description: "Structured multimodal output for the strict engineering run.",
+  })
+}
+
+async function executeValidatorNoop(
+  record: BackendRunRecord,
+  accumulator: ExecutionAccumulator,
+  manifest: TaskPacketManifest | undefined,
+): Promise<void> {
+  const workspaceRoot = record.request.workspace.worktree_path
+  await writeExecutorSummaryArtifact(
+    workspaceRoot,
+    "validator-dispatch.md",
+    [
+      "# Deterministic Validator Dispatch",
+      "",
+      "Implementation phase skipped because the active governed packet is routed to `deterministic_validator`.",
+      manifest?.active_task_packet_ref ? `Task packet: ${manifest.active_task_packet_ref}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    accumulator,
+    {
+      name: "validator-dispatch",
+      kind: "run_summary",
+      description: "Marker artifact showing validator-routed packet dispatch.",
+    },
+  )
+}
+
+async function executeStrategicReviewerRun(
+  record: BackendRunRecord,
+  options: ExecuteRunOptions,
+  accumulator: ExecutionAccumulator,
+  manifest: TaskPacketManifest | undefined,
+  onCommand: (command: CommandExecution) => void,
+): Promise<void> {
+  if (!manifest?.escalation_packets || manifest.escalation_packets.length === 0) {
+    throw new Error("strategic_reviewer requires a typed escalation packet in the manifest.")
+  }
+  const workspaceRoot = record.request.workspace.worktree_path
+  const allTools = createWorkspaceTools(workspaceRoot, { onCommand })
+  const allowedTools = allTools.filter((tool) =>
+    ["workspace_find_files", "workspace_file_read", "workspace_git_status"].includes(tool.name),
+  )
+  const orchestration = new OpenMultiAgent({
+    defaultModel: options.defaultModel,
+    defaultProvider: options.defaultProvider,
+    enableBuiltInTools: false,
+    extraTools: allowedTools,
+  })
+  const team = orchestration.createTeam(`devplane-${record.request.task_id}`, {
+    name: "devplane-strategic-review",
+    sharedMemory: true,
+    maxConcurrency: 1,
+    agents: [
+      {
+        name: "strategic_reviewer",
+        model: options.defaultModel,
+        provider: options.defaultProvider,
+        systemPrompt: buildStrategicReviewSystemPrompt(workspaceRoot),
+        tools: allowedTools.map((tool) => tool.name),
+        maxTurns: 6,
+      },
+    ],
+  })
+  const result = await orchestration.runTasks(team, [
+    {
+      title: "Review typed escalation packet",
+      description: buildReadOnlyTask("Review typed escalation packet", manifest),
+      assignee: "strategic_reviewer",
+    },
+  ])
+  await writeExecutorSummaryArtifact(
+    workspaceRoot,
+    "strategic-review-output.md",
+    "# Strategic Review Output\n\n" +
+      (result.agentResults.get("strategic_reviewer")?.output ?? "(no reviewer output)\n"),
+    accumulator,
+    {
+      name: "strategic-review-output",
+      kind: "run_summary",
+      description: "Strategic review output for a typed engineering escalation.",
+    },
+  )
+}
+
+async function writeExecutorSummaryArtifact(
+  workspaceRoot: string,
+  filename: string,
+  content: string,
+  accumulator: ExecutionAccumulator,
+  artifact: Pick<ArtifactRecord, "name" | "kind" | "description">,
+): Promise<void> {
+  const outputPath = path.join(workspaceRoot, ".birtha", filename)
+  await mkdir(path.dirname(outputPath), { recursive: true })
+  await writeFile(outputPath, content, "utf8")
+  accumulator.artifacts.push({
+    ...artifact,
+    path: outputPath,
+  })
 }
 
 function mapPorcelainStatus(status: string): string {

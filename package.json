@@ -11,6 +11,7 @@
     "services/topology-viewer"
   ],
   "scripts": {
+    "deps:external": "bash scripts/sync_external_repos.sh",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",

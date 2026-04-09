@@ -1,6 +1,0 @@
-server_mode: "openai_compatible"
-host: "127.0.0.1"
-port: 8000
-base_model: "Qwen/Qwen2.5-0.5B-Instruct"
-# Seconds for Hugging Face Hub HEAD/download HTTP (default in hub is 10; increase on slow Wi‑Fi)
-hf_hub_timeout_seconds: 300

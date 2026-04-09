@@ -6,7 +6,6 @@
 
 import type { PlatformConfig } from "../config.js"
 
-export type OrchestrationPacket = Record<string, unknown>
 export type ModelRuntimeInferResponse = {
   usage: { prompt_tokens: number; completion_tokens: number; latency_ms: number }
   model_id_resolved: string
@@ -24,7 +23,7 @@ function base(cfg: PlatformConfig): string {
 
 export async function postInferGeneral(
   cfg: PlatformConfig,
-  body: OrchestrationPacket,
+  body: Record<string, unknown>,
   workflowRoot: boolean,
 ): Promise<ModelRuntimeInferResponse> {
   const url = `${base(cfg)}/infer/general?workflow_root=${workflowRoot ? "true" : "false"}`
@@ -40,34 +39,34 @@ export async function postInferGeneral(
   return (await res.json()) as ModelRuntimeInferResponse
 }
 
-export async function postSolveMechanics(
+export async function postInferCoding(
   cfg: PlatformConfig,
   body: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
-  const res = await fetch(`${base(cfg)}/solve/mechanics`, {
+): Promise<ModelRuntimeInferResponse> {
+  const res = await fetch(`${base(cfg)}/infer/coding`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   })
   if (!res.ok) {
     const t = await res.text()
-    throw new Error(`solve/mechanics ${res.status}: ${t}`)
+    throw new Error(`infer/coding ${res.status}: ${t}`)
   }
-  return (await res.json()) as Record<string, unknown>
+  return (await res.json()) as ModelRuntimeInferResponse
 }
 
-export async function postSolveVerify(
+export async function postInferMultimodal(
   cfg: PlatformConfig,
-  report: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
-  const res = await fetch(`${base(cfg)}/solve/verify`, {
+  body: Record<string, unknown>,
+): Promise<ModelRuntimeInferResponse> {
+  const res = await fetch(`${base(cfg)}/infer/multimodal`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(report),
+    body: JSON.stringify(body),
   })
   if (!res.ok) {
     const t = await res.text()
-    throw new Error(`solve/verify ${res.status}: ${t}`)
+    throw new Error(`infer/multimodal ${res.status}: ${t}`)
   }
-  return (await res.json()) as Record<string, unknown>
+  return (await res.json()) as ModelRuntimeInferResponse
 }

@@ -31,6 +31,12 @@ class ContractValidationError(Exception):
         contract_type: Literal[
             "TASK_PACKET",
             "ARTIFACT_RECORD",
+            "KNOWLEDGE_PACK",
+            "RECIPE_OBJECT",
+            "EXECUTION_ADAPTER_SPEC",
+            "EVIDENCE_BUNDLE",
+            "ROLE_CONTEXT_BUNDLE",
+            "DECISION_LOG",
             "VERIFICATION_REPORT",
             "ESCALATION_PACKET",
             "PROBLEM_BRIEF",

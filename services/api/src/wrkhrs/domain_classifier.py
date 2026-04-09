@@ -282,7 +282,6 @@ class DomainClassifier:
                     "interface",
                     "Birtha",
                     "Claw",
-                    "mbmh",
                 ],
                 "formulas": [
                     r"def \w+\(",  # Python function definition
