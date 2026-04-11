@@ -35,12 +35,14 @@ from src.control_plane.validation import (
     validate_engineering_state_json,
     validate_knowledge_pool_assessment_json,
     validate_problem_brief_json,
+    validate_response_control_assessment_json,
     validate_routing_policy_json,
     validate_task_packet_json,
     validate_task_queue_json,
     validate_typed_artifact_json,
     validate_verification_report_json,
 )
+from src.control_plane.response_control import evaluate_response_control
 from src.devplane.models import ArtifactRecord, CostLedgerEntry
 
 
@@ -105,21 +107,30 @@ def test_task_packet_validation_type_requires_requirements() -> None:
         validate_task_packet_json(raw)
 
 
-def test_task_packet_accepts_knowledge_context_when_required() -> None:
+def test_task_packet_accepts_response_control_refs_when_required() -> None:
     raw = _minimal_task_packet_dict()
-    raw["knowledge_context"] = {
-        "assessment_ref": "artifact://knowledge_pool_assessment/kpa-1",
-        "candidate_pack_refs": ["artifact://knowledge-pack/test-pack"],
-        "role_context_ref": "artifact://role_context_bundle/coder_abc",
-        "preferred_adapter_ref": "artifact://execution-adapter/adapter-1",
-        "preferred_environment_ref": "artifact://environment-spec/env-1",
-        "runtime_verification_refs": ["artifact://verification-report/runtime-1"],
-        "coverage_class": "partial",
-        "required": True,
-    }
+    raw["response_control_ref"] = "artifact://response-control-assessment/rca-1"
+    raw["selected_knowledge_pool_refs"] = ["artifact://knowledge-pool/computational_engineering"]
+    raw["selected_module_refs"] = ["artifact://module-card/engineering_orchestration_stack"]
+    raw["selected_technique_refs"] = ["artifact://technique-card/artifact_first_task_graph_execution"]
+    raw["selected_theory_refs"] = ["artifact://theory-card/computational_engineering_numerical_methods"]
     packet = validate_task_packet_json(raw)
-    assert packet.knowledge_context is not None
-    assert packet.knowledge_context.required is True
+    assert packet.response_control_ref == "artifact://response-control-assessment/rca-1"
+    assert packet.knowledge_context is None
+
+
+def test_response_control_explicit_mode_dissonance_does_not_reroute() -> None:
+    assessment = evaluate_response_control(
+        prompt="Implement the FEM solver verification refactor in the repository",
+        requested_mode="content",
+    )
+    payload = validate_response_control_assessment_json(
+        assessment.model_dump(mode="json")
+    ).model_dump(mode="json")
+    assert payload["mode_selection"]["selected_mode"] == "content"
+    assert payload["mode_selection"]["user_override"] is True
+    assert payload["mode_selection"]["mode_dissonance"]["suggested_mode"] == "engineering"
+    assert payload["assembly_order"] == ["mode", "knowledge_pool", "module", "technique", "theory"]
 
 
 def test_lifecycle_task_packet_illegal() -> None:
@@ -322,6 +333,11 @@ def test_engineering_state_derivation_is_idempotent_and_permutation_invariant() 
         item["criterion_id"] for item in state_b["verification_intent"]
     )
     assert isinstance(state_a["knowledge_pool_assessment_ref"], str)
+    assert isinstance(state_a["response_control_ref"], str)
+    assert state_a["selected_knowledge_pool_refs"]
+    assert state_a["selected_module_refs"]
+    assert state_a["selected_technique_refs"]
+    assert state_a["selected_theory_refs"]
     assert state_a["knowledge_pool_coverage"] in {
         "not_applicable",
         "none",
@@ -417,8 +433,15 @@ def test_control_plane_engineering_intake_route_builds_governing_artifacts(
     assert body["status"] == "READY"
     assert body["problem_brief_valid"] is True
     assert body["ready_for_task_decomposition"] is True
+    assert body["response_control_ref"]
+    assert body["selected_knowledge_pool_refs"]
+    assert body["selected_module_refs"]
+    assert body["selected_technique_refs"]
+    assert body["selected_theory_refs"]
     assert body["task_queue"]
     assert body["task_packets"]
+    assert all("knowledge_context" not in packet for packet in body["task_packets"])
+    assert all(packet["response_control_ref"] for packet in body["task_packets"])
 
 
 def test_control_plane_build_task_queue_route_blocks_when_state_not_ready(

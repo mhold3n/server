@@ -8,7 +8,7 @@ version: "3.9"
 services:
   # ── Generation lane ─────────────────────────────────────────────
   llm-runner-gen:
-    image: vllm/vllm-openai:latest
+    image: ${VLLM_IMAGE:-vllm/vllm-openai@sha256:7a0f0fdd2771464b6976625c2b2d5dd46f566aa00fbc53eceab86ef50883da90}
     restart: unless-stopped
     deploy:
       resources:
@@ -41,7 +41,7 @@ services:
 
   # ── Embedding lane ──────────────────────────────────────────────
   llm-runner-embed:
-    image: vllm/vllm-openai:latest
+    image: ${VLLM_IMAGE:-vllm/vllm-openai@sha256:7a0f0fdd2771464b6976625c2b2d5dd46f566aa00fbc53eceab86ef50883da90}
     restart: unless-stopped
     deploy:
       resources:
@@ -72,7 +72,7 @@ services:
 
   # ── Ollama (development/alternative) ────────────────────────────
   ollama-runner:
-    image: ollama/ollama:latest
+    image: ${OLLAMA_IMAGE:-ollama/ollama@sha256:1375516e575632dd84ad23b2c1cbd5e36ef34ebe8e41f9857545ab9aa72aeec2}
     restart: unless-stopped
     deploy:
       resources:

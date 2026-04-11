@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/knowledge-pool.schema.json",
+  "title": "knowledge_pool — discipline-level response-control context",
+  "description": "For agents: discipline/context window selected independently from mode. Theory cards are derived from selected pools.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "knowledge_pool_id",
+    "schema_version",
+    "pool_key",
+    "label",
+    "domain",
+    "summary",
+    "theory_refs",
+    "module_refs"
+  ],
+  "properties": {
+    "knowledge_pool_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "pool_key": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "label": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "domain": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "summary": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "theory_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "module_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    }
+  }
+}

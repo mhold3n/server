@@ -7,6 +7,7 @@ Scaffolded control plane endpoints added:
 - Search (Spotlight): `GET /api/search?q=...&kind=all|files|web`, `GET /api/search/files`, `GET /api/search/web`
 - Apps: `GET /api/apps` (reachability), `POST /api/apps/{id}/restart` (501 placeholder)
 - AI: `POST /api/ai/query` (router or AI stack), `POST /api/ai/workflows/run` (code-rag/media-fixups/sysadmin-ops), `POST /api/ai/simulations/analyze`
+  - Runtime hints: `/api/ai/query` accepts `provider`, `model`, `temperature`, and `max_tokens`. Supported provider hints are `local_worker`, `ollama`, `vllm`, `huggingface`, `hosted_api`, plus enabled direct provider names. Raw provider API keys are not accepted in public request bodies.
   - Status: `GET /api/ai/status` (aggregated: worker, router, ai-stack, MCPs)
   - MCP: `GET /api/ai/mcp/servers`, `POST /api/ai/mcp/servers/{name}/enable`, `GET /api/ai/mcp/servers/{name}/tools`, `POST /api/ai/mcp/call`
 

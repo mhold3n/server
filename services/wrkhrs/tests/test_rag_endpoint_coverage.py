@@ -9,6 +9,7 @@ import sys
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
+import httpx
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
@@ -56,6 +57,92 @@ async def test_remote_embedding_client_encode_sets_dimension():
     assert embeddings.shape == (1, 3)
     assert client.get_sentence_embedding_dimension() == 3
     assert np.allclose(embeddings[0], [1.0, 2.0, 3.0])
+
+
+@pytest.mark.asyncio
+async def test_remote_embedding_client_ollama_embed_shape_and_endpoint():
+    client = rag.RemoteEmbeddingClient(
+        "http://localhost:11434",
+        model="nomic-embed-text",
+        backend="ollama",
+    )
+    response = Mock()
+    response.raise_for_status.return_value = None
+    response.json.return_value = {"embeddings": [[0.1, 0.2, 0.3]]}
+    async_client = AsyncMock()
+    async_client.post.return_value = response
+    context_manager = MagicMock()
+    context_manager.__aenter__ = AsyncMock(return_value=async_client)
+    context_manager.__aexit__ = AsyncMock(return_value=None)
+
+    with patch("rag.app.httpx.AsyncClient", return_value=context_manager):
+        embeddings = await client.encode("hello world")
+
+    async_client.post.assert_awaited_once()
+    url = async_client.post.await_args.args[0]
+    payload = async_client.post.await_args.kwargs["json"]
+    assert url == "http://localhost:11434/api/embed"
+    assert payload == {"model": "nomic-embed-text", "input": ["hello world"]}
+    assert embeddings.shape == (1, 3)
+    assert client.get_sentence_embedding_dimension() == 3
+
+
+@pytest.mark.asyncio
+async def test_rerank_candidates_merges_cross_encoder_scores():
+    svc = rag.RAGService()
+    svc.reranker_url = "http://reranker:8080"
+    candidates = [
+        {"content": "low", "combined_score": 0.9},
+        {"content": "high", "combined_score": 0.1},
+    ]
+    response = Mock()
+    response.raise_for_status.return_value = None
+    response.json.return_value = {
+        "results": [
+            {"index": 0, "score": 0.1},
+            {"index": 1, "score": 0.9},
+        ]
+    }
+    async_client = AsyncMock()
+    async_client.post.return_value = response
+    context_manager = MagicMock()
+    context_manager.__aenter__ = AsyncMock(return_value=async_client)
+    context_manager.__aexit__ = AsyncMock(return_value=None)
+
+    with patch("rag.app.httpx.AsyncClient", return_value=context_manager):
+        applied = await svc.rerank_candidates("query", candidates, k=2)
+
+    assert applied is True
+    async_client.post.assert_awaited_once()
+    url = async_client.post.await_args.args[0]
+    payload = async_client.post.await_args.kwargs["json"]
+    assert url == "http://reranker:8080/rerank"
+    assert payload["query"] == "query"
+    assert payload["documents"] == ["low", "high"]
+    assert candidates[0]["content"] == "high"
+    assert candidates[0]["reranker_score"] == 0.9
+
+
+@pytest.mark.asyncio
+async def test_rerank_candidates_failure_preserves_fallback_scores():
+    svc = rag.RAGService()
+    svc.reranker_url = "http://reranker:8080/rerank"
+    candidates = [
+        {"content": "first", "combined_score": 0.6},
+        {"content": "second", "combined_score": 0.5},
+    ]
+    async_client = AsyncMock()
+    async_client.post.side_effect = httpx.ConnectError("down")
+    context_manager = MagicMock()
+    context_manager.__aenter__ = AsyncMock(return_value=async_client)
+    context_manager.__aexit__ = AsyncMock(return_value=None)
+
+    with patch("rag.app.httpx.AsyncClient", return_value=context_manager):
+        applied = await svc.rerank_candidates("query", candidates, k=2)
+
+    assert applied is False
+    assert [c["content"] for c in candidates] == ["first", "second"]
+    assert "reranker_score" not in candidates[0]
 
 
 @patch("rag.app.RAGService.add_document", new_callable=AsyncMock)

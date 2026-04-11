@@ -42,7 +42,7 @@ Based on your 20GB total VRAM:
 ### Production Docker Compose (`compose/docker-compose.prod.yml`)
 ```yaml
 llm-runner:
-  image: vllm/vllm-openai:latest
+  image: ${VLLM_IMAGE:-vllm/vllm-openai@sha256:7a0f0fdd2771464b6976625c2b2d5dd46f566aa00fbc53eceab86ef50883da90}
   ports: [ "8001:8000" ]
   environment:
     - NVIDIA_VISIBLE_DEVICES=all

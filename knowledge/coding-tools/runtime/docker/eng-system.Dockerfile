@@ -1,5 +1,8 @@
-FROM python:3.11-slim
+FROM mambaorg/micromamba:1.5.10
+USER root
+SHELL ["bash", "-lc"]
 WORKDIR /workspace
-COPY knowledge/coding-tools/runtime/uv/eng-system.requirements.txt /tmp/requirements.txt
-RUN python -m pip install --upgrade pip && python -m pip install -r /tmp/requirements.txt
-ENTRYPOINT ["python"]
+RUN micromamba install -y -n base -c conda-forge python=3.11 pyfmi && micromamba clean --all --yes
+ENV PATH="/opt/conda/bin:${PATH}"
+RUN ln -sf /opt/conda/bin/python /usr/local/bin/python || true
+CMD ["bash"]

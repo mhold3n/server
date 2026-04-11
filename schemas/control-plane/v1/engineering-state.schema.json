@@ -74,6 +74,38 @@
     "knowledge_required": {
       "type": "boolean"
     },
+    "response_control_ref": {
+      "anyOf": [
+        {
+          "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+        },
+        { "type": "null" }
+      ]
+    },
+    "selected_knowledge_pool_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "selected_module_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "selected_technique_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "selected_theory_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
     "evidence_bundle_refs": {
       "type": "array",
       "items": {

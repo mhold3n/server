@@ -23,6 +23,36 @@
       "kind": "contract"
     },
     {
+      "id": "https://birtha.local/schemas/control-plane/v1/response-mode.schema.json",
+      "path": "response-mode.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/knowledge-pool.schema.json",
+      "path": "knowledge-pool.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/module-card.schema.json",
+      "path": "module-card.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/technique-card.schema.json",
+      "path": "technique-card.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/theory-card.schema.json",
+      "path": "theory-card.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/response-control-assessment.schema.json",
+      "path": "response-control-assessment.schema.json",
+      "kind": "contract"
+    },
+    {
       "id": "https://birtha.local/schemas/control-plane/v1/recipe-object.schema.json",
       "path": "recipe-object.schema.json",
       "kind": "contract"
@@ -45,6 +75,11 @@
     {
       "id": "https://birtha.local/schemas/control-plane/v1/environment-spec.schema.json",
       "path": "environment-spec.schema.json",
+      "kind": "contract"
+    },
+    {
+      "id": "https://birtha.local/schemas/control-plane/v1/gui-session-spec.schema.json",
+      "path": "gui-session-spec.schema.json",
       "kind": "contract"
     },
     {

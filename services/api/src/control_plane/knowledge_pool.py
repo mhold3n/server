@@ -6,6 +6,8 @@ import hashlib
 import json
 import platform
 import re
+import secrets
+import socket
 import subprocess
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -21,6 +23,7 @@ from .contracts import (
     EnvironmentSpecPayload,
     EvidenceBundlePayload,
     ExecutionAdapterSpecPayload,
+    GuiSessionSpecPayload,
     KnowledgePackPayload,
     Producer,
     RecipeObjectPayload,
@@ -37,6 +40,7 @@ from .validation import (
     validate_environment_spec_json,
     validate_evidence_bundle_json,
     validate_execution_adapter_spec_json,
+    validate_gui_session_spec_json,
     validate_knowledge_pack_json,
     validate_recipe_object_json,
     validate_role_context_bundle_json,
@@ -84,6 +88,7 @@ class LoadedArtifact:
         | RecipeObjectPayload
         | ExecutionAdapterSpecPayload
         | EvidenceBundlePayload
+        | GuiSessionSpecPayload
         | RoleContextBundlePayload
         | DecisionLogPayload
         | EnvironmentSpecPayload
@@ -109,6 +114,17 @@ class PackLookupHit:
     score: int
     matched_terms: tuple[str, ...]
     runtime_gated: bool
+
+
+@dataclass(frozen=True)
+class GuiSessionHandle:
+    gui_session_ref: str
+    container_id: str
+    container_name: str
+    url: str
+    novnc_port: int
+    password: str
+    artifact_output_dir: str
 
 
 class KnowledgePoolCatalog:
@@ -155,6 +171,11 @@ class KnowledgePoolCatalog:
             for ref, artifact in artifacts.items()
             if artifact.record.artifact_type is ArtifactType.ENVIRONMENT_SPEC
         }
+        self.gui_session_specs = {
+            ref: artifact
+            for ref, artifact in artifacts.items()
+            if artifact.record.artifact_type is ArtifactType.GUI_SESSION_SPEC
+        }
         self.verification_reports = {
             ref: artifact
             for ref, artifact in artifacts.items()
@@ -176,6 +197,7 @@ class KnowledgePoolCatalog:
             "substrate/recipe-objects.json",
             "substrate/decision-logs.json",
             "environments/environment-specs.json",
+            "gui/gui-session-specs.json",
             "adapters/execution-adapter-specs.json",
             "evidence/evidence-bundles.json",
             "evidence/verification-reports.json",
@@ -385,6 +407,54 @@ class KnowledgePoolCatalog:
                     field_name="runtime_verification_refs",
                 )
             )
+        for ref, artifact in self.environment_specs.items():
+            payload = artifact.payload
+            assert isinstance(payload, EnvironmentSpecPayload)
+            errors.extend(
+                _check_refs_exist(
+                    artifacts=self.artifacts,
+                    refs=payload.gui_session_refs,
+                    allowed_types=(ArtifactType.GUI_SESSION_SPEC,),
+                    source_ref=ref,
+                    field_name="gui_session_refs",
+                )
+            )
+            if payload.default_gui_session_ref:
+                errors.extend(
+                    _check_refs_exist(
+                        artifacts=self.artifacts,
+                        refs=[payload.default_gui_session_ref],
+                        allowed_types=(ArtifactType.GUI_SESSION_SPEC,),
+                        source_ref=ref,
+                        field_name="default_gui_session_ref",
+                    )
+                )
+                if payload.default_gui_session_ref not in payload.gui_session_refs:
+                    errors.append(
+                        f"{ref} default GUI session {payload.default_gui_session_ref} is not listed in gui_session_refs"
+                    )
+        for ref, artifact in self.gui_session_specs.items():
+            payload = artifact.payload
+            assert isinstance(payload, GuiSessionSpecPayload)
+            errors.extend(
+                _check_refs_exist(
+                    artifacts=self.artifacts,
+                    refs=[payload.base_environment_ref, payload.gui_environment_ref],
+                    allowed_types=(ArtifactType.ENVIRONMENT_SPEC,),
+                    source_ref=ref,
+                    field_name="environment_refs",
+                )
+            )
+            if payload.verification_ref:
+                errors.extend(
+                    _check_refs_exist(
+                        artifacts=self.artifacts,
+                        refs=[payload.verification_ref],
+                        allowed_types=(ArtifactType.VERIFICATION_REPORT,),
+                        source_ref=ref,
+                        field_name="verification_ref",
+                    )
+                )
         for ref, artifact in self.verification_reports.items():
             payload = artifact.payload
             assert isinstance(payload, VerificationReportPayload)
@@ -397,6 +467,7 @@ class KnowledgePoolCatalog:
                         ArtifactType.KNOWLEDGE_PACK,
                         ArtifactType.EXECUTION_ADAPTER_SPEC,
                         ArtifactType.EVIDENCE_BUNDLE,
+                        ArtifactType.GUI_SESSION_SPEC,
                     ),
                     source_ref=ref,
                     field_name="validated_artifact_refs",
@@ -415,6 +486,7 @@ class KnowledgePoolCatalog:
                         ArtifactType.EXECUTION_ADAPTER_SPEC,
                         ArtifactType.EVIDENCE_BUNDLE,
                         ArtifactType.ENVIRONMENT_SPEC,
+                        ArtifactType.GUI_SESSION_SPEC,
                     ),
                     source_ref=ref,
                     field_name="chosen_refs",
@@ -430,6 +502,7 @@ class KnowledgePoolCatalog:
                         ArtifactType.EXECUTION_ADAPTER_SPEC,
                         ArtifactType.EVIDENCE_BUNDLE,
                         ArtifactType.ENVIRONMENT_SPEC,
+                        ArtifactType.GUI_SESSION_SPEC,
                     ),
                     source_ref=ref,
                     field_name="rejected_refs",
@@ -449,6 +522,7 @@ class KnowledgePoolCatalog:
                         ArtifactType.EVIDENCE_BUNDLE,
                         ArtifactType.DECISION_LOG,
                         ArtifactType.ENVIRONMENT_SPEC,
+                        ArtifactType.GUI_SESSION_SPEC,
                         ArtifactType.VERIFICATION_REPORT,
                     ),
                     source_ref=ref,
@@ -730,6 +804,74 @@ class KnowledgePoolCatalog:
             key=lambda item: (-item[0], item[1].environment_spec_id),
         )[0][1]
 
+    def resolve_gui_session(
+        self,
+        module_or_environment_ref: str,
+        host_profile: dict[str, Any] | None = None,
+    ) -> GuiSessionSpecPayload:
+        """Resolve the best noVNC/OpenClaw GUI session for a module or environment."""
+        host_profile = host_profile or {}
+        verified_only = bool(host_profile.get("verified_only", True))
+        platform_tag = host_profile.get("docker_platform") or host_profile.get("platform", "linux/amd64")
+
+        candidate_refs: list[str] = []
+        if module_or_environment_ref in self.gui_session_specs:
+            candidate_refs = [module_or_environment_ref]
+        elif module_or_environment_ref in self.environment_specs:
+            env_payload = self.environment_specs[module_or_environment_ref].payload
+            assert isinstance(env_payload, EnvironmentSpecPayload)
+            candidate_refs = list(env_payload.gui_session_refs)
+            if env_payload.default_gui_session_ref:
+                candidate_refs.insert(0, env_payload.default_gui_session_ref)
+        elif module_or_environment_ref in self.execution_adapters:
+            adapter_payload = self.execution_adapters[module_or_environment_ref].payload
+            assert isinstance(adapter_payload, ExecutionAdapterSpecPayload)
+            for env_ref in adapter_payload.environment_refs:
+                env_payload = self.environment_specs.get(env_ref)
+                if env_payload is None:
+                    continue
+                payload = env_payload.payload
+                assert isinstance(payload, EnvironmentSpecPayload)
+                candidate_refs.extend(payload.gui_session_refs)
+        elif module_or_environment_ref in self.knowledge_packs:
+            pack_payload = self.knowledge_packs[module_or_environment_ref].payload
+            assert isinstance(pack_payload, KnowledgePackPayload)
+            for env_ref in pack_payload.environment_refs:
+                env_payload = self.environment_specs.get(env_ref)
+                if env_payload is None:
+                    continue
+                payload = env_payload.payload
+                assert isinstance(payload, EnvironmentSpecPayload)
+                candidate_refs.extend(payload.gui_session_refs)
+        else:
+            raise ValueError(f"Unknown module, environment, adapter, or GUI session ref: {module_or_environment_ref}")
+
+        ranked: list[tuple[int, GuiSessionSpecPayload]] = []
+        for gui_ref in dict.fromkeys(candidate_refs):
+            artifact = self.gui_session_specs.get(gui_ref)
+            if artifact is None:
+                continue
+            payload = artifact.payload
+            assert isinstance(payload, GuiSessionSpecPayload)
+            if verified_only and not self._gui_session_has_passing_verification(gui_ref):
+                continue
+            score = 0
+            if payload.control_provider == "openclaw_browser":
+                score += 40
+            if payload.display_protocol == "novnc_web":
+                score += 30
+            if payload.docker_platform == platform_tag:
+                score += 20
+            if payload.base_environment_ref == module_or_environment_ref:
+                score += 10
+            ranked.append((score, payload))
+        if not ranked:
+            raise ValueError(f"No GUI session matched for {module_or_environment_ref}")
+        return sorted(
+            ranked,
+            key=lambda item: (-item[0], item[1].gui_session_spec_id),
+        )[0][1]
+
     def verify_runtime(self, environment_ref: str) -> VerificationReportPayload:
         """Run the environment health check command and return a verification report."""
         artifact = self.environment_specs.get(environment_ref)
@@ -796,6 +938,72 @@ class KnowledgePoolCatalog:
             }
         )
 
+    def verify_gui_session(self, gui_session_ref: str) -> VerificationReportPayload:
+        """Run the GUI session health check command and return a verification report."""
+        artifact = self.gui_session_specs.get(gui_session_ref)
+        if artifact is None:
+            raise ValueError(f"Unknown GUI session ref: {gui_session_ref}")
+        payload = artifact.payload
+        assert isinstance(payload, GuiSessionSpecPayload)
+        result = subprocess.run(
+            payload.healthcheck_command,
+            cwd=_repo_root(),
+            shell=True,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        report_id = str(uuid5(NAMESPACE_URL, f"gui-session-verification:{gui_session_ref}"))
+        if result.returncode == 0:
+            return VerificationReportPayload.model_validate(
+                {
+                    "verification_report_id": report_id,
+                    "schema_version": "1.0.0",
+                    "outcome": VerificationOutcome.PASS,
+                    "reasons": ["GUI session health check passed."],
+                    "gate_results": [
+                        VerificationGateResult(
+                            gate_id="gui_session_healthcheck",
+                            gate_kind="tests",
+                            status="PASS",
+                            detail=result.stdout.strip() or "GUI health check completed successfully.",
+                            artifact_ref=gui_session_ref,
+                        ).model_dump(mode="json")
+                    ],
+                    "recommended_next_action": "accept_gui_session",
+                    "validated_artifact_refs": [gui_session_ref, payload.gui_environment_ref],
+                    "created_at": datetime.now(UTC).isoformat(),
+                }
+            )
+        return VerificationReportPayload.model_validate(
+            {
+                "verification_report_id": report_id,
+                "schema_version": "1.0.0",
+                "outcome": VerificationOutcome.REWORK,
+                "reasons": ["GUI session health check failed."],
+                "blocking_findings": [
+                    VerificationFinding(
+                        code="gui_session_healthcheck_failed",
+                        severity="high",
+                        artifact_ref=gui_session_ref,
+                    ).model_dump(mode="json")
+                ],
+                "gate_results": [
+                    VerificationGateResult(
+                        gate_id="gui_session_healthcheck",
+                        gate_kind="tests",
+                        status="FAIL",
+                        detail=(result.stderr or result.stdout).strip() or "GUI health check failed.",
+                        remediation_hint="Bootstrap the GUI environment and rerun the GUI verification command.",
+                        artifact_ref=gui_session_ref,
+                    ).model_dump(mode="json")
+                ],
+                "recommended_next_action": "repair_gui_session",
+                "validated_artifact_refs": [gui_session_ref, payload.gui_environment_ref],
+                "created_at": datetime.now(UTC).isoformat(),
+            }
+        )
+
     def compile_role_context(
         self,
         role: str,
@@ -810,6 +1018,7 @@ class KnowledgePoolCatalog:
             raise ValueError("candidate_refs must not be empty")
 
         pack_refs = list(dict.fromkeys(candidate_refs))
+        promotion_only = bool(project_constraints.get("promotion_only"))
         source_refs: set[str] = set()
         summary_chunks: list[str] = []
         retrieval_keys = sorted(set([role, task_class, *_tokenize_structure(project_constraints)]))
@@ -821,12 +1030,35 @@ class KnowledgePoolCatalog:
             assert isinstance(payload, KnowledgePackPayload)
             runtime_refs = self._runtime_verification_refs_for_pack(payload)
             source_refs.add(pack_ref)
-            source_refs.update(payload.integration_refs)
+            integration_refs = list(payload.integration_refs)
+            if promotion_only:
+                integration_refs = [
+                    ref
+                    for ref in integration_refs
+                    if ref not in self.knowledge_packs or ref in pack_refs
+                ]
+            source_refs.update(integration_refs)
             source_refs.update(payload.recipe_refs)
             source_refs.update(payload.adapter_refs)
             source_refs.update(payload.evidence_refs)
             source_refs.update(payload.environment_refs)
             source_refs.update(runtime_refs)
+            for env_ref in payload.environment_refs:
+                env_artifact = self.environment_specs.get(env_ref)
+                if env_artifact is None:
+                    continue
+                env_payload = env_artifact.payload
+                assert isinstance(env_payload, EnvironmentSpecPayload)
+                source_refs.update(env_payload.gui_session_refs)
+                for gui_ref in env_payload.gui_session_refs:
+                    gui_artifact = self.gui_session_specs.get(gui_ref)
+                    if gui_artifact is None:
+                        continue
+                    gui_payload = gui_artifact.payload
+                    assert isinstance(gui_payload, GuiSessionSpecPayload)
+                    source_refs.add(gui_payload.gui_environment_ref)
+                    if gui_payload.verification_ref:
+                        source_refs.add(gui_payload.verification_ref)
             summary_chunks.append(self._summary_for_role(role, payload, runtime_refs))
 
         sorted_source_refs = sorted(source_refs)
@@ -918,6 +1150,14 @@ class KnowledgePoolCatalog:
             if isinstance(report.payload, VerificationReportPayload)
         )
 
+    def _gui_session_has_passing_verification(self, gui_session_ref: str) -> bool:
+        return any(
+            gui_session_ref in report.payload.validated_artifact_refs
+            and report.payload.outcome is VerificationOutcome.PASS
+            for report in self.verification_reports.values()
+            if isinstance(report.payload, VerificationReportPayload)
+        )
+
     def _pack_has_passing_runtime_verification(
         self,
         payload: KnowledgePackPayload,
@@ -956,6 +1196,13 @@ class KnowledgePoolCatalog:
             f"healthcheck commands {', '.join(evidence.healthcheck_commands)}; "
             f"verification refs {', '.join(runtime_refs)}."
         )
+        gui_text = (
+            f" GUI state {env.gui_capability_state}; "
+            f"default GUI session {env.default_gui_session_ref}; "
+            "control provider noVNC via OpenClaw browser."
+            if env.default_gui_session_ref
+            else f" GUI state {env.gui_capability_state}."
+        )
         alias_text = (
             f" Aliases: {', '.join(payload.alias_names)}."
             if payload.alias_names
@@ -986,7 +1233,7 @@ class KnowledgePoolCatalog:
                 f"{payload.tool_name}: solves {', '.join(payload.scope.solves)}. "
                 f"Best for {', '.join(payload.best_for)}. "
                 f"Avoid {', '.join(payload.scope.not_for)}. "
-                f"{runtime_label}{alias_text}{substitution_text}{gating_text}"
+                f"{runtime_label}{gui_text}{alias_text}{substitution_text}{gating_text}"
             )
         if role == "coder":
             object_names = ", ".join(obj.name for obj in payload.core_objects)
@@ -996,14 +1243,14 @@ class KnowledgePoolCatalog:
                 f"Adapter {adapter.callable_interface.entrypoint} takes {input_names}. "
                 f"Launcher {adapter.launcher_ref}. "
                 f"Recipe {recipe.title} follows {', '.join(recipe.implementation_pattern)}. "
-                f"{runtime_label}{alias_text}{substitution_text}{gating_text}"
+                f"{runtime_label}{gui_text}{alias_text}{substitution_text}{gating_text}"
             )
         return (
             f"{payload.tool_name}: review {', '.join(evidence.smoke_tests)}. "
             f"Checklist {', '.join(evidence.reviewer_checklist)}. "
             f"Watch anti-patterns {', '.join(payload.anti_patterns)}. "
             f"Healthcheck commands {', '.join(evidence.healthcheck_commands)}. "
-            f"{runtime_label}{alias_text}{substitution_text}{gating_text}"
+            f"{runtime_label}{gui_text}{alias_text}{substitution_text}{gating_text}"
         )
 
 
@@ -1045,6 +1292,17 @@ def verify_runtime(environment_ref: str) -> VerificationReportPayload:
     return load_knowledge_pool().verify_runtime(environment_ref)
 
 
+def resolve_gui_session(
+    module_or_environment_ref: str,
+    host_profile: dict[str, Any] | None = None,
+) -> GuiSessionSpecPayload:
+    return load_knowledge_pool().resolve_gui_session(module_or_environment_ref, host_profile)
+
+
+def verify_gui_session(gui_session_ref: str) -> VerificationReportPayload:
+    return load_knowledge_pool().verify_gui_session(gui_session_ref)
+
+
 def compile_role_context(
     role: str,
     candidate_refs: list[str],
@@ -1083,6 +1341,8 @@ def _artifact_ref_for(
         return f"artifact://role-context-bundle/{payload['role_context_bundle_id']}"
     if artifact_type is ArtifactType.ENVIRONMENT_SPEC:
         return f"artifact://environment-spec/{payload['environment_spec_id']}"
+    if artifact_type is ArtifactType.GUI_SESSION_SPEC:
+        return f"artifact://gui-session-spec/{payload['gui_session_spec_id']}"
     if artifact_type is ArtifactType.VERIFICATION_REPORT:
         return f"artifact://verification-report/{payload['verification_report_id']}"
     if artifact_type is ArtifactType.DECISION_LOG:
@@ -1106,6 +1366,7 @@ def _validate_payload(
     | RecipeObjectPayload
     | ExecutionAdapterSpecPayload
     | EvidenceBundlePayload
+    | GuiSessionSpecPayload
     | RoleContextBundlePayload
     | DecisionLogPayload
     | EnvironmentSpecPayload
@@ -1116,6 +1377,7 @@ def _validate_payload(
         ArtifactType.RECIPE_OBJECT: validate_recipe_object_json,
         ArtifactType.EXECUTION_ADAPTER_SPEC: validate_execution_adapter_spec_json,
         ArtifactType.EVIDENCE_BUNDLE: validate_evidence_bundle_json,
+        ArtifactType.GUI_SESSION_SPEC: validate_gui_session_spec_json,
         ArtifactType.ROLE_CONTEXT_BUNDLE: validate_role_context_bundle_json,
         ArtifactType.ENVIRONMENT_SPEC: validate_environment_spec_json,
         ArtifactType.VERIFICATION_REPORT: validate_verification_report_json,

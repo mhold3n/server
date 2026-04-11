@@ -30,6 +30,45 @@ def test_ai_query_via_router():
         assert body["status"] in ("completed", "failed")
 
 
+def test_ai_query_forwards_model_routing_hints():
+    client = TestClient(app)
+    with respx.mock(assert_all_called=True) as mock:
+        route = mock.post(f"{settings.agent_platform_url}/v1/workflows/execute").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "status": "completed",
+                    "workflow_id": "w-route",
+                    "workflow_name": "wrkhrs_chat",
+                    "duration": 0.01,
+                    "result": {"final_response": "ok"},
+                },
+            )
+        )
+        resp = client.post(
+            "/api/ai/query",
+            json={
+                "prompt": "hi",
+                "provider": "huggingface",
+                "model": "Qwen/Qwen3-8B",
+                "temperature": 0.25,
+                "max_tokens": 512,
+            },
+        )
+        assert resp.status_code == 200
+        payload = json.loads(route.calls[0].request.content.decode("utf-8"))
+        assert payload["input_data"]["model"] == "Qwen/Qwen3-8B"
+        assert payload["input_data"]["temperature"] == 0.25
+        assert payload["input_data"]["max_tokens"] == 512
+        assert payload["workflow_config"]["provider_preference"] == "huggingface"
+        assert payload["workflow_config"]["model_routing"] == {
+            "provider_preference": "huggingface",
+            "model": "Qwen/Qwen3-8B",
+            "temperature": 0.25,
+            "max_tokens": 512,
+        }
+
+
 def test_ai_query_via_ai_stack():
     client = TestClient(app)
     with respx.mock(assert_all_called=True) as mock:

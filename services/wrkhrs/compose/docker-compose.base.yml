@@ -220,7 +220,7 @@ services:
 
   # This is a placeholder - will be overridden in dev/prod
   llm-runner:
-    image: ollama/ollama:latest
+    image: ${OLLAMA_IMAGE:-ollama/ollama@sha256:1375516e575632dd84ad23b2c1cbd5e36ef34ebe8e41f9857545ab9aa72aeec2}
     networks: [ llm_net ]
     ports: [ "11434:11434" ]
     volumes:

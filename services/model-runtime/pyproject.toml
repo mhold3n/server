@@ -14,6 +14,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+hf = [
+  "torch>=2.0.0",
+  "transformers>=4.39",
+  "accelerate>=0.30.0",
+]
 
 [tool.pytest.ini_options]
 addopts = [

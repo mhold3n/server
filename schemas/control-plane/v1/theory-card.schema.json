@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/theory-card.schema.json",
+  "title": "theory_card — pool-level basis and source-bearing doctrine",
+  "description": "For agents: theory belongs to a knowledge pool and owns source refs, principles, assumptions, reference points, and interpretation rules.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "theory_card_id",
+    "schema_version",
+    "theory_key",
+    "label",
+    "pool_ref",
+    "summary",
+    "source_refs",
+    "principles",
+    "assumptions",
+    "reference_points",
+    "interpretation_rules"
+  ],
+  "properties": {
+    "theory_card_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "theory_key": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "label": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "pool_ref": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+    },
+    "summary": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "source_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "principles": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "reference_points": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "interpretation_rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    }
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/response-control-assessment.schema.json",
+  "title": "response_control_assessment — three-choice/five-layer response control decision",
+  "description": "For agents: records independent mode/pool/module choices plus derived technique/theory refs. Assembly order is always mode, knowledge_pool, module, technique, theory.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "response_control_assessment_id",
+    "schema_version",
+    "mode_selection",
+    "knowledge_pool_selection",
+    "module_selection",
+    "technique_selection",
+    "assembly_order",
+    "created_at"
+  ],
+  "properties": {
+    "response_control_assessment_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/uuidString"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "mode_selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selected_mode", "user_override", "confidence", "reasons"],
+      "properties": {
+        "selected_mode": {
+          "type": "string",
+          "enum": [
+            "casual_chat",
+            "ideation",
+            "napkin_math",
+            "engineering",
+            "research",
+            "dictionary_definition",
+            "query",
+            "business",
+            "content",
+            "marketing"
+          ]
+        },
+        "user_override": { "type": "boolean" },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "reasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "mode_dissonance": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["inferred_mode", "suggested_mode", "reason"],
+          "properties": {
+            "inferred_mode": { "type": "string" },
+            "suggested_mode": { "type": "string" },
+            "reason": { "type": "string" }
+          }
+        }
+      }
+    },
+    "knowledge_pool_selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selected_pool_refs", "selected_theory_refs", "reasons"],
+      "properties": {
+        "selected_pool_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+          }
+        },
+        "selected_theory_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+          }
+        },
+        "reasons": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "module_selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selected_module_refs_by_kind", "selected_module_refs", "reasons"],
+      "properties": {
+        "selected_module_refs_by_kind": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["tool", "package", "knowledge_bank"],
+          "properties": {
+            "tool": {
+              "type": "array",
+              "items": {
+                "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+              }
+            },
+            "package": {
+              "type": "array",
+              "items": {
+                "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+              }
+            },
+            "knowledge_bank": {
+              "type": "array",
+              "items": {
+                "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+              }
+            }
+          }
+        },
+        "selected_module_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+          }
+        },
+        "reasons": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "technique_selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selected_technique_refs", "derived_from_module_refs"],
+      "properties": {
+        "selected_technique_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+          }
+        },
+        "derived_from_module_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+          }
+        }
+      }
+    },
+    "assembly_order": {
+      "type": "array",
+      "prefixItems": [
+        { "const": "mode" },
+        { "const": "knowledge_pool" },
+        { "const": "module" },
+        { "const": "technique" },
+        { "const": "theory" }
+      ],
+      "minItems": 5,
+      "maxItems": 5
+    },
+    "created_at": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/iso8601Utc"
+    }
+  }
+}

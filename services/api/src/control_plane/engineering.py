@@ -34,7 +34,6 @@ from .contracts import (
     EngineeringState,
     EvidenceInput,
     Executor,
-    KnowledgeContext,
     KnowledgeCoverageClass,
     KnowledgePoolAssessment,
     NormalizedBoundary,
@@ -49,6 +48,7 @@ from .contracts import (
     RequiredDeliverable,
     RequiredGateRecord,
     RequiredOutputSpec,
+    ResponseControlAssessment,
     RoutingMetadata,
     Scope,
     StateConstraint,
@@ -72,10 +72,16 @@ from .contracts import (
     HumanApprovalBlock,
 )
 from .knowledge_pool import load_knowledge_pool
+from .response_control import (
+    evaluate_response_control,
+    response_control_artifact_ref,
+    selected_response_control_refs,
+)
 from .validation import (
     validate_engineering_state_json,
     validate_knowledge_pool_assessment_json,
     validate_problem_brief_json,
+    validate_response_control_assessment_json,
     validate_task_packet_json,
     validate_task_queue_json,
 )
@@ -205,13 +211,6 @@ _KNOWLEDGE_STRICT_TASK_CLASSES = {
     "electrics_dynamics_system",
     "structures_pde",
 }
-_KNOWLEDGE_ROLE_BY_EXECUTOR = {
-    Executor.CODING_MODEL: "coder",
-    Executor.LOCAL_GENERAL_MODEL: "general",
-    Executor.MULTIMODAL_MODEL: "general",
-    Executor.DETERMINISTIC_VALIDATOR: "reviewer",
-    Executor.STRATEGIC_REVIEWER: "reviewer",
-}
 _KNOWLEDGE_CACHE: tuple[str, Any] | None = None
 
 
@@ -241,11 +240,21 @@ def _normalize_mode(mode: Any) -> str | None:
     if mode is None:
         return None
     value = str(mode).strip().lower()
+    if value == "engineering":
+        value = "strict_engineering"
     if value == "strict":
         value = "strict_engineering"
     if value in _MODE_RANK:
         return value
     return None
+
+
+def _response_mode_to_engagement_alias(response_mode: str, *, strict: bool = True) -> str:
+    if response_mode == "engineering":
+        return "strict_engineering" if strict else "engineering_task"
+    if response_mode in {"casual_chat", "ideation", "napkin_math"}:
+        return response_mode
+    return "ideation" if response_mode in {"research", "business", "content", "marketing"} else "casual_chat"
 
 
 def _mode_max(*modes: str | None) -> str:
@@ -862,6 +871,36 @@ def _prompt_knowledge_assessment(
     return assessment
 
 
+def _problem_brief_response_control(
+    problem_brief: ProblemBrief,
+    *,
+    requested_mode: str | None = None,
+) -> dict[str, Any]:
+    text = " ".join(
+        [
+            problem_brief.title,
+            problem_brief.summary,
+            problem_brief.problem_statement.need,
+            " ".join(problem_brief.problem_statement.non_goals),
+            " ".join(item.description for item in problem_brief.deliverables),
+            " ".join(item.description for item in problem_brief.inputs),
+            " ".join(criterion.statement for criterion in problem_brief.success_criteria),
+            " ".join(criterion.metric for criterion in problem_brief.success_criteria),
+        ]
+    ).strip()
+    context = {
+        "target_paths": list(problem_brief.code_guidance.target_paths)
+        if problem_brief.code_guidance is not None
+        else [],
+    }
+    assessment = evaluate_response_control(
+        prompt=text,
+        context=context,
+        requested_mode=requested_mode or "engineering",
+    )
+    return assessment.model_dump(mode="json")
+
+
 def _problem_brief_knowledge_assessment(problem_brief: ProblemBrief) -> KnowledgePoolAssessment:
     text = " ".join(
         [
@@ -973,45 +1012,6 @@ def _knowledge_role_context_payloads(
     return payloads
 
 
-def _knowledge_context_for_packet(
-    *,
-    assessment: KnowledgePoolAssessment,
-    executor: Executor,
-    role_contexts: dict[str, dict[str, Any]],
-) -> KnowledgeContext | None:
-    if not assessment.required_for_mode and not assessment.candidate_pack_refs:
-        return None
-    role = _KNOWLEDGE_ROLE_BY_EXECUTOR[executor]
-    role_context = role_contexts.get(role)
-    return KnowledgeContext(
-        assessment_ref=_assessment_artifact_ref(assessment),
-        candidate_pack_refs=list(assessment.candidate_pack_refs),
-        role_context_ref=(
-            _artifact_ref("role_context_bundle", role_context["role_context_bundle_id"])
-            if role_context is not None
-            else None
-        ),
-        role_context_summary=(
-            str(role_context.get("compiled_summary"))
-            if role_context is not None and role_context.get("compiled_summary")
-            else None
-        ),
-        preferred_adapter_ref=(
-            assessment.preferred_adapter_refs[0]
-            if assessment.preferred_adapter_refs
-            else None
-        ),
-        preferred_environment_ref=(
-            assessment.preferred_environment_refs[0]
-            if assessment.preferred_environment_refs
-            else None
-        ),
-        runtime_verification_refs=list(assessment.runtime_verification_refs),
-        coverage_class=assessment.coverage_class,
-        required=assessment.required_for_mode,
-    )
-
-
 def _knowledge_gate_record(assessment: KnowledgePoolAssessment) -> RequiredGateRecord:
     return RequiredGateRecord(
         gate_id="knowledge_pool_coverage",
@@ -1046,6 +1046,9 @@ def reset_engineering_sessions_for_tests() -> None:
     """Strict-engineering sessions are now durably persisted via DevPlane."""
     global _KNOWLEDGE_CACHE  # noqa: PLW0603 - test reset
     _KNOWLEDGE_CACHE = None
+    from .response_control import reset_response_control_catalog_cache_for_tests
+
+    reset_response_control_catalog_cache_for_tests()
     return None
 
 
@@ -1061,6 +1064,18 @@ def evaluate_engagement_mode(
     """Infer the required engagement mode directly from current evidence."""
     ctx = context or {}
     text = (prompt or _latest_user_content(messages)).strip()
+    response_control = evaluate_response_control(
+        prompt=text,
+        messages=messages,
+        context=ctx,
+        requested_mode=requested_mode,
+        active_mode=active_mode,
+        minimum_mode=minimum_mode,
+    )
+    response_control_payload = validate_response_control_assessment_json(
+        response_control.model_dump(mode="json")
+    ).model_dump(mode="json")
+    response_mode = str(response_control.mode_selection.selected_mode.value)
     prompt_assessment = _prompt_knowledge_assessment(text=text, context=ctx)
     requested = _normalize_mode(
         requested_mode
@@ -1127,12 +1142,47 @@ def evaluate_engagement_mode(
         chosen_mode = minimum_required
         source = "resumed_session" if persisted_floor else "inferred"
     confidence = max((signal.confidence for signal in signals), default=0.35)
+    response_mode_alias = _response_mode_to_engagement_alias(
+        response_mode,
+        strict=chosen_mode == "strict_engineering",
+    )
+    response_mode_reasons = list(
+        dict.fromkeys(
+            [
+                *response_control.mode_selection.reasons,
+                *relevant_signals,
+            ]
+        )
+    )
+    mode_dissonance = (
+        response_control.mode_selection.mode_dissonance.model_dump(mode="json")
+        if response_control.mode_selection.mode_dissonance is not None
+        else None
+    )
     return {
+        "response_mode": response_mode,
+        "response_mode_source": "explicit"
+        if response_control.mode_selection.user_override
+        else source,
+        "response_mode_confidence": response_control.mode_selection.confidence,
+        "response_mode_reasons": response_control.mode_selection.reasons,
+        "mode_dissonance": mode_dissonance,
+        "response_control_assessment": response_control_payload,
+        "response_control_ref": response_control_artifact_ref(response_control),
+        **selected_response_control_refs(response_control),
+        "assembly_order": list(response_control.assembly_order),
         "engagement_mode": chosen_mode,
-        "engagement_mode_source": source,
-        "engagement_mode_confidence": round(min(confidence, 1.0), 3),
-        "engagement_mode_reasons": relevant_signals,
-        "minimum_engagement_mode": minimum_required,
+        "engagement_mode_source": "explicit"
+        if response_control.mode_selection.user_override
+        else source,
+        "engagement_mode_confidence": round(
+            min(max(confidence, response_control.mode_selection.confidence), 1.0),
+            3,
+        ),
+        "engagement_mode_reasons": response_mode_reasons,
+        "minimum_engagement_mode": response_mode_alias
+        if response_control.mode_selection.user_override
+        else minimum_required,
         "pending_mode_change": pending_mode_change,
         "requires_confirmation": pending_mode_change is not None,
         "rule_matches": [signal.reason for signal in signals],
@@ -1200,10 +1250,18 @@ def intake_engineering_request(
     snapshot = deepcopy(persisted_snapshot or {})
     if isinstance(snapshot.get("knowledge_pool_assessment"), dict):
         ctx["__knowledge_pool_assessment"] = snapshot["knowledge_pool_assessment"]
+    prompt_text = (user_input or _latest_user_content(messages)).strip()
     prompt_assessment = _prompt_knowledge_assessment(
-        text=(user_input or _latest_user_content(messages)).strip(),
+        text=prompt_text,
         context=ctx,
     )
+    response_control = evaluate_response_control(
+        prompt=prompt_text,
+        context=ctx,
+        requested_mode=engagement_mode or snapshot.get("response_mode") or snapshot.get("engagement_mode"),
+    )
+    response_control_payload = response_control.model_dump(mode="json")
+    response_refs = selected_response_control_refs(response_control)
     bridged = _draft_problem_brief(
         base=snapshot.get("problem_brief"),
         user_input=user_input,
@@ -1240,6 +1298,14 @@ def intake_engineering_request(
         or _normalize_mode(engagement_mode)
         or "strict_engineering",
         "pending_mode_change": pending_mode_change or snapshot.get("pending_mode_change"),
+        "response_mode": response_control.mode_selection.selected_mode.value,
+        "response_control_assessment": response_control_payload,
+        "response_control_ref": response_control_artifact_ref(response_control),
+        "selected_knowledge_pool_refs": list(response_refs["selected_knowledge_pool_refs"]),
+        "selected_module_refs": list(response_refs["selected_module_refs"]),
+        "selected_technique_refs": list(response_refs["selected_technique_refs"]),
+        "selected_theory_refs": list(response_refs["selected_theory_refs"]),
+        "assembly_order": list(response_control.assembly_order),
         "knowledge_pool_assessment": prompt_assessment.model_dump(mode="json"),
         "knowledge_pool_assessment_ref": _assessment_artifact_ref(prompt_assessment),
         "knowledge_pool_coverage": prompt_assessment.coverage_class.value,
@@ -1269,6 +1335,14 @@ def intake_engineering_request(
 
     pb_model = validate_problem_brief_json(bridged)
     structured_assessment = _problem_brief_knowledge_assessment(pb_model)
+    structured_response_control_payload = _problem_brief_response_control(
+        pb_model,
+        requested_mode=engagement_mode or result.get("response_mode") or "engineering",
+    )
+    structured_response_control = validate_response_control_assessment_json(
+        structured_response_control_payload
+    )
+    structured_response_refs = selected_response_control_refs(structured_response_control)
     role_context_payloads = _knowledge_role_context_payloads(
         assessment=structured_assessment,
         project_constraints=_problem_brief_knowledge_project_constraints(
@@ -1279,6 +1353,7 @@ def intake_engineering_request(
     state_model = derive_engineering_state(
         pb_model,
         knowledge_pool_assessment=structured_assessment,
+        response_control_assessment=structured_response_control,
     )
     result.update(
         {
@@ -1295,6 +1370,18 @@ def intake_engineering_request(
             ],
             "knowledge_gaps": list(structured_assessment.knowledge_gaps),
             "knowledge_required": structured_assessment.required_for_mode,
+            "response_mode": structured_response_control.mode_selection.selected_mode.value,
+            "response_control_assessment": structured_response_control.model_dump(mode="json"),
+            "response_control_ref": response_control_artifact_ref(structured_response_control),
+            "selected_knowledge_pool_refs": list(
+                structured_response_refs["selected_knowledge_pool_refs"]
+            ),
+            "selected_module_refs": list(structured_response_refs["selected_module_refs"]),
+            "selected_technique_refs": list(
+                structured_response_refs["selected_technique_refs"]
+            ),
+            "selected_theory_refs": list(structured_response_refs["selected_theory_refs"]),
+            "assembly_order": list(structured_response_control.assembly_order),
             "engineering_state": state_model.model_dump(mode="json", exclude_none=True),
             "engineering_state_ref": _artifact_ref(
                 "engineering_state",
@@ -1339,6 +1426,7 @@ def intake_engineering_request(
             engineering_state=state_model,
             knowledge_pool_assessment=structured_assessment,
             knowledge_role_contexts=role_context_payloads,
+            response_control_assessment=structured_response_control,
         )
         result.update(
             {
@@ -1361,6 +1449,7 @@ def derive_engineering_state(
     problem_brief: ProblemBrief | dict[str, Any],
     *,
     knowledge_pool_assessment: KnowledgePoolAssessment | dict[str, Any] | None = None,
+    response_control_assessment: ResponseControlAssessment | dict[str, Any] | None = None,
 ) -> EngineeringState:
     """Deterministically normalize a valid problem_brief into engineering_state."""
     pb = (
@@ -1375,6 +1464,14 @@ def derive_engineering_state(
         if isinstance(knowledge_pool_assessment, dict)
         else _problem_brief_knowledge_assessment(pb)
     )
+    response_control = (
+        response_control_assessment
+        if isinstance(response_control_assessment, ResponseControlAssessment)
+        else validate_response_control_assessment_json(response_control_assessment)
+        if isinstance(response_control_assessment, dict)
+        else validate_response_control_assessment_json(_problem_brief_response_control(pb))
+    )
+    response_refs = selected_response_control_refs(response_control)
     problem_brief_ref = _artifact_ref("problem_brief", pb.problem_brief_id)
     evidence_refs = [
         item.ref
@@ -1496,6 +1593,11 @@ def derive_engineering_state(
         ],
         "knowledge_gaps": list(assessment.knowledge_gaps),
         "knowledge_required": assessment.required_for_mode,
+        "response_control_ref": response_control_artifact_ref(response_control),
+        "selected_knowledge_pool_refs": list(response_refs["selected_knowledge_pool_refs"]),
+        "selected_module_refs": list(response_refs["selected_module_refs"]),
+        "selected_technique_refs": list(response_refs["selected_technique_refs"]),
+        "selected_theory_refs": list(response_refs["selected_theory_refs"]),
         "evidence_bundle_refs": evidence_refs,
         "normalized_boundary": {
             "system_of_interest": pb.system_boundary.system_of_interest,
@@ -1561,6 +1663,7 @@ def build_task_queue(
     engineering_state: EngineeringState | dict[str, Any],
     knowledge_pool_assessment: KnowledgePoolAssessment | dict[str, Any] | None = None,
     knowledge_role_contexts: dict[str, dict[str, Any]] | None = None,
+    response_control_assessment: ResponseControlAssessment | dict[str, Any] | None = None,
 ) -> tuple[TaskQueue, list[TaskPacket]]:
     """Build governed task_queue + task_packets; fail closed if gates remain open."""
     pb = (
@@ -1593,6 +1696,13 @@ def build_task_queue(
             pb,
             required_for_mode=assessment.required_for_mode,
         ),
+    )
+    response_control = (
+        response_control_assessment
+        if isinstance(response_control_assessment, ResponseControlAssessment)
+        else validate_response_control_assessment_json(response_control_assessment)
+        if isinstance(response_control_assessment, dict)
+        else validate_response_control_assessment_json(_problem_brief_response_control(pb))
     )
 
     problem_brief_ref = _artifact_ref("problem_brief", pb.problem_brief_id)
@@ -1631,6 +1741,7 @@ def build_task_queue(
             input_artifact_refs=ordered_refs,
             knowledge_pool_assessment=assessment,
             knowledge_role_contexts=role_contexts,
+            response_control_assessment=response_control,
         )
         packets.append(packet)
         packet_refs.append(_artifact_ref("task_packet", packet.task_packet_id))
@@ -1961,13 +2072,11 @@ def _task_packet_for_deliverable(
     input_artifact_refs: list[str],
     knowledge_pool_assessment: KnowledgePoolAssessment,
     knowledge_role_contexts: dict[str, dict[str, Any]],
+    response_control_assessment: ResponseControlAssessment,
 ) -> TaskPacket:
     task_type, executor = _task_routing_for_deliverable(deliverable)
-    knowledge_context = _knowledge_context_for_packet(
-        assessment=knowledge_pool_assessment,
-        executor=executor,
-        role_contexts=knowledge_role_contexts,
-    )
+    _ = (knowledge_pool_assessment, knowledge_role_contexts)
+    response_refs = selected_response_control_refs(response_control_assessment)
     budget_policy = BudgetPolicy(
         allow_escalation=task_type in {TaskType.VALIDATION, TaskType.ESCALATION_REVIEW},
     )
@@ -1995,11 +2104,11 @@ def _task_packet_for_deliverable(
             for assumption in problem_brief.assumptions
             if assumption.status == "assumed"
         ],
-        "knowledge_context": (
-            knowledge_context.model_dump(mode="json", exclude_none=True)
-            if knowledge_context is not None
-            else None
-        ),
+        "response_control_ref": response_control_artifact_ref(response_control_assessment),
+        "selected_knowledge_pool_refs": list(response_refs["selected_knowledge_pool_refs"]),
+        "selected_module_refs": list(response_refs["selected_module_refs"]),
+        "selected_technique_refs": list(response_refs["selected_technique_refs"]),
+        "selected_theory_refs": list(response_refs["selected_theory_refs"]),
         "code_guidance": (
             problem_brief.code_guidance.model_dump(mode="json", exclude_none=True)
             if problem_brief.code_guidance and executor is Executor.CODING_MODEL

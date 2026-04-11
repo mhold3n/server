@@ -1,0 +1,38 @@
+{
+  "gui_session_spec_id": "eng_paraview_gui",
+  "schema_version": "1.0.0",
+  "base_environment_ref": "artifact://environment-spec/eng_paraview_docker",
+  "gui_environment_ref": "artifact://environment-spec/eng_paraview_gui",
+  "module_ids": ["paraview"],
+  "docker_image": "birtha/knowledge-eng-paraview-gui:1.0.0",
+  "docker_platform": "linux/amd64",
+  "display_protocol": "novnc_web",
+  "control_provider": "openclaw_browser",
+  "container_ports": {
+    "bind_host": "127.0.0.1",
+    "novnc": 6080,
+    "vnc": 5900
+  },
+  "display_env": {
+    "DISPLAY": ":99",
+    "NOVNC_PORT": "6080",
+    "VNC_PORT": "5900"
+  },
+  "launch_command": "knowledge/coding-tools/runtime/launchers/gui/eng_paraview_gui.sh",
+  "healthcheck_command": "python scripts/verify_knowledge_gui_runtime.py --gui-session-ref artifact://gui-session-spec/eng_paraview_gui",
+  "openclaw_entry_url": "http://127.0.0.1:{novnc_port}/vnc.html?autoconnect=true&resize=scale",
+  "artifact_output_dir": ".cache/knowledge-gui-artifacts/eng_paraview_gui",
+  "security_policy": {
+    "bind_host": "127.0.0.1",
+    "require_token": true,
+    "network_mode": "bridge",
+    "allow_host_desktop": false,
+    "close_on_session_end": true
+  },
+  "manifest_path": "knowledge/coding-tools/runtime/docker/gui/eng_paraview_gui.Dockerfile",
+  "launcher_ref": "knowledge/coding-tools/runtime/launchers/gui/eng_paraview_gui.sh",
+  "app_profile": "paraview",
+  "launch_target_command": "paraview",
+  "verification_ref": "artifact://verification-report/00000000-0000-0000-0000-000000000000",
+  "notes": ["Minimal GUI session fixture for schema validation."]
+}

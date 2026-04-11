@@ -156,7 +156,7 @@ version: '3.8'
 
 services:
   vllm:
-    image: vllm/vllm-openai:latest
+    image: ${VLLM_IMAGE:-vllm/vllm-openai@sha256:7a0f0fdd2771464b6976625c2b2d5dd46f566aa00fbc53eceab86ef50883da90}
     container_name: vllm-worker
     ports:
       - "8000:8000"

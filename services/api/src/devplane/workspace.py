@@ -199,6 +199,18 @@ class WorkspaceManager:
                 ),
                 "knowledge_gaps": engineering_bundle.get("knowledge_gaps", []),
                 "knowledge_required": bool(engineering_bundle.get("knowledge_required")),
+                "response_mode": engineering_bundle.get("response_mode"),
+                "response_control_ref": engineering_bundle.get("response_control_ref"),
+                "selected_knowledge_pool_refs": engineering_bundle.get(
+                    "selected_knowledge_pool_refs",
+                    [],
+                ),
+                "selected_module_refs": engineering_bundle.get("selected_module_refs", []),
+                "selected_technique_refs": engineering_bundle.get(
+                    "selected_technique_refs",
+                    [],
+                ),
+                "selected_theory_refs": engineering_bundle.get("selected_theory_refs", []),
                 "task_queue": engineering_bundle.get("task_queue"),
                 "active_task_queue_item": active_queue_item,
                 "task_packet_refs": engineering_bundle.get("task_packet_refs", []),
@@ -210,25 +222,24 @@ class WorkspaceManager:
                         "selected_executor"
                     )
                 ),
-                "active_knowledge_assessment_ref": (
-                    ((active_task_packet or {}).get("knowledge_context") or {}).get(
-                        "assessment_ref"
-                    )
+                "active_response_control_ref": (active_task_packet or {}).get(
+                    "response_control_ref"
                 ),
-                "active_role_context_ref": (
-                    ((active_task_packet or {}).get("knowledge_context") or {}).get(
-                        "role_context_ref"
-                    )
+                "active_selected_knowledge_pool_refs": (active_task_packet or {}).get(
+                    "selected_knowledge_pool_refs",
+                    [],
                 ),
-                "active_preferred_adapter_ref": (
-                    ((active_task_packet or {}).get("knowledge_context") or {}).get(
-                        "preferred_adapter_ref"
-                    )
+                "active_selected_module_refs": (active_task_packet or {}).get(
+                    "selected_module_refs",
+                    [],
                 ),
-                "active_preferred_environment_ref": (
-                    ((active_task_packet or {}).get("knowledge_context") or {}).get(
-                        "preferred_environment_ref"
-                    )
+                "active_selected_technique_refs": (active_task_packet or {}).get(
+                    "selected_technique_refs",
+                    [],
+                ),
+                "active_selected_theory_refs": (active_task_packet or {}).get(
+                    "selected_theory_refs",
+                    [],
                 ),
                 "required_gates": engineering_bundle.get("required_gates", []),
                 "ready_for_task_decomposition": engineering_bundle.get(
@@ -380,6 +391,33 @@ class WorkspaceManager:
                     input_refs=[
                         ref
                         for ref in [engineering_bundle.get("problem_brief_ref")]
+                        if ref
+                    ],
+                )
+            )
+
+        response_control_assessment = engineering_bundle.get("response_control_assessment")
+        if isinstance(response_control_assessment, dict):
+            response_control_path = packet_dir / "response-control-assessment.json"
+            response_control_path.write_text(
+                json.dumps(response_control_assessment, indent=2),
+                encoding="utf-8",
+            )
+            artifacts.append(
+                _typed_record(
+                    name="response-control-assessment",
+                    file_path=response_control_path,
+                    artifact_type="RESPONSE_CONTROL_ASSESSMENT",
+                    payload=response_control_assessment,
+                    input_refs=[
+                        ref
+                        for ref in [
+                            engineering_bundle.get("problem_brief_ref"),
+                            *(engineering_bundle.get("selected_knowledge_pool_refs") or []),
+                            *(engineering_bundle.get("selected_module_refs") or []),
+                            *(engineering_bundle.get("selected_technique_refs") or []),
+                            *(engineering_bundle.get("selected_theory_refs") or []),
+                        ]
                         if ref
                     ],
                 )

@@ -92,6 +92,9 @@ jobs:
           (cd mcp/servers/filesystem-mcp && mypy --strict src)
           (cd mcp/servers/secrets-mcp && mypy --strict src)
           (cd mcp/servers/vector-db-mcp && mypy --strict src)
+
+      - name: Check AI runtime dependency tracking
+        run: python scripts/check_ai_runtime_dependencies.py
       
       # Run tests (PYTHONPATH: each wheel uses a top-level `src/` package; multiple editables
       # would otherwise shadow each other on sys.path). Skip packages with no tests/ directory.
@@ -137,8 +140,8 @@ jobs:
           TEMPO_BASE_URL: "http://127.0.0.1:3200"
           MCP_REGISTRY_BASE_URL: "http://127.0.0.1:8001"
         run: |
-          run_pytest_cov() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=src --cov-report=xml); else echo "Skip pytest: no $d/tests"; fi; }
-          run_pytest_cov_any() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=. --cov-report=xml); else echo "Skip pytest: no $d/tests"; fi; }
+          run_pytest_cov() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=src --cov-report=xml --cov-fail-under=90); else echo "Skip pytest: no $d/tests"; fi; }
+          run_pytest_cov_any() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=. --cov-report=xml --cov-fail-under=90); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_plain() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_cov services/api
           run_pytest_cov services/router

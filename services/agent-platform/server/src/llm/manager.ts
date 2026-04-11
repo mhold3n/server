@@ -38,6 +38,16 @@ export class LLMManager {
     if (llmBackend === "vllm") {
       return this.vllmChat(messages, temperature, maxTokens)
     }
+    if (llmBackend === "huggingface" || llmBackend === "hf") {
+      return this.openAiCompatChat(
+        messages,
+        temperature,
+        maxTokens,
+        this.cfg.huggingfaceBaseUrl,
+        this.cfg.huggingfaceModel,
+        this.cfg.huggingfaceApiKey,
+      )
+    }
     return this.mockChat(messages)
   }
 
@@ -103,26 +113,44 @@ export class LLMManager {
     temperature: number,
     maxTokens: number,
   ): Promise<OpenAICompatResult> {
-    const base = this.cfg.llmRunnerUrl.replace(/\/$/, "")
+    return this.openAiCompatChat(
+      messages,
+      temperature,
+      maxTokens,
+      `${this.cfg.llmRunnerUrl.replace(/\/$/, "")}/v1`,
+      this.cfg.vllmModel,
+      this.cfg.llmRunnerApiKey,
+    )
+  }
+
+  private async openAiCompatChat(
+    messages: ChatMessage[],
+    temperature: number,
+    maxTokens: number,
+    baseUrl: string,
+    model: string,
+    apiKey?: string,
+  ): Promise<OpenAICompatResult> {
+    const base = baseUrl.replace(/\/$/, "")
     const payload = {
-      model: this.cfg.vllmModel,
+      model,
       messages,
       temperature,
       max_tokens: maxTokens,
       stream: false,
     }
     const headers: Record<string, string> = { "Content-Type": "application/json" }
-    if (this.cfg.llmRunnerApiKey) {
-      headers.Authorization = `Bearer ${this.cfg.llmRunnerApiKey}`
+    if (apiKey) {
+      headers.Authorization = `Bearer ${apiKey}`
     }
-    const res = await fetch(`${base}/v1/chat/completions`, {
+    const res = await fetch(`${base}/chat/completions`, {
       method: "POST",
       headers,
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(120_000),
     })
     if (!res.ok) {
-      throw new LLMBackendError(`vLLM HTTP ${res.status}`)
+      throw new LLMBackendError(`OpenAI-compatible HTTP ${res.status}`)
     }
     return (await res.json()) as OpenAICompatResult
   }
@@ -183,6 +211,25 @@ export class LLMManager {
         }
       }
     }
+    if (llmBackend === "huggingface" || llmBackend === "hf") {
+      const headers: Record<string, string> = {}
+      if (this.cfg.huggingfaceApiKey) {
+        headers.Authorization = `Bearer ${this.cfg.huggingfaceApiKey}`
+      }
+      try {
+        const res = await fetch(`${this.cfg.huggingfaceBaseUrl}/models`, {
+          headers,
+          signal: AbortSignal.timeout(10_000),
+        })
+        return { healthy: res.ok, backend: "huggingface" }
+      } catch (e) {
+        return {
+          healthy: false,
+          backend: "huggingface",
+          detail: e instanceof Error ? e.message : String(e),
+        }
+      }
+    }
     return { healthy: true, backend: llmBackend }
   }
 
@@ -213,6 +260,23 @@ export class LLMManager {
         return []
       }
     }
+    if (this.cfg.llmBackend === "huggingface" || this.cfg.llmBackend === "hf") {
+      const headers: Record<string, string> = {}
+      if (this.cfg.huggingfaceApiKey) {
+        headers.Authorization = `Bearer ${this.cfg.huggingfaceApiKey}`
+      }
+      try {
+        const res = await fetch(`${this.cfg.huggingfaceBaseUrl}/models`, {
+          headers,
+          signal: AbortSignal.timeout(10_000),
+        })
+        if (!res.ok) return []
+        const data = (await res.json()) as { data?: Array<{ id: string }> }
+        return (data.data ?? []).map((m) => m.id)
+      } catch {
+        return []
+      }
+    }
     return []
   }
 
@@ -222,6 +286,8 @@ export class LLMManager {
       model:
         this.cfg.llmBackend === "vllm"
           ? this.cfg.vllmModel
+          : this.cfg.llmBackend === "huggingface" || this.cfg.llmBackend === "hf"
+            ? this.cfg.huggingfaceModel
           : this.cfg.ollamaModel,
     }
   }

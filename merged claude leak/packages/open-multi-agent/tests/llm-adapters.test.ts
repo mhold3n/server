@@ -39,6 +39,11 @@ describe('createAdapter', () => {
     expect(adapter.name).toBe('gemini')
   })
 
+  it('creates an ollama adapter', async () => {
+    const adapter = await createAdapter('ollama', 'ollama-local')
+    expect(adapter.name).toBe('ollama')
+  })
+
   it('throws on unknown provider', async () => {
     await expect(
       createAdapter('unknown' as any, 'test-key'),

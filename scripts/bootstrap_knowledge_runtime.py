@@ -26,6 +26,16 @@ def _run(cmd: list[str]) -> None:
     subprocess.run(cmd, cwd=REPO_ROOT, check=True)
 
 
+def _read_requirements(manifest_path: Path) -> list[str]:
+    requirements: list[str] = []
+    for raw_line in manifest_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        requirements.append(line)
+    return requirements
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--environment-ref", help="artifact://environment-spec/... ref")
@@ -56,8 +66,34 @@ def main() -> int:
     if environment.delivery_kind == "uv_venv":
         env_dir = _resolve_path(environment.runtime_locator)
         env_dir.parent.mkdir(parents=True, exist_ok=True)
-        _run(["uv", "venv", "--clear", "--python", args.python_bin, str(env_dir)])
-        _run(["uv", "pip", "install", "--python", str(env_dir / "bin" / "python"), "-r", str(manifest_path)])
+        if env_dir.exists():
+            subprocess.run(["rm", "-rf", str(env_dir)], cwd=REPO_ROOT, check=True)
+        _run(["uv", "venv", "--python", args.python_bin, str(env_dir)])
+        python_bin = str(env_dir / "bin" / "python")
+        for requirement in _read_requirements(manifest_path):
+            install_cmd = ["uv", "pip", "install", "--python", python_bin]
+            if requirement.lower().startswith("pyphs"):
+                _run(
+                    [
+                        "uv",
+                        "pip",
+                        "install",
+                        "--python",
+                        python_bin,
+                        "numpy",
+                        "scipy",
+                        "sympy",
+                        "networkx",
+                        "progressbar2",
+                        "matplotlib",
+                        "h5py",
+                        "setuptools",
+                        "wheel",
+                    ]
+                )
+                install_cmd.append("--no-build-isolation")
+            install_cmd.append(requirement)
+            _run(install_cmd)
         print(f"Bootstrapped uv runtime at {env_dir}")
         return 0
 
@@ -86,7 +122,11 @@ def main() -> int:
     )
     if docker_bin.returncode != 0:
         raise RuntimeError("docker CLI is not available in this environment")
-    _run(["docker", "build", "-f", str(manifest_path), "-t", environment.runtime_locator, str(REPO_ROOT)])
+    build_cmd = ["docker", "build"]
+    if environment.docker_platform:
+        build_cmd.extend(["--platform", environment.docker_platform])
+    build_cmd.extend(["-f", str(manifest_path), "-t", environment.runtime_locator, str(REPO_ROOT)])
+    _run(build_cmd)
     print(f"Built docker runtime {environment.runtime_locator}")
     return 0
 

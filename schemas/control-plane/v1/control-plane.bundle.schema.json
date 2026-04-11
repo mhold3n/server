@@ -78,6 +78,16 @@
     },
     {
       "type": "object",
+      "required": ["contract", "response_control_assessment"],
+      "properties": {
+        "contract": { "const": "response_control_assessment" },
+        "response_control_assessment": {
+          "$ref": "https://birtha.local/schemas/control-plane/v1/response-control-assessment.schema.json"
+        }
+      }
+    },
+    {
+      "type": "object",
       "required": ["contract", "artifact_record"],
       "properties": {
         "contract": { "const": "artifact_record" },

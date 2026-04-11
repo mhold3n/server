@@ -33,6 +33,31 @@
     "delivery_kind": {
       "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/deliveryKindEnum"
     },
+    "docker_platform": {
+      "type": ["string", "null"]
+    },
+    "gui_session_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      },
+      "default": []
+    },
+    "default_gui_session_ref": {
+      "type": ["string", "null"],
+      "pattern": "^artifact://.+"
+    },
+    "gui_capability_state": {
+      "type": "string",
+      "enum": [
+        "NO_GUI",
+        "PLANNED_CONTAINER_GUI",
+        "VERIFIED_CONTAINER_GUI",
+        "BLOCKED_CONTAINER_GUI",
+        "API_ONLY_HOST_PATH"
+      ],
+      "default": "NO_GUI"
+    },
     "module_ids": {
       "type": "array",
       "minItems": 1,

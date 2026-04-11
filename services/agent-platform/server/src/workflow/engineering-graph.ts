@@ -11,6 +11,7 @@ import { Annotation, END, START, StateGraph } from "@langchain/langgraph"
 import type { PlatformConfig } from "../config.js"
 import { LLMBackendError } from "../llm/manager.js"
 import { OrchestrationEngine } from "../orchestration/engine.js"
+import { resolveWorkflowModelRouting } from "../orchestration/runtime-router.js"
 import type { ChatMessage } from "../tools/wrkhrs.js"
 
 export const EngineeringWorkflowAnnotation = Annotation.Root({
@@ -42,6 +43,24 @@ export const EngineeringWorkflowAnnotation = Annotation.Root({
   }),
   minimum_engagement_mode: Annotation<string | undefined>(),
   pending_mode_change: Annotation<Record<string, unknown> | undefined>(),
+  response_mode: Annotation<string | undefined>(),
+  response_control_ref: Annotation<string | undefined>(),
+  selected_knowledge_pool_refs: Annotation<string[]>({
+    reducer: (_left, right) => right,
+    default: () => [],
+  }),
+  selected_module_refs: Annotation<string[]>({
+    reducer: (_left, right) => right,
+    default: () => [],
+  }),
+  selected_technique_refs: Annotation<string[]>({
+    reducer: (_left, right) => right,
+    default: () => [],
+  }),
+  selected_theory_refs: Annotation<string[]>({
+    reducer: (_left, right) => right,
+    default: () => [],
+  }),
   lifecycle_reason: Annotation<string | undefined>(),
   lifecycle_detail: Annotation<Record<string, unknown> | undefined>(),
   task_plan: Annotation<Record<string, unknown> | undefined>(),
@@ -258,11 +277,17 @@ function packetExecutor(packet: Record<string, unknown> | undefined): string | u
   return selected || undefined
 }
 
-function packetKnowledgeContext(
-  packet: Record<string, unknown> | undefined,
-): Record<string, unknown> | undefined {
-  const knowledge = packet?.knowledge_context as Record<string, unknown> | undefined
-  return knowledge && typeof knowledge === "object" ? knowledge : undefined
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.map((item) => String(item)).filter(Boolean) : []
+}
+
+function packetResponseControlRef(packet: Record<string, unknown> | undefined): string | undefined {
+  const ref = String(packet?.response_control_ref ?? "").trim()
+  return ref || undefined
+}
+
+function packetSelectedRefs(packet: Record<string, unknown> | undefined, key: string): string[] {
+  return asStringArray(packet?.[key])
 }
 
 function packetPrompt(
@@ -274,16 +299,26 @@ function packetPrompt(
     ? (packet.acceptance_criteria as string[])
     : []
   const guidance = (packet.code_guidance as Record<string, unknown> | undefined) ?? {}
-  const knowledge = (packet.knowledge_context as Record<string, unknown> | undefined) ?? {}
   const implementationHints = Array.isArray(guidance.implementation_hints)
     ? (guidance.implementation_hints as string[])
     : []
-  const candidatePackRefs = Array.isArray(knowledge.candidate_pack_refs)
-    ? (knowledge.candidate_pack_refs as string[])
-    : []
-  const runtimeVerificationRefs = Array.isArray(knowledge.runtime_verification_refs)
-    ? (knowledge.runtime_verification_refs as string[])
-    : []
+  const responseControlRef = packetResponseControlRef(packet) ?? state.response_control_ref
+  const selectedPoolRefs =
+    packetSelectedRefs(packet, "selected_knowledge_pool_refs").length > 0
+      ? packetSelectedRefs(packet, "selected_knowledge_pool_refs")
+      : state.selected_knowledge_pool_refs
+  const selectedModuleRefs =
+    packetSelectedRefs(packet, "selected_module_refs").length > 0
+      ? packetSelectedRefs(packet, "selected_module_refs")
+      : state.selected_module_refs
+  const selectedTechniqueRefs =
+    packetSelectedRefs(packet, "selected_technique_refs").length > 0
+      ? packetSelectedRefs(packet, "selected_technique_refs")
+      : state.selected_technique_refs
+  const selectedTheoryRefs =
+    packetSelectedRefs(packet, "selected_theory_refs").length > 0
+      ? packetSelectedRefs(packet, "selected_theory_refs")
+      : state.selected_theory_refs
   const toolResults = state.required_tool_results && state.required_tool_results.length > 0
     ? `Required tool results:\n${JSON.stringify(state.required_tool_results, null, 2)}`
     : ""
@@ -295,29 +330,21 @@ function packetPrompt(
     implementationHints.length > 0
       ? `Implementation hints:\n- ${implementationHints.join("\n- ")}`
       : "",
-    knowledge.assessment_ref
-      ? `Knowledge assessment ref: ${String(knowledge.assessment_ref)}`
+    responseControlRef ? `Response control ref: ${responseControlRef}` : "",
+    selectedPoolRefs.length > 0
+      ? `Selected knowledge pools:\n- ${selectedPoolRefs.join("\n- ")}`
       : "",
-    knowledge.role_context_ref
-      ? `Role context ref: ${String(knowledge.role_context_ref)}`
+    selectedModuleRefs.length > 0
+      ? `Selected modules:\n- ${selectedModuleRefs.join("\n- ")}`
       : "",
-    knowledge.role_context_summary
-      ? `Role context summary:\n${String(knowledge.role_context_summary)}`
+    selectedTechniqueRefs.length > 0
+      ? `Selected techniques:\n- ${selectedTechniqueRefs.join("\n- ")}`
       : "",
-    knowledge.preferred_adapter_ref
-      ? `Preferred adapter ref: ${String(knowledge.preferred_adapter_ref)}`
-      : "",
-    knowledge.preferred_environment_ref
-      ? `Preferred environment ref: ${String(knowledge.preferred_environment_ref)}`
-      : "",
-    candidatePackRefs.length > 0
-      ? `Candidate knowledge packs:\n- ${candidatePackRefs.join("\n- ")}`
-      : "",
-    runtimeVerificationRefs.length > 0
-      ? `Runtime verification refs:\n- ${runtimeVerificationRefs.join("\n- ")}`
+    selectedTheoryRefs.length > 0
+      ? `Selected theory basis:\n- ${selectedTheoryRefs.join("\n- ")}`
       : "",
     toolResults,
-    "Use only the task packet and artifact refs as governing context.",
+    "Use only the task packet, response-control refs, and artifact refs as governing context.",
   ]
     .filter(Boolean)
     .join("\n\n")
@@ -441,6 +468,28 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
       intake.pending_mode_change && typeof intake.pending_mode_change === "object"
         ? (intake.pending_mode_change as Record<string, unknown>)
         : state.pending_mode_change
+    const responseMode =
+      typeof intake.response_mode === "string" ? intake.response_mode : state.response_mode
+    const responseControlAssessment =
+      intake.response_control_assessment && typeof intake.response_control_assessment === "object"
+        ? (intake.response_control_assessment as Record<string, unknown>)
+        : undefined
+    const responseControlRef =
+      typeof intake.response_control_ref === "string"
+        ? intake.response_control_ref
+        : state.response_control_ref
+    const selectedKnowledgePoolRefs = Array.isArray(intake.selected_knowledge_pool_refs)
+      ? (intake.selected_knowledge_pool_refs as string[])
+      : state.selected_knowledge_pool_refs
+    const selectedModuleRefs = Array.isArray(intake.selected_module_refs)
+      ? (intake.selected_module_refs as string[])
+      : state.selected_module_refs
+    const selectedTechniqueRefs = Array.isArray(intake.selected_technique_refs)
+      ? (intake.selected_technique_refs as string[])
+      : state.selected_technique_refs
+    const selectedTheoryRefs = Array.isArray(intake.selected_theory_refs)
+      ? (intake.selected_theory_refs as string[])
+      : state.selected_theory_refs
     const knowledgePoolAssessment =
       intake.knowledge_pool_assessment && typeof intake.knowledge_pool_assessment === "object"
         ? (intake.knowledge_pool_assessment as Record<string, unknown>)
@@ -482,6 +531,17 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
           "KNOWLEDGE_POOL_ASSESSMENT",
           knowledgePoolAssessment,
           [],
+          "agent_platform.engineering_graph.intake",
+          "local_general_model",
+        ),
+      )
+    }
+    if (responseControlAssessment) {
+      artifacts.push(
+        typedArtifact(
+          "RESPONSE_CONTROL_ASSESSMENT",
+          responseControlAssessment,
+          [...selectedKnowledgePoolRefs, ...selectedModuleRefs, ...selectedTechniqueRefs, ...selectedTheoryRefs],
           "agent_platform.engineering_graph.intake",
           "local_general_model",
         ),
@@ -583,6 +643,12 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         engagement_mode_reasons: engagementModeReasons,
         minimum_engagement_mode: minimumEngagementMode,
         pending_mode_change: pendingModeChange,
+        response_mode: responseMode,
+        response_control_ref: responseControlRef,
+        selected_knowledge_pool_refs: selectedKnowledgePoolRefs,
+        selected_module_refs: selectedModuleRefs,
+        selected_technique_refs: selectedTechniqueRefs,
+        selected_theory_refs: selectedTheoryRefs,
         knowledge_pool_assessment: knowledgePoolAssessment,
         knowledge_pool_assessment_ref: knowledgePoolAssessmentRef,
         knowledge_pool_coverage: knowledgePoolCoverage,
@@ -621,6 +687,12 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         engagement_mode_reasons: engagementModeReasons,
         minimum_engagement_mode: minimumEngagementMode,
         pending_mode_change: pendingModeChange,
+        response_mode: responseMode,
+        response_control_ref: responseControlRef,
+        selected_knowledge_pool_refs: selectedKnowledgePoolRefs,
+        selected_module_refs: selectedModuleRefs,
+        selected_technique_refs: selectedTechniqueRefs,
+        selected_theory_refs: selectedTheoryRefs,
         knowledge_pool_assessment: knowledgePoolAssessment,
         knowledge_pool_assessment_ref: knowledgePoolAssessmentRef,
         knowledge_pool_coverage: knowledgePoolCoverage,
@@ -662,6 +734,12 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         engagement_mode_reasons: engagementModeReasons,
         minimum_engagement_mode: minimumEngagementMode,
         pending_mode_change: pendingModeChange,
+        response_mode: responseMode,
+        response_control_ref: responseControlRef,
+        selected_knowledge_pool_refs: selectedKnowledgePoolRefs,
+        selected_module_refs: selectedModuleRefs,
+        selected_technique_refs: selectedTechniqueRefs,
+        selected_theory_refs: selectedTheoryRefs,
         knowledge_pool_assessment: knowledgePoolAssessment,
         knowledge_pool_assessment_ref: knowledgePoolAssessmentRef,
         knowledge_pool_coverage: knowledgePoolCoverage,
@@ -696,6 +774,12 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         engagement_mode_reasons: engagementModeReasons,
         minimum_engagement_mode: minimumEngagementMode,
         pending_mode_change: pendingModeChange,
+        response_mode: responseMode,
+        response_control_ref: responseControlRef,
+        selected_knowledge_pool_refs: selectedKnowledgePoolRefs,
+        selected_module_refs: selectedModuleRefs,
+        selected_technique_refs: selectedTechniqueRefs,
+        selected_theory_refs: selectedTheoryRefs,
         knowledge_pool_assessment: knowledgePoolAssessment,
         knowledge_pool_assessment_ref: knowledgePoolAssessmentRef,
         knowledge_pool_coverage: knowledgePoolCoverage,
@@ -730,6 +814,12 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
       engagement_mode_reasons: engagementModeReasons,
       minimum_engagement_mode: minimumEngagementMode,
       pending_mode_change: pendingModeChange,
+      response_mode: responseMode,
+      response_control_ref: responseControlRef,
+      selected_knowledge_pool_refs: selectedKnowledgePoolRefs,
+      selected_module_refs: selectedModuleRefs,
+      selected_technique_refs: selectedTechniqueRefs,
+      selected_theory_refs: selectedTheoryRefs,
       knowledge_pool_assessment: knowledgePoolAssessment,
       knowledge_pool_assessment_ref: knowledgePoolAssessmentRef,
       knowledge_pool_coverage: knowledgePoolCoverage,
@@ -780,63 +870,68 @@ function buildExecuteTaskPacket(cfg: PlatformConfig, engine: OrchestrationEngine
         current_step: "complete",
       }
     }
-    const knowledge = packetKnowledgeContext(packet)
-    const knowledgeRequired = knowledge?.required === true || state.knowledge_required === true
-    const runtimeVerificationRefs = Array.isArray(knowledge?.runtime_verification_refs)
-      ? (knowledge?.runtime_verification_refs as string[])
-      : []
-    if (knowledgeRequired && !knowledge) {
+    const responseControlRef = packetResponseControlRef(packet) ?? state.response_control_ref
+    const selectedPoolRefs =
+      packetSelectedRefs(packet, "selected_knowledge_pool_refs").length > 0
+        ? packetSelectedRefs(packet, "selected_knowledge_pool_refs")
+        : state.selected_knowledge_pool_refs
+    const selectedTheoryRefs =
+      packetSelectedRefs(packet, "selected_theory_refs").length > 0
+        ? packetSelectedRefs(packet, "selected_theory_refs")
+        : state.selected_theory_refs
+    const selectedModuleRefs =
+      packetSelectedRefs(packet, "selected_module_refs").length > 0
+        ? packetSelectedRefs(packet, "selected_module_refs")
+        : state.selected_module_refs
+    const knowledgeRequired = state.knowledge_required === true || selectedPoolRefs.length > 0
+    if (knowledgeRequired && !responseControlRef) {
       return {
         final_response:
-          "Strict engineering execution blocked: active packet is missing required knowledge_context.",
+          "Strict engineering execution blocked: active packet is missing response_control_ref.",
         verification_outcome: "BLOCKED",
         lifecycle_reason: "governance_gate",
         lifecycle_detail: {
-          reason: "knowledge_context_missing",
+          reason: "response_control_ref_missing",
           active_task_packet_ref: state.active_task_packet_ref,
         },
         current_step: "complete",
       }
     }
-    if (knowledgeRequired && !knowledge?.assessment_ref) {
+    if (knowledgeRequired && selectedPoolRefs.length === 0) {
       return {
         final_response:
-          "Strict engineering execution blocked: active packet is missing knowledge_context.assessment_ref.",
+          "Strict engineering execution blocked: active packet is missing selected_knowledge_pool_refs.",
         verification_outcome: "BLOCKED",
         lifecycle_reason: "governance_gate",
         lifecycle_detail: {
-          reason: "knowledge_assessment_missing",
+          reason: "selected_knowledge_pool_refs_missing",
           active_task_packet_ref: state.active_task_packet_ref,
         },
         current_step: "complete",
       }
     }
-    if (knowledgeRequired && !knowledge?.role_context_ref) {
+    if (knowledgeRequired && selectedTheoryRefs.length === 0) {
       return {
         final_response:
-          "Strict engineering execution blocked: active packet is missing knowledge_context.role_context_ref.",
+          "Strict engineering execution blocked: active packet is missing selected_theory_refs.",
         verification_outcome: "BLOCKED",
         lifecycle_reason: "governance_gate",
         lifecycle_detail: {
-          reason: "knowledge_role_context_missing",
+          reason: "selected_theory_refs_missing",
           active_task_packet_ref: state.active_task_packet_ref,
         },
         current_step: "complete",
       }
     }
-    if (
-      knowledgeRequired &&
-      knowledge?.preferred_environment_ref &&
-      runtimeVerificationRefs.length === 0
-    ) {
+    if (selectedExecutor === "coding_model" && selectedModuleRefs.length === 0) {
       return {
         final_response:
-          "Strict engineering execution blocked: preferred environment is pinned without runtime verification refs.",
+          "Strict engineering execution blocked: coding packet is missing selected_module_refs.",
         verification_outcome: "BLOCKED",
-        lifecycle_reason: "validator_unavailable",
+        lifecycle_reason: "governance_gate",
         lifecycle_detail: {
-          reason: "knowledge_runtime_verification_missing",
-          preferred_environment_ref: knowledge.preferred_environment_ref,
+          reason: "selected_module_refs_missing",
+          active_task_packet_ref: state.active_task_packet_ref,
         },
         current_step: "complete",
       }
@@ -873,6 +968,7 @@ function buildExecuteTaskPacket(cfg: PlatformConfig, engine: OrchestrationEngine
         selectedExecutor === "local_general_model"
           ? "You are the governed local-general executor. Synthesize only from the packet and referenced artifacts; do not invent missing evidence or mutate repositories."
           : "You are the strategic reviewer for a typed engineering escalation packet. Return compact decision guidance only."
+      const routing = resolveWorkflowModelRouting(cfg, {}, state.workflow_config ?? {})
 
       const execution = await engine.runGovernedEngineering({
         selectedExecutor,
@@ -884,7 +980,11 @@ function buildExecuteTaskPacket(cfg: PlatformConfig, engine: OrchestrationEngine
                   type: "ESCALATION_PACKET",
                   escalation_packet: state.escalation_packet,
                   knowledge_pool_assessment_ref: state.knowledge_pool_assessment_ref,
-                  knowledge_role_context_refs: state.knowledge_role_context_refs,
+                  response_control_ref: state.response_control_ref,
+                  selected_knowledge_pool_refs: state.selected_knowledge_pool_refs,
+                  selected_module_refs: state.selected_module_refs,
+                  selected_technique_refs: state.selected_technique_refs,
+                  selected_theory_refs: state.selected_theory_refs,
                 },
                 null,
                 2,
@@ -894,6 +994,10 @@ function buildExecuteTaskPacket(cfg: PlatformConfig, engine: OrchestrationEngine
         workspaceRoot,
         packet,
         toolNames: [],
+        model: routing.model,
+        provider: routing.provider,
+        baseURL: routing.baseURL,
+        apiKey: routing.apiKey,
         claw:
           selectedExecutor === "coding_model"
             ? {
@@ -1016,7 +1120,24 @@ function buildVerificationEngineering(cfg: PlatformConfig) {
         : randomUUID()
     const generatedArtifacts = state.generated_artifacts ?? []
     const generatedArtifactRefs = (state.generated_artifact_refs ?? []).filter(Boolean)
-    const activeKnowledge = packetKnowledgeContext(state.task_packet)
+    const activeResponseControlRef =
+      packetResponseControlRef(state.task_packet) ?? state.response_control_ref
+    const activePoolRefs =
+      packetSelectedRefs(state.task_packet, "selected_knowledge_pool_refs").length > 0
+        ? packetSelectedRefs(state.task_packet, "selected_knowledge_pool_refs")
+        : state.selected_knowledge_pool_refs
+    const activeModuleRefs =
+      packetSelectedRefs(state.task_packet, "selected_module_refs").length > 0
+        ? packetSelectedRefs(state.task_packet, "selected_module_refs")
+        : state.selected_module_refs
+    const activeTechniqueRefs =
+      packetSelectedRefs(state.task_packet, "selected_technique_refs").length > 0
+        ? packetSelectedRefs(state.task_packet, "selected_technique_refs")
+        : state.selected_technique_refs
+    const activeTheoryRefs =
+      packetSelectedRefs(state.task_packet, "selected_theory_refs").length > 0
+        ? packetSelectedRefs(state.task_packet, "selected_theory_refs")
+        : state.selected_theory_refs
     const validatedRefs = Array.from(
       new Set(
         [
@@ -1024,69 +1145,66 @@ function buildVerificationEngineering(cfg: PlatformConfig) {
           ...generatedArtifactRefs,
           state.problem_brief_ref,
           state.knowledge_pool_assessment_ref,
-          ...(state.knowledge_role_context_refs ?? []),
+          activeResponseControlRef,
+          ...activePoolRefs,
+          ...activeModuleRefs,
+          ...activeTechniqueRefs,
+          ...activeTheoryRefs,
           state.engineering_state_ref,
         ].filter(Boolean) as string[],
       ),
     )
     const gateResults: Array<Record<string, unknown>> = []
     const blockingFindings: Array<Record<string, unknown>> = []
-    const knowledgeRequired =
-      activeKnowledge?.required === true || state.knowledge_required === true
+    const knowledgeRequired = state.knowledge_required === true || activePoolRefs.length > 0
 
     if (knowledgeRequired) {
-      const hasAssessmentRef = Boolean(
-        activeKnowledge?.assessment_ref || state.knowledge_pool_assessment_ref,
-      )
+      const hasResponseControlRef = Boolean(activeResponseControlRef)
       gateResults.push({
-        gate_id: "knowledge_assessment_present",
+        gate_id: "response_control_ref_present",
         gate_kind: "policy",
-        status: hasAssessmentRef ? "PASS" : "FAIL",
-        detail: hasAssessmentRef
-          ? "Knowledge pool assessment ref is present."
-          : "Knowledge pool assessment ref is missing for a knowledge-required packet.",
+        status: hasResponseControlRef ? "PASS" : "FAIL",
+        detail: hasResponseControlRef
+          ? "Response-control ref is present."
+          : "Response-control ref is missing for a knowledge-required packet.",
       })
-      if (!hasAssessmentRef) {
+      if (!hasResponseControlRef) {
         blockingFindings.push({
-          code: "KNOWLEDGE_ASSESSMENT_MISSING",
+          code: "RESPONSE_CONTROL_REF_MISSING",
           severity: "high",
           artifact_ref: state.active_task_packet_ref ?? null,
         })
       }
 
-      const hasRoleContextRef = Boolean(activeKnowledge?.role_context_ref)
       gateResults.push({
-        gate_id: "knowledge_role_context_present",
+        gate_id: "selected_knowledge_pools_present",
         gate_kind: "policy",
-        status: hasRoleContextRef ? "PASS" : "FAIL",
-        detail: hasRoleContextRef
-          ? "Role context ref is present for the active packet."
-          : "Role context ref is missing for a knowledge-required packet.",
+        status: activePoolRefs.length > 0 ? "PASS" : "FAIL",
+        detail:
+          activePoolRefs.length > 0
+            ? "Selected knowledge-pool refs are present."
+            : "Selected knowledge-pool refs are missing for a knowledge-required packet.",
       })
-      if (!hasRoleContextRef) {
+      if (activePoolRefs.length === 0) {
         blockingFindings.push({
-          code: "KNOWLEDGE_ROLE_CONTEXT_MISSING",
+          code: "SELECTED_KNOWLEDGE_POOL_REFS_MISSING",
           severity: "high",
           artifact_ref: state.active_task_packet_ref ?? null,
         })
       }
 
-      const runtimeVerificationRefs = Array.isArray(activeKnowledge?.runtime_verification_refs)
-        ? (activeKnowledge?.runtime_verification_refs as string[])
-        : []
-      const runtimeOk =
-        !activeKnowledge?.preferred_environment_ref || runtimeVerificationRefs.length > 0
       gateResults.push({
-        gate_id: "knowledge_runtime_verification_present",
-        gate_kind: "tests",
-        status: runtimeOk ? "PASS" : "FAIL",
-        detail: runtimeOk
-          ? "Runtime verification refs satisfy the preferred environment policy."
-          : "Preferred environment is pinned without runtime verification refs.",
+        gate_id: "selected_theory_refs_present",
+        gate_kind: "policy",
+        status: activeTheoryRefs.length > 0 ? "PASS" : "FAIL",
+        detail:
+          activeTheoryRefs.length > 0
+            ? "Selected theory refs are present."
+            : "Selected theory refs are missing for a knowledge-required packet.",
       })
-      if (!runtimeOk) {
+      if (activeTheoryRefs.length === 0) {
         blockingFindings.push({
-          code: "KNOWLEDGE_RUNTIME_VERIFICATION_MISSING",
+          code: "SELECTED_THEORY_REFS_MISSING",
           severity: "high",
           artifact_ref: state.active_task_packet_ref ?? null,
         })
@@ -1323,7 +1441,11 @@ function buildTypedEscalation(
       verification_report: state.verification_report,
       problem_brief_ref: state.problem_brief_ref,
       knowledge_pool_assessment_ref: state.knowledge_pool_assessment_ref,
-      knowledge_role_context_refs: state.knowledge_role_context_refs,
+      response_control_ref: state.response_control_ref,
+      selected_knowledge_pool_refs: state.selected_knowledge_pool_refs,
+      selected_module_refs: state.selected_module_refs,
+      selected_technique_refs: state.selected_technique_refs,
+      selected_theory_refs: state.selected_theory_refs,
       verification_report_ref:
         state.verification_report &&
         typeof state.verification_report.verification_report_id === "string"

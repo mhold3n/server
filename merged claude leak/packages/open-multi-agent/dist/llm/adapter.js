@@ -23,6 +23,7 @@
  * - `openai`    → `OPENAI_API_KEY`
  * - `gemini`    → `GEMINI_API_KEY` / `GOOGLE_API_KEY`
  * - `grok`      → `XAI_API_KEY`
+ * - `ollama`    → `OLLAMA_API_KEY` (optional; local servers usually use a placeholder)
  * - `copilot`   → `GITHUB_COPILOT_TOKEN` / `GITHUB_TOKEN`, or interactive
  *                  OAuth2 device flow if neither is set
  *
@@ -58,6 +59,10 @@ export async function createAdapter(provider, apiKey, baseURL) {
         case 'grok': {
             const { GrokAdapter } = await import('./grok.js');
             return new GrokAdapter(apiKey, baseURL);
+        }
+        case 'ollama': {
+            const { OllamaAdapter } = await import('./ollama.js');
+            return new OllamaAdapter(apiKey, baseURL);
         }
         default: {
             // The `never` cast here makes TypeScript enforce exhaustiveness.

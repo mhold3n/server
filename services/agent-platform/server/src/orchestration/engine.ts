@@ -50,7 +50,8 @@ export interface DirectAgentInput {
   maxTokens?: number
   temperature?: number
   model?: string
-  provider?: SupportedProvider
+  provider?: string
+  providerPreference?: string
   baseURL?: string
   apiKey?: string
 }
@@ -58,7 +59,8 @@ export interface DirectAgentInput {
 export interface GoalTeamAgentDefinition {
   name: string
   model?: string
-  provider?: SupportedProvider
+  provider?: string
+  providerPreference?: string
   baseURL?: string
   apiKey?: string
   systemPrompt?: string
@@ -88,7 +90,8 @@ export interface GovernedTaskDefinition {
   maxTokens?: number
   temperature?: number
   model?: string
-  provider?: SupportedProvider
+  provider?: string
+  providerPreference?: string
   baseURL?: string
   apiKey?: string
 }
@@ -113,9 +116,24 @@ export interface GovernedEngineeringInput {
   packet?: Record<string, unknown>
   claw?: Partial<ClawCodeExecutionInput>
   model?: string
-  provider?: SupportedProvider
+  provider?: string
+  providerPreference?: string
   baseURL?: string
   apiKey?: string
+}
+
+function supportedProviderFromHint(value: string | undefined): SupportedProvider | undefined {
+  switch (value?.trim().toLowerCase()) {
+    case "anthropic":
+    case "copilot":
+    case "grok":
+    case "openai":
+    case "gemini":
+    case "ollama":
+      return value.trim().toLowerCase() as SupportedProvider
+    default:
+      return undefined
+  }
 }
 
 function transcriptFromMessages(messages: ChatMessage[]): string {
@@ -191,14 +209,16 @@ export class OrchestrationEngine {
 
   private createOrchestration(input: {
     model?: string
-    provider?: SupportedProvider
+    provider?: string
+    providerPreference?: string
     baseURL?: string
     apiKey?: string
     extraTools?: readonly ToolDefinition[]
   }): OpenMultiAgent {
     const route = resolveMergedOmaRoute(this.cfg, {
       model: input.model,
-      provider: input.provider,
+      provider: supportedProviderFromHint(input.provider),
+      providerPreference: input.providerPreference ?? input.provider,
       baseURL: input.baseURL,
       apiKey: input.apiKey,
     })
@@ -253,7 +273,8 @@ export class OrchestrationEngine {
   async runDirectAgent(input: DirectAgentInput): Promise<EngineRunResult> {
     const route = resolveMergedOmaRoute(this.cfg, {
       model: input.model,
-      provider: input.provider,
+      provider: supportedProviderFromHint(input.provider),
+      providerPreference: input.providerPreference ?? input.provider,
       baseURL: input.baseURL,
       apiKey: input.apiKey,
     })
@@ -265,6 +286,7 @@ export class OrchestrationEngine {
     const orchestration = this.createOrchestration({
       model: input.model,
       provider: input.provider,
+      providerPreference: input.providerPreference,
       baseURL: input.baseURL,
       apiKey: input.apiKey,
       extraTools: input.extraTools,
@@ -322,6 +344,7 @@ export class OrchestrationEngine {
           temperature: agent.temperature,
           model: agent.model,
           provider: agent.provider,
+          providerPreference: agent.providerPreference,
           baseURL: agent.baseURL,
           apiKey: agent.apiKey,
         })
@@ -358,7 +381,8 @@ export class OrchestrationEngine {
       agents: input.agents.map((agent) => {
         const route = resolveMergedOmaRoute(this.cfg, {
           model: agent.model,
-          provider: agent.provider,
+          provider: supportedProviderFromHint(agent.provider),
+          providerPreference: agent.providerPreference ?? agent.provider,
           baseURL: agent.baseURL,
           apiKey: agent.apiKey,
         })
@@ -409,7 +433,8 @@ export class OrchestrationEngine {
     maxTokens?: number
     temperature?: number
     model?: string
-    provider?: SupportedProvider
+    provider?: string
+    providerPreference?: string
     baseURL?: string
     apiKey?: string
   }): Promise<EngineRunResult> {
@@ -424,6 +449,7 @@ export class OrchestrationEngine {
       temperature: input.temperature,
       model: input.model,
       provider: input.provider,
+      providerPreference: input.providerPreference,
       baseURL: input.baseURL,
       apiKey: input.apiKey,
     })
@@ -437,7 +463,8 @@ export class OrchestrationEngine {
     const firstTask = input.tasks[0]
     const route = resolveMergedOmaRoute(this.cfg, {
       model: firstTask?.model,
-      provider: firstTask?.provider,
+      provider: supportedProviderFromHint(firstTask?.provider),
+      providerPreference: firstTask?.providerPreference ?? firstTask?.provider,
       baseURL: firstTask?.baseURL,
       apiKey: firstTask?.apiKey,
     })
@@ -485,6 +512,7 @@ export class OrchestrationEngine {
     const orchestration = this.createOrchestration({
       model: firstTask?.model,
       provider: firstTask?.provider,
+      providerPreference: firstTask?.providerPreference,
       baseURL: firstTask?.baseURL,
       apiKey: firstTask?.apiKey,
       extraTools: input.extraTools,
@@ -504,7 +532,8 @@ export class OrchestrationEngine {
       agents: Array.from(agentConfigs.entries()).map(([assignee, task]) => {
         const agentRoute = resolveMergedOmaRoute(this.cfg, {
           model: task.model,
-          provider: task.provider,
+          provider: supportedProviderFromHint(task.provider),
+          providerPreference: task.providerPreference ?? task.provider,
           baseURL: task.baseURL,
           apiKey: task.apiKey,
         })
@@ -579,6 +608,7 @@ export class OrchestrationEngine {
               toolNames: input.toolNames,
               model: input.model,
               provider: input.provider,
+              providerPreference: input.providerPreference,
               baseURL: input.baseURL,
               apiKey: input.apiKey,
             },

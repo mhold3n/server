@@ -157,7 +157,7 @@ export interface BeforeRunHookContext {
 export interface AgentConfig {
     readonly name: string;
     readonly model: string;
-    readonly provider?: 'anthropic' | 'copilot' | 'grok' | 'openai' | 'gemini';
+    readonly provider?: 'anthropic' | 'copilot' | 'grok' | 'openai' | 'gemini' | 'ollama';
     /**
      * Custom base URL for OpenAI-compatible APIs (Ollama, vLLM, LM Studio, etc.).
      * Note: local servers that don't require auth still need `apiKey` set to a
@@ -324,7 +324,7 @@ export interface OrchestratorConfig {
     /** Maximum cumulative tokens (input + output) allowed per orchestrator run. */
     readonly maxTokenBudget?: number;
     readonly defaultModel?: string;
-    readonly defaultProvider?: 'anthropic' | 'copilot' | 'grok' | 'openai' | 'gemini';
+    readonly defaultProvider?: 'anthropic' | 'copilot' | 'grok' | 'openai' | 'gemini' | 'ollama';
     readonly defaultBaseURL?: string;
     readonly defaultApiKey?: string;
     /**
@@ -363,7 +363,7 @@ export interface OrchestratorConfig {
 export interface CoordinatorConfig {
     /** Coordinator model. Defaults to `OrchestratorConfig.defaultModel`. */
     readonly model?: string;
-    readonly provider?: 'anthropic' | 'copilot' | 'grok' | 'openai' | 'gemini';
+    readonly provider?: 'anthropic' | 'copilot' | 'grok' | 'openai' | 'gemini' | 'ollama';
     readonly baseURL?: string;
     readonly apiKey?: string;
     /**
@@ -495,5 +495,12 @@ export interface LLMAdapter {
      * or `type === 'error'` on failure.
      */
     stream(messages: LLMMessage[], options: LLMStreamOptions): AsyncIterable<StreamEvent>;
+    /**
+     * Optional lightweight provider health probe.
+     */
+    health?(): Promise<{
+        healthy: boolean;
+        models?: string[];
+    }>;
 }
 //# sourceMappingURL=types.d.ts.map

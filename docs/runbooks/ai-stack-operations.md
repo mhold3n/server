@@ -10,6 +10,7 @@ This runbook covers operational procedures for the WrkHrs AI stack services runn
 - **wrkhrs-agent-platform**: TypeScript orchestration (Open Multi-Agent + LangGraph JS); default replacement for the retired Python orchestrator
 - **wrkhrs-rag**: Retrieval-augmented generation service
 - **wrkhrs-asr**: Automatic speech recognition service
+- **model-runtime**: Bounded local HF model runtime for `/infer/*` roles; defaults to mock inference in dev
 - **wrkhrs-tool-registry**: Tool discovery and registration
 - **wrkhrs-mcp**: Micro-capability platform service
 
@@ -50,6 +51,7 @@ docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d wrkh
 - **Legacy Python orchestrator** (opt-in profile `legacy-python-orchestrator`): `http://localhost:8081/health`
 - **RAG**: `http://localhost:8082/health`
 - **ASR**: `http://localhost:8084/health`
+- **Model runtime**: `http://localhost:${MODEL_RUNTIME_PORT:-8765}/health`
 - **Tool Registry**: `http://localhost:8086/health`
 - **MCP**: `http://localhost:8085/health`
 
@@ -93,9 +95,13 @@ docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs wrkhr
 ### Agent platform (orchestration) configuration
 
 - **Gateway → orchestrator**: `ORCHESTRATOR_URL` on `wrkhrs-gateway` must point at the TS service (default above).
-- **LLM**: Set `LLM_BACKEND` (`mock`, `ollama`, `vllm`) and `LLM_RUNNER_URL` consistently with your worker (Ollama uses `/api/chat` on `LLM_RUNNER_URL`).
+- **LLM**: Set `LLM_BACKEND` (`mock`, `ollama`, `vllm`, `huggingface`) and `LLM_RUNNER_URL` consistently with your worker. Ollama uses native `/api/chat`; vLLM uses OpenAI-compatible `/v1`; hosted Hugging Face uses `HF_INFERENCE_BASE_URL=https://router.huggingface.co/v1` plus `HF_TOKEN` or `HUGGINGFACE_HUB_TOKEN`.
+- **Per-request routing hints**: `/api/ai/query` and internal workflow runs may set `provider` / `provider_preference` to `local_worker`, `ollama`, `vllm`, `huggingface`, `hosted_api`, or an enabled direct provider. Model, temperature, and max-token hints are forwarded through `workflow_config.model_routing`.
 - **Open Multi-Agent team/agent HTTP routes** (`/v1/teams/run`, `/v1/agents/run`): set `ANTHROPIC_API_KEY` and/or `OPENAI_API_KEY`, plus `OMA_DEFAULT_MODEL` and `OMA_DEFAULT_PROVIDER` as needed.
 - **`POST /llm/switch`**: The TS service does not hot-reload backends; change `LLM_BACKEND` / `LLM_RUNNER_URL` and restart the container (legacy Python supported runtime switch).
+- **RAG embeddings**: Set `EMBEDDING_BACKEND=auto|openai|ollama|local|mock`. Use `EMBEDDING_ENDPOINT_URL` for OpenAI-compatible `/v1/embeddings` or Ollama `/api/embed` endpoints.
+- **RAG reranking**: Set `RERANKER_URL` to a service exposing `/rerank`. RAG falls back to existing BM25 plus embedding scoring if reranking fails.
+- **Model-runtime HF mode**: Keep `MOCK_INFER=1` for dev smoke tests. Set `MOCK_INFER=0` and configure `services/model-runtime/config/models.yaml` with `local_model_path` for offline Transformers loading.
 
 #### 2. RAG Service Performance Issues
 **Symptoms**: Slow responses, high memory usage
@@ -337,7 +343,6 @@ make health
 - **Slack**: #ai-operations
 - **Email**: ai-ops@company.com
 - **Phone**: +1-555-AI-OPS
-
 
 
 

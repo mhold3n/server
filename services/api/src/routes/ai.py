@@ -95,9 +95,11 @@ class QueryRequest(BaseModel):
     chat. Internally, the control plane forwards it to the LangGraph workflow
     named ``\"wrkhrs_chat\"`` running in the TypeScript agent-platform.
 
-    The `provider` field lets callers express a preference for which backing
-    provider to use. The exact routing rules are implemented inside the
-    orchestrator; this API simply forwards the hint via `workflow_config`.
+    The `provider` field lets callers express a backing-runtime preference.
+    Supported values are ``local_worker``, ``ollama``, ``vllm``,
+    ``huggingface``, ``hosted_api``, and the direct provider names accepted by
+    the internal orchestrator. Raw provider API keys are never accepted in this
+    public request body; they must be configured through service environment.
     """
 
     prompt: str | None = Field(default=None)
@@ -134,16 +136,16 @@ class QueryRequest(BaseModel):
     provider: str | None = Field(
         default=None,
         description=(
-            "Optional provider preference hint for the orchestrator. Expected values "
-            "include 'local_worker', 'swarm', or 'hosted_api'. The orchestrator may "
-            "ignore unknown values."
+            "Optional provider preference hint for the orchestrator. Supported values "
+            "include 'local_worker', 'ollama', 'vllm', 'huggingface', 'hosted_api', "
+            "or direct provider names where enabled."
         ),
     )
     engagement_mode: str | None = Field(
         default=None,
         description=(
             "Optional routing strictness override. Supported values: "
-            "casual_chat, ideation, napkin_math, engineering_task, strict_engineering."
+            "casual_chat, ideation, napkin_math, engineering, engineering_task, strict_engineering."
         ),
     )
 
@@ -205,6 +207,12 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
         )
     if req.provider:
         workflow_config["provider_preference"] = req.provider
+    workflow_config["model_routing"] = {
+        "provider_preference": req.provider,
+        "model": req.model,
+        "temperature": req.temperature,
+        "max_tokens": req.max_tokens,
+    }
     if req.tools:
         # Tools passed by the caller are treated as required intent for orchestration.
         # The LangGraph workflow decides how to satisfy them.
@@ -234,6 +242,15 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
     input_data["engagement_mode_reasons"] = mode_decision["engagement_mode_reasons"]
     input_data["minimum_engagement_mode"] = mode_decision["minimum_engagement_mode"]
     input_data["pending_mode_change"] = mode_decision.get("pending_mode_change")
+    input_data["response_mode"] = mode_decision.get("response_mode")
+    input_data["response_control_ref"] = mode_decision.get("response_control_ref")
+    input_data["selected_knowledge_pool_refs"] = mode_decision.get(
+        "selected_knowledge_pool_refs",
+        [],
+    )
+    input_data["selected_module_refs"] = mode_decision.get("selected_module_refs", [])
+    input_data["selected_technique_refs"] = mode_decision.get("selected_technique_refs", [])
+    input_data["selected_theory_refs"] = mode_decision.get("selected_theory_refs", [])
     input_data["knowledge_pool_assessment_ref"] = mode_decision.get(
         "knowledge_pool_assessment_ref"
     )
@@ -245,6 +262,8 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
     workflow_config["engagement_mode_confidence"] = mode_decision["engagement_mode_confidence"]
     workflow_config["engagement_mode_reasons"] = mode_decision["engagement_mode_reasons"]
     workflow_config["minimum_engagement_mode"] = mode_decision["minimum_engagement_mode"]
+    workflow_config["response_mode"] = mode_decision.get("response_mode")
+    workflow_config["response_control_ref"] = mode_decision.get("response_control_ref")
     if mode_decision.get("pending_mode_change") is not None:
         workflow_config["pending_mode_change"] = mode_decision["pending_mode_change"]
     if selected_mode in {"engineering_task", "strict_engineering"}:
@@ -317,6 +336,27 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
                 "knowledge_required",
                 mode_decision.get("knowledge_required"),
             )
+            result_payload.setdefault("response_mode", mode_decision.get("response_mode"))
+            result_payload.setdefault(
+                "response_control_ref",
+                mode_decision.get("response_control_ref"),
+            )
+            result_payload.setdefault(
+                "selected_knowledge_pool_refs",
+                mode_decision.get("selected_knowledge_pool_refs", []),
+            )
+            result_payload.setdefault(
+                "selected_module_refs",
+                mode_decision.get("selected_module_refs", []),
+            )
+            result_payload.setdefault(
+                "selected_technique_refs",
+                mode_decision.get("selected_technique_refs", []),
+            )
+            result_payload.setdefault(
+                "selected_theory_refs",
+                mode_decision.get("selected_theory_refs", []),
+            )
             if mode_decision.get("knowledge_pool_assessment") is not None:
                 result_payload.setdefault(
                     "knowledge_pool_assessment",
@@ -388,6 +428,27 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
                 "pending_mode_change",
                 mode_decision.get("pending_mode_change"),
             )
+            result_payload.setdefault("response_mode", mode_decision.get("response_mode"))
+            result_payload.setdefault(
+                "response_control_ref",
+                mode_decision.get("response_control_ref"),
+            )
+            result_payload.setdefault(
+                "selected_knowledge_pool_refs",
+                mode_decision.get("selected_knowledge_pool_refs", []),
+            )
+            result_payload.setdefault(
+                "selected_module_refs",
+                mode_decision.get("selected_module_refs", []),
+            )
+            result_payload.setdefault(
+                "selected_technique_refs",
+                mode_decision.get("selected_technique_refs", []),
+            )
+            result_payload.setdefault(
+                "selected_theory_refs",
+                mode_decision.get("selected_theory_refs", []),
+            )
             result_payload.setdefault(
                 "knowledge_pool_assessment_ref",
                 (
@@ -451,6 +512,27 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
                 "pending_mode_change",
                 mode_decision.get("pending_mode_change"),
             )
+            result_payload.setdefault("response_mode", mode_decision.get("response_mode"))
+            result_payload.setdefault(
+                "response_control_ref",
+                mode_decision.get("response_control_ref"),
+            )
+            result_payload.setdefault(
+                "selected_knowledge_pool_refs",
+                mode_decision.get("selected_knowledge_pool_refs", []),
+            )
+            result_payload.setdefault(
+                "selected_module_refs",
+                mode_decision.get("selected_module_refs", []),
+            )
+            result_payload.setdefault(
+                "selected_technique_refs",
+                mode_decision.get("selected_technique_refs", []),
+            )
+            result_payload.setdefault(
+                "selected_theory_refs",
+                mode_decision.get("selected_theory_refs", []),
+            )
             result_payload.setdefault(
                 "knowledge_pool_assessment_ref",
                 mode_decision.get("knowledge_pool_assessment_ref"),
@@ -490,7 +572,8 @@ class WorkflowRunRequest(BaseModel):
         default=None,
         description=(
             "Optional provider preference hint for this workflow run "
-            "('local_worker', 'swarm', or 'hosted_api')."
+            "('local_worker', 'ollama', 'vllm', 'huggingface', 'hosted_api', "
+            "or enabled direct provider names)."
         ),
     )
 
@@ -559,6 +642,12 @@ async def run_workflow(req: WorkflowRunRequest) -> dict[str, Any]:
     workflow_config: dict[str, Any] = {}
     if req.provider:
         workflow_config["provider_preference"] = req.provider
+    workflow_config["model_routing"] = {
+        "provider_preference": req.provider,
+        "model": req.model or DEFAULT_LLM_MODEL,
+        "temperature": req.temperature if req.temperature is not None else card.temperature,
+        "max_tokens": req.max_tokens if req.max_tokens is not None else card.max_tokens,
+    }
     if card.required_tools:
         workflow_config["strict_tools"] = True
 

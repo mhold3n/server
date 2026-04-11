@@ -69,6 +69,13 @@ services:
       - AGENT_PLATFORM_PORT=8000
       - LLM_BACKEND=${LLM_BACKEND:-mock}
       - LLM_RUNNER_URL=${LLM_RUNNER_URL:-http://llm-runner:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3:8b-instruct}
+      - VLLM_MODEL=${VLLM_MODEL:-default}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HUGGINGFACE_HUB_TOKEN=${HUGGINGFACE_HUB_TOKEN:-}
+      - HF_INFERENCE_MODEL=${HF_INFERENCE_MODEL:-Qwen/Qwen3-8B}
+      - HF_INFERENCE_BASE_URL=${HF_INFERENCE_BASE_URL:-https://router.huggingface.co/v1}
+      - MODEL_RUNTIME_URL=${MODEL_RUNTIME_URL:-http://model-runtime:8000}
       - TOOL_REGISTRY_URL=http://wrkhrs-tool-registry:8000
       - RAG_URL=http://wrkhrs-rag:8000
       - ASR_URL=http://wrkhrs-asr:8000
@@ -84,6 +91,8 @@ services:
       wrkhrs-asr:
         condition: service_healthy
       wrkhrs-mcp:
+        condition: service_healthy
+      model-runtime:
         condition: service_healthy
     volumes:
       - logs:/logs
@@ -144,6 +153,7 @@ services:
       - RAG_PORT=8000
       - QDRANT_URL=http://qdrant:6333
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
+      - EMBEDDING_BACKEND=${EMBEDDING_BACKEND:-auto}
       - EMBEDDING_ENDPOINT_URL=${EMBEDDING_ENDPOINT_URL:-}
       - RERANKER_URL=${RERANKER_URL:-}
       - RAG_CHUNK_SIZE=${RAG_CHUNK_SIZE:-500}
@@ -187,6 +197,34 @@ services:
       timeout: 5s
       retries: 8
       start_period: 60s
+
+  # Python model-runtime - strict /infer/* + /solve/*; mock by default for dev
+  model-runtime:
+    build:
+      context: .
+      dockerfile: services/model-runtime/Dockerfile
+    ports:
+      - "${MODEL_RUNTIME_PORT:-8765}:8000"
+    environment:
+      - MODEL_RUNTIME_HOST=0.0.0.0
+      - MODEL_RUNTIME_PORT=8000
+      - MODEL_RUNTIME_CONFIG_PATH=/app/services/model-runtime/config/models.yaml
+      - MOCK_INFER=${MOCK_INFER:-1}
+      - HF_HOME=/.cache/models/hf
+      - TRANSFORMERS_CACHE=/.cache/models/hf
+      - MODEL_CACHE_DIR=/.cache/models/hf
+      - HF_TOKEN=${HF_TOKEN:-}
+      - HUGGINGFACE_HUB_TOKEN=${HUGGINGFACE_HUB_TOKEN:-}
+    volumes:
+      - ./.cache/models/hf:/.cache/models/hf
+      - logs:/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   # WrkHrs Tool Registry - Pluggy-based tool discovery
   wrkhrs-tool-registry:

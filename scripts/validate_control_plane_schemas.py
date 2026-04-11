@@ -123,6 +123,10 @@ def main() -> int:
             SCHEMA_DIR / "fixtures" / "environment-spec" / "valid-minimal.json",
         ),
         (
+            "https://birtha.local/schemas/control-plane/v1/gui-session-spec.schema.json",
+            SCHEMA_DIR / "fixtures" / "gui-session-spec" / "valid-minimal.json",
+        ),
+        (
             "https://birtha.local/schemas/control-plane/v1/decision-log.schema.json",
             SCHEMA_DIR / "fixtures" / "decision-log" / "valid-minimal.json",
         ),

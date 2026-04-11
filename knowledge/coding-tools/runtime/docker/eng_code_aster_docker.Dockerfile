@@ -1,5 +1,5 @@
-FROM ubuntu:24.04
-SHELL ["/bin/bash", "-lc"]
+FROM codeastersolver/codeaster-seq
+SHELL ["bash", "-lc"]
 WORKDIR /workspace
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends bash ca-certificates && rm -rf /var/lib/apt/lists/*
+ENTRYPOINT []
 CMD ["bash"]

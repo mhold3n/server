@@ -115,7 +115,7 @@ curl -f http://localhost:8443/health
 # Download vLLM model
 docker run --rm -v $(pwd)/.cache/models/vllm:/.cache/models/vllm \
   -e HF_TOKEN=$HF_TOKEN \
-  vllm/vllm-openai:latest \
+  "${VLLM_IMAGE:-vllm/vllm-openai@sha256:7a0f0fdd2771464b6976625c2b2d5dd46f566aa00fbc53eceab86ef50883da90}" \
   python -c "
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -127,7 +127,7 @@ model.save_pretrained('/.cache/models/vllm/Mistral-7B-Instruct-v0.3')
 "
 
 # Download Ollama model
-docker run --rm -v ollama_data:/root/.ollama ollama/ollama:latest \
+docker run --rm -v ollama_data:/root/.ollama "${OLLAMA_IMAGE:-ollama/ollama@sha256:1375516e575632dd84ad23b2c1cbd5e36ef34ebe8e41f9857545ab9aa72aeec2}" \
   ollama pull llama3:8b-instruct-q4_K_M
 ```
 
@@ -483,7 +483,6 @@ docker compose -f compose/docker-compose.worker.yml logs -f
 - **Slack**: #gpu-operations
 - **Email**: gpu-ops@company.com
 - **Phone**: +1-555-GPU-OPS
-
 
 
 

@@ -22,6 +22,7 @@ Key services:
 
 - RAG worker: `wrkhrs-rag` on `http://localhost:8082`
 - ASR worker: `wrkhrs-asr` on `http://localhost:8084`
+- Model runtime: `model-runtime` on `http://localhost:${MODEL_RUNTIME_PORT:-8765}`
 
 ### 2. Verify ASR uses the local Systran model
 
@@ -66,6 +67,10 @@ Expected fields:
 - `status`: `"healthy"`
 - `embedding_model_loaded`: `true` (when using local embeddings)
 - `embedding_model_name`: `"sentence-transformers/all-MiniLM-L6-v2"`
+- `embedding_backend`: `"local"` for SentenceTransformer, `"ollama"` for Ollama
+  `/api/embed`, `"openai"` for OpenAI-compatible remote embeddings, or `"mock"`
+  for deterministic test embeddings.
+- `reranker_configured`: `true` when `RERANKER_URL` is set.
 - `use_mock`: `false`
 
 Ingest a simple document:
@@ -102,7 +107,70 @@ Expected:
 - HTTP 200.
 - `results` list with at least one entry mentioning graphene.
 
-### 4. GPU \"no-compromises\" path (Qwen3.5-9B via vLLM)
+### Remote embedding variants
+
+Use a local OpenAI-compatible embedding endpoint:
+
+```bash
+EMBEDDING_BACKEND=openai
+EMBEDDING_ENDPOINT_URL=http://embedding-worker:8000/v1/embeddings
+EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+```
+
+Use Ollama native embeddings:
+
+```bash
+EMBEDDING_BACKEND=ollama
+EMBEDDING_ENDPOINT_URL=http://llm-runner:11434
+EMBEDDING_MODEL=nomic-embed-text
+```
+
+When `EMBEDDING_BACKEND=auto`, the RAG service treats endpoints ending in
+`/api/embed` or containing port `11434` as Ollama and otherwise assumes an
+OpenAI-compatible embeddings API.
+
+### Optional reranking
+
+Set `RERANKER_URL` to a service exposing `POST /rerank` with
+`{"query": "...", "documents": [...], "top_k": N}`. Search responses expose
+`reranking_method`; if the reranker fails, the service logs a warning and falls
+back to the current BM25 plus embedding score.
+
+### 4. Model-runtime HF mode
+
+Dev compose defaults `MOCK_INFER=1`, so `/infer/*` endpoints return deterministic
+mock envelopes without loading large models. To smoke test real local HF
+generation:
+
+```bash
+export MOCK_INFER=0
+export MODEL_RUNTIME_CONFIG_PATH=/app/services/model-runtime/config/models.yaml
+export HF_HOME=./.cache/models/hf
+export TRANSFORMERS_CACHE=./.cache/models/hf
+export MODEL_CACHE_DIR=./.cache/models/hf
+docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d model-runtime
+curl -s http://localhost:${MODEL_RUNTIME_PORT:-8765}/health | jq
+```
+
+For offline loading, set `local_model_path` in
+`services/model-runtime/config/models.yaml`; model-runtime then calls
+Transformers with `local_files_only=True`.
+
+### 5. Hosted Hugging Face route
+
+Hosted HF chat uses the OpenAI-compatible router:
+
+```bash
+LLM_BACKEND=huggingface
+HF_INFERENCE_BASE_URL=https://router.huggingface.co/v1
+HF_INFERENCE_MODEL=Qwen/Qwen3-8B
+HF_TOKEN=...
+```
+
+The public API accepts `provider: "huggingface"` as a routing hint, but raw
+provider API keys are not accepted in request bodies.
+
+### 6. GPU \"no-compromises\" path (Qwen3.5-9B via vLLM)
 
 When you have access to an NVIDIA GPU Linux host and want the full Qwen3.5-9B model, run the vLLM worker and point the orchestrator at it:
 
@@ -127,7 +195,7 @@ OPENAI_BASE_URL=http://gpu-hostname-or-ip:8000/v1
 
 The router and task cards will continue to hit `/v1/chat/completions` via the API; only the worker URL and default model change per profile.
 
-### 5. Toggle mock mode
+### 7. Toggle mock mode
 
 To run the stack with mock backends instead of real HF models:
 

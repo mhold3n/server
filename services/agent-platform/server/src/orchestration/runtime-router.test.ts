@@ -3,6 +3,7 @@ import type { PlatformConfig } from "../config.js"
 import {
   resolveExecutorRuntime,
   resolveMergedOmaRoute,
+  resolveWorkflowModelRouting,
 } from "./runtime-router.js"
 
 function baseConfig(): PlatformConfig {
@@ -16,6 +17,9 @@ function baseConfig(): PlatformConfig {
     llmBackend: "mock",
     ollamaModel: "ollama-model",
     vllmModel: "vllm-model",
+    huggingfaceModel: "hf-model",
+    huggingfaceBaseUrl: "https://router.huggingface.co/v1",
+    huggingfaceApiKey: "hf-token",
     apiBrainEnabled: false,
     apiBrainMaxEscalationsPerTask: 1,
     apiBrainProvider: "openai",
@@ -52,6 +56,15 @@ describe("runtime-router", () => {
     expect(route.model).toBe("mock-llm")
   })
 
+  it("keeps local_worker on mock fallback when the configured backend is mock", () => {
+    const route = resolveMergedOmaRoute(baseConfig(), {
+      providerPreference: "local_worker",
+      model: "requested-model",
+    })
+    expect(route.transport).toBe("mock")
+    expect(route.model).toBe("requested-model")
+  })
+
   it("routes local OpenAI-compatible backends through merged OMA openai config", () => {
     const cfg = baseConfig()
     cfg.llmBackend = "vllm"
@@ -63,5 +76,68 @@ describe("runtime-router", () => {
     expect(route.model).toBe("vllm-model")
     expect(route.baseURL).toBe("http://localhost:9000/v1")
     expect(route.apiKey).toBe("token")
+  })
+
+  it("routes Ollama through native provider config", () => {
+    const cfg = baseConfig()
+    cfg.llmBackend = "ollama"
+    cfg.llmRunnerUrl = "http://localhost:11434/v1"
+    const route = resolveMergedOmaRoute(cfg)
+    expect(route.transport).toBe("provider")
+    expect(route.provider).toBe("ollama")
+    expect(route.model).toBe("ollama-model")
+    expect(route.baseURL).toBe("http://localhost:11434")
+  })
+
+  it("routes Hugging Face preference through OpenAI-compatible router", () => {
+    const route = resolveMergedOmaRoute(baseConfig(), {
+      providerPreference: "huggingface",
+    })
+    expect(route.provider).toBe("openai")
+    expect(route.model).toBe("hf-model")
+    expect(route.baseURL).toBe("https://router.huggingface.co/v1")
+    expect(route.apiKey).toBe("hf-token")
+  })
+
+  it("routes workflow model hints from flat input fields", () => {
+    const cfg = baseConfig()
+    cfg.llmBackend = "ollama"
+    cfg.llmRunnerUrl = "http://localhost:11434/v1"
+    const route = resolveWorkflowModelRouting(
+      cfg,
+      {
+        provider: "vllm",
+        model: "request-model",
+        temperature: 0.15,
+        max_tokens: 321,
+      },
+      {},
+    )
+    expect(route.provider).toBe("openai")
+    expect(route.model).toBe("request-model")
+    expect(route.baseURL).toBe("http://localhost:11434/v1")
+    expect(route.temperature).toBe(0.15)
+    expect(route.maxTokens).toBe(321)
+  })
+
+  it("lets workflow_config.model_routing override flat input hints", () => {
+    const route = resolveWorkflowModelRouting(
+      baseConfig(),
+      { provider: "ollama", model: "ignored", temperature: 0.1, max_tokens: 100 },
+      {
+        model_routing: {
+          provider_preference: "huggingface",
+          model: "hf-override",
+          temperature: 0.4,
+          max_tokens: 200,
+        },
+      },
+    )
+    expect(route.provider).toBe("openai")
+    expect(route.model).toBe("hf-override")
+    expect(route.baseURL).toBe("https://router.huggingface.co/v1")
+    expect(route.apiKey).toBe("hf-token")
+    expect(route.temperature).toBe(0.4)
+    expect(route.maxTokens).toBe(200)
   })
 })

@@ -295,6 +295,10 @@ class DevPlaneService:
             task.dossier,
             "KNOWLEDGE_POOL_ASSESSMENT",
         )
+        latest_response_control = self._latest_typed_payload(
+            task.dossier,
+            "RESPONSE_CONTROL_ASSESSMENT",
+        )
         latest_role_contexts = {
             str(payload.get("role")): payload
             for payload in self._typed_payloads(task.dossier, "ROLE_CONTEXT_BUNDLE")
@@ -307,6 +311,7 @@ class DevPlaneService:
             [
                 latest_problem_brief,
                 latest_knowledge_assessment,
+                latest_response_control,
                 latest_role_contexts,
                 latest_engineering_state,
                 latest_task_queue,
@@ -320,6 +325,98 @@ class DevPlaneService:
                 session.knowledge_pool_assessment if session else None
             )
             or latest_knowledge_assessment,
+            "response_control_ref": (
+                session.response_control_ref if session else None
+            )
+            or task.response_control_ref
+            or task.dossier.response_control_ref
+            or (
+                "artifact://response-control-assessment/"
+                f"{latest_response_control['response_control_assessment_id']}"
+                if latest_response_control
+                and latest_response_control.get("response_control_assessment_id")
+                else None
+            ),
+            "response_mode": (
+                session.response_mode if session else None
+            )
+            or task.response_mode
+            or task.dossier.response_mode
+            or (
+                str(
+                    (
+                        latest_response_control.get("mode_selection", {})
+                        if latest_response_control
+                        else {}
+                    ).get("selected_mode")
+                )
+                if latest_response_control
+                else None
+            ),
+            "selected_knowledge_pool_refs": (
+                list(session.selected_knowledge_pool_refs) if session else []
+            )
+            or list(task.selected_knowledge_pool_refs)
+            or list(task.dossier.selected_knowledge_pool_refs)
+            or (
+                list(
+                    (
+                        latest_response_control.get("knowledge_pool_selection", {})
+                        if latest_response_control
+                        else {}
+                    ).get("selected_pool_refs", [])
+                )
+                if latest_response_control
+                else []
+            ),
+            "selected_module_refs": (
+                list(session.selected_module_refs) if session else []
+            )
+            or list(task.selected_module_refs)
+            or list(task.dossier.selected_module_refs)
+            or (
+                list(
+                    (
+                        latest_response_control.get("module_selection", {})
+                        if latest_response_control
+                        else {}
+                    ).get("selected_module_refs", [])
+                )
+                if latest_response_control
+                else []
+            ),
+            "selected_technique_refs": (
+                list(session.selected_technique_refs) if session else []
+            )
+            or list(task.selected_technique_refs)
+            or list(task.dossier.selected_technique_refs)
+            or (
+                list(
+                    (
+                        latest_response_control.get("technique_selection", {})
+                        if latest_response_control
+                        else {}
+                    ).get("selected_technique_refs", [])
+                )
+                if latest_response_control
+                else []
+            ),
+            "selected_theory_refs": (
+                list(session.selected_theory_refs) if session else []
+            )
+            or list(task.selected_theory_refs)
+            or list(task.dossier.selected_theory_refs)
+            or (
+                list(
+                    (
+                        latest_response_control.get("knowledge_pool_selection", {})
+                        if latest_response_control
+                        else {}
+                    ).get("selected_theory_refs", [])
+                )
+                if latest_response_control
+                else []
+            ),
             "knowledge_pool_assessment_ref": (
                 session.knowledge_pool_assessment_ref if session else None
             )
@@ -492,6 +589,22 @@ class DevPlaneService:
             session.task_queue = workflow_result.get("task_queue")  # type: ignore[assignment]
         session.task_packets = [packet for packet in packets if isinstance(packet, dict)]
         session.problem_brief_ref = ref_state.get("problem_brief_ref") or session.problem_brief_ref
+        if workflow_result.get("response_mode") is not None:
+            session.response_mode = str(workflow_result.get("response_mode"))
+        session.response_control_ref = (
+            ref_state.get("response_control_ref")
+            or workflow_result.get("response_control_ref")
+            or session.response_control_ref
+        )
+        for field_name in (
+            "selected_knowledge_pool_refs",
+            "selected_module_refs",
+            "selected_technique_refs",
+            "selected_theory_refs",
+        ):
+            refs = workflow_result.get(field_name)
+            if isinstance(refs, list):
+                setattr(session, field_name, [str(ref) for ref in refs if str(ref).strip()])
         session.knowledge_pool_assessment_ref = (
             ref_state.get("knowledge_pool_assessment_ref")
             or workflow_result.get("knowledge_pool_assessment_ref")
@@ -659,6 +772,18 @@ class DevPlaneService:
             pending_mode_change=session.pending_mode_change,
             lifecycle_reason=session.lifecycle_reason,
             lifecycle_detail=session.lifecycle_detail,
+        )
+        self._apply_response_control_metadata(
+            task=task,
+            dossier=task.dossier,
+            run=run,
+            session=session,
+            response_mode=session.response_mode,
+            response_control_ref=session.response_control_ref,
+            selected_knowledge_pool_refs=session.selected_knowledge_pool_refs,
+            selected_module_refs=session.selected_module_refs,
+            selected_technique_refs=session.selected_technique_refs,
+            selected_theory_refs=session.selected_theory_refs,
         )
         self._apply_knowledge_metadata(
             task=task,
@@ -899,6 +1024,16 @@ class DevPlaneService:
             ),
             knowledge_gaps=list(engineering_bundle.get("knowledge_gaps") or []),
             knowledge_required=bool(engineering_bundle.get("knowledge_required")),
+            response_mode=engineering_bundle.get("response_mode"),
+            response_control_ref=engineering_bundle.get("response_control_ref"),
+            selected_knowledge_pool_refs=list(
+                engineering_bundle.get("selected_knowledge_pool_refs") or []
+            ),
+            selected_module_refs=list(engineering_bundle.get("selected_module_refs") or []),
+            selected_technique_refs=list(
+                engineering_bundle.get("selected_technique_refs") or []
+            ),
+            selected_theory_refs=list(engineering_bundle.get("selected_theory_refs") or []),
             workspace=workspace,
             execution_mode=request.execution_mode,
             agent_session_id=request.agent_session_id,
@@ -952,6 +1087,18 @@ class DevPlaneService:
             knowledge_role_context_refs=engineering_bundle.get("knowledge_role_context_refs"),
             knowledge_gaps=engineering_bundle.get("knowledge_gaps"),
             knowledge_required=engineering_bundle.get("knowledge_required"),
+        )
+        self._apply_response_control_metadata(
+            task=task,
+            dossier=task.dossier,
+            run=run,
+            session=task.dossier.engineering_session,
+            response_mode=engineering_bundle.get("response_mode"),
+            response_control_ref=engineering_bundle.get("response_control_ref"),
+            selected_knowledge_pool_refs=engineering_bundle.get("selected_knowledge_pool_refs"),
+            selected_module_refs=engineering_bundle.get("selected_module_refs"),
+            selected_technique_refs=engineering_bundle.get("selected_technique_refs"),
+            selected_theory_refs=engineering_bundle.get("selected_theory_refs"),
         )
         self.store.save_run(run)
         self.store.save_task(task)
@@ -1458,6 +1605,45 @@ class DevPlaneService:
             target.knowledge_role_context_refs = list(role_context_refs)
             target.knowledge_gaps = list(gaps)
             target.knowledge_required = required
+
+    def _apply_response_control_metadata(
+        self,
+        *,
+        task: TaskRecord,
+        dossier: TaskDossier,
+        run: RunRecord | None = None,
+        session: EngineeringSessionRecord | None = None,
+        response_mode: str | None = None,
+        response_control_ref: str | None = None,
+        selected_knowledge_pool_refs: list[str] | None = None,
+        selected_module_refs: list[str] | None = None,
+        selected_technique_refs: list[str] | None = None,
+        selected_theory_refs: list[str] | None = None,
+    ) -> None:
+        pool_refs = self._coalesce_string_list(
+            selected_knowledge_pool_refs,
+            task.selected_knowledge_pool_refs,
+        )
+        module_refs = self._coalesce_string_list(selected_module_refs, task.selected_module_refs)
+        technique_refs = self._coalesce_string_list(
+            selected_technique_refs,
+            task.selected_technique_refs,
+        )
+        theory_refs = self._coalesce_string_list(selected_theory_refs, task.selected_theory_refs)
+        targets: list[object] = [task, dossier]
+        if run is not None:
+            targets.append(run)
+        if session is not None:
+            targets.append(session)
+        for target in targets:
+            if response_mode is not None:
+                target.response_mode = str(response_mode)
+            if response_control_ref is not None:
+                target.response_control_ref = str(response_control_ref)
+            target.selected_knowledge_pool_refs = list(pool_refs)
+            target.selected_module_refs = list(module_refs)
+            target.selected_technique_refs = list(technique_refs)
+            target.selected_theory_refs = list(theory_refs)
 
     def _merge_file_changes(
         self,

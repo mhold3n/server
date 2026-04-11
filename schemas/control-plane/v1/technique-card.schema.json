@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/technique-card.schema.json",
+  "title": "technique_card — module-level application guidance",
+  "description": "For agents: technique belongs to one or more modules. It may reference stable theory ids but never owns theory sources.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "technique_card_id",
+    "schema_version",
+    "technique_key",
+    "label",
+    "summary",
+    "module_refs",
+    "application_rules",
+    "verification_rules"
+  ],
+  "properties": {
+    "technique_card_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "technique_key": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "label": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "summary": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "module_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "theory_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/artifactRef"
+      }
+    },
+    "application_rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "verification_rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    }
+  }
+}

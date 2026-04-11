@@ -404,6 +404,12 @@ class EngineeringSessionRecord(BaseModel):
     knowledge_role_context_refs: list[str] = Field(default_factory=list)
     knowledge_gaps: list[str] = Field(default_factory=list)
     knowledge_required: bool = False
+    response_mode: str | None = None
+    response_control_ref: str | None = None
+    selected_knowledge_pool_refs: list[str] = Field(default_factory=list)
+    selected_module_refs: list[str] = Field(default_factory=list)
+    selected_technique_refs: list[str] = Field(default_factory=list)
+    selected_theory_refs: list[str] = Field(default_factory=list)
     engineering_state: dict[str, Any] | None = None
     engineering_state_ref: str | None = None
     task_queue: dict[str, Any] | None = None
@@ -441,6 +447,12 @@ class TaskDossier(BaseModel):
     knowledge_role_context_refs: list[str] = Field(default_factory=list)
     knowledge_gaps: list[str] = Field(default_factory=list)
     knowledge_required: bool = False
+    response_mode: str | None = None
+    response_control_ref: str | None = None
+    selected_knowledge_pool_refs: list[str] = Field(default_factory=list)
+    selected_module_refs: list[str] = Field(default_factory=list)
+    selected_technique_refs: list[str] = Field(default_factory=list)
+    selected_theory_refs: list[str] = Field(default_factory=list)
     reasoning_tier: str | None = Field(
         default=None,
         description=(
@@ -507,6 +519,12 @@ class TaskRecord(BaseModel):
     knowledge_role_context_refs: list[str] = Field(default_factory=list)
     knowledge_gaps: list[str] = Field(default_factory=list)
     knowledge_required: bool = False
+    response_mode: str | None = None
+    response_control_ref: str | None = None
+    selected_knowledge_pool_refs: list[str] = Field(default_factory=list)
+    selected_module_refs: list[str] = Field(default_factory=list)
+    selected_technique_refs: list[str] = Field(default_factory=list)
+    selected_theory_refs: list[str] = Field(default_factory=list)
     request: TaskRequestRecord
     clarifications: TaskClarification = Field(default_factory=TaskClarification)
     plan: TaskPlan | None = None
@@ -538,6 +556,12 @@ class RunRecord(BaseModel):
     knowledge_role_context_refs: list[str] = Field(default_factory=list)
     knowledge_gaps: list[str] = Field(default_factory=list)
     knowledge_required: bool = False
+    response_mode: str | None = None
+    response_control_ref: str | None = None
+    selected_knowledge_pool_refs: list[str] = Field(default_factory=list)
+    selected_module_refs: list[str] = Field(default_factory=list)
+    selected_technique_refs: list[str] = Field(default_factory=list)
+    selected_theory_refs: list[str] = Field(default_factory=list)
     workspace: WorkspaceRecord | None = None
     execution_mode: ExecutionMode = ExecutionMode.INTERNAL
     execution_backend: str | None = None

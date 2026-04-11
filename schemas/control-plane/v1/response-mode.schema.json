@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.local/schemas/control-plane/v1/response-mode.schema.json",
+  "title": "response_mode — user-visible answer mode policy",
+  "description": "For agents: user-facing mode selection is independent of knowledge pools and modules. It controls answer posture, governance, and response constraints only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "response_mode_id",
+    "schema_version",
+    "mode_key",
+    "label",
+    "summary",
+    "policy",
+    "seed_status"
+  ],
+  "properties": {
+    "response_mode_id": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "mode_key": {
+      "type": "string",
+      "enum": [
+        "casual_chat",
+        "ideation",
+        "napkin_math",
+        "engineering",
+        "research",
+        "dictionary_definition",
+        "query",
+        "business",
+        "content",
+        "marketing"
+      ]
+    },
+    "label": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "summary": {
+      "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["response_posture", "governance_rules"],
+      "properties": {
+        "response_posture": {
+          "$ref": "https://birtha.local/schemas/control-plane/v1/common.schema.json#/$defs/nonEmptyString"
+        },
+        "governance_rules": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "strict_constraints": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "seed_status": {
+      "type": "string",
+      "enum": ["formalized", "seeded"]
+    }
+  }
+}

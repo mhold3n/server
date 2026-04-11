@@ -174,7 +174,7 @@ services:
     healthcheck: { test: ["CMD","curl","-f","http://localhost:8000/health"], interval: 10s, timeout: 3s, retries: 10 }
 
   llm-runner:
-    image: ${LLM_BACKEND:-ollama} == "ollama" ? "ollama/ollama:latest" : "vllm/vllm-openai:latest"
+    image: ${LLM_BACKEND:-ollama} == "ollama" ? "${OLLAMA_IMAGE}" : "${VLLM_IMAGE}"
     networks: [ llm_net ]
     # Ports only for OpenAI-compatible APIs (vLLM); Ollama uses 11434
     ports:
@@ -202,7 +202,7 @@ services:
 ```yaml
 services:
   llm-runner:
-    image: ollama/ollama:latest
+    image: ${OLLAMA_IMAGE:-ollama/ollama@sha256:1375516e575632dd84ad23b2c1cbd5e36ef34ebe8e41f9857545ab9aa72aeec2}
     ports: [ "11434:11434" ]
     environment:
       - OLLAMA_ORIGINS=*
@@ -250,7 +250,7 @@ curl http://localhost:${ORCH_PORT}/health
 ```yaml
 services:
   llm-runner:
-    image: vllm/vllm-openai:latest
+    image: ${VLLM_IMAGE:-vllm/vllm-openai@sha256:7a0f0fdd2771464b6976625c2b2d5dd46f566aa00fbc53eceab86ef50883da90}
     ports: [ "8001:8000" ]  # OpenAI-compatible
     environment:
       - NVIDIA_VISIBLE_DEVICES=all

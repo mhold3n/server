@@ -106,8 +106,12 @@ def main() -> int:
     if docker_bin.returncode != 0:
         raise RuntimeError("docker CLI is not available in this environment")
     container_command = args.container_command or ["python", "--version"]
+    docker_cmd = ["docker", "run", "--rm"]
+    if environment.docker_platform:
+        docker_cmd.extend(["--platform", environment.docker_platform])
+    docker_cmd.extend([environment.runtime_locator, *container_command])
     result = subprocess.run(
-        ["docker", "run", "--rm", environment.runtime_locator, *container_command],
+        docker_cmd,
         cwd=REPO_ROOT,
         text=True,
         capture_output=True,

@@ -19,14 +19,21 @@ from .contracts import (
     EnvironmentSpecPayload,
     EvidenceBundlePayload,
     ExecutionAdapterSpecPayload,
+    GuiSessionSpecPayload,
     KnowledgePackPayload,
+    KnowledgePoolPayload,
     KnowledgePoolAssessment,
+    ModuleCardPayload,
     ProblemBrief,
     RecipeObjectPayload,
+    ResponseControlAssessment,
+    ResponseModePayload,
     RoleContextBundlePayload,
     RoutingPolicy,
     TaskPacket,
     TaskQueue,
+    TechniqueCardPayload,
+    TheoryCardPayload,
     VerificationReportPayload,
 )
 from .errors import ContractErrorDetail, ContractValidationError
@@ -46,6 +53,24 @@ KNOWLEDGE_PACK_SCHEMA_ID = (
 KNOWLEDGE_POOL_ASSESSMENT_SCHEMA_ID = (
     "https://birtha.local/schemas/control-plane/v1/knowledge-pool-assessment.schema.json"
 )
+RESPONSE_MODE_SCHEMA_ID = (
+    "https://birtha.local/schemas/control-plane/v1/response-mode.schema.json"
+)
+KNOWLEDGE_POOL_SCHEMA_ID = (
+    "https://birtha.local/schemas/control-plane/v1/knowledge-pool.schema.json"
+)
+MODULE_CARD_SCHEMA_ID = (
+    "https://birtha.local/schemas/control-plane/v1/module-card.schema.json"
+)
+TECHNIQUE_CARD_SCHEMA_ID = (
+    "https://birtha.local/schemas/control-plane/v1/technique-card.schema.json"
+)
+THEORY_CARD_SCHEMA_ID = (
+    "https://birtha.local/schemas/control-plane/v1/theory-card.schema.json"
+)
+RESPONSE_CONTROL_ASSESSMENT_SCHEMA_ID = (
+    "https://birtha.local/schemas/control-plane/v1/response-control-assessment.schema.json"
+)
 RECIPE_OBJECT_SCHEMA_ID = (
     "https://birtha.local/schemas/control-plane/v1/recipe-object.schema.json"
 )
@@ -60,6 +85,9 @@ ROLE_CONTEXT_BUNDLE_SCHEMA_ID = (
 )
 ENVIRONMENT_SPEC_SCHEMA_ID = (
     "https://birtha.local/schemas/control-plane/v1/environment-spec.schema.json"
+)
+GUI_SESSION_SPEC_SCHEMA_ID = (
+    "https://birtha.local/schemas/control-plane/v1/gui-session-spec.schema.json"
 )
 DECISION_LOG_SCHEMA_ID = (
     "https://birtha.local/schemas/control-plane/v1/decision-log.schema.json"
@@ -232,6 +260,128 @@ def validate_knowledge_pool_assessment_json(data: dict[str, Any]) -> KnowledgePo
         ) from e
 
 
+def validate_response_mode_json(data: dict[str, Any]) -> ResponseModePayload:
+    v = _validator_for(RESPONSE_MODE_SCHEMA_ID)
+    try:
+        v.validate(data)
+    except jsonschema.exceptions.ValidationError as e:
+        raise _schema_error(
+            schema_id=RESPONSE_MODE_SCHEMA_ID,
+            contract_type="RESPONSE_MODE",
+            error=e,
+        ) from e
+    try:
+        return ResponseModePayload.model_validate(data)
+    except ValueError as e:
+        raise _model_error(
+            schema_id=RESPONSE_MODE_SCHEMA_ID,
+            contract_type="RESPONSE_MODE",
+            error=e,
+        ) from e
+
+
+def validate_knowledge_pool_json(data: dict[str, Any]) -> KnowledgePoolPayload:
+    v = _validator_for(KNOWLEDGE_POOL_SCHEMA_ID)
+    try:
+        v.validate(data)
+    except jsonschema.exceptions.ValidationError as e:
+        raise _schema_error(
+            schema_id=KNOWLEDGE_POOL_SCHEMA_ID,
+            contract_type="KNOWLEDGE_POOL",
+            error=e,
+        ) from e
+    try:
+        return KnowledgePoolPayload.model_validate(data)
+    except ValueError as e:
+        raise _model_error(
+            schema_id=KNOWLEDGE_POOL_SCHEMA_ID,
+            contract_type="KNOWLEDGE_POOL",
+            error=e,
+        ) from e
+
+
+def validate_module_card_json(data: dict[str, Any]) -> ModuleCardPayload:
+    v = _validator_for(MODULE_CARD_SCHEMA_ID)
+    try:
+        v.validate(data)
+    except jsonschema.exceptions.ValidationError as e:
+        raise _schema_error(
+            schema_id=MODULE_CARD_SCHEMA_ID,
+            contract_type="MODULE_CARD",
+            error=e,
+        ) from e
+    try:
+        return ModuleCardPayload.model_validate(data)
+    except ValueError as e:
+        raise _model_error(
+            schema_id=MODULE_CARD_SCHEMA_ID,
+            contract_type="MODULE_CARD",
+            error=e,
+        ) from e
+
+
+def validate_technique_card_json(data: dict[str, Any]) -> TechniqueCardPayload:
+    v = _validator_for(TECHNIQUE_CARD_SCHEMA_ID)
+    try:
+        v.validate(data)
+    except jsonschema.exceptions.ValidationError as e:
+        raise _schema_error(
+            schema_id=TECHNIQUE_CARD_SCHEMA_ID,
+            contract_type="TECHNIQUE_CARD",
+            error=e,
+        ) from e
+    try:
+        return TechniqueCardPayload.model_validate(data)
+    except ValueError as e:
+        raise _model_error(
+            schema_id=TECHNIQUE_CARD_SCHEMA_ID,
+            contract_type="TECHNIQUE_CARD",
+            error=e,
+        ) from e
+
+
+def validate_theory_card_json(data: dict[str, Any]) -> TheoryCardPayload:
+    v = _validator_for(THEORY_CARD_SCHEMA_ID)
+    try:
+        v.validate(data)
+    except jsonschema.exceptions.ValidationError as e:
+        raise _schema_error(
+            schema_id=THEORY_CARD_SCHEMA_ID,
+            contract_type="THEORY_CARD",
+            error=e,
+        ) from e
+    try:
+        return TheoryCardPayload.model_validate(data)
+    except ValueError as e:
+        raise _model_error(
+            schema_id=THEORY_CARD_SCHEMA_ID,
+            contract_type="THEORY_CARD",
+            error=e,
+        ) from e
+
+
+def validate_response_control_assessment_json(
+    data: dict[str, Any],
+) -> ResponseControlAssessment:
+    v = _validator_for(RESPONSE_CONTROL_ASSESSMENT_SCHEMA_ID)
+    try:
+        v.validate(data)
+    except jsonschema.exceptions.ValidationError as e:
+        raise _schema_error(
+            schema_id=RESPONSE_CONTROL_ASSESSMENT_SCHEMA_ID,
+            contract_type="RESPONSE_CONTROL_ASSESSMENT",
+            error=e,
+        ) from e
+    try:
+        return ResponseControlAssessment.model_validate(data)
+    except ValueError as e:
+        raise _model_error(
+            schema_id=RESPONSE_CONTROL_ASSESSMENT_SCHEMA_ID,
+            contract_type="RESPONSE_CONTROL_ASSESSMENT",
+            error=e,
+        ) from e
+
+
 def validate_recipe_object_json(data: dict[str, Any]) -> RecipeObjectPayload:
     v = _validator_for(RECIPE_OBJECT_SCHEMA_ID)
     try:
@@ -328,6 +478,26 @@ def validate_environment_spec_json(data: dict[str, Any]) -> EnvironmentSpecPaylo
         raise _model_error(
             schema_id=ENVIRONMENT_SPEC_SCHEMA_ID,
             contract_type="ENVIRONMENT_SPEC",
+            error=e,
+        ) from e
+
+
+def validate_gui_session_spec_json(data: dict[str, Any]) -> GuiSessionSpecPayload:
+    v = _validator_for(GUI_SESSION_SPEC_SCHEMA_ID)
+    try:
+        v.validate(data)
+    except jsonschema.exceptions.ValidationError as e:
+        raise _schema_error(
+            schema_id=GUI_SESSION_SPEC_SCHEMA_ID,
+            contract_type="GUI_SESSION_SPEC",
+            error=e,
+        ) from e
+    try:
+        return GuiSessionSpecPayload.model_validate(data)
+    except ValueError as e:
+        raise _model_error(
+            schema_id=GUI_SESSION_SPEC_SCHEMA_ID,
+            contract_type="GUI_SESSION_SPEC",
             error=e,
         ) from e
 

@@ -15,6 +15,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
 from model_runtime.config import resolved_model_id
+from model_runtime.hf_runtime import infer_with_hf
 from model_runtime.validate import (
     validate_orchestration_packet,
     validate_solve_request,
@@ -33,9 +34,36 @@ def _usage(latency_ms: float, prompt: int = 0, completion: int = 0) -> dict[str,
     }
 
 
+def _mock_enabled() -> bool:
+    return os.environ.get("MOCK_INFER", "").lower() in ("1", "true", "yes")
+
+
+def _json_prompt(kind: str, body: dict[str, Any]) -> str:
+    return (
+        f"Input kind: {kind}\n\n"
+        f"{json.dumps(body, indent=2, sort_keys=True)}\n\n"
+        "Return a concise answer. If structured output is required, include a valid JSON object."
+    )
+
+
+def _task_packet_prompt(kind: str, body: dict[str, Any]) -> str:
+    summary = {
+        "task_type": body.get("task_type"),
+        "objective": body.get("objective"),
+        "context_summary": body.get("context_summary"),
+        "validation_requirements": body.get("validation_requirements"),
+        "routing_metadata": body.get("routing_metadata"),
+    }
+    return _json_prompt(kind, {k: v for k, v in summary.items() if v is not None})
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "model-runtime"}
+    return {
+        "status": "ok",
+        "service": "model-runtime",
+        "mock_infer": str(_mock_enabled()).lower(),
+    }
 
 
 @app.post("/infer/general")
@@ -58,7 +86,7 @@ async def infer_general(
 
     lat = (time.perf_counter() - t0) * 1000
     mid = resolved_model_id("general")
-    if os.environ.get("MOCK_INFER", "").lower() in ("1", "true", "yes"):
+    if _mock_enabled():
         out = {
             "usage": _usage(lat, 10, 32),
             "model_id_resolved": mid,
@@ -77,9 +105,21 @@ async def infer_general(
         }
         return JSONResponse(out)
 
-    raise HTTPException(
-        status_code=503,
-        detail="Model load not configured; set MOCK_INFER=1 or implement transformers path",
+    try:
+        result = infer_with_hf(
+            "general",
+            "You are the model-runtime general inference role. Extract task-relevant facts and preserve uncertainty.",
+            _json_prompt("orchestration_packet", body),
+        )
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    return JSONResponse(
+        {
+            "usage": _usage(result.latency_ms, result.prompt_tokens, result.completion_tokens),
+            "model_id_resolved": mid,
+            "text": result.text,
+            "structured_output": result.structured_output or {},
+        },
     )
 
 
@@ -96,7 +136,7 @@ async def infer_coding(request: Request) -> JSONResponse:
         raise HTTPException(status_code=422, detail=str(e)) from e
     lat = (time.perf_counter() - t0) * 1000
     mid = resolved_model_id("coding")
-    if os.environ.get("MOCK_INFER", "").lower() in ("1", "true", "yes"):
+    if _mock_enabled():
         return JSONResponse(
             {
                 "usage": _usage(lat, 5, 20),
@@ -104,7 +144,22 @@ async def infer_coding(request: Request) -> JSONResponse:
                 "text": "# mock codegen\npass\n",
             },
         )
-    raise HTTPException(status_code=503, detail="Set MOCK_INFER=1 or load coding model")
+    try:
+        result = infer_with_hf(
+            "coding",
+            "You are the model-runtime coding role. Return implementation guidance or code scoped only to the task packet.",
+            _task_packet_prompt("coding_task_packet", body),
+        )
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    return JSONResponse(
+        {
+            "usage": _usage(result.latency_ms, result.prompt_tokens, result.completion_tokens),
+            "model_id_resolved": mid,
+            "text": result.text,
+            "structured_output": result.structured_output or {},
+        },
+    )
 
 
 @app.post("/infer/multimodal")
@@ -120,7 +175,7 @@ async def infer_multimodal(request: Request) -> JSONResponse:
         raise HTTPException(status_code=422, detail=str(e)) from e
     lat = (time.perf_counter() - t0) * 1000
     mid = resolved_model_id("multimodal")
-    if os.environ.get("MOCK_INFER", "").lower() in ("1", "true", "yes"):
+    if _mock_enabled():
         return JSONResponse(
             {
                 "usage": _usage(lat, 100, 50),
@@ -132,7 +187,22 @@ async def infer_multimodal(request: Request) -> JSONResponse:
                 "text": "mock multimodal summary",
             },
         )
-    raise HTTPException(status_code=503, detail="Set MOCK_INFER=1 or load VL model")
+    try:
+        result = infer_with_hf(
+            "multimodal",
+            "You are the model-runtime multimodal extraction role. Return packet-scoped extraction results as JSON when possible.",
+            _task_packet_prompt("multimodal_task_packet", body),
+        )
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    return JSONResponse(
+        {
+            "usage": _usage(result.latency_ms, result.prompt_tokens, result.completion_tokens),
+            "model_id_resolved": mid,
+            "text": result.text,
+            "structured_output": result.structured_output or {},
+        },
+    )
 
 
 @app.post("/solve/mechanics")

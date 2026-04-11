@@ -2,6 +2,7 @@ import { Annotation, END, START, StateGraph } from "@langchain/langgraph"
 import type { PlatformConfig } from "../config.js"
 import { LLMBackendError } from "../llm/manager.js"
 import { OrchestrationEngine } from "../orchestration/engine.js"
+import { resolveWorkflowModelRouting } from "../orchestration/runtime-router.js"
 import type { ChatMessage } from "../tools/wrkhrs.js"
 import {
   extractDomainWeightsFromMessages,
@@ -158,7 +159,7 @@ export function buildApiBrainPacket(state: WorkflowStateType): string {
   return JSON.stringify(packet, null, 2)
 }
 
-export function buildGenerateResponse(engine: OrchestrationEngine) {
+export function buildGenerateResponse(cfg: PlatformConfig, engine: OrchestrationEngine) {
   return async function generateResponse(
     state: WorkflowStateType,
   ): Promise<Partial<WorkflowStateType>> {
@@ -210,10 +211,15 @@ export function buildGenerateResponse(engine: OrchestrationEngine) {
     }
 
     try {
+      const routing = resolveWorkflowModelRouting(cfg, {}, state.workflow_config ?? {})
       const result = await engine.runSimpleChat({
         messages: enhancedMessages,
-        temperature: 0.7,
-        maxTokens: 1000,
+        temperature: routing.temperature ?? 0.7,
+        maxTokens: routing.maxTokens ?? 1000,
+        model: routing.model,
+        provider: routing.provider,
+        baseURL: routing.baseURL,
+        apiKey: routing.apiKey,
       })
       return {
         final_response: result.output || "No response generated",
@@ -235,7 +241,7 @@ export function createChatWorkflow(
   apiBrainCall?: (packet: string) => Promise<string>,
 ) {
   const gatherContext = buildGatherContext(cfg)
-  const generateResponse = buildGenerateResponse(engine)
+  const generateResponse = buildGenerateResponse(cfg, engine)
 
   const decideEscalation = async (
     state: WorkflowStateType,

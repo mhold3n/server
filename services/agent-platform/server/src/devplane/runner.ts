@@ -51,6 +51,11 @@ interface ActiveTaskPacket {
     implementation_hints?: string[]
     target_paths?: string[]
   }
+  response_control_ref?: string
+  selected_knowledge_pool_refs?: string[]
+  selected_module_refs?: string[]
+  selected_technique_refs?: string[]
+  selected_theory_refs?: string[]
   knowledge_context?: {
     assessment_ref?: string
     candidate_pack_refs?: string[]
@@ -75,6 +80,12 @@ interface TaskPacketManifest {
   knowledge_role_context_refs?: string[]
   knowledge_gaps?: string[]
   knowledge_required?: boolean
+  response_mode?: string
+  response_control_ref?: string
+  selected_knowledge_pool_refs?: string[]
+  selected_module_refs?: string[]
+  selected_technique_refs?: string[]
+  selected_theory_refs?: string[]
   active_knowledge_assessment_ref?: string
   active_role_context_ref?: string
   active_preferred_adapter_ref?: string
@@ -198,31 +209,37 @@ async function executeImplementationPhase(
   if (!selectedExecutor) {
     throw new Error("Active governed task packet is missing routing_metadata.selected_executor.")
   }
-  const knowledge = activeTaskPacket.knowledge_context
-  const knowledgeRequired = knowledge?.required === true || manifest?.knowledge_required === true
+  const responseControlRef =
+    activeTaskPacket.response_control_ref ?? manifest?.response_control_ref
+  const selectedPoolRefs =
+    activeTaskPacket.selected_knowledge_pool_refs ?? manifest?.selected_knowledge_pool_refs ?? []
+  const selectedTheoryRefs =
+    activeTaskPacket.selected_theory_refs ?? manifest?.selected_theory_refs ?? []
+  const selectedModuleRefs =
+    activeTaskPacket.selected_module_refs ?? manifest?.selected_module_refs ?? []
+  const knowledgeRequired = manifest?.knowledge_required === true || selectedPoolRefs.length > 0
   if (knowledgeRequired) {
-    if (!knowledge) {
+    if (!responseControlRef) {
       throw new Error(
-        "Active governed task packet requires knowledge_context before execution.",
+        "Active governed task packet requires response_control_ref before execution.",
       )
     }
-    if (!knowledge.assessment_ref) {
+    if (selectedPoolRefs.length === 0) {
       throw new Error(
-        "Active governed task packet requires knowledge_context.assessment_ref before execution.",
+        "Active governed task packet requires selected_knowledge_pool_refs before execution.",
       )
     }
-    if (!knowledge.role_context_ref) {
+    if (selectedTheoryRefs.length === 0) {
       throw new Error(
-        "Active governed task packet requires knowledge_context.role_context_ref before execution.",
+        "Active governed task packet requires selected_theory_refs before execution.",
       )
     }
     if (
-      knowledge.preferred_environment_ref &&
-      (!Array.isArray(knowledge.runtime_verification_refs) ||
-        knowledge.runtime_verification_refs.length === 0)
+      activeTaskPacket.routing_metadata?.selected_executor === "coding_model" &&
+      selectedModuleRefs.length === 0
     ) {
       throw new Error(
-        "Active governed task packet requires runtime_verification_refs for the preferred environment.",
+        "Active governed coding task packet requires selected_module_refs before execution.",
       )
     }
   }
@@ -586,7 +603,16 @@ function buildImplementationTask(
     activeTaskPacket.code_guidance.implementation_hints.length > 0
       ? activeTaskPacket.code_guidance.implementation_hints
       : []
-  const knowledge = activeTaskPacket.knowledge_context
+  const responseControlRef =
+    activeTaskPacket.response_control_ref ?? manifest?.response_control_ref
+  const selectedPoolRefs =
+    activeTaskPacket.selected_knowledge_pool_refs ?? manifest?.selected_knowledge_pool_refs ?? []
+  const selectedModuleRefs =
+    activeTaskPacket.selected_module_refs ?? manifest?.selected_module_refs ?? []
+  const selectedTechniqueRefs =
+    activeTaskPacket.selected_technique_refs ?? manifest?.selected_technique_refs ?? []
+  const selectedTheoryRefs =
+    activeTaskPacket.selected_theory_refs ?? manifest?.selected_theory_refs ?? []
   return [
     `Objective: ${objective}`,
     activeTaskPacket?.context_summary
@@ -601,33 +627,21 @@ function buildImplementationTask(
     implementationHints.length > 0
       ? `Implementation outline:\n- ${implementationHints.join("\n- ")}`
       : "",
-    knowledge?.assessment_ref
-      ? `Knowledge pool assessment ref: ${knowledge.assessment_ref}`
-      : manifest?.knowledge_pool_assessment_ref
-        ? `Knowledge pool assessment ref: ${manifest.knowledge_pool_assessment_ref}`
-        : "",
-    knowledge?.coverage_class
-      ? `Knowledge coverage: ${knowledge.coverage_class}`
-      : manifest?.knowledge_pool_coverage
-        ? `Knowledge coverage: ${manifest.knowledge_pool_coverage}`
-        : "",
-    knowledge?.candidate_pack_refs && knowledge.candidate_pack_refs.length > 0
-      ? `Knowledge candidate packs:\n- ${knowledge.candidate_pack_refs.join("\n- ")}`
-      : manifest?.knowledge_candidate_refs && manifest.knowledge_candidate_refs.length > 0
-        ? `Knowledge candidate packs:\n- ${manifest.knowledge_candidate_refs.join("\n- ")}`
-        : "",
-    knowledge?.role_context_ref ? `Role context ref: ${knowledge.role_context_ref}` : "",
-    knowledge?.role_context_summary
-      ? `Role context summary:\n${knowledge.role_context_summary}`
+    responseControlRef ? `Response control ref: ${responseControlRef}` : "",
+    manifest?.knowledge_pool_coverage
+      ? `Knowledge coverage: ${manifest.knowledge_pool_coverage}`
       : "",
-    knowledge?.preferred_adapter_ref
-      ? `Preferred adapter ref: ${knowledge.preferred_adapter_ref}`
+    selectedPoolRefs.length > 0
+      ? `Selected knowledge pools:\n- ${selectedPoolRefs.join("\n- ")}`
       : "",
-    knowledge?.preferred_environment_ref
-      ? `Preferred environment ref: ${knowledge.preferred_environment_ref}`
+    selectedModuleRefs.length > 0
+      ? `Selected modules:\n- ${selectedModuleRefs.join("\n- ")}`
       : "",
-    knowledge?.runtime_verification_refs && knowledge.runtime_verification_refs.length > 0
-      ? `Runtime verification refs:\n- ${knowledge.runtime_verification_refs.join("\n- ")}`
+    selectedTechniqueRefs.length > 0
+      ? `Selected techniques:\n- ${selectedTechniqueRefs.join("\n- ")}`
+      : "",
+    selectedTheoryRefs.length > 0
+      ? `Selected theory basis:\n- ${selectedTheoryRefs.join("\n- ")}`
       : "",
     manifest?.active_task_packet_ref
       ? `Active governed task packet: ${manifest.active_task_packet_ref}`
@@ -649,7 +663,16 @@ function buildReadOnlyTask(
   manifest?: TaskPacketManifest,
 ): string {
   const objective = manifest?.active_task_packet?.objective ?? "governed engineering task"
-  const knowledge = manifest?.active_task_packet?.knowledge_context
+  const activeTaskPacket = manifest?.active_task_packet
+  const responseControlRef = activeTaskPacket?.response_control_ref ?? manifest?.response_control_ref
+  const selectedPoolRefs =
+    activeTaskPacket?.selected_knowledge_pool_refs ?? manifest?.selected_knowledge_pool_refs ?? []
+  const selectedModuleRefs =
+    activeTaskPacket?.selected_module_refs ?? manifest?.selected_module_refs ?? []
+  const selectedTechniqueRefs =
+    activeTaskPacket?.selected_technique_refs ?? manifest?.selected_technique_refs ?? []
+  const selectedTheoryRefs =
+    activeTaskPacket?.selected_theory_refs ?? manifest?.selected_theory_refs ?? []
   return [
     `${title}: ${objective}`,
     manifest?.active_task_packet_ref
@@ -661,26 +684,18 @@ function buildReadOnlyTask(
     manifest?.engineering_state_ref
       ? `Engineering state ref: ${manifest.engineering_state_ref}`
       : "",
-    knowledge?.assessment_ref
-      ? `Knowledge pool assessment ref: ${knowledge.assessment_ref}`
-      : manifest?.knowledge_pool_assessment_ref
-        ? `Knowledge pool assessment ref: ${manifest.knowledge_pool_assessment_ref}`
-        : "",
-    knowledge?.role_context_ref
-      ? `Role context ref: ${knowledge.role_context_ref}`
-      : manifest?.active_role_context_ref
-        ? `Role context ref: ${manifest.active_role_context_ref}`
-        : "",
-    knowledge?.role_context_summary
-      ? `Role context summary:\n${knowledge.role_context_summary}`
+    responseControlRef ? `Response control ref: ${responseControlRef}` : "",
+    selectedPoolRefs.length > 0
+      ? `Selected knowledge pools:\n- ${selectedPoolRefs.join("\n- ")}`
       : "",
-    knowledge?.preferred_environment_ref
-      ? `Preferred environment ref: ${knowledge.preferred_environment_ref}`
-      : manifest?.active_preferred_environment_ref
-        ? `Preferred environment ref: ${manifest.active_preferred_environment_ref}`
-        : "",
-    knowledge?.runtime_verification_refs && knowledge.runtime_verification_refs.length > 0
-      ? `Runtime verification refs:\n- ${knowledge.runtime_verification_refs.join("\n- ")}`
+    selectedModuleRefs.length > 0
+      ? `Selected modules:\n- ${selectedModuleRefs.join("\n- ")}`
+      : "",
+    selectedTechniqueRefs.length > 0
+      ? `Selected techniques:\n- ${selectedTechniqueRefs.join("\n- ")}`
+      : "",
+    selectedTheoryRefs.length > 0
+      ? `Selected theory basis:\n- ${selectedTheoryRefs.join("\n- ")}`
       : "",
     "Treat the governed manifest and active task packet as authoritative.",
   ]

@@ -19,3 +19,11 @@ def load_models_config() -> dict[str, Any]:
 def resolved_model_id(role: str) -> str:
     cfg = load_models_config()
     return str(cfg["models"][role]["model_id"])
+
+
+def resolved_model_config(role: str) -> dict[str, Any]:
+    cfg = load_models_config()
+    model_cfg = cfg["models"][role]
+    if not isinstance(model_cfg, dict):
+        raise TypeError(f"models.{role} must be an object")
+    return model_cfg

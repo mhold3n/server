@@ -15,6 +15,7 @@ from .knowledge_pool import (
     resolve_stack,
     verify_runtime,
 )
+from .response_control import evaluate_response_control, load_response_control_catalog
 
 __all__ = [
     "ContractValidationError",
@@ -25,4 +26,6 @@ __all__ = [
     "resolve_runtime",
     "verify_runtime",
     "compile_role_context",
+    "evaluate_response_control",
+    "load_response_control_catalog",
 ]

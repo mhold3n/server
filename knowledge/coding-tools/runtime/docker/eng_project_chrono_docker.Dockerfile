@@ -1,5 +1,5 @@
-FROM ubuntu:24.04
-SHELL ["/bin/bash", "-lc"]
+FROM python:3.11-slim
+SHELL ["bash", "-lc"]
 WORKDIR /workspace
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends bash ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN python3 -m pip install --break-system-packages --no-cache-dir pychrono
 CMD ["bash"]

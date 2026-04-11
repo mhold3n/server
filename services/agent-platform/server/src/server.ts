@@ -34,7 +34,63 @@ const WORKFLOW_NAMES = [
   "devplane_code_task",
 ] as const
 
-const providerSchema = z.enum(["anthropic", "copilot", "grok", "openai", "gemini"])
+const providerSchema = z.enum([
+  "anthropic",
+  "copilot",
+  "grok",
+  "openai",
+  "gemini",
+  "ollama",
+  "vllm",
+  "huggingface",
+  "hf",
+  "hosted_api",
+  "local_worker",
+  "local",
+  "swarm",
+])
+
+function withModelRouting(
+  inputData: Record<string, unknown>,
+  workflowConfig?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  const existing = workflowConfig ?? {}
+  const current =
+    existing.model_routing &&
+    typeof existing.model_routing === "object" &&
+    !Array.isArray(existing.model_routing)
+      ? (existing.model_routing as Record<string, unknown>)
+      : {}
+  const modelRouting: Record<string, unknown> = { ...current }
+
+  if (typeof inputData.model === "string" && inputData.model.trim()) {
+    modelRouting.model = inputData.model
+  }
+  if (typeof inputData.temperature === "number") {
+    modelRouting.temperature = inputData.temperature
+  }
+  if (typeof inputData.max_tokens === "number") {
+    modelRouting.max_tokens = inputData.max_tokens
+  }
+  if (typeof inputData.maxTokens === "number") {
+    modelRouting.maxTokens = inputData.maxTokens
+  }
+  if (typeof inputData.provider === "string" && inputData.provider.trim()) {
+    modelRouting.provider_preference = inputData.provider
+  }
+  if (
+    typeof existing.provider_preference === "string" &&
+    existing.provider_preference.trim() &&
+    modelRouting.provider_preference === undefined
+  ) {
+    modelRouting.provider_preference = existing.provider_preference
+  }
+
+  if (Object.keys(modelRouting).length === 0) {
+    return workflowConfig
+  }
+  return { ...existing, model_routing: modelRouting }
+}
 
 export function buildServer() {
   const cfg = loadConfig()
@@ -99,6 +155,7 @@ export function buildServer() {
     model: z.string().optional(),
     temperature: z.number().optional(),
     max_tokens: z.number().optional(),
+    provider: providerSchema.optional(),
   })
 
   app.post("/chat", async (request, reply) => {
@@ -112,6 +169,12 @@ export function buildServer() {
       current_step: "analyze",
       tools_needed: [],
       tool_results: {},
+      workflow_config: withModelRouting({
+        model: body.model,
+        temperature: body.temperature,
+        max_tokens: body.max_tokens,
+        provider: body.provider,
+      }),
     })
 
     const now = Math.floor(Date.now() / 1000)
@@ -165,9 +228,9 @@ export function buildServer() {
     "/llm/switch/:backend_type",
     async (request, reply) => {
       const backend_type = request.params.backend_type.toLowerCase()
-      if (!["ollama", "vllm", "mock", "none", "disabled"].includes(backend_type)) {
+      if (!["ollama", "vllm", "huggingface", "hf", "mock", "none", "disabled"].includes(backend_type)) {
         return reply.status(400).send({
-          detail: "Backend must be ollama, vllm, mock, none, or disabled",
+          detail: "Backend must be ollama, vllm, huggingface, hf, mock, none, or disabled",
         })
       }
       return {
@@ -226,7 +289,10 @@ export function buildServer() {
         const messages = (inputData.messages as ChatMessage[]) ?? [
           { role: "user", content: String(inputData.prompt ?? inputData.query ?? "") },
         ]
-        const workflowConfig = (body.workflow_config as Record<string, unknown> | undefined) ?? undefined
+        const workflowConfig = withModelRouting(
+          inputData,
+          (body.workflow_config as Record<string, unknown> | undefined) ?? undefined,
+        )
         const requiredToolResults = (inputData.required_tool_results as unknown[] | undefined) ?? undefined
         const result = await chatWorkflow.invoke({
           messages,
@@ -269,8 +335,10 @@ export function buildServer() {
             ),
           },
         ]
-        const workflowConfig =
-          (body.workflow_config as Record<string, unknown> | undefined) ?? undefined
+        const workflowConfig = withModelRouting(
+          inputData,
+          (body.workflow_config as Record<string, unknown> | undefined) ?? undefined,
+        )
         const requiredToolResults =
           (inputData.required_tool_results as unknown[] | undefined) ?? undefined
         const result = await engineeringWorkflow.invoke({
@@ -523,6 +591,9 @@ export function buildServer() {
       systemPrompt: z.string().optional(),
       tools: z.array(z.string()).optional(),
       maxTurns: z.number().optional(),
+      maxTokens: z.number().optional(),
+      max_tokens: z.number().optional(),
+      temperature: z.number().optional(),
     }),
     prompt: z.string(),
   })
@@ -538,10 +609,12 @@ export function buildServer() {
       prompt,
       systemPrompt: agentSpec.systemPrompt,
       model: agentSpec.model,
-      provider: agentSpec.provider ?? defaultProvider,
+      provider: agentSpec.provider,
       extraTools: omaTools,
       toolNames: agentSpec.tools ?? ["search_knowledge_base", "get_domain_data"],
       maxTurns: agentSpec.maxTurns ?? 8,
+      maxTokens: agentSpec.maxTokens ?? agentSpec.max_tokens,
+      temperature: agentSpec.temperature,
     })
     return {
       success: result.success,
@@ -563,6 +636,9 @@ export function buildServer() {
         systemPrompt: z.string().optional(),
         tools: z.array(z.string()).optional(),
         maxTurns: z.number().optional(),
+        maxTokens: z.number().optional(),
+        max_tokens: z.number().optional(),
+        temperature: z.number().optional(),
       }),
     ),
   })
@@ -588,10 +664,12 @@ export function buildServer() {
         agents: body.team.agents.map((agent) => ({
           name: agent.name,
           model: agent.model,
-          provider: agent.provider ?? defaultProvider,
+          provider: agent.provider,
           systemPrompt: agent.systemPrompt,
           toolNames: agent.tools ?? ["search_knowledge_base", "get_domain_data"],
           maxTurns: agent.maxTurns ?? 6,
+          maxTokens: agent.maxTokens ?? agent.max_tokens,
+          temperature: agent.temperature,
         })),
       })
       return {
@@ -654,7 +732,10 @@ export function buildServer() {
             toolNames: agent.tools ?? ["search_knowledge_base", "get_domain_data"],
             maxTurns: agent.maxTurns ?? 6,
             model: agent.model,
-            provider: agent.provider ?? defaultProvider,
+            provider: agent.provider,
+            providerPreference: agent.provider,
+            maxTokens: agent.maxTokens ?? agent.max_tokens,
+            temperature: agent.temperature,
           }
         }),
       })

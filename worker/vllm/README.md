@@ -107,7 +107,7 @@ docker compose -f docker-compose.vllm.yml logs -f qwen-vllm
 docker run --gpus all \
   -p 8000:8000 \
   -e HF_TOKEN=your_token \
-  vllm/vllm-openai:latest \
+  "${VLLM_IMAGE:-vllm/vllm-openai@sha256:7a0f0fdd2771464b6976625c2b2d5dd46f566aa00fbc53eceab86ef50883da90}" \
   --model mistralai/Mistral-7B-Instruct-v0.3 \
   --dtype float16 \
   --max-model-len 8192 \
@@ -299,8 +299,8 @@ cp compose/docker-compose.worker.yml compose/docker-compose.worker.yml.backup
 
 ### Updating vLLM
 ```bash
-# Pull latest image
-docker pull vllm/vllm-openai:latest
+# Pull the pinned/default image (or override VLLM_IMAGE first)
+docker pull "${VLLM_IMAGE:-vllm/vllm-openai@sha256:7a0f0fdd2771464b6976625c2b2d5dd46f566aa00fbc53eceab86ef50883da90}"
 
 # Restart with new image
 docker compose -f compose/docker-compose.worker.yml up -d --force-recreate

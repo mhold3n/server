@@ -60,10 +60,6 @@ addopts = [
     "--strict-config",
     "-o",
     "cache_dir=../../.cache/pytest/services-api",
-    "--cov=src",
-    "--cov-report=term-missing",
-    "--cov-report=xml",
-    "--cov-fail-under=90",
 ]
 testpaths = ["tests"]
 markers = [

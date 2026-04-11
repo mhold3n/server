@@ -79,20 +79,30 @@ class DocumentResponse(BaseModel):
 
 
 class RemoteEmbeddingClient:
-    """Thin HTTP client for calling a remote OpenAI-compatible /v1/embeddings endpoint."""
+    """Thin HTTP client for remote OpenAI-compatible or Ollama embeddings."""
 
     def __init__(
-        self, endpoint_url: str, model: str = "default", timeout: float = 30.0
+        self,
+        endpoint_url: str,
+        model: str = "default",
+        timeout: float = 30.0,
+        backend: str = "openai",
     ):
         self.endpoint_url = endpoint_url.rstrip("/")
         self.model = model
         self.timeout = timeout
+        self.backend = backend
         self._dimension: Optional[int] = None
 
     async def encode(self, texts: Union[str, List[str]]) -> np.ndarray:
         """Encode text(s) via the remote endpoint. Returns np.ndarray of shape (n, dim)."""
         if isinstance(texts, str):
             texts = [texts]
+        if self.backend == "ollama":
+            return await self._encode_ollama(texts)
+        return await self._encode_openai(texts)
+
+    async def _encode_openai(self, texts: List[str]) -> np.ndarray:
         payload = {"model": self.model, "input": texts}
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             resp = await client.post(self.endpoint_url, json=payload)
@@ -100,6 +110,25 @@ class RemoteEmbeddingClient:
             data = resp.json()
         # OpenAI-compatible response: {"data": [{"embedding": [...]}, ...]}
         embeddings = [item["embedding"] for item in data["data"]]
+        arr = np.array(embeddings, dtype=np.float32)
+        if self._dimension is None:
+            self._dimension = arr.shape[1]
+        return arr
+
+    async def _encode_ollama(self, texts: List[str]) -> np.ndarray:
+        endpoint = self.endpoint_url
+        if not endpoint.endswith("/api/embed"):
+            endpoint = f"{endpoint}/api/embed"
+        payload = {"model": self.model, "input": texts}
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            resp = await client.post(endpoint, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+        embeddings = data.get("embeddings")
+        if embeddings is None and "embedding" in data:
+            embeddings = [data["embedding"]]
+        if not isinstance(embeddings, list):
+            raise ValueError("Ollama embedding response missing embeddings")
         arr = np.array(embeddings, dtype=np.float32)
         if self._dimension is None:
             self._dimension = arr.shape[1]
@@ -121,6 +150,7 @@ class RAGService:
         self.embed_model_name = os.getenv(
             "EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
         )
+        self.embedding_backend = os.getenv("EMBEDDING_BACKEND", "auto").lower()
         self.use_mock = os.getenv("USE_MOCK_MODELS", "false").lower() == "true"
         self.requests_total = 0
 
@@ -153,18 +183,54 @@ class RAGService:
 
             # Initialize embedding backend (remote-first, local fallback, optional mock)
             embedding_endpoint = os.getenv("EMBEDDING_ENDPOINT_URL", "").strip()
+            if self.embedding_backend not in {
+                "auto",
+                "openai",
+                "ollama",
+                "local",
+                "mock",
+            }:
+                raise ValueError(
+                    "EMBEDDING_BACKEND must be auto, openai, ollama, local, or mock"
+                )
 
-            if self.use_mock:
+            if self.use_mock or self.embedding_backend == "mock":
                 logger.info(
                     "USE_MOCK_MODELS=true – using lightweight mock embeddings backend"
                 )
+                self.use_mock = True
                 # Keep default embedding_dimension; embeddings will be simple numeric features.
-            elif embedding_endpoint:
-                logger.info(f"Using REMOTE embeddings at {embedding_endpoint}")
+            elif embedding_endpoint or self.embedding_backend in {"openai", "ollama"}:
+                resolved_backend = self.embedding_backend
+                if resolved_backend == "auto":
+                    resolved_backend = (
+                        "ollama"
+                        if "11434" in embedding_endpoint
+                        or embedding_endpoint.endswith("/api/embed")
+                        else "openai"
+                    )
+                if resolved_backend == "ollama" and not embedding_endpoint:
+                    embedding_endpoint = (
+                        os.getenv("OLLAMA_BASE_URL")
+                        or os.getenv("LLM_RUNNER_URL")
+                        or "http://llm-runner:11434"
+                    )
+                if resolved_backend == "openai" and not embedding_endpoint:
+                    base = (os.getenv("LLM_RUNNER_URL") or "http://llm-runner:8000").rstrip(
+                        "/"
+                    )
+                    embedding_endpoint = (
+                        base if base.endswith("/v1/embeddings") else f"{base}/v1/embeddings"
+                    )
+                logger.info(
+                    f"Using REMOTE {resolved_backend} embeddings at {embedding_endpoint}"
+                )
                 self._remote_embedder = RemoteEmbeddingClient(
                     endpoint_url=embedding_endpoint,
                     model=self.embed_model_name,
+                    backend=resolved_backend,
                 )
+                self.embedding_backend = resolved_backend
                 # Probe the endpoint to discover dimension
                 try:
                     probe = await self._remote_embedder.encode("probe")
@@ -177,6 +243,7 @@ class RAGService:
                         f"Remote embedding probe failed ({e}), using default dim"
                     )
             else:
+                self.embedding_backend = "local"
                 logger.info("Loading LOCAL embedding model...")
                 if SentenceTransformer is None:
                     raise ImportError(
@@ -384,6 +451,64 @@ class RAGService:
             total_weight += weight
 
         return total_score / total_weight if total_weight > 0 else 0.0
+
+    async def rerank_candidates(
+        self,
+        query: str,
+        candidates: List[Dict[str, Any]],
+        k: int,
+    ) -> bool:
+        """Apply optional cross-encoder reranking in-place.
+
+        Returns True when reranking was applied, False when disabled or failed.
+        The existing embedding/BM25/domain score remains part of the final score
+        so failures or flat cross-encoder outputs do not destabilize retrieval.
+        """
+        if not self.reranker_url or not candidates:
+            return False
+
+        endpoint = self.reranker_url.rstrip("/")
+        if not endpoint.endswith("/rerank"):
+            endpoint = f"{endpoint}/rerank"
+
+        documents = [str(candidate.get("content", "")) for candidate in candidates]
+        try:
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                resp = await client.post(
+                    endpoint,
+                    json={"query": query, "documents": documents, "top_k": len(documents)},
+                )
+                resp.raise_for_status()
+                payload = resp.json()
+        except Exception as e:
+            logger.warning(f"Cross-encoder reranking failed; using fallback scores: {e}")
+            return False
+
+        raw_scores: Dict[int, float] = {}
+        for item in payload.get("results", []):
+            if isinstance(item, dict) and isinstance(item.get("index"), int):
+                raw_scores[int(item["index"])] = float(item.get("score", 0.0))
+
+        if not raw_scores:
+            return False
+
+        min_score = min(raw_scores.values())
+        max_score = max(raw_scores.values())
+        span = max(max_score - min_score, 1e-8)
+
+        for idx, candidate in enumerate(candidates):
+            if idx not in raw_scores:
+                continue
+            raw = raw_scores[idx]
+            normalized = 1.0 if max_score == min_score else (raw - min_score) / span
+            candidate["reranker_score"] = raw
+            candidate["combined_score"] = (
+                normalized * 0.65 + float(candidate.get("combined_score", 0.0)) * 0.35
+            )
+
+        candidates.sort(key=lambda x: x["combined_score"], reverse=True)
+        del candidates[k * 4 :]
+        return True
 
     def generate_citations(
         self,
@@ -666,6 +791,8 @@ class RAGService:
 
                 candidate["combined_score"] = combined_score
 
+            reranking_applied = await self.rerank_candidates(query, candidates, k)
+
             # Sort by combined score and apply final threshold
             candidates.sort(key=lambda x: x["combined_score"], reverse=True)
             final_results = [
@@ -680,7 +807,8 @@ class RAGService:
 
             logger.info(
                 f"Search completed in {search_time:.3f}s. Found {len(final_results)} relevant chunks. "
-                f"BM25 reranking: {'enabled' if use_bm25_reranking else 'disabled'}"
+                f"BM25 reranking: {'enabled' if use_bm25_reranking else 'disabled'}; "
+                f"cross-encoder reranking: {'enabled' if reranking_applied else 'disabled'}"
             )
             self.requests_total += 1
 
@@ -690,7 +818,13 @@ class RAGService:
                 "evidence": evidence,
                 "search_time": search_time,
                 "reranking_method": (
-                    "bm25_embedding" if use_bm25_reranking else "embedding_only"
+                    "cross_encoder_bm25_embedding"
+                    if reranking_applied and use_bm25_reranking
+                    else "cross_encoder_embedding"
+                    if reranking_applied
+                    else "bm25_embedding"
+                    if use_bm25_reranking
+                    else "embedding_only"
                 ),
             }
 
@@ -737,6 +871,9 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "embedding_model_loaded": rag_service.embedding_model is not None,
         "embedding_model_name": rag_service.embed_model_name,
+        "embedding_backend": rag_service.embedding_backend,
+        "remote_embedding_configured": rag_service._remote_embedder is not None,
+        "reranker_configured": rag_service.reranker_url is not None,
         "use_mock": rag_service.use_mock,
         "qdrant_status": qdrant_status,
         "embedding_dimension": rag_service.embedding_dimension,

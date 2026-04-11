@@ -8,12 +8,15 @@ export interface PlatformConfig {
   llmBackend: string
   ollamaModel: string
   vllmModel: string
+  huggingfaceModel: string
+  huggingfaceBaseUrl: string
+  huggingfaceApiKey?: string
   apiBrainEnabled: boolean
   apiBrainMaxEscalationsPerTask: number
   apiBrainProvider: "anthropic" | "openai"
   apiBrainModel: string
   orchestrationDefaultModel: string
-  orchestrationDefaultProvider: "anthropic" | "copilot" | "grok" | "openai" | "gemini"
+  orchestrationDefaultProvider: "anthropic" | "copilot" | "grok" | "openai" | "gemini" | "ollama"
   orchestrationDefaultBaseUrl?: string
   orchestrationDefaultApiKey?: string
   orchestrationMaxTokenBudget?: number
@@ -51,6 +54,13 @@ export function loadConfig(): PlatformConfig {
     llmBackend: (process.env.LLM_BACKEND ?? "mock").toLowerCase(),
     ollamaModel: process.env.OLLAMA_MODEL ?? "llama3:8b-instruct",
     vllmModel: process.env.VLLM_MODEL ?? "default",
+    huggingfaceModel:
+      process.env.HF_INFERENCE_MODEL ?? process.env.HUGGINGFACE_MODEL ?? "Qwen/Qwen3-8B",
+    huggingfaceBaseUrl: (
+      process.env.HF_INFERENCE_BASE_URL ?? "https://router.huggingface.co/v1"
+    ).replace(/\/$/, ""),
+    huggingfaceApiKey:
+      process.env.HUGGINGFACE_HUB_TOKEN?.trim() || process.env.HF_TOKEN?.trim() || undefined,
     apiBrainEnabled: (process.env.API_BRAIN_ENABLED ?? "false").toLowerCase() === "true",
     apiBrainMaxEscalationsPerTask: Number(process.env.API_BRAIN_MAX_ESCALATIONS_PER_TASK ?? "1"),
     apiBrainProvider:
@@ -66,6 +76,7 @@ export function loadConfig(): PlatformConfig {
         | "grok"
         | "openai"
         | "gemini"
+        | "ollama"
         | undefined) ?? "anthropic"),
     orchestrationDefaultBaseUrl: (process.env.OMA_DEFAULT_BASE_URL ?? "").trim() || undefined,
     orchestrationDefaultApiKey: (process.env.OMA_DEFAULT_API_KEY ?? "").trim() || undefined,

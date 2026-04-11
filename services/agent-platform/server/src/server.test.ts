@@ -286,6 +286,16 @@ describe("agent-platform server", () => {
               knowledge_pool_assessment_ref: "artifact://knowledge_pool_assessment/kpa-1",
               knowledge_pool_coverage: "strong",
               knowledge_candidate_refs: ["artifact://knowledge-pack/demo-pack"],
+              response_mode: "engineering",
+              response_control_ref: "artifact://response-control-assessment/rca-1",
+              selected_knowledge_pool_refs: ["artifact://knowledge-pool/computational_engineering"],
+              selected_module_refs: ["artifact://module-card/engineering_orchestration_stack"],
+              selected_technique_refs: [
+                "artifact://technique-card/artifact_first_task_graph_execution",
+              ],
+              selected_theory_refs: [
+                "artifact://theory-card/computational_engineering_numerical_methods",
+              ],
               knowledge_role_contexts: {
                 coder: {
                   role_context_bundle_id: "coder_ctx_1",
@@ -315,17 +325,19 @@ describe("agent-platform server", () => {
                   required_outputs: [{ artifact_type: "CODE_PATCH" }],
                   acceptance_criteria: ["Emit a patch artifact"],
                   constraints: ["Honor the governed packet"],
-                  knowledge_context: {
-                    assessment_ref: "artifact://knowledge_pool_assessment/kpa-1",
-                    candidate_pack_refs: ["artifact://knowledge-pack/demo-pack"],
-                    role_context_ref: "artifact://role_context_bundle/coder_ctx_1",
-                    role_context_summary: "Use the verified demo pack and runtime.",
-                    preferred_adapter_ref: "artifact://execution-adapter/demo-adapter",
-                    preferred_environment_ref: "artifact://environment-spec/demo-env",
-                    runtime_verification_refs: ["artifact://verification-report/demo-runtime"],
-                    coverage_class: "strong",
-                    required: true,
-                  },
+                  response_control_ref: "artifact://response-control-assessment/rca-1",
+                  selected_knowledge_pool_refs: [
+                    "artifact://knowledge-pool/computational_engineering",
+                  ],
+                  selected_module_refs: [
+                    "artifact://module-card/engineering_orchestration_stack",
+                  ],
+                  selected_technique_refs: [
+                    "artifact://technique-card/artifact_first_task_graph_execution",
+                  ],
+                  selected_theory_refs: [
+                    "artifact://theory-card/computational_engineering_numerical_methods",
+                  ],
                   routing_metadata: { selected_executor: "coding_model" },
                   budget_policy: { allow_escalation: false },
                 },
@@ -339,6 +351,19 @@ describe("agent-platform server", () => {
                   required_outputs: [{ artifact_type: "VERIFICATION_REPORT" }],
                   acceptance_criteria: ["Verification report emitted"],
                   validation_requirements: ["criterion_1:test:target 1 pass"],
+                  response_control_ref: "artifact://response-control-assessment/rca-1",
+                  selected_knowledge_pool_refs: [
+                    "artifact://knowledge-pool/computational_engineering",
+                  ],
+                  selected_module_refs: [
+                    "artifact://module-card/engineering_orchestration_stack",
+                  ],
+                  selected_technique_refs: [
+                    "artifact://technique-card/artifact_first_task_graph_execution",
+                  ],
+                  selected_theory_refs: [
+                    "artifact://theory-card/computational_engineering_numerical_methods",
+                  ],
                   routing_metadata: { selected_executor: "deterministic_validator" },
                   budget_policy: { allow_escalation: true },
                 },
@@ -405,7 +430,7 @@ describe("agent-platform server", () => {
     await rm(path.dirname(fakeClaw), { recursive: true, force: true })
   })
 
-  it("POST /v1/workflows/execute engineering_workflow blocks when required knowledge role context is missing", async () => {
+  it("POST /v1/workflows/execute engineering_workflow blocks when required theory refs are missing", async () => {
     process.env.LLM_BACKEND = "mock"
     process.env.ORCHESTRATOR_API_URL = "http://127.0.0.1:7777"
     vi.stubGlobal(
@@ -424,6 +449,14 @@ describe("agent-platform server", () => {
               knowledge_pool_coverage: "strong",
               knowledge_candidate_refs: ["artifact://knowledge-pack/demo-pack"],
               knowledge_required: true,
+              response_mode: "engineering",
+              response_control_ref: "artifact://response-control-assessment/rca-1",
+              selected_knowledge_pool_refs: ["artifact://knowledge-pool/computational_engineering"],
+              selected_module_refs: ["artifact://module-card/engineering_orchestration_stack"],
+              selected_technique_refs: [
+                "artifact://technique-card/artifact_first_task_graph_execution",
+              ],
+              selected_theory_refs: [],
               engineering_state: {
                 engineering_state_id: "es-1",
                 open_issues: [],
@@ -443,12 +476,17 @@ describe("agent-platform server", () => {
                   required_outputs: [{ artifact_type: "CODE_PATCH" }],
                   acceptance_criteria: ["Emit a patch artifact"],
                   constraints: ["Honor the governed packet"],
-                  knowledge_context: {
-                    assessment_ref: "artifact://knowledge_pool_assessment/kpa-1",
-                    candidate_pack_refs: ["artifact://knowledge-pack/demo-pack"],
-                    coverage_class: "strong",
-                    required: true,
-                  },
+                  response_control_ref: "artifact://response-control-assessment/rca-1",
+                  selected_knowledge_pool_refs: [
+                    "artifact://knowledge-pool/computational_engineering",
+                  ],
+                  selected_module_refs: [
+                    "artifact://module-card/engineering_orchestration_stack",
+                  ],
+                  selected_technique_refs: [
+                    "artifact://technique-card/artifact_first_task_graph_execution",
+                  ],
+                  selected_theory_refs: [],
                   routing_metadata: { selected_executor: "coding_model" },
                   budget_policy: { allow_escalation: false },
                 },
@@ -474,7 +512,7 @@ describe("agent-platform server", () => {
           messages: [
             {
               role: "user",
-              content: "Implement the governed patch with required knowledge context.",
+              content: "Implement the governed patch with missing theory refs.",
             },
           ],
         },
@@ -486,7 +524,7 @@ describe("agent-platform server", () => {
       result: { final_response?: string; verification_outcome?: string; lifecycle_reason?: string }
     }
     expect(body.status).toBe("completed")
-    expect(body.result?.final_response).toContain("knowledge_context.role_context_ref")
+    expect(body.result?.final_response).toContain("selected_theory_refs")
     expect(body.result?.verification_outcome).toBe("BLOCKED")
     expect(body.result?.lifecycle_reason).toBe("governance_gate")
     vi.unstubAllGlobals()
@@ -509,6 +547,16 @@ describe("agent-platform server", () => {
               engineering_session_id: "sess-3",
               problem_brief: { problem_brief_id: "pb-1", title: "Strict task" },
               problem_brief_ref: "artifact://problem_brief/pb-1",
+              response_mode: "engineering",
+              response_control_ref: "artifact://response-control-assessment/rca-1",
+              selected_knowledge_pool_refs: ["artifact://knowledge-pool/computational_engineering"],
+              selected_module_refs: ["artifact://module-card/engineering_orchestration_stack"],
+              selected_technique_refs: [
+                "artifact://technique-card/artifact_first_task_graph_execution",
+              ],
+              selected_theory_refs: [
+                "artifact://theory-card/computational_engineering_numerical_methods",
+              ],
               engineering_state: {
                 engineering_state_id: "es-1",
                 open_issues: [],
@@ -528,6 +576,19 @@ describe("agent-platform server", () => {
                   required_outputs: [{ artifact_type: "CODE_PATCH" }],
                   acceptance_criteria: ["Emit a patch artifact"],
                   constraints: ["Honor the governed packet"],
+                  response_control_ref: "artifact://response-control-assessment/rca-1",
+                  selected_knowledge_pool_refs: [
+                    "artifact://knowledge-pool/computational_engineering",
+                  ],
+                  selected_module_refs: [
+                    "artifact://module-card/engineering_orchestration_stack",
+                  ],
+                  selected_technique_refs: [
+                    "artifact://technique-card/artifact_first_task_graph_execution",
+                  ],
+                  selected_theory_refs: [
+                    "artifact://theory-card/computational_engineering_numerical_methods",
+                  ],
                   routing_metadata: { selected_executor: "coding_model" },
                   budget_policy: { allow_escalation: false },
                 },
@@ -541,6 +602,19 @@ describe("agent-platform server", () => {
                   required_outputs: [{ artifact_type: "VERIFICATION_REPORT" }],
                   acceptance_criteria: ["Verification report emitted"],
                   validation_requirements: ["criterion_1:test:target 1 pass"],
+                  response_control_ref: "artifact://response-control-assessment/rca-1",
+                  selected_knowledge_pool_refs: [
+                    "artifact://knowledge-pool/computational_engineering",
+                  ],
+                  selected_module_refs: [
+                    "artifact://module-card/engineering_orchestration_stack",
+                  ],
+                  selected_technique_refs: [
+                    "artifact://technique-card/artifact_first_task_graph_execution",
+                  ],
+                  selected_theory_refs: [
+                    "artifact://theory-card/computational_engineering_numerical_methods",
+                  ],
                   routing_metadata: { selected_executor: "deterministic_validator" },
                   budget_policy: { allow_escalation: true },
                 },

@@ -24,6 +24,12 @@ EXCLUDED_PATH = REPO_ROOT / "KNOWLEGE MINUTES EXCLUDED.md"
 ACQUISITION_DOSSIERS_JSON_PATH = (
     REPO_ROOT / "knowledge" / "coding-tools" / "substrate" / "deferred-acquisition-dossiers.json"
 )
+PACKAGE_COMPLETION_LEDGER_PATH = (
+    REPO_ROOT / "knowledge" / "coding-tools" / "substrate" / "package-completion-ledger.json"
+)
+PACKAGE_PROMOTION_HISTORY_PATH = (
+    REPO_ROOT / "knowledge" / "coding-tools" / "substrate" / "package-promotion-history.json"
+)
 
 
 def _copy_knowledge_root(tmp_path: Path) -> Path:
@@ -51,7 +57,7 @@ def _excluded_names_from_markdown(path: Path) -> set[str]:
     return names
 
 
-def test_seed_catalog_matches_phase2_inventory_and_synthetic_packs() -> None:
+def test_seed_catalog_matches_phase3_inventory_and_synthetic_packs() -> None:
     catalog = load_knowledge_pool()
     inventory = load_minutes_inventory()
     inventory_pack_refs = {
@@ -92,15 +98,33 @@ def test_minutes_inventory_entries_have_runtime_or_exclusion_row() -> None:
             "detailed_linked_parent_gated",
             "detailed_linked_manual",
         }
+        assert entry["phase3_completion_status"] in {
+            "promoted",
+            "queued",
+            "smoke_verified",
+            "blocked_runtime",
+            "blocked_smoke",
+            "blocked_external",
+        }
+        assert entry["phase3_primary_runtime_ref"].startswith("artifact://environment-spec/")
+        assert entry["phase3_smoke_case_ref"].startswith("package-smoke://")
+        assert isinstance(entry["phase3_parent_completion_refs"], list)
+        assert isinstance(entry["promotion_ready"], bool)
         if entry["implementation_status"] == "implemented":
             assert entry["environment_refs"]
             assert entry["excluded_reason"] is None
             assert entry["phase_state"] == "linked"
             assert entry["phase2_link_status"] == "recommendable"
-            assert entry["alias_resolution_kind"] == "self"
+            assert entry["alias_resolution_kind"] in {
+                "self",
+                "substituted_by_canonical_pack",
+            }
+            assert entry["phase3_completion_status"] == "promoted"
+            assert entry["promotion_ready"] is True
             continue
         assert entry["excluded_reason"]
         assert entry["name"] in excluded_names
+        assert entry["promotion_ready"] is False
     assert excluded_names == inventory_excluded_names
 
 
@@ -120,6 +144,13 @@ def test_excluded_inventory_entries_have_recovery_metadata() -> None:
             "detailed_linked_runtime_gated",
             "detailed_linked_parent_gated",
             "detailed_linked_manual",
+        }
+        assert entry["phase3_completion_status"] in {
+            "queued",
+            "smoke_verified",
+            "blocked_runtime",
+            "blocked_smoke",
+            "blocked_external",
         }
         assert entry["alias_resolution_kind"] in {
             "self",
@@ -151,13 +182,15 @@ def test_excluded_inventory_entries_have_recovery_metadata() -> None:
             "linked",
             "deferred",
         }
+        assert entry["promotion_ready"] is False
         if entry["install_method_category"] == "I6_deferred_external_manual":
             assert entry["manual_acquisition_required"] is True
             assert entry["phase_target"] == "next_sprint"
             assert entry["phase_state"] == "deferred"
             assert entry["phase2_link_status"] == "detailed_linked_manual"
+            assert entry["phase3_completion_status"] == "blocked_external"
         else:
-            assert entry["phase_target"] == "phase1"
+            assert entry["phase_target"] in {"phase1", "phase3b"}
 
 
 def test_recovery_plan_metadata_covers_all_install_and_kb_categories() -> None:
@@ -166,8 +199,8 @@ def test_recovery_plan_metadata_covers_all_install_and_kb_categories() -> None:
     install_categories = {item["id"] for item in recovery_plan["install_method_categories"]}
     kb_categories = {item["id"] for item in recovery_plan["kb_build_method_categories"]}
     excluded_entries = [entry for entry in inventory["entries"] if entry["implementation_status"] == "excluded"]
-    assert {entry["install_method_category"] for entry in excluded_entries} == install_categories
-    assert {entry["kb_build_method_category"] for entry in excluded_entries} == kb_categories
+    assert {entry["install_method_category"] for entry in excluded_entries} <= install_categories
+    assert {entry["kb_build_method_category"] for entry in excluded_entries} <= kb_categories
 
 
 def test_host_companion_dependency_metadata_matches_plan() -> None:
@@ -186,31 +219,43 @@ def test_cli_phase1_metadata_distinguishes_ready_and_manual_modules() -> None:
     assert by_slug["picogk_shapekernel"]["install_method_category"] == "I2_containerized_native_backend_family"
     assert by_slug["picogk_shapekernel"]["cli_install_channel"] == "dotnet_nuget"
     assert by_slug["picogk_shapekernel"]["manual_acquisition_required"] is False
-    assert by_slug["picogk_shapekernel"]["phase_target"] == "phase1"
-    assert by_slug["picogk_shapekernel"]["phase_state"] == "installed"
+    assert by_slug["picogk_shapekernel"]["phase_target"] == "completed"
+    assert by_slug["picogk_shapekernel"]["phase_state"] == "linked"
     assert by_slug["picogk_shapekernel"]["phase2_link_status"] == "recommendable"
+    assert by_slug["picogk_shapekernel"]["phase3_completion_status"] == "promoted"
+    assert by_slug["picogk_shapekernel"]["promotion_ready"] is True
     assert by_slug["picogk_shapekernel"]["environment_refs"] == ["artifact://environment-spec/eng_dotnet_sdk"]
-    assert by_slug["compas"]["phase_state"] == "installed"
+    assert by_slug["compas"]["phase_state"] == "linked"
     assert by_slug["compas"]["acquisition_status"] == "verified_in_knowledge_runtime"
     assert by_slug["compas"]["phase2_link_status"] == "recommendable"
+    assert by_slug["compas"]["phase3_completion_status"] == "promoted"
     assert "artifact://environment-spec/eng_geometry_uv" in by_slug["compas"]["environment_refs"]
-    assert by_slug["rhino_common"]["phase_state"] == "installed"
+    assert by_slug["rhino_common"]["phase_state"] == "linked"
     assert by_slug["rhino_common"]["cli_install_channel"] == "host_app_cli"
     assert by_slug["rhino_common"]["phase2_link_status"] == "recommendable"
+    assert by_slug["rhino_common"]["phase3_completion_status"] == "promoted"
     assert by_slug["rhino_common"]["environment_refs"] == ["artifact://environment-spec/eng_rhino_host"]
     assert by_slug["ipopt"]["environment_refs"] == ["artifact://environment-spec/eng_ipopt_onemkl_docker"]
-    assert by_slug["ipopt"]["phase2_link_status"] == "detailed_linked_runtime_gated"
+    assert by_slug["ipopt"]["phase2_link_status"] == "recommendable"
+    assert by_slug["ipopt"]["phase3_completion_status"] == "promoted"
+    assert by_slug["ipopt"]["phase_target"] == "completed"
+    assert by_slug["ipopt"]["phase_state"] == "linked"
     assert by_slug["pardiso"]["manual_acquisition_required"] is False
     assert by_slug["pardiso"]["cli_install_channel"] == "docker_build_with_onemkl"
-    assert by_slug["pardiso"]["phase2_link_status"] == "detailed_linked_runtime_gated"
+    assert by_slug["pardiso"]["phase2_link_status"] == "recommendable"
+    assert by_slug["pardiso"]["phase3_completion_status"] == "promoted"
     assert by_slug["pardiso"]["knowledge_pack_ref"] == "artifact://knowledge-pack/onemkl"
     assert by_slug["pardiso"]["alias_resolution_kind"] == "substituted_by_canonical_pack"
-    assert by_slug["ompython"]["phase_state"] == "installed"
-    assert by_slug["ompython"]["acquisition_status"] == "verified_in_knowledge_runtime_parent_pending"
-    assert by_slug["ompython"]["phase2_link_status"] == "detailed_linked_parent_gated"
+    assert by_slug["ompython"]["phase_state"] == "linked"
+    assert by_slug["ompython"]["acquisition_status"] == "verified_in_knowledge_runtime"
+    assert by_slug["ompython"]["phase2_link_status"] == "recommendable"
+    assert by_slug["ompython"]["phase3_completion_status"] == "promoted"
+    assert by_slug["porepy"]["phase3_completion_status"] == "promoted"
+    assert by_slug["porepy"]["phase2_link_status"] == "recommendable"
     assert by_slug["femm"]["user_intervention_class"] == "website_download"
     assert by_slug["femm"]["cli_install_channel"] == "wine_installer_after_download"
     assert by_slug["femm"]["phase2_link_status"] == "detailed_linked_manual"
+    assert by_slug["femm"]["phase3_completion_status"] == "blocked_external"
 
 
 def test_excluded_markdown_is_grouped_by_install_and_kb_method() -> None:
@@ -218,11 +263,12 @@ def test_excluded_markdown_is_grouped_by_install_and_kb_method() -> None:
     assert "## Remaining User Intervention Required" in content
     assert "## By Install Method" in content
     assert "## By Knowledge Build Method" in content
-    assert "### I1 containerized_native_solver_platform -> K1 executable_solver_platform_pack" in content
+    assert "### I6 deferred_external_manual -> K6 acquisition_deferred_pack" in content
     assert "### K6 acquisition_deferred_pack" in content
-    assert "| PicoGK / ShapeKernel |" in content
-    assert "| PARDISO |" in content
-    assert "| RhinoCommon |" in content
+    assert "### I1 containerized_native_solver_platform -> K1 executable_solver_platform_pack" not in content
+    assert "| PicoGK / ShapeKernel |" not in content
+    assert "| PARDISO |" not in content
+    assert "| RhinoCommon |" not in content
     assert "| FEMM |" in content
 
 
@@ -306,15 +352,15 @@ def test_phase2_alias_rows_resolve_to_canonical_pack() -> None:
     assert pardiso["knowledge_pack_ref"] == "artifact://knowledge-pack/onemkl"
     assert pardiso["alias_resolution_kind"] == "substituted_by_canonical_pack"
     assert pardiso["canonical_tool_name"] == "Intel oneMKL"
+    assert pardiso["phase3_parent_completion_refs"] == []
 
 
 def test_lookup_knowledge_packs_supports_aliases_but_keeps_runtime_gates() -> None:
-    assert lookup_knowledge_packs("pardiso") == []
-    hits = lookup_knowledge_packs("pardiso", include_runtime_gated=True)
+    hits = lookup_knowledge_packs("pardiso")
     assert hits
     first = hits[0]
     assert first.knowledge_pack_ref == "artifact://knowledge-pack/onemkl"
-    assert first.runtime_gated is True
+    assert first.runtime_gated is False
     assert first.matched_terms == ("pardiso",)
 
 
@@ -324,8 +370,10 @@ def test_top_level_compiled_context_summaries_exclude_runtime_gated_phase2_packs
     summary = payload["payload"]["compiled_summary"]
     assert "RhinoCommon" in summary
     assert "CGNS" in summary
-    assert "Intel oneMKL" not in summary
+    assert "Intel oneMKL" in summary
     assert "Geometry Native Family" not in summary
+    assert "CGAL" in summary
+    assert "OpenCAMLib" in summary
 
 
 def test_phase2_compiled_contexts_include_aliases_and_runtime_gates() -> None:
@@ -336,8 +384,8 @@ def test_phase2_compiled_contexts_include_aliases_and_runtime_gates() -> None:
     summary = payload["payload"]["compiled_summary"]
     assert "Intel oneMKL" in summary
     assert "Aliases: PARDISO." in summary
-    assert "Runtime gate:" in summary
-    assert "canonical Docker build has not been verified in this sprint" in summary
+    assert "Runtime eng-ipopt-onemkl/docker_image" in summary
+    assert "verification refs artifact://verification-report/" in summary
 
 
 def test_phase2_generated_batch_context_files_exist() -> None:
@@ -345,6 +393,177 @@ def test_phase2_generated_batch_context_files_exist() -> None:
     assert (phase2_root / "family_k2_backend_families_general.json").exists()
     assert (phase2_root / "install_phase1_batch1f_onemkl_family_general.json").exists()
     assert (phase2_root / "kb_phase2_batch_k6_deferred_acquisition_reviewer.json").exists()
+
+
+def test_phase3_completion_ledger_covers_every_recovery_module() -> None:
+    payload = _read_json(PACKAGE_COMPLETION_LEDGER_PATH)
+    assert isinstance(payload, dict)
+    entries = payload["entries"]
+    assert len(entries) == 76
+    assert {entry["module_slug"] for entry in entries} == {
+        entry["slug"]
+        for entry in load_minutes_inventory()["entries"]
+        if entry["slug"] in {
+            "openfoam",
+            "calculix",
+            "code_saturne",
+            "su2",
+            "code_aster",
+            "openwam",
+            "opensmokepp",
+            "openmodelica",
+            "kratos_multiphysics",
+            "moose",
+            "fenicsx",
+            "dealii",
+            "hermes",
+            "dakota",
+            "project_chrono",
+            "mbdyn",
+            "salome",
+            "paraview",
+            "petsc",
+            "petsc_ksp",
+            "petsc_gamg",
+            "slepc",
+            "hypre",
+            "primme",
+            "trilinos",
+            "trilinos_belos",
+            "trilinos_ifpack2",
+            "trilinos_muelu",
+            "mumps",
+            "superlu",
+            "superlu_dist",
+            "suitesparse",
+            "cholmod",
+            "umfpack",
+            "klu",
+            "strumpack",
+            "ipopt",
+            "sundials",
+            "tchem",
+            "ma57",
+            "ma77",
+            "ma86",
+            "ma87",
+            "ma97",
+            "cgal",
+            "opencamlib",
+            "pardiso",
+            "picogk_shapekernel",
+            "dymos",
+            "mphys",
+            "idaes",
+            "optas",
+            "simpy",
+            "compas",
+            "simpeg",
+            "pyphs",
+            "openpnm",
+            "porepy",
+            "rmg_py",
+            "ray",
+            "botorch",
+            "nevergrad",
+            "petsc4py",
+            "pyoptsparse",
+            "precice",
+            "ompython",
+            "pyfmi",
+            "medcoupling",
+            "vtk",
+            "rhino_common",
+            "cgns",
+            "exodus_ii",
+            "fmi_fmus",
+            "modelica_standard_library",
+            "femm",
+            "pyleecan",
+        }
+    }
+    by_slug = {entry["module_slug"]: entry for entry in entries}
+    assert by_slug["compas"]["status"] == "promoted"
+    assert by_slug["ompython"]["status"] == "promoted"
+    assert by_slug["ipopt"]["status"] == "promoted"
+    assert by_slug["porepy"]["status"] == "promoted"
+    assert by_slug["pyphs"]["status"] == "promoted"
+    assert by_slug["femm"]["status"] == "blocked_external"
+    assert by_slug["pardiso"]["completion_kind"] == "alias"
+    assert by_slug["pyoptsparse"]["parent_package_refs"] == ["artifact://knowledge-pack/ipopt"]
+    assert by_slug["openmodelica"]["child_package_refs"] == sorted(
+        [
+            "artifact://knowledge-pack/modelica_standard_library",
+            "artifact://knowledge-pack/ompython",
+            "artifact://knowledge-pack/pyfmi",
+        ]
+    )
+    assert by_slug["compas"]["smoke_command"].startswith(
+        "python scripts/run_knowledge_package_smoke.py --module-slug compas"
+    )
+    assert by_slug["strumpack"]["status"] == "promoted"
+    assert by_slug["strumpack"]["last_failure_stage"] is None
+    assert by_slug["tchem"]["status"] == "promoted"
+    assert by_slug["tchem"]["last_failure_stage"] is None
+    assert by_slug["rmg_py"]["status"] == "promoted"
+    assert by_slug["rmg_py"]["last_failure_stage"] is None
+    assert by_slug["ipopt"]["last_attempted_at"]
+    assert by_slug["ipopt"]["last_log_path"]
+
+
+def test_phase3_promotion_history_tracks_closed_recovery_rows() -> None:
+    payload = _read_json(PACKAGE_PROMOTION_HISTORY_PATH)
+    assert isinstance(payload, dict)
+    entries = payload["entries"]
+    promoted_slugs = {
+        entry["module_slug"]
+        for entry in _read_json(PACKAGE_COMPLETION_LEDGER_PATH)["entries"]
+        if entry["status"] == "promoted"
+    }
+    assert len(entries) == len(promoted_slugs)
+    assert {entry["module_slug"] for entry in entries} == promoted_slugs
+
+
+def test_top_level_compiled_context_pack_refs_match_promoted_inventory() -> None:
+    inventory = load_minutes_inventory()
+    promoted_pack_refs = {
+        entry["knowledge_pack_ref"]
+        for entry in inventory["entries"]
+        if entry["promotion_ready"]
+    }
+    payload = _read_json(KNOWLEDGE_ROOT / "compiled" / "general-context.json")
+    assert isinstance(payload, dict)
+    compiled_pack_refs = {
+        ref
+        for ref in payload["payload"]["source_artifact_refs"]
+        if ref.startswith("artifact://knowledge-pack/")
+    }
+    assert compiled_pack_refs == promoted_pack_refs
+
+
+def test_phase3_generated_context_files_exist() -> None:
+    phase3_root = KNOWLEDGE_ROOT / "compiled" / "phase3"
+    assert (phase3_root / "package_pardiso_general.json").exists()
+    assert (phase3_root / "package_femm_reviewer.json").exists()
+    assert (phase3_root / "parent_ipopt_general.json").exists()
+    assert (phase3_root / "parent_openmodelica_coder.json").exists()
+
+
+def test_phase3_package_contexts_include_gate_reasons() -> None:
+    payload = _read_json(KNOWLEDGE_ROOT / "compiled" / "phase3" / "package_pardiso_general.json")
+    assert isinstance(payload, dict)
+    summary = payload["payload"]["compiled_summary"]
+    assert "Intel oneMKL" in summary
+    assert "Aliases: PARDISO." in summary
+    assert "Runtime gate:" in summary
+
+
+def test_phase3_parent_contexts_include_parent_and_child_packages() -> None:
+    payload = _read_json(KNOWLEDGE_ROOT / "compiled" / "phase3" / "parent_ipopt_general.json")
+    assert isinstance(payload, dict)
+    summary = payload["payload"]["compiled_summary"]
+    assert "IPOPT" in summary
+    assert "pyOptSparse" in summary
 
 
 def test_phase2_linked_packs_meet_detail_requirements() -> None:

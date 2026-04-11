@@ -50,14 +50,20 @@ class Executor(StrEnum):
 
 
 class ArtifactType(StrEnum):
+    RESPONSE_MODE = "RESPONSE_MODE"
+    RESPONSE_CONTROL_ASSESSMENT = "RESPONSE_CONTROL_ASSESSMENT"
     KNOWLEDGE_POOL = "KNOWLEDGE_POOL"
     KNOWLEDGE_POOL_ASSESSMENT = "KNOWLEDGE_POOL_ASSESSMENT"
     KNOWLEDGE_PACK = "KNOWLEDGE_PACK"
+    MODULE_CARD = "MODULE_CARD"
+    TECHNIQUE_CARD = "TECHNIQUE_CARD"
+    THEORY_CARD = "THEORY_CARD"
     RECIPE_OBJECT = "RECIPE_OBJECT"
     EXECUTION_ADAPTER_SPEC = "EXECUTION_ADAPTER_SPEC"
     EVIDENCE_BUNDLE = "EVIDENCE_BUNDLE"
     ROLE_CONTEXT_BUNDLE = "ROLE_CONTEXT_BUNDLE"
     ENVIRONMENT_SPEC = "ENVIRONMENT_SPEC"
+    GUI_SESSION_SPEC = "GUI_SESSION_SPEC"
     PROBLEM_BRIEF = "PROBLEM_BRIEF"
     REQUIREMENTS_SET = "REQUIREMENTS_SET"
     CONSTRAINTS_REGISTER = "CONSTRAINTS_REGISTER"
@@ -135,6 +141,148 @@ class KnowledgeContext(BaseModel):
     required: bool = False
 
 
+class ResponseModeKey(StrEnum):
+    CASUAL_CHAT = "casual_chat"
+    IDEATION = "ideation"
+    NAPKIN_MATH = "napkin_math"
+    ENGINEERING = "engineering"
+    RESEARCH = "research"
+    DICTIONARY_DEFINITION = "dictionary_definition"
+    QUERY = "query"
+    BUSINESS = "business"
+    CONTENT = "content"
+    MARKETING = "marketing"
+
+
+class ModuleKind(StrEnum):
+    TOOL = "tool"
+    PACKAGE = "package"
+    KNOWLEDGE_BANK = "knowledge_bank"
+
+
+class ResponseModePolicy(BaseModel):
+    response_posture: str = Field(..., min_length=1)
+    governance_rules: list[str] = Field(default_factory=list)
+    strict_constraints: list[str] = Field(default_factory=list)
+
+
+class ResponseModePayload(BaseModel):
+    response_mode_id: str = Field(..., min_length=1)
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    mode_key: ResponseModeKey
+    label: str = Field(..., min_length=1)
+    summary: str = Field(..., min_length=1)
+    policy: ResponseModePolicy
+    keywords: list[str] = Field(default_factory=list)
+    seed_status: str = Field(..., pattern=r"^(formalized|seeded)$")
+
+
+class KnowledgePoolPayload(BaseModel):
+    knowledge_pool_id: str = Field(..., min_length=1)
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    pool_key: str = Field(..., min_length=1)
+    label: str = Field(..., min_length=1)
+    domain: str = Field(..., min_length=1)
+    summary: str = Field(..., min_length=1)
+    keywords: list[str] = Field(default_factory=list)
+    theory_refs: list[str] = Field(..., min_length=1)
+    module_refs: list[str] = Field(default_factory=list)
+
+
+class ModuleCardPayload(BaseModel):
+    module_card_id: str = Field(..., min_length=1)
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    module_key: str = Field(..., min_length=1)
+    module_kind: ModuleKind
+    label: str = Field(..., min_length=1)
+    summary: str = Field(..., min_length=1)
+    keywords: list[str] = Field(default_factory=list)
+    pool_refs: list[str] = Field(default_factory=list)
+    technique_refs: list[str] = Field(default_factory=list)
+    legacy_knowledge_pack_refs: list[str] = Field(default_factory=list)
+
+
+class TechniqueCardPayload(BaseModel):
+    technique_card_id: str = Field(..., min_length=1)
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    technique_key: str = Field(..., min_length=1)
+    label: str = Field(..., min_length=1)
+    summary: str = Field(..., min_length=1)
+    module_refs: list[str] = Field(..., min_length=1)
+    theory_refs: list[str] = Field(default_factory=list)
+    application_rules: list[str] = Field(..., min_length=1)
+    verification_rules: list[str] = Field(..., min_length=1)
+
+
+class TheoryCardPayload(BaseModel):
+    theory_card_id: str = Field(..., min_length=1)
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    theory_key: str = Field(..., min_length=1)
+    label: str = Field(..., min_length=1)
+    pool_ref: str = Field(..., pattern=r"^artifact://.+")
+    summary: str = Field(..., min_length=1)
+    source_refs: list[str] = Field(default_factory=list)
+    principles: list[str] = Field(..., min_length=1)
+    assumptions: list[str] = Field(default_factory=list)
+    reference_points: list[str] = Field(default_factory=list)
+    interpretation_rules: list[str] = Field(..., min_length=1)
+
+
+class ModeDissonance(BaseModel):
+    inferred_mode: ResponseModeKey
+    suggested_mode: ResponseModeKey
+    reason: str = Field(..., min_length=1)
+
+
+class ModeSelection(BaseModel):
+    selected_mode: ResponseModeKey
+    user_override: bool
+    confidence: float = Field(..., ge=0, le=1)
+    reasons: list[str] = Field(..., min_length=1)
+    mode_dissonance: ModeDissonance | None = None
+
+
+class KnowledgePoolSelection(BaseModel):
+    selected_pool_refs: list[str] = Field(default_factory=list)
+    selected_theory_refs: list[str] = Field(default_factory=list)
+    reasons: list[str] = Field(default_factory=list)
+
+
+class ModuleSelection(BaseModel):
+    selected_module_refs_by_kind: dict[ModuleKind, list[str]]
+    selected_module_refs: list[str] = Field(default_factory=list)
+    reasons: list[str] = Field(default_factory=list)
+
+
+class TechniqueSelection(BaseModel):
+    selected_technique_refs: list[str] = Field(default_factory=list)
+    derived_from_module_refs: list[str] = Field(default_factory=list)
+
+
+class ResponseControlAssessment(BaseModel):
+    response_control_assessment_id: UUID
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    mode_selection: ModeSelection
+    knowledge_pool_selection: KnowledgePoolSelection
+    module_selection: ModuleSelection
+    technique_selection: TechniqueSelection
+    assembly_order: list[str] = Field(
+        default_factory=lambda: ["mode", "knowledge_pool", "module", "technique", "theory"],
+    )
+    created_at: datetime
+
+    @model_validator(mode="after")
+    def _response_control_invariants(self) -> ResponseControlAssessment:
+        expected = ["mode", "knowledge_pool", "module", "technique", "theory"]
+        if self.assembly_order != expected:
+            raise ValueError("response_control assembly_order must be mode, knowledge_pool, module, technique, theory")
+        selected_modules = set(self.module_selection.selected_module_refs)
+        derived_modules = set(self.technique_selection.derived_from_module_refs)
+        if not derived_modules.issubset(selected_modules):
+            raise ValueError("technique_selection.derived_from_module_refs must come from selected_module_refs")
+        return self
+
+
 class TaskPacket(BaseModel):
     """Specialist execution contract."""
 
@@ -150,6 +298,11 @@ class TaskPacket(BaseModel):
     constraints: list[str] = Field(default_factory=list)
     assumptions: list[str] = Field(default_factory=list)
     knowledge_context: KnowledgeContext | None = None
+    response_control_ref: str | None = Field(default=None, pattern=r"^artifact://.+")
+    selected_knowledge_pool_refs: list[str] = Field(default_factory=list)
+    selected_module_refs: list[str] = Field(default_factory=list)
+    selected_technique_refs: list[str] = Field(default_factory=list)
+    selected_theory_refs: list[str] = Field(default_factory=list)
     code_guidance: CodeGuidance | None = None
     required_outputs: list[RequiredOutputSpec] = Field(..., min_length=1)
     acceptance_criteria: list[str] = Field(..., min_length=1)
@@ -178,6 +331,24 @@ class TaskPacket(BaseModel):
                 )
             if self.knowledge_context.role_context_ref is None:
                 raise ValueError("knowledge_context.required=true requires role_context_ref")
+        has_response_control_context = any(
+            [
+                self.selected_knowledge_pool_refs,
+                self.selected_module_refs,
+                self.selected_technique_refs,
+                self.selected_theory_refs,
+            ]
+        )
+        if has_response_control_context and self.response_control_ref is None:
+            raise ValueError("selected response-control refs require response_control_ref")
+        if self.selected_knowledge_pool_refs and not self.selected_theory_refs:
+            raise ValueError("selected_knowledge_pool_refs require selected_theory_refs")
+        if (
+            self.response_control_ref
+            and self.routing_metadata.selected_executor is Executor.CODING_MODEL
+            and not self.selected_module_refs
+        ):
+            raise ValueError("coding_model packets with response_control_ref require selected_module_refs")
         return self
 
 
@@ -445,6 +616,13 @@ class EnvironmentSpecPayload(BaseModel):
     schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
     runtime_profile: str = Field(..., min_length=1)
     delivery_kind: str = Field(..., pattern=r"^(docker_image|uv_venv|dotnet_toolchain|host_app)$")
+    docker_platform: str | None = None
+    gui_session_refs: list[str] = Field(default_factory=list)
+    default_gui_session_ref: str | None = Field(default=None, pattern=r"^artifact://.+")
+    gui_capability_state: str = Field(
+        default="NO_GUI",
+        pattern=r"^(NO_GUI|PLANNED_CONTAINER_GUI|VERIFIED_CONTAINER_GUI|BLOCKED_CONTAINER_GUI|API_ONLY_HOST_PATH)$",
+    )
     module_ids: list[str] = Field(..., min_length=1)
     supported_host_platforms: list[str] = Field(..., min_length=1)
     manifest_format: str = Field(
@@ -456,6 +634,55 @@ class EnvironmentSpecPayload(BaseModel):
     bootstrap_command: str = Field(..., min_length=1)
     healthcheck_command: str = Field(..., min_length=1)
     launcher_ref: str = Field(..., min_length=1)
+    notes: list[str] = Field(default_factory=list)
+
+
+class GuiContainerPorts(BaseModel):
+    bind_host: str = Field(default="127.0.0.1", pattern=r"^127\.0\.0\.1$")
+    novnc: int = Field(..., ge=1)
+    vnc: int = Field(..., ge=1)
+
+
+class GuiSecurityPolicy(BaseModel):
+    bind_host: str = Field(default="127.0.0.1", pattern=r"^127\.0\.0\.1$")
+    require_token: bool = True
+    network_mode: str = Field(..., pattern=r"^(bridge|none)$")
+    allow_host_desktop: bool = False
+    close_on_session_end: bool = True
+
+    @model_validator(mode="after")
+    def _no_host_desktop_and_token_required(self) -> GuiSecurityPolicy:
+        if self.bind_host != "127.0.0.1":
+            raise ValueError("GUI sessions must bind noVNC to 127.0.0.1")
+        if not self.require_token:
+            raise ValueError("GUI sessions must require a token/password")
+        if self.allow_host_desktop:
+            raise ValueError("GUI sessions must not allow host desktop control")
+        return self
+
+
+class GuiSessionSpecPayload(BaseModel):
+    gui_session_spec_id: str = Field(..., min_length=1)
+    schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
+    base_environment_ref: str = Field(..., pattern=r"^artifact://.+")
+    gui_environment_ref: str = Field(..., pattern=r"^artifact://.+")
+    module_ids: list[str] = Field(..., min_length=1)
+    docker_image: str = Field(..., min_length=1)
+    docker_platform: str = Field(..., min_length=1)
+    display_protocol: str = Field(default="novnc_web", pattern=r"^novnc_web$")
+    control_provider: str = Field(default="openclaw_browser", pattern=r"^openclaw_browser$")
+    container_ports: GuiContainerPorts
+    display_env: dict[str, str] = Field(..., min_length=1)
+    launch_command: str = Field(..., min_length=1)
+    healthcheck_command: str = Field(..., min_length=1)
+    openclaw_entry_url: str = Field(..., min_length=1)
+    artifact_output_dir: str = Field(..., min_length=1)
+    security_policy: GuiSecurityPolicy
+    manifest_path: str = Field(..., min_length=1)
+    launcher_ref: str = Field(..., min_length=1)
+    app_profile: str | None = None
+    launch_target_command: str | None = None
+    verification_ref: str | None = Field(default=None, pattern=r"^artifact://.+")
     notes: list[str] = Field(default_factory=list)
 
 
@@ -1091,6 +1318,11 @@ class EngineeringState(BaseModel):
     knowledge_role_context_refs: list[str] = Field(default_factory=list)
     knowledge_gaps: list[str] = Field(default_factory=list)
     knowledge_required: bool = False
+    response_control_ref: str | None = Field(default=None, pattern=r"^artifact://.+")
+    selected_knowledge_pool_refs: list[str] = Field(default_factory=list)
+    selected_module_refs: list[str] = Field(default_factory=list)
+    selected_technique_refs: list[str] = Field(default_factory=list)
+    selected_theory_refs: list[str] = Field(default_factory=list)
     evidence_bundle_refs: list[str] = Field(default_factory=list)
     normalized_boundary: NormalizedBoundary
     objectives: list[ObjectiveRecord] = Field(..., min_length=1)

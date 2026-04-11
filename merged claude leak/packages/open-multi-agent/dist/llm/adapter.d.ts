@@ -21,7 +21,7 @@ import type { LLMAdapter } from '../types.js';
  * Additional providers can be integrated by implementing {@link LLMAdapter}
  * directly and bypassing this factory.
  */
-export type SupportedProvider = 'anthropic' | 'copilot' | 'grok' | 'openai' | 'gemini';
+export type SupportedProvider = 'anthropic' | 'copilot' | 'grok' | 'openai' | 'gemini' | 'ollama';
 /**
  * Instantiate the appropriate {@link LLMAdapter} for the given provider.
  *
@@ -31,6 +31,7 @@ export type SupportedProvider = 'anthropic' | 'copilot' | 'grok' | 'openai' | 'g
  * - `openai`    → `OPENAI_API_KEY`
  * - `gemini`    → `GEMINI_API_KEY` / `GOOGLE_API_KEY`
  * - `grok`      → `XAI_API_KEY`
+ * - `ollama`    → `OLLAMA_API_KEY` (optional; local servers usually use a placeholder)
  * - `copilot`   → `GITHUB_COPILOT_TOKEN` / `GITHUB_TOKEN`, or interactive
  *                  OAuth2 device flow if neither is set
  *
