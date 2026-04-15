@@ -1,0 +1,99 @@
+{
+  "artifact_id": "8f4105d4-4f0f-5f5d-b32b-a640f5025e71",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_system_docker",
+    "artifact://environment-spec/eng_system_uv",
+    "artifact://evidence-bundle/ompython_runtime",
+    "artifact://execution-adapter-spec/ompython_probe",
+    "artifact://knowledge-pack/ompython",
+    "artifact://recipe-object/ompython_electrics_dynamics_system",
+    "artifact://verification-report/1a1728ec-4e58-5f5c-a4b9-9e05feeb01df"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "OMPython: use ompython, OMPython exchange contract, eng_system_uv. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng-system.sh. Recipe OMPython phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_system_uv as the canonical runtime surface, Run the linked health check for OMPython, Stop if the parent-runtime compatibility gate is still REWORK, Execute OMPython only inside its declared capability boundary and record the evidence refs. Runtime eng-system/uv_venv at .cache/knowledge-envs/eng-system; environment ref artifact://environment-spec/eng_system_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv; verification refs artifact://verification-report/1a1728ec-4e58-5f5c-a4b9-9e05feeb01df. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_system_uv: Using CPython 3.11.15 interpreter at: /opt/homebrew/opt/python@3.11/bin/python3.11.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "retrieval_keys": [
+      "coder",
+      "ompython",
+      "package",
+      "phase3_package_ompython",
+      "true"
+    ],
+    "role": "coder",
+    "role_context_bundle_id": "coder_499a2a667de1f962",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_system_docker",
+      "artifact://environment-spec/eng_system_uv",
+      "artifact://evidence-bundle/ompython_runtime",
+      "artifact://execution-adapter-spec/ompython_probe",
+      "artifact://knowledge-pack/ompython",
+      "artifact://recipe-object/ompython_electrics_dynamics_system",
+      "artifact://verification-report/1a1728ec-4e58-5f5c-a4b9-9e05feeb01df"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_system_docker",
+        "sha256": "9634e52e714a082468487d9b5e77eef053e4d6ac07703a4fd11b3c2e93b2d09f"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_system_uv",
+        "sha256": "7a5dbbd1005fb02535919ee3572493cc362ec5cdf6198e7a1c2bc4c19a9c9160"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/ompython_runtime",
+        "sha256": "e9a02a78acbc585b3a0e11cc2e10768207e98a07320f900d0ee624969e389410"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/ompython_probe",
+        "sha256": "540f17cb9c361b4f3804a4d39a56025640bcf1efb032a9868cb5d2c0894ea451"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ompython",
+        "sha256": "686ccbca3ff2715fbe0578c5f6c5e81d14444bf6c19284cc3ae3711858b76624"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/ompython_electrics_dynamics_system",
+        "sha256": "e42565c513b360c622df38c2053fa8a055fd9ca01063bd4f8ce36379e5285a1c"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/1a1728ec-4e58-5f5c-a4b9-9e05feeb01df",
+        "sha256": "3102955e11ab8c8657a09a714f1560541e46c4088c1c48f06e91c18c64672653"
+      }
+    ],
+    "task_class": "phase3_package_ompython"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

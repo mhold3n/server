@@ -1,6 +1,7 @@
 """Model smoke tests: opt-in via RUN_MODEL_SMOKE=1.
 
-For agents: general model smoke is minimal and validates response envelope.
+For agents: general-role causal model smoke only (matches models.yaml key `general`).
+Paths: MODEL_RUNTIME_GENERAL_LOCAL_PATH or alias MODEL_RUNTIME_LOCAL_PATH_GENERAL.
 """
 
 from __future__ import annotations
@@ -19,9 +20,14 @@ import pytest
 )
 def test_placeholder_smoke_requires_torch_and_weights() -> None:
     """General role: verify offline load path and response envelope (no network)."""
-    local = os.environ.get("MODEL_RUNTIME_GENERAL_LOCAL_PATH")
+    local = os.environ.get("MODEL_RUNTIME_GENERAL_LOCAL_PATH") or os.environ.get(
+        "MODEL_RUNTIME_LOCAL_PATH_GENERAL",
+    )
     if not local:
-        pytest.skip("Set MODEL_RUNTIME_GENERAL_LOCAL_PATH to local model directory")
+        pytest.skip(
+            "Set MODEL_RUNTIME_GENERAL_LOCAL_PATH (or MODEL_RUNTIME_LOCAL_PATH_GENERAL) "
+            "to a local snapshot directory for models.yaml role general",
+        )
 
     try:
         from transformers import AutoModelForCausalLM, AutoTokenizer  # type: ignore

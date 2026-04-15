@@ -1,0 +1,11 @@
+:8443 {
+	respond /health "ok" 200
+
+	handle_path /v1/* {
+		reverse_proxy llm-runner-gen:8000
+	}
+
+	handle_path /embed/* {
+		reverse_proxy llm-runner-embed:8001
+	}
+}

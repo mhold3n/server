@@ -1,5 +1,5 @@
 # Multi-stage build for production optimization
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -32,7 +32,7 @@ RUN pip install --upgrade pip && \
       pyyaml>=6.0.0
 
 # Production stage
-FROM python:3.11-slim as production
+FROM python:3.11-slim AS production
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \

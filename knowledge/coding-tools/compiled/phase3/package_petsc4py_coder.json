@@ -1,0 +1,93 @@
+{
+  "artifact_id": "09b866e0-6a79-5b2d-85a0-8f139ea71c97",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_petsc_family_docker",
+    "artifact://evidence-bundle/petsc4py_runtime",
+    "artifact://execution-adapter-spec/petsc4py_probe",
+    "artifact://knowledge-pack/petsc4py",
+    "artifact://recipe-object/petsc4py_optimization_uq_backbone",
+    "artifact://verification-report/fa26971c-ab93-5345-9676-7d703423f3aa"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "petsc4py: use petsc4py, petsc4py exchange contract, eng_petsc_family_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_petsc_family-container.sh. Recipe petsc4py phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_petsc_family_docker as the canonical runtime surface, Run the linked health check for petsc4py, Stop if the parent-runtime compatibility gate is still REWORK, Execute petsc4py only inside its declared capability boundary and record the evidence refs. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/fa26971c-ab93-5345-9676-7d703423f3aa. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_petsc_family_docker: #0 building with \"desktop-linux\" instance using docker driver.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "retrieval_keys": [
+      "coder",
+      "package",
+      "petsc4py",
+      "phase3_package_petsc4py",
+      "true"
+    ],
+    "role": "coder",
+    "role_context_bundle_id": "coder_5b496d0d375fc55c",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_petsc_family_docker",
+      "artifact://evidence-bundle/petsc4py_runtime",
+      "artifact://execution-adapter-spec/petsc4py_probe",
+      "artifact://knowledge-pack/petsc4py",
+      "artifact://recipe-object/petsc4py_optimization_uq_backbone",
+      "artifact://verification-report/fa26971c-ab93-5345-9676-7d703423f3aa"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_petsc_family_docker",
+        "sha256": "6072a9ec8600f0d5a8cd2fd00b6c11529aa2d6d1dab2f924992030e4aae5f244"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/petsc4py_runtime",
+        "sha256": "e3a81a1a13057e80ea85d49799e9c454b0ef689612688ca5bd6e1cbbfc79c74b"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/petsc4py_probe",
+        "sha256": "3baa06df14091283ffb4c224046af4a16ff07442d9afea8cf612837a9413f961"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc4py",
+        "sha256": "65494bd481bb5f47d31c41dcae11a7b4057fa8b873b8e76d8bdfbd4c5856d260"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/petsc4py_optimization_uq_backbone",
+        "sha256": "e15d1a6c7166cbc8f8c65a8197e4dce34a35a0edcdc095c0aea5dd1b8b3c1238"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/fa26971c-ab93-5345-9676-7d703423f3aa",
+        "sha256": "778dcff2601c5554785dae354363c7e7b77dacc577f1f1e7a2d4d88365a5d6b1"
+      }
+    ],
+    "task_class": "phase3_package_petsc4py"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

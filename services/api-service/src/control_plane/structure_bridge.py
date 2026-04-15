@@ -1,5 +1,5 @@
 """
-Bridge to `services/structure` deterministic classifier for control-plane routing.
+Bridge to `services/structure-service` deterministic classifier for control-plane routing.
 
 For agents: mutates `sys.path` temporarily to import structure packages; failures are
 surfaced to callers for structured routing fallbacks.
@@ -14,13 +14,13 @@ from typing import Any
 
 
 def _structure_root() -> Path:
-    """Resolve `services/structure` from repo root."""
+    """Resolve `services/structure-service` from repo root."""
     here = Path(__file__).resolve()
     for p in here.parents:
-        candidate = p / "services" / "structure"
+        candidate = p / "services" / "structure-service"
         if (candidate / "router" / "classifier.py").exists():
             return candidate
-    raise RuntimeError("services/structure not found from control_plane package")
+    raise RuntimeError("services/structure-service not found from control_plane package")
 
 
 def classify_user_input(*, user_input: str, request_id: str | None = None) -> dict[str, Any]:

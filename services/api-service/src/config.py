@@ -2,7 +2,7 @@
 
 from enum import StrEnum
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -173,11 +173,11 @@ class Settings(BaseSettings):
     # Wrkhrs RAG/ASR health (optional; for status endpoint; set to empty to skip)
     rag_health_url: str | None = Field(
         default=None,
-        description="Base URL for RAG worker health (e.g. http://wrkhrs-rag:8000)",
+        description="Base URL for RAG worker health (e.g. http://ai-gateway-service-rag:8000)",
     )
     asr_health_url: str | None = Field(
         default=None,
-        description="Base URL for ASR worker health (e.g. http://wrkhrs-asr:8000)",
+        description="Base URL for ASR worker health (e.g. http://ai-gateway-service-asr:8000)",
     )
 
     # AI workflow configuration
@@ -210,8 +210,15 @@ class Settings(BaseSettings):
         description="Default Git remote used for branch pushes and PR creation",
     )
     agent_platform_url: str = Field(
-        default="http://wrkhrs-agent-platform:8000",
-        description="Base URL for the internal agent-platform execution backend",
+        default="http://ai-gateway-service-agent-platform:8000",
+        description=(
+            "Base URL for the internal agent-platform execution backend "
+            "(OrchestratorClient / DevPlaneExecutionClient)."
+        ),
+        validation_alias=AliasChoices(
+            "AGENT_PLATFORM_URL",
+            "ORCHESTRATOR_AGENT_PLATFORM_URL",
+        ),
     )
     devplane_public_base_url: str = Field(
         default="http://api:8080",

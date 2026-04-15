@@ -2,7 +2,7 @@
 
 Task cards define the workflow type, system prompt, required tools, and
 guardrails. The router uses them to drive the orchestration loop; the user
-never sees wrkhrs directly—the router controls what data Qwen receives.
+never sees ai_gateway_client directly—the router controls what data Qwen receives.
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ class TaskCard(BaseModel):
     )
     required_tools: list[str] = Field(
         default_factory=list,
-        description="MCP/wrkhrs tools this workflow should use (e.g. vector-db-mcp:embedding_search)",
+        description="MCP/ai_gateway_client tools this workflow should use (e.g. vector-db-mcp:embedding_search)",
     )
     max_tokens: int | None = Field(
         default=None, gt=0, description="Max tokens for completion"

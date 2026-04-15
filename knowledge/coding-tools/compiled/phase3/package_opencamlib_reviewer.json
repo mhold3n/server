@@ -1,0 +1,99 @@
+{
+  "artifact_id": "06ab2868-946d-5cbe-b6b1-4fe7f2595120",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_geometry_native_family_docker",
+    "artifact://evidence-bundle/opencamlib_runtime",
+    "artifact://execution-adapter-spec/opencamlib_probe",
+    "artifact://knowledge-pack/geometry_native_family",
+    "artifact://knowledge-pack/opencamlib",
+    "artifact://recipe-object/opencamlib_geometry_manufacturing",
+    "artifact://verification-report/6ae0462a-91b7-5693-afed-edab36b3d6d9"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "OpenCAMLib: review Probe OpenCAMLib through artifact://environment-spec/eng_geometry_native_family_docker, Confirm the current Phase 2 gate state for OpenCAMLib. Checklist OpenCAMLib pack links to the intended environment spec(s), OpenCAMLib adapter and evidence bundle reference the same runtime verification report, OpenCAMLib anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using OpenCAMLib for using opencamlib as a substitute for unrelated workflows outside geometry and manufacturing workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_geometry_native_family_docker., Crossing the adapter boundary for OpenCAMLib without a typed contract tied to opencamlib backend kernels reused by geometry and manufacturing workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_native_family_docker. Runtime eng-geometry-native-family/docker_image at birtha/knowledge-eng-geometry-native-family:1.0.0; environment ref artifact://environment-spec/eng_geometry_native_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_native_family_docker; verification refs artifact://verification-report/6ae0462a-91b7-5693-afed-edab36b3d6d9. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_geometry_native_family_docker: #0 building with \"desktop-linux\" instance using docker driver.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "included_sections": [
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "retrieval_keys": [
+      "opencamlib",
+      "package",
+      "phase3_package_opencamlib",
+      "reviewer",
+      "true"
+    ],
+    "role": "reviewer",
+    "role_context_bundle_id": "reviewer_b1e8e637c24d981d",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_geometry_native_family_docker",
+      "artifact://evidence-bundle/opencamlib_runtime",
+      "artifact://execution-adapter-spec/opencamlib_probe",
+      "artifact://knowledge-pack/geometry_native_family",
+      "artifact://knowledge-pack/opencamlib",
+      "artifact://recipe-object/opencamlib_geometry_manufacturing",
+      "artifact://verification-report/6ae0462a-91b7-5693-afed-edab36b3d6d9"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_geometry_native_family_docker",
+        "sha256": "772efc440de398a7a350a28afe97c9137152caead78179591f51a99f4a4376a0"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/opencamlib_runtime",
+        "sha256": "444521bcf9b8f4796aa085ec1128f53d96b3ee2db59e9c8482e318ac3fdbd117"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/opencamlib_probe",
+        "sha256": "192911eadfb3fbf8d1c6e51fea8c56080c9d661f2a48527886cd088b1a57ac54"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/geometry_native_family",
+        "sha256": "4e4a14e5a58c7111530b8cd29f59d7a265e4bf0438f216951bf4c651412c0b46"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/opencamlib",
+        "sha256": "2a378d921f726995c443461a7708f12da557c5fa66a8e9a58904286dff3ef85e"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/opencamlib_geometry_manufacturing",
+        "sha256": "2524710de603421164494ef46da9efa9252b4cfc839ba74f8bf656532e8a9d63"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/6ae0462a-91b7-5693-afed-edab36b3d6d9",
+        "sha256": "2b8e1300447ffda2676bbf911b7785473b0ccc4546d89866d1a52eb0cc0b989c"
+      }
+    ],
+    "task_class": "phase3_package_opencamlib"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

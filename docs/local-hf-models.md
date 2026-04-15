@@ -4,6 +4,7 @@ This document describes how to verify that the local `server` stack is using off
 
 ### Prerequisites
 
+- Cache layout for `HF_HOME` and related vars is documented under **Local dev caches** in [dev-environment.md](dev-environment.md).
 - `.env` in the project root has:
   - `HF_HOME=./.cache/models/hf`
   - `MODEL_CACHE_DIR=./.cache/models/hf`
@@ -15,7 +16,12 @@ This document describes how to verify that the local `server` stack is using off
 
 ```bash
 cd /path/to/server
-docker compose -f docker-compose.yml -f compose/docker-compose.local-ai.yml up -d
+docker compose --project-directory "$(pwd)" \
+  -f docker-compose.yml \
+  -f docker/compose-profiles/docker-compose.platform.yml \
+  -f docker/compose-profiles/docker-compose.ai.yml \
+  -f docker/compose-profiles/docker-compose.local-ai.yml \
+  up -d
 ```
 
 Key services:
@@ -138,23 +144,93 @@ back to the current BM25 plus embedding score.
 
 ### 4. Model-runtime HF mode
 
-Dev compose defaults `MOCK_INFER=1`, so `/infer/*` endpoints return deterministic
-mock envelopes without loading large models. To smoke test real local HF
-generation:
+Dev compose defaults **`MOCK_INFER=1`**, so `/infer/*` returns deterministic stubs
+without loading PyTorch. **`wrkhrs-agent-platform`** calls **`model-runtime`** only
+for **`POST /infer/multimodal`** (strict engineering `multimodal_model`); see
+[external-orchestration-interfaces.md](external-orchestration-interfaces.md).
+
+**Ports:** On the host, compose maps **`${MODEL_RUNTIME_PORT:-8765}:8000`** (hit
+`http://localhost:8765` from your machine). Inside the Docker network, other
+services use **`http://model-runtime:8000`** (no host port in the URL).
+
+#### 4a. One-time weights (host cache)
+
+From the repo root (bash), use the shared cache env then download the three
+role checkpoints used by [`services/model-runtime/config/models.yaml`](../services/model-runtime/config/models.yaml):
+
+```bash
+source scripts/workspace_env.sh
+scripts/bootstrap_tool_env.sh qwen-runtime
+scripts/download_qwen_engineering_models.sh   # optional: hf auth login for rate limits
+```
+
+Weights land under **`HF_HOME`** (default **`./.cache/models/hf`**). Compose bind-mounts
+**`./.cache/models/hf`** into the `model-runtime` container at **`/.cache/models/hf`**.
+
+#### 4b. Turn on real inference (single service)
+
+Set **`MOCK_INFER=0`** in `.env` (or export for the shell session), then recreate
+`model-runtime` so the container picks it up:
 
 ```bash
 export MOCK_INFER=0
-export MODEL_RUNTIME_CONFIG_PATH=/app/services/model-runtime/config/models.yaml
-export HF_HOME=./.cache/models/hf
-export TRANSFORMERS_CACHE=./.cache/models/hf
-export MODEL_CACHE_DIR=./.cache/models/hf
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d model-runtime
-curl -s http://localhost:${MODEL_RUNTIME_PORT:-8765}/health | jq
+docker compose --project-directory "$(pwd)" \
+  -f docker-compose.yml \
+  -f docker/compose-profiles/docker-compose.platform.yml \
+  -f docker/compose-profiles/docker-compose.ai.yml \
+  up -d model-runtime
 ```
 
-For offline loading, set `local_model_path` in
-`services/model-runtime/config/models.yaml`; model-runtime then calls
-Transformers with `local_files_only=True`.
+**Health:** expect **`mock_infer`** false and per-role **`model_id`** fields (see
+`/health` JSON).
+
+**Smoke `POST /infer/multimodal`** (valid task packet; replace `TASK_PACKET_ID` with a UUID):
+
+```bash
+curl -s -X POST "http://localhost:${MODEL_RUNTIME_PORT:-8765}/infer/multimodal" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task_packet_id": "TASK_PACKET_ID",
+    "schema_version": "1.0.0",
+    "status": "PENDING",
+    "task_type": "MULTIMODAL_EXTRACTION",
+    "title": "t",
+    "objective": "extract",
+    "input_artifact_refs": ["artifact://document_extract/x"],
+    "required_outputs": [{"artifact_type": "DOCUMENT_EXTRACT", "schema_version": "1.0.0"}],
+    "acceptance_criteria": ["c1"],
+    "budget_policy": {"allow_escalation": false},
+    "routing_metadata": {
+      "requested_by": "test",
+      "selected_executor": "multimodal_model",
+      "reason": "test",
+      "router_policy_version": "1"
+    },
+    "provenance": {"source_stage": "task_generation"},
+    "created_at": "2026-04-07T12:00:00Z",
+    "updated_at": "2026-04-07T12:00:00Z"
+  }' | jq
+```
+
+Expect HTTP **200** and non-mock **`structured_output`** / **`text`** when HF
+loaded successfully; **503** usually means missing weights, OOM, or wrong
+Transformers path—check `docker compose ... logs model-runtime`.
+
+For offline loading, set `local_model_path` per role in
+`services/model-runtime/config/models.yaml`; model-runtime then uses
+`local_files_only=True`. You can also set **`HF_LOCAL_FILES_ONLY=1`** when all
+roles resolve from disk.
+
+#### 4c. Consolidated real-HF checklist
+
+Use this as a single pass/fail list before claiming “model-runtime HF is ready”:
+
+1. **Weights**: Role IDs in [`services/model-runtime/config/models.yaml`](../services/model-runtime/config/models.yaml) are cached under your `HF_HOME` (see §4a) or `local_model_path` is set for offline load.
+2. **`MOCK_INFER=0`** on the `model-runtime` container after recreate.
+3. **`/health`**: `status` is `ok`, `mock_infer` is false, `roles.*.model_id` populated; when not mocking, `generators_loaded` lists loaded roles after first infer or startup (see service implementation).
+4. **`POST /infer/multimodal`**: HTTP 200, non-empty `text` or `structured_output` (not the tiny mock-only shapes from `MOCK_INFER=1`).
+5. **Optional pytest** (offline general-role torch): set `RUN_MODEL_SMOKE=1` and `MODEL_RUNTIME_GENERAL_LOCAL_PATH` (or `MODEL_RUNTIME_LOCAL_PATH_GENERAL`) per [`services/model-runtime/tests/test_smoke_placeholder.py`](../services/model-runtime/tests/test_smoke_placeholder.py).
+6. **Script**: from repo root, `make smoke-model-runtime-hf` (or `bash dev/scripts/smoke_model_runtime_hf.sh`) hits `/health` and `/infer/multimodal` against `MODEL_RUNTIME_BASE_URL`.
 
 ### 5. Hosted Hugging Face route
 
@@ -175,8 +251,8 @@ provider API keys are not accepted in request bodies.
 When you have access to an NVIDIA GPU Linux host and want the full Qwen3.5-9B model, run the vLLM worker and point the orchestrator at it:
 
 ```bash
-cd /path/to/server/worker/vllm
-docker compose -f docker-compose.vllm.yml up -d
+cd /path/to/server
+docker compose --project-directory "$(pwd)" -f worker/vllm/docker-compose.vllm.yml up -d
 ```
 
 Then set, in the orchestrator `.env`:
@@ -201,7 +277,12 @@ To run the stack with mock backends instead of real HF models:
 
 ```bash
 export USE_MOCK_MODELS=true
-docker compose -f docker-compose.yml -f compose/docker-compose.local-ai.yml up -d --force-recreate
+docker compose --project-directory "$(pwd)" \
+  -f docker-compose.yml \
+  -f docker/compose-profiles/docker-compose.platform.yml \
+  -f docker/compose-profiles/docker-compose.ai.yml \
+  -f docker/compose-profiles/docker-compose.local-ai.yml \
+  up -d --force-recreate
 ```
 
 Then:

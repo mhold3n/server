@@ -1,0 +1,99 @@
+{
+  "artifact_id": "261e2660-b6a4-5475-a6c8-a89b8b63d825",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_petsc_family_docker",
+    "artifact://evidence-bundle/petsc_runtime",
+    "artifact://execution-adapter-spec/petsc_probe",
+    "artifact://knowledge-pack/petsc",
+    "artifact://knowledge-pack/petsc_family",
+    "artifact://recipe-object/petsc_optimization_uq_backbone",
+    "artifact://verification-report/9f060f30-f8e0-5486-80ee-2689af957002"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "PETSc: solves PETSc backend kernels reused by optimization, UQ, and numerical-backbone workflows, PETSc low-level numeric or geometric primitives inside a linked execution adapter. Best for PETSc inside optimization, UQ, and numerical-backbone workflows. Avoid Using PETSc as a substitute for unrelated workflows outside optimization, UQ, and numerical-backbone workflows, Treating PETSc as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/9f060f30-f8e0-5486-80ee-2689af957002. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_petsc_family_docker: #0 building with \"desktop-linux\" instance using docker driver.",
+    "excluded_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs"
+    ],
+    "retrieval_keys": [
+      "general",
+      "package",
+      "petsc",
+      "phase3_package_petsc",
+      "true"
+    ],
+    "role": "general",
+    "role_context_bundle_id": "general_04186ca804942adb",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_petsc_family_docker",
+      "artifact://evidence-bundle/petsc_runtime",
+      "artifact://execution-adapter-spec/petsc_probe",
+      "artifact://knowledge-pack/petsc",
+      "artifact://knowledge-pack/petsc_family",
+      "artifact://recipe-object/petsc_optimization_uq_backbone",
+      "artifact://verification-report/9f060f30-f8e0-5486-80ee-2689af957002"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_petsc_family_docker",
+        "sha256": "6072a9ec8600f0d5a8cd2fd00b6c11529aa2d6d1dab2f924992030e4aae5f244"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/petsc_runtime",
+        "sha256": "b88b646daf8ecfa4864613ec904dd85a383dbb55cd21b360e493dd3d4d5faa03"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/petsc_probe",
+        "sha256": "1f28102885e2387e94dae4c904e44320b149a1c6aba32a330878b345d93bc80e"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc",
+        "sha256": "a195d73cdec46f87c7fa832e2ebbbad95acdacf327f45e2328a6cee6d1483b73"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc_family",
+        "sha256": "e555bb51cea23d3cafa27b5d60a1d3aaa54f27eee77a92f8d561a1b12e71af1a"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/petsc_optimization_uq_backbone",
+        "sha256": "72a8042512bf154a2c7771248f667090069fccc1296fcfce44adf5f2590f0535"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/9f060f30-f8e0-5486-80ee-2689af957002",
+        "sha256": "1c0a95d5c31e8453a721d533bff89887f225d35192aff8b7e8033f4b42a7ee28"
+      }
+    ],
+    "task_class": "phase3_package_petsc"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

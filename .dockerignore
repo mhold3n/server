@@ -1,0 +1,43 @@
+.git
+.gitmodules
+.DS_Store
+**/.DS_Store
+
+# Local dependency/build output
+node_modules
+**/node_modules
+dist
+**/dist
+build
+**/build
+coverage
+**/coverage
+*.log
+logs
+
+# Caches and local runtime state
+.cache
+**/.cache
+.venv
+**/.venv
+.pytest_cache
+**/.pytest_cache
+.mypy_cache
+**/.mypy_cache
+data
+plugins
+
+# External/source dependencies that are not needed in monorepo image contexts
+claw-code-main
+openclaw
+vendor
+.tmp
+
+# Secrets and machine-local env
+.env
+.env.*
+secrets
+certificates
+machine-config
+workstation-config
+server-config

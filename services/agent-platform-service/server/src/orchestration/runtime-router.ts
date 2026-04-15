@@ -68,14 +68,7 @@ function normalizeProviderPreference(value: string | undefined): string | undefi
 }
 
 function isSupportedProvider(value: string | undefined): value is SupportedProvider {
-  return (
-    value === "anthropic" ||
-    value === "copilot" ||
-    value === "grok" ||
-    value === "openai" ||
-    value === "gemini" ||
-    value === "ollama"
-  )
+  return value === "anthropic" || value === "openai" || value === "ollama"
 }
 
 function hfApiKey(cfg: PlatformConfig, override?: string): string | undefined {
@@ -182,7 +175,7 @@ export function resolveMergedOmaRoute(
   return {
     runtime: "merged_oma",
     transport: "provider",
-    provider,
+    provider: provider as any,
     model,
     baseURL,
     apiKey,

@@ -409,7 +409,7 @@ async def test_observability_tracing_module_pipe(
 
 @pytest.mark.asyncio
 async def test_wrkhrs_gateway_client_pipe(monkeypatch: pytest.MonkeyPatch) -> None:
-    from src.wrkhrs.gateway_client import WrkHrsGatewayClient
+    from src.ai_gateway_client.gateway_client import WrkHrsGatewayClient
 
     class _Resp:
         def __init__(self, payload: dict[str, Any]):
@@ -444,7 +444,7 @@ async def test_wrkhrs_gateway_client_pipe(monkeypatch: pytest.MonkeyPatch) -> No
 async def test_wrkhrs_gateway_client_errors_pipe() -> None:
     from httpx import HTTPError
 
-    from src.wrkhrs.gateway_client import WrkHrsGatewayClient
+    from src.ai_gateway_client.gateway_client import WrkHrsGatewayClient
 
     c = WrkHrsGatewayClient(base_url="http://x")
     with pytest.raises(RuntimeError):
@@ -588,7 +588,7 @@ async def test_routes_feedback_reasons_handler_pipe() -> None:
 
 
 def test_wrkhrs_conditioning_pipe() -> None:
-    from src.wrkhrs.conditioning import NonGenerativeConditioning
+    from src.ai_gateway_client.conditioning import NonGenerativeConditioning
 
     c = NonGenerativeConditioning()
     text = "Measure 3 inches and 2 feet."
@@ -612,7 +612,7 @@ def test_wrkhrs_conditioning_pipe() -> None:
 
 
 def test_wrkhrs_domain_classifier_pipe() -> None:
-    from src.wrkhrs.domain_classifier import DomainClassifier
+    from src.ai_gateway_client.domain_classifier import DomainClassifier
 
     dc = DomainClassifier()
     weights = dc.get_domain_weights("Tell me about calculus.")

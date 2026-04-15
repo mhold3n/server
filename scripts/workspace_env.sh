@@ -1,33 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SERVER_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CACHE_ROOT="${CACHE_ROOT:-$SERVER_ROOT/.cache}"
-
-export SERVER_ROOT
-export CACHE_ROOT
-export UV_CACHE_DIR="${UV_CACHE_DIR:-$CACHE_ROOT/uv}"
-export NPM_CONFIG_CACHE="${NPM_CONFIG_CACHE:-$CACHE_ROOT/npm}"
-export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$CACHE_ROOT/xdg}"
-export RUFF_CACHE_DIR="${RUFF_CACHE_DIR:-$CACHE_ROOT/ruff}"
-export MYPY_CACHE_ROOT="${MYPY_CACHE_ROOT:-$CACHE_ROOT/mypy}"
-export PYTEST_CACHE_ROOT="${PYTEST_CACHE_ROOT:-$CACHE_ROOT/pytest}"
-export TOOL_ENV_ROOT="${TOOL_ENV_ROOT:-$CACHE_ROOT/envs}"
-export HF_HOME="${HF_HOME:-$CACHE_ROOT/models/hf}"
-export MODEL_CACHE_DIR="${MODEL_CACHE_DIR:-$HF_HOME}"
-export TRANSFORMERS_CACHE="${TRANSFORMERS_CACHE:-$HF_HOME}"
-export WHISPER_CACHE_DIR="${WHISPER_CACHE_DIR:-$CACHE_ROOT/models/whisper}"
-
-mkdir -p \
-  "$UV_CACHE_DIR" \
-  "$NPM_CONFIG_CACHE" \
-  "$XDG_CACHE_HOME" \
-  "$RUFF_CACHE_DIR" \
-  "$MYPY_CACHE_ROOT" \
-  "$PYTEST_CACHE_ROOT" \
-  "$TOOL_ENV_ROOT" \
-  "$HF_HOME" \
-  "$WHISPER_CACHE_DIR"
+_SCRIPTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$_SCRIPTS_DIR/cache_env.sh"
 
 if [[ "${1:-}" == "--print" ]]; then
   cat <<EOF

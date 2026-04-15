@@ -1,0 +1,579 @@
+{
+  "artifact_id": "559089a5-f65e-5e64-bd35-06bf8b5d52ac",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_geometry_native_family_docker",
+    "artifact://environment-spec/eng_geometry_native_family_gui",
+    "artifact://environment-spec/eng_ipopt_onemkl_docker",
+    "artifact://environment-spec/eng_ipopt_onemkl_gui",
+    "artifact://environment-spec/eng_nlp_time_chem_family_docker",
+    "artifact://environment-spec/eng_nlp_time_chem_family_gui",
+    "artifact://environment-spec/eng_petsc_family_docker",
+    "artifact://environment-spec/eng_petsc_family_gui",
+    "artifact://environment-spec/eng_sparse_direct_family_docker",
+    "artifact://environment-spec/eng_sparse_direct_family_gui",
+    "artifact://environment-spec/eng_trilinos_family_docker",
+    "artifact://environment-spec/eng_trilinos_family_gui",
+    "artifact://evidence-bundle/coinhsl_family_runtime",
+    "artifact://evidence-bundle/geometry_native_family_runtime",
+    "artifact://evidence-bundle/nlp_time_chem_family_runtime",
+    "artifact://evidence-bundle/onemkl_runtime",
+    "artifact://evidence-bundle/petsc_family_runtime",
+    "artifact://evidence-bundle/sparse_direct_family_runtime",
+    "artifact://evidence-bundle/trilinos_family_runtime",
+    "artifact://execution-adapter-spec/coinhsl_family_probe",
+    "artifact://execution-adapter-spec/geometry_native_family_probe",
+    "artifact://execution-adapter-spec/nlp_time_chem_family_probe",
+    "artifact://execution-adapter-spec/onemkl_probe",
+    "artifact://execution-adapter-spec/petsc_family_probe",
+    "artifact://execution-adapter-spec/sparse_direct_family_probe",
+    "artifact://execution-adapter-spec/trilinos_family_probe",
+    "artifact://gui-session-spec/eng_geometry_native_family_gui",
+    "artifact://gui-session-spec/eng_ipopt_onemkl_gui",
+    "artifact://gui-session-spec/eng_nlp_time_chem_family_gui",
+    "artifact://gui-session-spec/eng_petsc_family_gui",
+    "artifact://gui-session-spec/eng_sparse_direct_family_gui",
+    "artifact://gui-session-spec/eng_trilinos_family_gui",
+    "artifact://knowledge-pack/cgal",
+    "artifact://knowledge-pack/cholmod",
+    "artifact://knowledge-pack/coinhsl_family",
+    "artifact://knowledge-pack/geometry_native_family",
+    "artifact://knowledge-pack/ipopt",
+    "artifact://knowledge-pack/klu",
+    "artifact://knowledge-pack/ma57",
+    "artifact://knowledge-pack/ma77",
+    "artifact://knowledge-pack/ma86",
+    "artifact://knowledge-pack/ma87",
+    "artifact://knowledge-pack/ma97",
+    "artifact://knowledge-pack/mumps",
+    "artifact://knowledge-pack/nlp_time_chem_family",
+    "artifact://knowledge-pack/onemkl",
+    "artifact://knowledge-pack/opencamlib",
+    "artifact://knowledge-pack/petsc",
+    "artifact://knowledge-pack/petsc4py",
+    "artifact://knowledge-pack/petsc_family",
+    "artifact://knowledge-pack/petsc_gamg",
+    "artifact://knowledge-pack/petsc_ksp",
+    "artifact://knowledge-pack/picogk_shapekernel",
+    "artifact://knowledge-pack/slepc",
+    "artifact://knowledge-pack/sparse_direct_family",
+    "artifact://knowledge-pack/strumpack",
+    "artifact://knowledge-pack/suitesparse",
+    "artifact://knowledge-pack/sundials",
+    "artifact://knowledge-pack/superlu",
+    "artifact://knowledge-pack/superlu_dist",
+    "artifact://knowledge-pack/tchem",
+    "artifact://knowledge-pack/trilinos",
+    "artifact://knowledge-pack/trilinos_belos",
+    "artifact://knowledge-pack/trilinos_family",
+    "artifact://knowledge-pack/trilinos_ifpack2",
+    "artifact://knowledge-pack/trilinos_muelu",
+    "artifact://knowledge-pack/umfpack",
+    "artifact://recipe-object/coinhsl_family_solver_backends",
+    "artifact://recipe-object/geometry_native_family_geometry_manufacturing",
+    "artifact://recipe-object/nlp_time_chem_family_optimization_uq_backbone",
+    "artifact://recipe-object/onemkl_solver_backends",
+    "artifact://recipe-object/petsc_family_solver_backends",
+    "artifact://recipe-object/sparse_direct_family_solver_backends",
+    "artifact://recipe-object/trilinos_family_solver_backends",
+    "artifact://verification-report/1ab9479e-2f22-536a-9652-bc50b8fd5b38",
+    "artifact://verification-report/1b81c83f-b4e0-5068-908e-a26fc7e17cb8",
+    "artifact://verification-report/21b7505b-83b9-5865-9c71-2c303aed105b",
+    "artifact://verification-report/4d57a4c2-907d-5aea-8549-9b96a7caa9dc",
+    "artifact://verification-report/6120cb05-37d0-51f3-a0ce-597858b4f397",
+    "artifact://verification-report/6222437b-ba93-50c1-bd50-f5fb3223b0c2",
+    "artifact://verification-report/7bbb7d4b-1ccf-57aa-8b5b-a84762770916",
+    "artifact://verification-report/7c82cce3-ffdc-5f4e-bb13-a70a51369bf2",
+    "artifact://verification-report/8170a12e-53c8-5f2b-bc9c-3b2cf19c907d",
+    "artifact://verification-report/82b7a37e-2324-56ad-a62e-ef2d3ae8414a",
+    "artifact://verification-report/a61dc9c1-2765-5e62-9952-ab677730ed31",
+    "artifact://verification-report/d27e1fdf-9e1d-540f-88fc-99829a79dfc0",
+    "artifact://verification-report/fef209a2-4dab-51a2-b261-dc40c39d22be"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "CoinHSL Family: use coinhsl_family, CoinHSL Family configuration surface, eng_ipopt_onemkl_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng-ipopt-onemkl-container.sh. Recipe CoinHSL Family phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_ipopt_onemkl_docker as the canonical runtime surface, Run the linked health check for CoinHSL Family, Stop if the runtime verification report is still REWORK, Execute CoinHSL Family only inside its declared capability boundary and record the evidence refs. Runtime eng-ipopt-onemkl/docker_image at birtha/knowledge-eng-ipopt-onemkl:1.0.0; environment ref artifact://environment-spec/eng_ipopt_onemkl_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker; verification refs artifact://verification-report/7c82cce3-ffdc-5f4e-bb13-a70a51369bf2. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_ipopt_onemkl_gui; control provider noVNC via OpenClaw browser. Runtime gate: CoinHSL sources are staged locally, but the canonical IPOPT plus CoinHSL container has not been verified in this sprint..\nGeometry Native Family: use geometry_native_family, Geometry Native Family configuration surface, eng_geometry_native_family_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_native_family_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_geometry_native_family-container.sh. Recipe Geometry Native Family phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_geometry_native_family_docker as the canonical runtime surface, Run the linked health check for Geometry Native Family, Stop if the runtime verification report is still REWORK, Execute Geometry Native Family only inside its declared capability boundary and record the evidence refs. Runtime eng-geometry-native-family/docker_image at birtha/knowledge-eng-geometry-native-family:1.0.0; environment ref artifact://environment-spec/eng_geometry_native_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_native_family_docker; verification refs artifact://verification-report/21b7505b-83b9-5865-9c71-2c303aed105b. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_geometry_native_family_gui; control provider noVNC via OpenClaw browser. Runtime gate: Geometry-native family manifests are linked, but the canonical family runtime has not been verified in this sprint..\nNLP Time Chemistry Family: use nlp_time_chem_family, NLP Time Chemistry Family configuration surface, eng_nlp_time_chem_family_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_nlp_time_chem_family_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_nlp_time_chem_family-container.sh. Recipe NLP Time Chemistry Family phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_nlp_time_chem_family_docker as the canonical runtime surface, Run the linked health check for NLP Time Chemistry Family, Stop if the runtime verification report is still REWORK, Execute NLP Time Chemistry Family only inside its declared capability boundary and record the evidence refs. Runtime eng-nlp-time-chem-family/docker_image at birtha/knowledge-eng-nlp-time-chem-family:1.0.0; environment ref artifact://environment-spec/eng_nlp_time_chem_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_nlp_time_chem_family_docker; verification refs artifact://verification-report/fef209a2-4dab-51a2-b261-dc40c39d22be. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_nlp_time_chem_family_gui; control provider noVNC via OpenClaw browser. Runtime gate: NLP, time-integration, and chemistry family manifests are linked, but the canonical family runtime has not been verified in this sprint..\nIntel oneMKL: use mkl_rt, Intel oneMKL configuration surface, eng_ipopt_onemkl_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng-ipopt-onemkl-container.sh. Recipe Intel oneMKL phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_ipopt_onemkl_docker as the canonical runtime surface, Run the linked health check for Intel oneMKL, Stop if the runtime verification report is still REWORK, Execute Intel oneMKL only inside its declared capability boundary and record the evidence refs. Runtime eng-ipopt-onemkl/docker_image at birtha/knowledge-eng-ipopt-onemkl:1.0.0; environment ref artifact://environment-spec/eng_ipopt_onemkl_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker; verification refs artifact://verification-report/82b7a37e-2324-56ad-a62e-ef2d3ae8414a. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_ipopt_onemkl_gui; control provider noVNC via OpenClaw browser. Aliases: PARDISO. Substitution: Canonical pack used in place of the previously planned PARDISO acquisition path..\nPETSc Family: use petsc_family, PETSc Family configuration surface, eng_petsc_family_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_petsc_family-container.sh. Recipe PETSc Family phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_petsc_family_docker as the canonical runtime surface, Run the linked health check for PETSc Family, Stop if the runtime verification report is still REWORK, Execute PETSc Family only inside its declared capability boundary and record the evidence refs. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/1b81c83f-b4e0-5068-908e-a26fc7e17cb8. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_petsc_family_gui; control provider noVNC via OpenClaw browser. Runtime gate: PETSc family manifests are linked, but the canonical backend-family runtime has not been verified in this sprint..\nSparse Direct Family: use sparse_direct_family, Sparse Direct Family configuration surface, eng_sparse_direct_family_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_sparse_direct_family-container.sh. Recipe Sparse Direct Family phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_sparse_direct_family_docker as the canonical runtime surface, Run the linked health check for Sparse Direct Family, Stop if the runtime verification report is still REWORK, Execute Sparse Direct Family only inside its declared capability boundary and record the evidence refs. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/8170a12e-53c8-5f2b-bc9c-3b2cf19c907d. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser. Runtime gate: Sparse-direct family manifests are linked, but the canonical backend-family runtime has not been verified in this sprint..\nTrilinos Family: use trilinos_family, Trilinos Family configuration surface, eng_trilinos_family_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_trilinos_family-container.sh. Recipe Trilinos Family phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_trilinos_family_docker as the canonical runtime surface, Run the linked health check for Trilinos Family, Stop if the runtime verification report is still REWORK, Execute Trilinos Family only inside its declared capability boundary and record the evidence refs. Runtime eng-trilinos-family/docker_image at birtha/knowledge-eng-trilinos-family:1.0.0; environment ref artifact://environment-spec/eng_trilinos_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker; verification refs artifact://verification-report/6222437b-ba93-50c1-bd50-f5fb3223b0c2. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_trilinos_family_gui; control provider noVNC via OpenClaw browser. Runtime gate: Trilinos family manifests are linked, but the canonical backend-family runtime has not been verified in this sprint..",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "retrieval_keys": [
+      "coder",
+      "family",
+      "k2_backend_families",
+      "phase2_family_k2_backend_families",
+      "true"
+    ],
+    "role": "coder",
+    "role_context_bundle_id": "coder_c787ac89580336ab",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_geometry_native_family_docker",
+      "artifact://environment-spec/eng_geometry_native_family_gui",
+      "artifact://environment-spec/eng_ipopt_onemkl_docker",
+      "artifact://environment-spec/eng_ipopt_onemkl_gui",
+      "artifact://environment-spec/eng_nlp_time_chem_family_docker",
+      "artifact://environment-spec/eng_nlp_time_chem_family_gui",
+      "artifact://environment-spec/eng_petsc_family_docker",
+      "artifact://environment-spec/eng_petsc_family_gui",
+      "artifact://environment-spec/eng_sparse_direct_family_docker",
+      "artifact://environment-spec/eng_sparse_direct_family_gui",
+      "artifact://environment-spec/eng_trilinos_family_docker",
+      "artifact://environment-spec/eng_trilinos_family_gui",
+      "artifact://evidence-bundle/coinhsl_family_runtime",
+      "artifact://evidence-bundle/geometry_native_family_runtime",
+      "artifact://evidence-bundle/nlp_time_chem_family_runtime",
+      "artifact://evidence-bundle/onemkl_runtime",
+      "artifact://evidence-bundle/petsc_family_runtime",
+      "artifact://evidence-bundle/sparse_direct_family_runtime",
+      "artifact://evidence-bundle/trilinos_family_runtime",
+      "artifact://execution-adapter-spec/coinhsl_family_probe",
+      "artifact://execution-adapter-spec/geometry_native_family_probe",
+      "artifact://execution-adapter-spec/nlp_time_chem_family_probe",
+      "artifact://execution-adapter-spec/onemkl_probe",
+      "artifact://execution-adapter-spec/petsc_family_probe",
+      "artifact://execution-adapter-spec/sparse_direct_family_probe",
+      "artifact://execution-adapter-spec/trilinos_family_probe",
+      "artifact://gui-session-spec/eng_geometry_native_family_gui",
+      "artifact://gui-session-spec/eng_ipopt_onemkl_gui",
+      "artifact://gui-session-spec/eng_nlp_time_chem_family_gui",
+      "artifact://gui-session-spec/eng_petsc_family_gui",
+      "artifact://gui-session-spec/eng_sparse_direct_family_gui",
+      "artifact://gui-session-spec/eng_trilinos_family_gui",
+      "artifact://knowledge-pack/cgal",
+      "artifact://knowledge-pack/cholmod",
+      "artifact://knowledge-pack/coinhsl_family",
+      "artifact://knowledge-pack/geometry_native_family",
+      "artifact://knowledge-pack/ipopt",
+      "artifact://knowledge-pack/klu",
+      "artifact://knowledge-pack/ma57",
+      "artifact://knowledge-pack/ma77",
+      "artifact://knowledge-pack/ma86",
+      "artifact://knowledge-pack/ma87",
+      "artifact://knowledge-pack/ma97",
+      "artifact://knowledge-pack/mumps",
+      "artifact://knowledge-pack/nlp_time_chem_family",
+      "artifact://knowledge-pack/onemkl",
+      "artifact://knowledge-pack/opencamlib",
+      "artifact://knowledge-pack/petsc",
+      "artifact://knowledge-pack/petsc4py",
+      "artifact://knowledge-pack/petsc_family",
+      "artifact://knowledge-pack/petsc_gamg",
+      "artifact://knowledge-pack/petsc_ksp",
+      "artifact://knowledge-pack/picogk_shapekernel",
+      "artifact://knowledge-pack/slepc",
+      "artifact://knowledge-pack/sparse_direct_family",
+      "artifact://knowledge-pack/strumpack",
+      "artifact://knowledge-pack/suitesparse",
+      "artifact://knowledge-pack/sundials",
+      "artifact://knowledge-pack/superlu",
+      "artifact://knowledge-pack/superlu_dist",
+      "artifact://knowledge-pack/tchem",
+      "artifact://knowledge-pack/trilinos",
+      "artifact://knowledge-pack/trilinos_belos",
+      "artifact://knowledge-pack/trilinos_family",
+      "artifact://knowledge-pack/trilinos_ifpack2",
+      "artifact://knowledge-pack/trilinos_muelu",
+      "artifact://knowledge-pack/umfpack",
+      "artifact://recipe-object/coinhsl_family_solver_backends",
+      "artifact://recipe-object/geometry_native_family_geometry_manufacturing",
+      "artifact://recipe-object/nlp_time_chem_family_optimization_uq_backbone",
+      "artifact://recipe-object/onemkl_solver_backends",
+      "artifact://recipe-object/petsc_family_solver_backends",
+      "artifact://recipe-object/sparse_direct_family_solver_backends",
+      "artifact://recipe-object/trilinos_family_solver_backends",
+      "artifact://verification-report/1ab9479e-2f22-536a-9652-bc50b8fd5b38",
+      "artifact://verification-report/1b81c83f-b4e0-5068-908e-a26fc7e17cb8",
+      "artifact://verification-report/21b7505b-83b9-5865-9c71-2c303aed105b",
+      "artifact://verification-report/4d57a4c2-907d-5aea-8549-9b96a7caa9dc",
+      "artifact://verification-report/6120cb05-37d0-51f3-a0ce-597858b4f397",
+      "artifact://verification-report/6222437b-ba93-50c1-bd50-f5fb3223b0c2",
+      "artifact://verification-report/7bbb7d4b-1ccf-57aa-8b5b-a84762770916",
+      "artifact://verification-report/7c82cce3-ffdc-5f4e-bb13-a70a51369bf2",
+      "artifact://verification-report/8170a12e-53c8-5f2b-bc9c-3b2cf19c907d",
+      "artifact://verification-report/82b7a37e-2324-56ad-a62e-ef2d3ae8414a",
+      "artifact://verification-report/a61dc9c1-2765-5e62-9952-ab677730ed31",
+      "artifact://verification-report/d27e1fdf-9e1d-540f-88fc-99829a79dfc0",
+      "artifact://verification-report/fef209a2-4dab-51a2-b261-dc40c39d22be"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_geometry_native_family_docker",
+        "sha256": "bae05010b6b2e635f1c19fbfb302dccef5740ac956cd75cfe9c67d527fcdacdf"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_geometry_native_family_gui",
+        "sha256": "a60ce47a5f1c48a7d07747c42c31f6b950dfc780c00a95de79feac2d94554bdd"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_ipopt_onemkl_docker",
+        "sha256": "8e4059fb97acb13655ec22ca77c1b70e665209fc96f582c1daacbe09f71d6dd8"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_ipopt_onemkl_gui",
+        "sha256": "105a6bef5732828a98a07d870371a3a3f2ceaa6af1e428c628b4c7d2ef2e4640"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_nlp_time_chem_family_docker",
+        "sha256": "196c7f574e01da37e6e27b7af6c583c971f480ff57c5686e94afc8d9fcd1ef71"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_nlp_time_chem_family_gui",
+        "sha256": "9ec14573e2cb647cf4f646a7154da7135073a8c2a7174f287a93202da768857a"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_petsc_family_docker",
+        "sha256": "27c972437d1c655433551f6c1d46a60aaa339a3eb63e681b86fb867520da1672"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_petsc_family_gui",
+        "sha256": "24d1bb8aaefb108886d874a9e7b03106d2b1a16b76891f466e071d7fb576b561"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_sparse_direct_family_docker",
+        "sha256": "7e86971929d43f88c3f099624e73d546156dac4caeb5f9e9584cc79321d30dbc"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_sparse_direct_family_gui",
+        "sha256": "f9f0551ab1cc19cfaf1e35602385785e0053a7185ad1cc8e2c768555cc0ca568"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_trilinos_family_docker",
+        "sha256": "1dfdee49a480ba658a71a33440d141d0d1338567230bb4790702b99e0b402071"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_trilinos_family_gui",
+        "sha256": "b69b59dcbc31b99dbab857ffcc85ad5f355cc606c7c8637649c3213879cc3422"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/coinhsl_family_runtime",
+        "sha256": "e8ad7665ac227322cfa240fdbea4416d0f87fd98e0a106f1caad4784520f078b"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/geometry_native_family_runtime",
+        "sha256": "0076063cdeb9746b07e02063b7f2e8cc6a52571675055fdf1d7b8c37ed881f77"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/nlp_time_chem_family_runtime",
+        "sha256": "4ce04ec82c5b74002f5b2ef2365f66da9020b9230ae232a01ddb38767b8373d0"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/onemkl_runtime",
+        "sha256": "6a337375f2003f48509bb12255616f089c1f68f8d66c711291f918c8a4222557"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/petsc_family_runtime",
+        "sha256": "bd0bf04366e3c2d0f3d4212bd9663508c8b9f6309628cc8556d8bef4383a9bb1"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/sparse_direct_family_runtime",
+        "sha256": "349282d84bd2e8a867cfbd01c8806aa347b249bac72ab256e2122cb7908883fa"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/trilinos_family_runtime",
+        "sha256": "af256c7bb6823b5e54fef95af52e61df1a7773b3bf9d845a571d814ae4a4b6c5"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/coinhsl_family_probe",
+        "sha256": "9200b6a820c2bc3ccdd7f6b7f387471e0bb8f483155fde77cdeed6eac70a0247"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/geometry_native_family_probe",
+        "sha256": "5545f0ec51c52d67629dc23cd6e53cd2e0c2f0398d10c039e95971d6312d2db7"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/nlp_time_chem_family_probe",
+        "sha256": "03409816d772f1193c2042e066d5dee0ee6e39b381af317847871cedf7e7169d"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/onemkl_probe",
+        "sha256": "92fdd75d22108a583616a7f86090880d9e8872a139221292618e7485b21ee3b6"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/petsc_family_probe",
+        "sha256": "f16e542107118aaef2685ef1366ade31e0f5b1f4664684e294a14f4eca3e7d19"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/sparse_direct_family_probe",
+        "sha256": "3030c94a1e300e1ec5e6ab09bfc715d9e84b20db2e84ab5798b7cae9a28bdb7e"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/trilinos_family_probe",
+        "sha256": "94d82a49d0962bb4ac7a3a377a41b7b59090711316c7c37295d341660c95b889"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_geometry_native_family_gui",
+        "sha256": "51b7dac1d0ce2bfcbe2768bce96ead5f6394b3dbde099f7563809054cac0417b"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_ipopt_onemkl_gui",
+        "sha256": "b46548aaa727087964636d21b2f6174f01453c2a8bef7cd0e84672ab6d273e13"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_nlp_time_chem_family_gui",
+        "sha256": "c184a338341c58c2b67948332c1f5dbea1c778fb4918f792917e5cd584db78be"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_petsc_family_gui",
+        "sha256": "fadccc7035283b4998935e73faa3568fe9ba6630a9ee2128efa32411503b4b80"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_sparse_direct_family_gui",
+        "sha256": "56b101e5dd97e99b8698507b731896ed919243acf45263d3b5982f06844f588a"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_trilinos_family_gui",
+        "sha256": "0fa4db4bdccc182cadbf4124db502ef089425737d153b28841186fa276d72fd7"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/cgal",
+        "sha256": "d0898dd503796e238e08c835b4b75a066c79e535098aab61374f85bd084dcc8a"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/cholmod",
+        "sha256": "a8e18c6335a8035551ba07f9b1e254ec212bac37b1207b58ba62dfcce7a0147e"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/coinhsl_family",
+        "sha256": "8341aee06ed45a0fe2b8c6a951a8cdfa3622f3117e9244ca7b4829bfaf60e572"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/geometry_native_family",
+        "sha256": "4e4a14e5a58c7111530b8cd29f59d7a265e4bf0438f216951bf4c651412c0b46"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ipopt",
+        "sha256": "7bbe6fe7c6a52cd6c401076b4cfa96356ed31c107955ec9f8e95e14e85c3e6ab"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/klu",
+        "sha256": "9d84a9346086e864be172c290987bf746fdc00a9e828686d04e784f020d09028"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ma57",
+        "sha256": "d41ceb0249b87b709bde30e7119610931d1524128ca4838dc963801a776d3be9"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ma77",
+        "sha256": "a5bff20bbe78d72976134c3e707c90fee6b7d5bc75b9a930dfa9f7b287ab55d3"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ma86",
+        "sha256": "e150b4606b13c13b25f75fc5ff0dcfb38b062c6e92bf6e803e5875ac2945bdf6"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ma87",
+        "sha256": "982e71408d5998d2c096345b6125ad336c29165f6ff490172a13765fe1743ca2"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ma97",
+        "sha256": "baca56b0fd3cf3654b5e0e610cf17c5a166facff344d8e884be98b31a4e6afca"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/mumps",
+        "sha256": "cc58b69b09ab6198712088e730c0324a44c55b55997ec8ee23b24d13975c033b"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/nlp_time_chem_family",
+        "sha256": "ae753921bf274193c7f330b99a74f02760e1ee93cd8aa51c51e2e7392edda7cc"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/onemkl",
+        "sha256": "33c9bee9f7f1ed92234f65c8c2b9f23f7679731fcb1bd38dfbbbaf65c35b27e9"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/opencamlib",
+        "sha256": "2a378d921f726995c443461a7708f12da557c5fa66a8e9a58904286dff3ef85e"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc",
+        "sha256": "a195d73cdec46f87c7fa832e2ebbbad95acdacf327f45e2328a6cee6d1483b73"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc4py",
+        "sha256": "65494bd481bb5f47d31c41dcae11a7b4057fa8b873b8e76d8bdfbd4c5856d260"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc_family",
+        "sha256": "e555bb51cea23d3cafa27b5d60a1d3aaa54f27eee77a92f8d561a1b12e71af1a"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc_gamg",
+        "sha256": "0d88b56608aafe1dd68e248de4439a884c7ec0cf1dd7080b0c5f953f75cba545"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc_ksp",
+        "sha256": "57ced9d1c53fd08c586d9777704db6f909397f322172e874a3d3e7fdb91c666e"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/picogk_shapekernel",
+        "sha256": "dffef655118077bda0f05946d82392551011c9173bea53d2005da8e1626fef05"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/slepc",
+        "sha256": "5ffc193fa4ba95819b17b8c31a5ef56c2a262e01f7f78b939e52df4430207e3c"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/sparse_direct_family",
+        "sha256": "fb791c05ea722b06df44569cdd722715ba6b8f6804097c4810fca3dea45cb812"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/strumpack",
+        "sha256": "6edefc9a5c5105d2ecd2536c602eb35a8d0db1088a7192303b6593dc6a384d07"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/suitesparse",
+        "sha256": "00120fed1dab5a3465e573c29ab7b1ffc918378fc0c682da3666ae372b9c1184"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/sundials",
+        "sha256": "28eae9262bddc88d0362df23abbc01b6a34e1e4c823f883ac4d6921d09b7ed05"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/superlu",
+        "sha256": "2597f152c6efa31338dec8936251f20d18d672e0498e1f0985004563ad93dee3"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/superlu_dist",
+        "sha256": "0323323d721b71f0f6bbc3e2a6c18b422231bef767f2924b0e7f671a3fa09314"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/tchem",
+        "sha256": "3cc6e6ae832e0fb36c55bc935aab6ca718094e1d065655f28f559435e97b167e"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos",
+        "sha256": "624ba323b5aef2971113caf68cd65e8c4604a9546d12345b5f4ede01ba879d90"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_belos",
+        "sha256": "26f15ce0d7b2dd4c6b52e379d1734fafea06e8b820b222a4446bc59f35e3ac7f"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_family",
+        "sha256": "a0e8bccdaa5171332af458bf810f765200943e493fdf84c0cd5efd22100b1349"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_ifpack2",
+        "sha256": "750d859b144b480e7ca5684a797e4c11c17e5c03b75b0b34b5bda21ee560f8af"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_muelu",
+        "sha256": "82ec87e738bcba0a4a923bb016bc7d82bb552d2de957e585345f513c6e5dd656"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/umfpack",
+        "sha256": "6b65d869c2ababff81b5a4536f7d1356b78974078505250d5b6202e656fd3fe5"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/coinhsl_family_solver_backends",
+        "sha256": "af00a78263af5471af2749c8e3a3572bbce4b65d9bab38c1346013b9238145be"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/geometry_native_family_geometry_manufacturing",
+        "sha256": "1e14da83dbe38299bbe156e17619987ccf051d6a78eb0b61d295eeaaa2645f4a"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/nlp_time_chem_family_optimization_uq_backbone",
+        "sha256": "3f83a92377951f0c1d7508c5144a9001c544adc3e59b503e3b724f9c79a0d58a"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/onemkl_solver_backends",
+        "sha256": "694e7b76ded1048f9878277dffbf3e0cf4a7297d41c55f4aa90e34c8c42867ff"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/petsc_family_solver_backends",
+        "sha256": "8b9d36fce5fe7f60ac4d73ce3ca06e69eb290705996e0cdcb936fe0bafd4a025"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/sparse_direct_family_solver_backends",
+        "sha256": "bd0715173be6cf305e6829f36a01e0187c90acea073990902077e7dac9f1da5f"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/trilinos_family_solver_backends",
+        "sha256": "5e8f08f4a3bf753b4cb4fe97432d041691e1ffc429647c63cf53769a7ced5a97"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/1ab9479e-2f22-536a-9652-bc50b8fd5b38",
+        "sha256": "ac90813498789e1d61cab078b9c55924648cd3dc3b158665a6394ad6a55c2317"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/1b81c83f-b4e0-5068-908e-a26fc7e17cb8",
+        "sha256": "d3e83f4141ad0b7f0280bbcd4cd4cdb92f6092bf604aac98222a2b7a21666f33"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/21b7505b-83b9-5865-9c71-2c303aed105b",
+        "sha256": "da40769262886ec8f9d1d4aba33367574227766433fcb5f51675504c6327f9c0"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/4d57a4c2-907d-5aea-8549-9b96a7caa9dc",
+        "sha256": "3dd64e015ff15abc0a5f60fdee449a943417aa66a21c9675bd9724a7f9d38239"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/6120cb05-37d0-51f3-a0ce-597858b4f397",
+        "sha256": "29d988c9413e47cb035423a43ac07ddac48f5a961360d37fdcb716b4e1502f23"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/6222437b-ba93-50c1-bd50-f5fb3223b0c2",
+        "sha256": "a14cf1b2d043c7de20e9fc245eb15ef28fa082270634ce1c36f4b1cfc70014c8"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/7bbb7d4b-1ccf-57aa-8b5b-a84762770916",
+        "sha256": "9154fd2bd2a5cc4b51d30bebf5a145b019cc319f7e8f6ee770e5bdb78b6b5032"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/7c82cce3-ffdc-5f4e-bb13-a70a51369bf2",
+        "sha256": "e92fe1ba52e42d544ec1babe95e9360579dfc7cfeb10a8be655ad07c6e781c93"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/8170a12e-53c8-5f2b-bc9c-3b2cf19c907d",
+        "sha256": "7c780cee6316d3bc8becbc0a70b5f11112fd932b06e333c7cfd248ec8344935f"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/82b7a37e-2324-56ad-a62e-ef2d3ae8414a",
+        "sha256": "e0d3f45a622dcc0fadec9f337496840114fca1b5a1bc812ab784d4bc0fb14fa3"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/a61dc9c1-2765-5e62-9952-ab677730ed31",
+        "sha256": "3b1848d2c0cb9ae6f4a78691d12adb0a828f5d5d57b9383341ed1a3806d9d01b"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/d27e1fdf-9e1d-540f-88fc-99829a79dfc0",
+        "sha256": "ed7d03663c6f5007d9de329d5da5c9b161d8cd8e67021e1fbf87cbcffd6eae25"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/fef209a2-4dab-51a2-b261-dc40c39d22be",
+        "sha256": "d49d51b88921dfc82f59f7ea12bc7d27e7056e9c242dd0c808a7f9969054f970"
+      }
+    ],
+    "task_class": "phase2_family_k2_backend_families"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

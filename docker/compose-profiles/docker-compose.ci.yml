@@ -1,7 +1,7 @@
-version: "3.9"
 name: agent-orchestrator-ci
 
 # Minimal stack required for RUN_LIVE_STACK_TESTS=1 pytest suites.
+# Build contexts and binds assume `docker compose --project-directory <repo root> -f ...`.
 services:
   queue:
     image: redis:7-alpine
@@ -27,7 +27,8 @@ services:
 
   api:
     build:
-      context: ./services/api
+      context: .
+      dockerfile: services/api-service/Dockerfile
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-test}
       - OPENAI_BASE_URL=http://mock-openai:8000/v1
@@ -116,7 +117,7 @@ services:
       - "4317:4317"
       - "4318:4318"
     volumes:
-      - ./infra/observability/tempo/tempo.yml:/etc/tempo.yml:ro
+      - ./docker/config/observability/tempo/tempo.yml:/etc/tempo.yml:ro
     healthcheck:
       # grafana/tempo image ships wget, not curl
       test:
@@ -134,7 +135,7 @@ services:
       start_period: 15s
 
   mcp-registry:
-    build: ./services/mcp-registry
+    build: ./services/mcp-registry-service
     ports:
       - "${MCP_REGISTRY_PORT:-8001}:8000"
     environment:
@@ -142,7 +143,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
       - MLFLOW_TRACKING_URI=http://mlflow:5000
     volumes:
-      - ./mcp/config:/mcp/config:ro
+      - ./mcp-servers/mcp/config:/mcp/config:ro
     # Same rationale as `api.depends_on` above: let the container start,
     # then let CI's explicit HTTP waits determine readiness.
     depends_on:
@@ -154,4 +155,3 @@ services:
       timeout: 3s
       retries: 30
       start_period: 10s
-

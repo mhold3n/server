@@ -7,8 +7,11 @@ from datetime import datetime, timedelta
 import hashlib
 import time
 from collections import defaultdict
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
 
 from fastapi import FastAPI, HTTPException, Request, Depends, Header, Security
+from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -144,6 +147,17 @@ ENABLE_AUTH = os.getenv("ENABLE_AUTHENTICATION", "true").lower() == "true"
 request_counts = defaultdict(list)
 security = HTTPBearer(auto_error=False)
 
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Lifespan hook replacing deprecated on_event handlers."""
+    if os.getenv("WRKHRS_DISABLE_MODEL_LOAD", "").lower() in ("1", "true", "yes"):
+        logger.info("Skipping embedding load (WRKHRS_DISABLE_MODEL_LOAD)")
+        yield
+        return
+    load_models()
+    yield
+
+
 # Initialize FastAPI app with comprehensive OpenAPI documentation
 api = FastAPI(
     title="AI Stack Gateway",
@@ -223,6 +237,7 @@ api = FastAPI(
             "description": "Text processing and domain analysis endpoints",
         },
     ],
+    lifespan=lifespan,
 )
 
 # Add CORS middleware
@@ -240,10 +255,13 @@ domain_classifier = None
 
 
 class ChatRequest(BaseModel):
-    messages: List[Dict[str, str]]
+    # OpenAI-compatible clients may send rich message objects (tool calls, arrays, null content).
+    # Keep this schema permissive so local gateways can serve as a drop-in baseUrl for agents.
+    messages: List[Dict[str, Any]]
     model: Optional[str] = "default"
     temperature: Optional[float] = 0.7
     max_tokens: Optional[int] = 1000
+    stream: Optional[bool] = None
 
 
 class ChatResponse(BaseModel):
@@ -494,7 +512,7 @@ async def get_weighted_evidence(prompt: str, weights: DomainWeights) -> str:
     """Get weighted evidence from RAG system"""
     try:
         rag_url = "http://rag-api:8000/search"
-        payload = {"query": prompt, "domain_weights": weights.dict(), "k": 5}
+        payload = {"query": prompt, "domain_weights": weights.model_dump(), "k": 5}
 
         response = requests.post(rag_url, json=payload, timeout=10)
         if response.status_code == 200:
@@ -506,15 +524,6 @@ async def get_weighted_evidence(prompt: str, weights: DomainWeights) -> str:
     except Exception as e:
         logger.error(f"Failed to get weighted evidence: {e}")
         return ""
-
-
-@api.on_event("startup")
-async def startup_event():
-    """Initialize models on startup"""
-    if os.getenv("WRKHRS_DISABLE_MODEL_LOAD", "").lower() in ("1", "true", "yes"):
-        logger.info("Skipping embedding load (WRKHRS_DISABLE_MODEL_LOAD)")
-        return
-    load_models()
 
 
 @api.post(
@@ -568,17 +577,81 @@ async def health_check():
     }
 
 
+@api.get("/v1/models")
+async def list_models(current_user: dict = Depends(get_current_user)):
+    """OpenAI-compatible model listing.
+
+    The Birtha API health check and OpenClaw both call GET /v1/models to confirm the
+    configured OpenAI-compatible base URL is reachable. The gateway is an adapter
+    around an orchestrator backend, so this list is descriptive rather than exhaustive.
+    """
+    # IMPORTANT: Prefer a *real* model id here so OpenAI-compatible clients don't
+    # turn around and request a sentinel like "wrkhrs-gateway", which the TS
+    # orchestrator may treat as an explicit model override and route incorrectly.
+    #
+    # Precedence:
+    # - Explicit gateway overrides: DEFAULT_LLM_MODEL / LLM_MODEL
+    # - Compose-local inference lane hints: OLLAMA_MODEL (host Ollama) / VLLM_MODEL (GPU worker)
+    # - Fallback sentinel (should be avoided in dev)
+    model_id = (
+        os.getenv("DEFAULT_LLM_MODEL")
+        or os.getenv("LLM_MODEL")
+        or os.getenv("OLLAMA_MODEL")
+        or os.getenv("VLLM_MODEL")
+        or "wrkhrs-gateway"
+    )
+    now = int(datetime.utcnow().timestamp())
+    return {
+        "object": "list",
+        "data": [
+            {
+                "id": model_id,
+                "object": "model",
+                "created": now,
+                "owned_by": "wrkhrs-gateway",
+            }
+        ],
+    }
+
+
 @api.post("/v1/chat/completions", response_model=ChatResponse)
 async def chat_completions(
-    request: ChatRequest, current_user: dict = Depends(get_current_user)
+    chat_request: ChatRequest,
+    http_request: Request,
+    current_user: dict = Depends(get_current_user),
 ):
     """OpenAI-compatible chat completions endpoint with non-generative conditioning"""
     try:
+        def _coerce_content(raw: Any) -> str:
+            if raw is None:
+                return ""
+            if isinstance(raw, str):
+                return raw
+            # OpenAI-compatible multimodal messages can send content as an array of parts.
+            # Keep only text-ish parts so downstream regex/domain parsing stays stable.
+            if isinstance(raw, list):
+                parts: list[str] = []
+                for part in raw:
+                    if isinstance(part, str):
+                        parts.append(part)
+                    elif isinstance(part, dict):
+                        if part.get("type") == "text" and isinstance(part.get("text"), str):
+                            parts.append(part["text"])
+                        elif isinstance(part.get("content"), str):
+                            parts.append(part["content"])
+                return "\n".join([p for p in parts if p])
+            if isinstance(raw, dict):
+                if raw.get("type") == "text" and isinstance(raw.get("text"), str):
+                    return raw["text"]
+                if isinstance(raw.get("content"), str):
+                    return raw["content"]
+            return str(raw)
+
         # Extract the user's prompt
         user_message = None
-        for msg in request.messages:
+        for msg in chat_request.messages:
             if msg.get("role") == "user":
-                user_message = msg.get("content", "")
+                user_message = _coerce_content(msg.get("content"))
                 break
 
         if not user_message:
@@ -588,7 +661,14 @@ async def chat_completions(
         processed = await process_prompt(user_message)
 
         # Forward to orchestrator with enhanced context
-        enhanced_messages = request.messages.copy()
+        # The TS agent-platform orchestrator expects `content` to be a string.
+        # OpenAI-compatible clients (incl. OpenClaw) may send `content` as an array of parts
+        # (multimodal) or other rich shapes. Coerce *all* message contents before forwarding.
+        enhanced_messages: list[dict[str, Any]] = []
+        for msg in chat_request.messages:
+            coerced = dict(msg)
+            coerced["content"] = _coerce_content(msg.get("content"))
+            enhanced_messages.append(coerced)
 
         # Add domain context and evidence without changing the original prompt
         if processed.weighted_evidence:
@@ -604,12 +684,45 @@ Please respond with SI units and consider the safety constraints mentioned.
 
         # Forward to orchestrator (Python or TS agent-platform)
         orchestrator_url = f"{ORCHESTRATOR_BASE_URL}/chat"
-        orchestrator_payload = {
-            "messages": enhanced_messages,
-            "model": request.model,
-            "temperature": request.temperature,
-            "max_tokens": request.max_tokens,
-        }
+        # If the client passed back a sentinel "model" we advertised for reachability,
+        # drop it so the orchestrator can choose the correct local-worker routing.
+        model_override = chat_request.model
+        # Many OpenAI-compatible clients send model="default" when they want the server-side default.
+        # Treat that like "no override" so the TS orchestrator can select its configured local-worker route.
+        if isinstance(model_override, str) and model_override.strip().lower() in {
+            "wrkhrs-gateway",
+            "orchestrator",
+            "default",
+        }:
+            model_override = None
+
+        # NOTE: the TS orchestrator schema treats `model` as optional, but rejects explicit null.
+        # Only include routing fields when they are non-null.
+        orchestrator_payload: dict[str, Any] = {"messages": enhanced_messages}
+        if model_override is not None:
+            orchestrator_payload["model"] = model_override
+        if chat_request.temperature is not None:
+            orchestrator_payload["temperature"] = chat_request.temperature
+        if chat_request.max_tokens is not None:
+            orchestrator_payload["max_tokens"] = chat_request.max_tokens
+
+        debug_enabled = http_request.headers.get("x-openclaw-debug", "") == "1"
+        if debug_enabled:
+            logger.info(
+                "OpenClaw debug: incoming chat request",
+                extra={
+                    "event_type": "openclaw_debug",
+                    "metadata": {
+                        "path": str(http_request.url.path),
+                        "model": chat_request.model,
+                        "stream": bool(chat_request.stream),
+                        "message_roles": [m.get("role") for m in chat_request.messages],
+                        "content_types": [
+                            type(m.get("content")).__name__ for m in chat_request.messages
+                        ],
+                    },
+                },
+            )
 
         response = ORCH_SESSION.post(
             orchestrator_url, json=orchestrator_payload, timeout=REQUEST_TIMEOUT
@@ -618,61 +731,193 @@ Please respond with SI units and consider the safety constraints mentioned.
         if response.status_code == 200:
             result = response.json()
 
+            # Compatibility: some OpenAI-compatible clients still look for legacy
+            # `choices[].text` (completions-style) even when calling chat endpoints.
+            # Provide it as a mirror of `choices[].message.content` when possible.
+            try:
+                choices = result.get("choices")
+                if isinstance(choices, list):
+                    for choice in choices:
+                        if not isinstance(choice, dict):
+                            continue
+                        if "text" in choice and isinstance(choice.get("text"), str):
+                            continue
+                        msg = choice.get("message")
+                        if isinstance(msg, dict) and isinstance(msg.get("content"), str):
+                            choice["text"] = msg["content"]
+            except Exception:
+                # Never fail a chat completion due to a best-effort compatibility shim.
+                pass
+
+            # Some clients treat usage=0 as "no output". Provide a tiny best-effort estimate
+            # when the orchestrator doesn't return token accounting.
+            try:
+                usage = result.get("usage")
+                if not isinstance(usage, dict):
+                    usage = {}
+                    result["usage"] = usage
+
+                def _est_tokens(s: str) -> int:
+                    # Lightweight heuristic: ~4 chars/token. Clamp to >=1 when non-empty.
+                    s = s.strip()
+                    if not s:
+                        return 0
+                    return max(1, len(s) // 4)
+
+                prompt_text = "\n".join(
+                    [
+                        f"{m.get('role','')}: {m.get('content','')}"
+                        for m in enhanced_messages
+                        if isinstance(m.get("content"), str)
+                    ]
+                )
+                completion_text = ""
+                choices = result.get("choices")
+                if isinstance(choices, list) and choices:
+                    first = choices[0]
+                    if isinstance(first, dict):
+                        msg = first.get("message")
+                        if isinstance(msg, dict) and isinstance(msg.get("content"), str):
+                            completion_text = msg["content"]
+                        elif isinstance(first.get("text"), str):
+                            completion_text = first["text"]
+
+                est_prompt = _est_tokens(prompt_text)
+                est_completion = _est_tokens(completion_text)
+
+                # If the backend didn't measure tokens (0s) but we do have text,
+                # overwrite with an estimate so clients don't treat the reply as empty.
+                if int(usage.get("prompt_tokens") or 0) == 0 and est_prompt > 0:
+                    usage["prompt_tokens"] = est_prompt
+                if int(usage.get("completion_tokens") or 0) == 0 and est_completion > 0:
+                    usage["completion_tokens"] = est_completion
+
+                total = int(usage.get("prompt_tokens") or 0) + int(
+                    usage.get("completion_tokens") or 0
+                )
+                if int(usage.get("total_tokens") or 0) == 0 and total > 0:
+                    usage["total_tokens"] = total
+            except Exception:
+                pass
+
+            if debug_enabled:
+                try:
+                    choices = result.get("choices")
+                    first_text = None
+                    if isinstance(choices, list) and choices and isinstance(choices[0], dict):
+                        first_text = choices[0].get("text")
+                    logger.info(
+                        "OpenClaw debug: outgoing chat response",
+                        extra={
+                            "event_type": "openclaw_debug",
+                            "metadata": {
+                                "has_choices": isinstance(result.get("choices"), list),
+                                "first_choice_has_text": isinstance(first_text, str),
+                                "usage": result.get("usage"),
+                            },
+                        },
+                    )
+                except Exception:
+                    pass
+
             # Log the interaction
             logger.info(
-                f"Request processed: domains={processed.domain_weights.dict()}, "
+                f"Request processed: domains={processed.domain_weights.model_dump()}, "
                 f"units={len(processed.extracted_units)}, constraints={len(processed.constraints)}"
             )
+
+            if chat_request.stream:
+                # OpenAI-style SSE streaming. The Control UI expects this when stream=true.
+                # We stream the already-produced content as a single delta chunk + stop chunk.
+                def _sse_lines():
+                    try:
+                        resp_id = result.get("id") or f"chatcmpl-{int(datetime.utcnow().timestamp())}"
+                        model = result.get("model") or (chat_request.model or "unknown")
+                        created = result.get("created") or int(datetime.utcnow().timestamp())
+
+                        content = ""
+                        try:
+                            choices = result.get("choices")
+                            if isinstance(choices, list) and choices and isinstance(choices[0], dict):
+                                msg = choices[0].get("message")
+                                if isinstance(msg, dict) and isinstance(msg.get("content"), str):
+                                    content = msg["content"]
+                                elif isinstance(choices[0].get("text"), str):
+                                    content = choices[0]["text"]
+                        except Exception:
+                            content = ""
+
+                        chunk = {
+                            "id": resp_id,
+                            "object": "chat.completion.chunk",
+                            "created": created,
+                            "model": model,
+                            "choices": [
+                                {
+                                    "index": 0,
+                                    "delta": {"content": content} if content else {},
+                                    "finish_reason": None,
+                                }
+                            ],
+                        }
+                        yield f"data: {json.dumps(chunk)}\n\n"
+
+                        done = {
+                            "id": resp_id,
+                            "object": "chat.completion.chunk",
+                            "created": created,
+                            "model": model,
+                            "choices": [
+                                {"index": 0, "delta": {}, "finish_reason": "stop"}
+                            ],
+                        }
+                        yield f"data: {json.dumps(done)}\n\n"
+                        yield "data: [DONE]\n\n"
+                    except Exception as e:
+                        # If streaming fails, emit an error-ish termination rather than hanging.
+                        err = {
+                            "error": {
+                                "message": f"streaming failed: {e}",
+                                "type": "server_error",
+                            }
+                        }
+                        yield f"data: {json.dumps(err)}\n\n"
+                        yield "data: [DONE]\n\n"
+
+                return StreamingResponse(
+                    _sse_lines(),
+                    media_type="text/event-stream",
+                    headers={
+                        "Cache-Control": "no-cache",
+                        "Connection": "keep-alive",
+                    },
+                )
 
             return result
         else:
             logger.error(
                 f"Orchestrator returned {response.status_code}: {response.text}"
             )
-            # Graceful fallback when orchestrator/LLM not available
-            fallback_backend = os.getenv("LLM_BACKEND", "mock")
-            return {
-                "id": "fallback",
-                "object": "chat.completion",
-                "created": int(datetime.utcnow().timestamp()),
-                "model": fallback_backend,
-                "choices": [
-                    {
-                        "index": 0,
-                        "message": {
-                            "role": "assistant",
-                            "content": "[Gateway] Orchestrator unavailable; returning fallback response.",
-                        },
-                        "finish_reason": "stop",
-                    }
-                ],
-                "usage": {
-                    "prompt_tokens": 0,
-                    "completion_tokens": 0,
-                    "total_tokens": 0,
+            raise HTTPException(
+                status_code=502,
+                detail={
+                    "error_code": "orchestrator_error",
+                    "message": "Orchestrator returned a non-200 response.",
+                    "orchestrator_status": response.status_code,
+                    "debug_hint": "Check wrkhrs-agent-platform logs and verify ORCHESTRATOR_URL + LLM_BACKEND configuration.",
                 },
-            }
+            )
 
     except requests.exceptions.RequestException as e:
         logger.error(f"Error contacting orchestrator: {e}")
-        fallback_backend = os.getenv("LLM_BACKEND", "mock")
-        return {
-            "id": "fallback",
-            "object": "chat.completion",
-            "created": int(datetime.utcnow().timestamp()),
-            "model": fallback_backend,
-            "choices": [
-                {
-                    "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": "[Gateway] Orchestrator not reachable; returning fallback response.",
-                    },
-                    "finish_reason": "stop",
-                }
-            ],
-            "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
-        }
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "error_code": "orchestrator_unreachable",
+                "message": "Error contacting orchestrator.",
+                "debug_hint": "Check wrkhrs-gateway logs, ORCHESTRATOR_URL, and that wrkhrs-agent-platform is healthy.",
+            },
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -709,7 +954,7 @@ async def analyze_domains(text: str):
     constraints = extract_constraints(text)
 
     return {
-        "domain_weights": weights.dict(),
+        "domain_weights": weights.model_dump(),
         "units": units,
         "constraints": constraints,
     }

@@ -11,7 +11,7 @@ The active profile is controlled by:
 ORCH_PROFILE=gpu   # or apple
 ```
 
-and resolved in `services/api/src/config.py:get_worker_settings()`. The router always calls the API’s `/v1/chat/completions`; only the worker URL + default model change.
+and resolved in `services/api-service/src/config.py:get_worker_settings()`. The router always calls the API's `/v1/chat/completions`; only the worker URL + default model change.
 
 ### GPU profile (`gpu`)
 
@@ -20,8 +20,8 @@ and resolved in `services/api/src/config.py:get_worker_settings()`. The router a
 - **How to run**:
 
 ```bash
-cd /path/to/server/worker/vllm
-docker compose -f docker-compose.vllm.yml up -d
+cd /path/to/server
+docker compose --project-directory "$(pwd)" -f worker/vllm/docker-compose.vllm.yml up -d
 ```
 
 In `.env`:
@@ -31,9 +31,22 @@ ORCH_PROFILE=gpu
 OPENAI_BASE_URL=http://qwen-vllm:8000/v1    # or http://gpu-host:8000/v1
 ```
 
+### WrkHrs agent-platform + host Ollama (recommended on Apple Silicon)
+
+The default full dev stack runs **wrkhrs-agent-platform** (LangGraph / open-multi-agent), not only the Python API worker. For accelerated inference on Apple Silicon, run **[Ollama](https://ollama.com)** on the host and wire the platform to its **native** HTTP API (containers reach the Mac via `host.docker.internal`; see `wrkhrs-agent-platform` `extra_hosts` in [`docker/compose-profiles/docker-compose.ai.yml`](../docker/compose-profiles/docker-compose.ai.yml)). **Use the Qwen lane**, not ad-hoc Llama defaults: pull **`qwen3:4b-instruct`** (Ollama) as the counterpart to **`Qwen/Qwen3-4B`** in [`docker-compose.local-ai.yml`](../docker/compose-profiles/docker-compose.local-ai.yml).
+
+```bash
+LLM_BACKEND=ollama
+LLM_RUNNER_URL=http://host.docker.internal:11434
+OLLAMA_MODEL=qwen3:4b-instruct
+OPENAI_BASE_URL=http://host.docker.internal:11434/v1
+```
+
+[`dev/scripts/fullstack_e2e_bootstrap.sh`](../dev/scripts/fullstack_e2e_bootstrap.sh) and [`dev/scripts/e2e_stack_up.sh`](../dev/scripts/e2e_stack_up.sh) set these automatically on Darwin arm64 (preflight: `ollama` + `/api/tags`); see [dev-environment.md — fullstack e2e](dev-environment.md#one-shot-fullstack-e2e-docker--openclaw--checks). This is separate from `ORCH_PROFILE=apple` below, which configures `get_worker_settings()` for the Python API’s worker URL and default model.
+
 ### Apple Silicon profile (`apple`)
 
-For Apple, we lean on an existing OpenAI-compatible server (for example **llama.cpp** with `--server` and OpenAI API enabled) and simply point the orchestrator at it.
+For Apple, we lean on an existing OpenAI-compatible server (for example **Ollama**’s `/v1` shim, or **llama.cpp** with `--server` and OpenAI API enabled) and point the Python API worker profile at it.
 
 - **Worker**: any Apple-capable model server exposing:
 
@@ -77,7 +90,7 @@ With this configuration:
 
 ```bash
 cd /path/to/server
-docker compose -p agent-orchestrator --env-file .env up -d api router
+docker compose --project-directory "$(pwd)" -f docker-compose.yml --env-file .env up -d api router
 ```
 
 4. Hit:

@@ -1,0 +1,99 @@
+{
+  "artifact_id": "647b2e52-7a93-527f-9db1-71fb3ff04de2",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_ipopt_onemkl_docker",
+    "artifact://evidence-bundle/ma57_runtime",
+    "artifact://execution-adapter-spec/ma57_probe",
+    "artifact://knowledge-pack/coinhsl_family",
+    "artifact://knowledge-pack/ma57",
+    "artifact://recipe-object/ma57_solver_backends",
+    "artifact://verification-report/5c78579f-7723-5692-a495-3788a20d1313"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "MA57: use ma57, MA57 configuration surface, eng_ipopt_onemkl_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng-ipopt-onemkl-container.sh. Recipe MA57 phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_ipopt_onemkl_docker as the canonical runtime surface, Run the linked health check for MA57, Stop if the runtime verification report is still REWORK, Execute MA57 only inside its declared capability boundary and record the evidence refs. Runtime eng-ipopt-onemkl/docker_image at birtha/knowledge-eng-ipopt-onemkl:1.0.0; environment ref artifact://environment-spec/eng_ipopt_onemkl_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker; verification refs artifact://verification-report/5c78579f-7723-5692-a495-3788a20d1313. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_ipopt_onemkl_docker: #0 building with \"desktop-linux\" instance using docker driver.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "retrieval_keys": [
+      "coder",
+      "ma57",
+      "package",
+      "phase3_package_ma57",
+      "true"
+    ],
+    "role": "coder",
+    "role_context_bundle_id": "coder_6aa96887dc28d85e",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_ipopt_onemkl_docker",
+      "artifact://evidence-bundle/ma57_runtime",
+      "artifact://execution-adapter-spec/ma57_probe",
+      "artifact://knowledge-pack/coinhsl_family",
+      "artifact://knowledge-pack/ma57",
+      "artifact://recipe-object/ma57_solver_backends",
+      "artifact://verification-report/5c78579f-7723-5692-a495-3788a20d1313"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_ipopt_onemkl_docker",
+        "sha256": "32569f4f18dadca67c1db0183ba8513468d6c59b4d93da352bd18c3faddbabf5"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/ma57_runtime",
+        "sha256": "f708e26e21205c6da2a0a24b00475e30a1645d6c790c6ac3b26b206623b682d9"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/ma57_probe",
+        "sha256": "cf383e0f91afba35496950e3e73751957fd4c182265ede46c7dd819767aab979"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/coinhsl_family",
+        "sha256": "8341aee06ed45a0fe2b8c6a951a8cdfa3622f3117e9244ca7b4829bfaf60e572"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ma57",
+        "sha256": "d41ceb0249b87b709bde30e7119610931d1524128ca4838dc963801a776d3be9"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/ma57_solver_backends",
+        "sha256": "3d988fab9c84c34653eede94b78d4ede9c7fed5af2b026d30add25f591e163c3"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/5c78579f-7723-5692-a495-3788a20d1313",
+        "sha256": "031a83a57072edee4a4ca3710c7517e3d621755974b129d1bdcd4774f50b7893"
+      }
+    ],
+    "task_class": "phase3_package_ma57"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

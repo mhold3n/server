@@ -1,9 +1,8 @@
-version: "3.9"
-
 # GPU Worker Services - Runs on workstation with RTX 4070 Ti + RTX 2080
 # Provides specialised GPU lanes for Birtha server orchestrator:
 #   GPU 0 (RTX 4070 Ti, 12 GB) → generation (vLLM chat/completions)
 #   GPU 1 (RTX 2080,     8 GB) → embeddings (vLLM or dedicated server)
+# Durable state: ${COMPOSE_DATA_ROOT:-.docker-data}/worker/*; model caches under ./.cache (repo).
 
 services:
   # ── Generation lane ─────────────────────────────────────────────
@@ -25,7 +24,8 @@ services:
       - HF_HOME=/.cache/models/hf
       - TRANSFORMERS_CACHE=/.cache/models/hf
       - MODEL_CACHE_DIR=/.cache/models/hf
-    command: [ "--model", "${VLLM_MODEL:-mistralai/Mistral-7B-Instruct-v0.3}", "--dtype", "float16", "--max-model-len", "${VLLM_MAX_MODEL_LEN:-8192}", "--gpu-memory-utilization", "${VLLM_GPU_MEMORY_UTILIZATION:-0.92}", "--enable-prefix-caching", "--host", "0.0.0.0", "--port", "8000" ]
+    # Default to a Qwen instruct model for local generation.
+    command: [ "--model", "${VLLM_MODEL:-Qwen/Qwen2.5-7B-Instruct}", "--dtype", "float16", "--max-model-len", "${VLLM_MAX_MODEL_LEN:-8192}", "--gpu-memory-utilization", "${VLLM_GPU_MEMORY_UTILIZATION:-0.92}", "--enable-prefix-caching", "--host", "0.0.0.0", "--port", "8000" ]
     ports:
       - "${WORKER_GEN_PORT:-8000}:8000"
     volumes:
@@ -82,7 +82,8 @@ services:
               count: 1
               capabilities: [ gpu ]
     environment:
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3:8b-instruct-q4_K_M}
+      # Qwen-first local lane (Ollama Hub tag); aligns with Qwen/Qwen3-4B in local-ai compose.
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3:4b-instruct}
       - OLLAMA_MODELS=/.cache/models/ollama
       - OLLAMA_ORIGINS=*
       - OLLAMA_KEEP_ALIVE=24h
@@ -92,7 +93,7 @@ services:
       - "${WORKER_OLLAMA_PORT:-11434}:11434"
     volumes:
       - ./.cache/models/ollama:/.cache/models/ollama
-      - ollama_data:/root/.ollama
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/worker/ollama_data:/root/.ollama
     runtime: nvidia
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:11434/api/tags" ]
@@ -140,15 +141,11 @@ services:
     ports:
       - "${WORKER_PROXY_PORT:-8443}:8443"
     volumes:
-      - ./infra/reverse-proxy/Caddyfile.worker:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
+      - ./docker/config/reverse-proxy/Caddyfile.worker:/etc/caddy/Caddyfile:ro
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/worker/caddy_data:/data
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/worker/caddy_config:/config
     depends_on:
       - llm-runner-gen
       - llm-runner-embed
     restart: unless-stopped
 
-volumes:
-  caddy_data:
-  caddy_config:
-  ollama_data:

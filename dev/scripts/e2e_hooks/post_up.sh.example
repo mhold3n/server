@@ -1,0 +1,8 @@
+# Optional hook sourced at the end of dev/scripts/fullstack_e2e_bootstrap.sh.
+#
+# For agents: copy to post_up.sh (same directory). post_up.sh is gitignored so each developer
+# can wire IDE helpers, extra port forwards, or local-only smoke without committing secrets.
+#
+# Example (uncomment and adapt):
+# log_extra() { printf '[post_up] %s\n' "$*"; }
+# log_extra "Add your commands here (e.g. open IDE workspace, attach debugger)."

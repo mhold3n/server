@@ -1,0 +1,207 @@
+{
+  "artifact_id": "c74ae509-1dc7-596e-8864-aa6e51e97e23",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_trilinos_family_docker",
+    "artifact://environment-spec/eng_trilinos_family_gui",
+    "artifact://evidence-bundle/trilinos_belos_runtime",
+    "artifact://evidence-bundle/trilinos_ifpack2_runtime",
+    "artifact://evidence-bundle/trilinos_muelu_runtime",
+    "artifact://evidence-bundle/trilinos_runtime",
+    "artifact://execution-adapter-spec/trilinos_belos_probe",
+    "artifact://execution-adapter-spec/trilinos_ifpack2_probe",
+    "artifact://execution-adapter-spec/trilinos_muelu_probe",
+    "artifact://execution-adapter-spec/trilinos_probe",
+    "artifact://gui-session-spec/eng_trilinos_family_gui",
+    "artifact://knowledge-pack/trilinos",
+    "artifact://knowledge-pack/trilinos_belos",
+    "artifact://knowledge-pack/trilinos_family",
+    "artifact://knowledge-pack/trilinos_ifpack2",
+    "artifact://knowledge-pack/trilinos_muelu",
+    "artifact://recipe-object/trilinos_belos_solver_backends",
+    "artifact://recipe-object/trilinos_ifpack2_solver_backends",
+    "artifact://recipe-object/trilinos_muelu_solver_backends",
+    "artifact://recipe-object/trilinos_solver_backends",
+    "artifact://verification-report/355071ee-e939-5741-a7ed-9ad38dd17563",
+    "artifact://verification-report/61f5f4f6-8ea3-5f43-bdda-99c885bce432",
+    "artifact://verification-report/a61dc9c1-2765-5e62-9952-ab677730ed31",
+    "artifact://verification-report/a66ea0c0-7455-5f3c-96a3-10834faf9ed1",
+    "artifact://verification-report/bd12c942-b6e5-51da-9379-9aecbd8429ba"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "Trilinos: review Probe Trilinos through artifact://environment-spec/eng_trilinos_family_docker, Confirm the current Phase 2 gate state for Trilinos. Checklist Trilinos pack links to the intended environment spec(s), Trilinos adapter and evidence bundle reference the same runtime verification report, Trilinos anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using Trilinos for using trilinos as a substitute for unrelated workflows outside solver-backend workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_trilinos_family_docker., Crossing the adapter boundary for Trilinos without a typed contract tied to trilinos backend kernels reused by solver-backend workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker. Runtime eng-trilinos-family/docker_image at birtha/knowledge-eng-trilinos-family:1.0.0; environment ref artifact://environment-spec/eng_trilinos_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker; verification refs artifact://verification-report/a66ea0c0-7455-5f3c-96a3-10834faf9ed1. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_trilinos_family_gui; control provider noVNC via OpenClaw browser.\nTrilinos Belos: review Probe Trilinos Belos through artifact://environment-spec/eng_trilinos_family_docker, Confirm the current Phase 2 gate state for Trilinos Belos. Checklist Trilinos Belos pack links to the intended environment spec(s), Trilinos Belos adapter and evidence bundle reference the same runtime verification report, Trilinos Belos anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using Trilinos Belos for using trilinos belos as a substitute for unrelated workflows outside solver-backend workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_trilinos_family_docker., Crossing the adapter boundary for Trilinos Belos without a typed contract tied to trilinos belos backend kernels reused by solver-backend workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker. Runtime eng-trilinos-family/docker_image at birtha/knowledge-eng-trilinos-family:1.0.0; environment ref artifact://environment-spec/eng_trilinos_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker; verification refs artifact://verification-report/61f5f4f6-8ea3-5f43-bdda-99c885bce432. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_trilinos_family_gui; control provider noVNC via OpenClaw browser.\nTrilinos Ifpack2: review Probe Trilinos Ifpack2 through artifact://environment-spec/eng_trilinos_family_docker, Confirm the current Phase 2 gate state for Trilinos Ifpack2. Checklist Trilinos Ifpack2 pack links to the intended environment spec(s), Trilinos Ifpack2 adapter and evidence bundle reference the same runtime verification report, Trilinos Ifpack2 anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using Trilinos Ifpack2 for using trilinos ifpack2 as a substitute for unrelated workflows outside solver-backend workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_trilinos_family_docker., Crossing the adapter boundary for Trilinos Ifpack2 without a typed contract tied to trilinos ifpack2 backend kernels reused by solver-backend workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker. Runtime eng-trilinos-family/docker_image at birtha/knowledge-eng-trilinos-family:1.0.0; environment ref artifact://environment-spec/eng_trilinos_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker; verification refs artifact://verification-report/bd12c942-b6e5-51da-9379-9aecbd8429ba. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_trilinos_family_gui; control provider noVNC via OpenClaw browser.\nTrilinos MueLu: review Probe Trilinos MueLu through artifact://environment-spec/eng_trilinos_family_docker, Confirm the current Phase 2 gate state for Trilinos MueLu. Checklist Trilinos MueLu pack links to the intended environment spec(s), Trilinos MueLu adapter and evidence bundle reference the same runtime verification report, Trilinos MueLu anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using Trilinos MueLu for using trilinos muelu as a substitute for unrelated workflows outside solver-backend workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_trilinos_family_docker., Crossing the adapter boundary for Trilinos MueLu without a typed contract tied to trilinos muelu backend kernels reused by solver-backend workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker. Runtime eng-trilinos-family/docker_image at birtha/knowledge-eng-trilinos-family:1.0.0; environment ref artifact://environment-spec/eng_trilinos_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker; verification refs artifact://verification-report/355071ee-e939-5741-a7ed-9ad38dd17563. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_trilinos_family_gui; control provider noVNC via OpenClaw browser.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "included_sections": [
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "retrieval_keys": [
+      "install",
+      "phase1_batch1b_trilinos_family",
+      "phase2_install_phase1_batch1b_trilinos_family",
+      "reviewer",
+      "true"
+    ],
+    "role": "reviewer",
+    "role_context_bundle_id": "reviewer_6a9952f633a4f530",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_trilinos_family_docker",
+      "artifact://environment-spec/eng_trilinos_family_gui",
+      "artifact://evidence-bundle/trilinos_belos_runtime",
+      "artifact://evidence-bundle/trilinos_ifpack2_runtime",
+      "artifact://evidence-bundle/trilinos_muelu_runtime",
+      "artifact://evidence-bundle/trilinos_runtime",
+      "artifact://execution-adapter-spec/trilinos_belos_probe",
+      "artifact://execution-adapter-spec/trilinos_ifpack2_probe",
+      "artifact://execution-adapter-spec/trilinos_muelu_probe",
+      "artifact://execution-adapter-spec/trilinos_probe",
+      "artifact://gui-session-spec/eng_trilinos_family_gui",
+      "artifact://knowledge-pack/trilinos",
+      "artifact://knowledge-pack/trilinos_belos",
+      "artifact://knowledge-pack/trilinos_family",
+      "artifact://knowledge-pack/trilinos_ifpack2",
+      "artifact://knowledge-pack/trilinos_muelu",
+      "artifact://recipe-object/trilinos_belos_solver_backends",
+      "artifact://recipe-object/trilinos_ifpack2_solver_backends",
+      "artifact://recipe-object/trilinos_muelu_solver_backends",
+      "artifact://recipe-object/trilinos_solver_backends",
+      "artifact://verification-report/355071ee-e939-5741-a7ed-9ad38dd17563",
+      "artifact://verification-report/61f5f4f6-8ea3-5f43-bdda-99c885bce432",
+      "artifact://verification-report/a61dc9c1-2765-5e62-9952-ab677730ed31",
+      "artifact://verification-report/a66ea0c0-7455-5f3c-96a3-10834faf9ed1",
+      "artifact://verification-report/bd12c942-b6e5-51da-9379-9aecbd8429ba"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_trilinos_family_docker",
+        "sha256": "1dfdee49a480ba658a71a33440d141d0d1338567230bb4790702b99e0b402071"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_trilinos_family_gui",
+        "sha256": "b69b59dcbc31b99dbab857ffcc85ad5f355cc606c7c8637649c3213879cc3422"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/trilinos_belos_runtime",
+        "sha256": "b85b0586ea697e2cdb64f77f5c177eb4b3339abd496518cd00d9d1fddc3ee2f9"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/trilinos_ifpack2_runtime",
+        "sha256": "254f587efd438da774db4ebd4e0ced52ac6dbd0e67e1e5955060987aafdaa825"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/trilinos_muelu_runtime",
+        "sha256": "6da72888425d24f09bdde561c4e5d330618181b6f44d608a8288b4b1f1affc31"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/trilinos_runtime",
+        "sha256": "4f1d0ea8b8994b402b6c40d5e15975fa868ae63e4579890d4b5cafbf031ef846"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/trilinos_belos_probe",
+        "sha256": "1adca91cb37060bb4b5b9a28ebfbd64cfc152bf859a22f8dc10b66b4433ff351"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/trilinos_ifpack2_probe",
+        "sha256": "dd538bfe93641989e1ac9f003827d71f45461a3b005087eb60448eae5ae4fde4"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/trilinos_muelu_probe",
+        "sha256": "eaef85d0fb6c0ba6b1582c0aa3869d79823fd3af87fbe23914160dc8be80ecd7"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/trilinos_probe",
+        "sha256": "da680ba906bbb476f702f291cf843f2db00804b58cb107048a409c0b1877e982"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_trilinos_family_gui",
+        "sha256": "0fa4db4bdccc182cadbf4124db502ef089425737d153b28841186fa276d72fd7"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos",
+        "sha256": "624ba323b5aef2971113caf68cd65e8c4604a9546d12345b5f4ede01ba879d90"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_belos",
+        "sha256": "26f15ce0d7b2dd4c6b52e379d1734fafea06e8b820b222a4446bc59f35e3ac7f"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_family",
+        "sha256": "a0e8bccdaa5171332af458bf810f765200943e493fdf84c0cd5efd22100b1349"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_ifpack2",
+        "sha256": "750d859b144b480e7ca5684a797e4c11c17e5c03b75b0b34b5bda21ee560f8af"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_muelu",
+        "sha256": "82ec87e738bcba0a4a923bb016bc7d82bb552d2de957e585345f513c6e5dd656"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/trilinos_belos_solver_backends",
+        "sha256": "de3bc79439f32770dfe4f5289982391102908ceba66b5afeda6a4f0aedef8f7c"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/trilinos_ifpack2_solver_backends",
+        "sha256": "13469e3ca6b13b583a9a062158aa40a82d8908a7af5cf0ec329be447f920e3ba"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/trilinos_muelu_solver_backends",
+        "sha256": "cfce5f1fbce7b9b2556c4df9093d48409e0bef45d767af0622898d9e915cf82a"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/trilinos_solver_backends",
+        "sha256": "412b46fa576a4f9becc6343586f6e6ebf9660ae8ec87f4c15ae31c59c301c01b"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/355071ee-e939-5741-a7ed-9ad38dd17563",
+        "sha256": "285a4024367419a83a6511eb929b689876bcbd3bc482a74e43638a2f78881455"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/61f5f4f6-8ea3-5f43-bdda-99c885bce432",
+        "sha256": "51689f849e6b2b32734a946e7d8a3843e6eb508588c06860c40720b9c76a7055"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/a61dc9c1-2765-5e62-9952-ab677730ed31",
+        "sha256": "3b1848d2c0cb9ae6f4a78691d12adb0a828f5d5d57b9383341ed1a3806d9d01b"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/a66ea0c0-7455-5f3c-96a3-10834faf9ed1",
+        "sha256": "1e583dffb9f4465995af3d935539c94434d3031413045bc203f2f99ed7e2cbb1"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/bd12c942-b6e5-51da-9379-9aecbd8429ba",
+        "sha256": "fbf9a2204bb7997c81c790abd6281e156623a32e9dfefb1dfbb97ade707a9684"
+      }
+    ],
+    "task_class": "phase2_install_phase1_batch1b_trilinos_family"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

@@ -1,9 +1,9 @@
-version: "3.9"
-
-# Optional/Addon services grouped by profiles. Enable selectively with:
-#   docker compose -f docker-compose.addons.yml --profile <name> up -d
+# Host/homelab-only addon services grouped by profiles. Not included in default dev.
+# Enable selectively with:
+#   docker compose --project-directory <repo> -f docker/compose-profiles/docker-compose.addons.yml --profile <name> up -d
 # Start all addon profiles via Makefile:
 #   make up-addons
+# Addon volume host paths: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/... (set COMPOSE_DATA_ROOT=/mnt/appdata for legacy Linux layout).
 
 services:
   # =============================
@@ -176,7 +176,7 @@ services:
 
   ai-stack:
     build:
-      context: ./services/ai_stack
+      context: ./services/ai-shared-service
     profiles: [ai]
     environment:
       - OPENAI_BASE_URL=${OPENAI_BASE_URL}
@@ -288,7 +288,7 @@ services:
   # Marker-based PDF optimizer/watcher
   marker-watcher:
     build:
-      context: ./services/marker_watcher
+      context: ./services/document-ingest-service
     profiles: [media]
     environment:
       - TZ=${TZ:-UTC}
@@ -530,55 +530,55 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/adguard_data
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/adguard_data
   adguard_conf:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/adguard_conf
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/adguard_conf
   crowdsec_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/crowdsec_data
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/crowdsec_data
   crowdsec_config:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/crowdsec_config
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/crowdsec_config
   fail2ban_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/fail2ban_data
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/fail2ban_data
   authentik_db:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/authentik_db
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/authentik_db
   authentik_redis:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/authentik_redis
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/authentik_redis
   authentik_media:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/authentik_media
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/authentik_media
   authentik_templates:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/authentik_templates
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/authentik_templates
 
   # Search
   meili_data:
@@ -586,13 +586,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/meili_data
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/meili_data
   es_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/es_data
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/es_data
 
   # Media
   prowlarr_config:
@@ -600,43 +600,43 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/prowlarr_config
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/prowlarr_config
   sonarr_config:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/sonarr_config
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/sonarr_config
   radarr_config:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/radarr_config
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/radarr_config
   jellyseerr_config:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/jellyseerr_config
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/jellyseerr_config
   qbittorrent_config:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/qbittorrent_config
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/qbittorrent_config
   media:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/media
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/media
   downloads:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/downloads
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/downloads
 
   # Documents (Marker)
   documents:
@@ -644,13 +644,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/documents
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/documents
   documents_processed:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/documents_processed
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/documents_processed
 
   # Personal/Data
   nextcloud_db:
@@ -658,43 +658,43 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/nextcloud_db
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/nextcloud_db
   nextcloud_redis:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/nextcloud_redis
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/nextcloud_redis
   nextcloud_html:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/nextcloud_html
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/nextcloud_html
   nextcloud_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/nextcloud_data
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/nextcloud_data
   immich_db:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/immich_db
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/immich_db
   immich_redis:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/immich_redis
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/immich_redis
   immich_upload:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/immich_upload
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/immich_upload
 
   # Games
   minecraft_data:
@@ -702,13 +702,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/minecraft_data
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/minecraft_data
   pelican_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/pelican_data
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/pelican_data
 
   # Apps
   vikunja_db:
@@ -716,31 +716,31 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/vikunja_db
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/vikunja_db
   vikunja_files:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/vikunja_files
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/vikunja_files
   anonaddy_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/anonaddy_data
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/anonaddy_data
   anonaddy_db:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/anonaddy_db
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/anonaddy_db
   kasm_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/kasm_data
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/kasm_data
 
   # Network
   tailscale_state:
@@ -748,4 +748,4 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /mnt/appdata/addons/tailscale_state
+      device: ${COMPOSE_DATA_ROOT:-.docker-data}/addons/tailscale_state

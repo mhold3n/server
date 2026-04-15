@@ -1,0 +1,93 @@
+{
+  "artifact_id": "1b07833c-03ea-5592-903d-3917a7926fbc",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_openmodelica_docker",
+    "artifact://evidence-bundle/openmodelica_runtime",
+    "artifact://execution-adapter-spec/openmodelica_probe",
+    "artifact://knowledge-pack/openmodelica",
+    "artifact://recipe-object/openmodelica_electrics_dynamics_system",
+    "artifact://verification-report/67d5cf16-f699-55c8-a702-2a7b3e043b09"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "OpenModelica: review Probe OpenModelica through artifact://environment-spec/eng_openmodelica_docker, Confirm the current Phase 2 gate state for OpenModelica. Checklist OpenModelica pack links to the intended environment spec(s), OpenModelica adapter and evidence bundle reference the same runtime verification report, OpenModelica anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using OpenModelica for using openmodelica as a substitute for unrelated workflows outside electrical, dynamic, and system workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_openmodelica_docker., Crossing the adapter boundary for OpenModelica without a typed contract tied to openmodelica executable workflows for electrical, dynamic, and system workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_openmodelica_docker. Runtime eng-openmodelica/docker_image at birtha/knowledge-eng-openmodelica:1.0.0; environment ref artifact://environment-spec/eng_openmodelica_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_openmodelica_docker; verification refs artifact://verification-report/67d5cf16-f699-55c8-a702-2a7b3e043b09. Runtime gate: Healthcheck failed for artifact://environment-spec/eng_openmodelica_docker: docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"python\": executable file not found in $PATH.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "included_sections": [
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "retrieval_keys": [
+      "openmodelica",
+      "package",
+      "phase3_package_openmodelica",
+      "reviewer",
+      "true"
+    ],
+    "role": "reviewer",
+    "role_context_bundle_id": "reviewer_f8033db236ec4c52",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_openmodelica_docker",
+      "artifact://evidence-bundle/openmodelica_runtime",
+      "artifact://execution-adapter-spec/openmodelica_probe",
+      "artifact://knowledge-pack/openmodelica",
+      "artifact://recipe-object/openmodelica_electrics_dynamics_system",
+      "artifact://verification-report/67d5cf16-f699-55c8-a702-2a7b3e043b09"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_openmodelica_docker",
+        "sha256": "7f6d942584f3203756f9ccfe08bd5cb9b22e238546bb5e6f6a895af1bba51b79"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/openmodelica_runtime",
+        "sha256": "34584d4b6bac5c367a32a4db6c046bacbb01984e90c4a9a6ca90fb124a08817a"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/openmodelica_probe",
+        "sha256": "1b3c25b0f05d4a23d43dffeb1144eb8a3e16ed7d55a16bf80382e09470c55f2a"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/openmodelica",
+        "sha256": "eefb9080ec61e6812ec2e0a43abd41bc07a58db1d54d0127a1b0f98f4dac6000"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/openmodelica_electrics_dynamics_system",
+        "sha256": "371784ac275408e6c26793dd4301c290cc60671e14e7565a65582d2b24827e43"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/67d5cf16-f699-55c8-a702-2a7b3e043b09",
+        "sha256": "6a0b469fcecf2872718c60ed57b33222dc753691444af486cd09bd0a07204315"
+      }
+    ],
+    "task_class": "phase3_package_openmodelica"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

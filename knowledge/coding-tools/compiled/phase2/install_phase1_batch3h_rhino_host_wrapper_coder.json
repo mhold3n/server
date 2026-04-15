@@ -1,0 +1,93 @@
+{
+  "artifact_id": "e7467eea-2534-5686-a69d-4d00cea5b77b",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_rhino_host",
+    "artifact://evidence-bundle/rhino_common_runtime",
+    "artifact://execution-adapter-spec/rhino_common_probe",
+    "artifact://knowledge-pack/rhino_common",
+    "artifact://recipe-object/rhino_common_csharp_examples",
+    "artifact://verification-report/e380b24d-ce5c-5eb5-9bdc-499eea848294"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "RhinoCommon: use rhino_common, RhinoCommon model object, eng_rhino_host. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_rhino_host takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng-rhino.sh. Recipe RhinoCommon phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_rhino_host as the canonical runtime surface, Run the linked health check for RhinoCommon, Record the passing verification report before using the module output downstream, Execute RhinoCommon only inside its declared capability boundary and record the evidence refs. Runtime eng-rhino/host_app at /Applications/Rhino 8.app; environment ref artifact://environment-spec/eng_rhino_host; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_rhino_host; verification refs artifact://verification-report/e380b24d-ce5c-5eb5-9bdc-499eea848294. GUI state API_ONLY_HOST_PATH.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "retrieval_keys": [
+      "coder",
+      "install",
+      "phase1_batch3h_rhino_host_wrapper",
+      "phase2_install_phase1_batch3h_rhino_host_wrapper",
+      "true"
+    ],
+    "role": "coder",
+    "role_context_bundle_id": "coder_4273fcad1a1312f8",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_rhino_host",
+      "artifact://evidence-bundle/rhino_common_runtime",
+      "artifact://execution-adapter-spec/rhino_common_probe",
+      "artifact://knowledge-pack/rhino_common",
+      "artifact://recipe-object/rhino_common_csharp_examples",
+      "artifact://verification-report/e380b24d-ce5c-5eb5-9bdc-499eea848294"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_rhino_host",
+        "sha256": "d6384688094a76d3fab63a7d15dafb6037b0e602d2902db6fabc021820e100bb"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/rhino_common_runtime",
+        "sha256": "a399a57238d2d08d2f70b3f9e396eb56adcce824b44f3bc5d3dec8f06f03aa0b"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/rhino_common_probe",
+        "sha256": "dc46792a3957a67129f7b66dc4236c36c8230309f00cf20dfb1bf13ebc41c298"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/rhino_common",
+        "sha256": "b0db226970ffb445d5d4cecc18d0baffb6919cbbb1f48e24fed79b14049c87d2"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/rhino_common_csharp_examples",
+        "sha256": "a280cce139eac55f60764befe6f06bdb53ef435e22f92214d3f030062921e538"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/e380b24d-ce5c-5eb5-9bdc-499eea848294",
+        "sha256": "f5641909c80919310bd647b9ccfaf83516252c0042606f9950ec12bd4a6210f7"
+      }
+    ],
+    "task_class": "phase2_install_phase1_batch3h_rhino_host_wrapper"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

@@ -6,8 +6,9 @@ should flow through LangGraph must go through this client so that agents and
 humans have a single place to reason about request/response shapes, routing
 behaviour, and error semantics.
 
-The underlying HTTP server is implemented in `services/agent-platform/server`,
-which currently exposes `/health`, `/v1/workflows`, and `/v1/workflows/execute`.
+The underlying HTTP server is implemented in
+`services/agent-platform-service/server`, which currently exposes `/health`,
+`/v1/workflows`, and `/v1/workflows/execute`.
 
 This client intentionally does **not** know anything about local-vs-hosted
 provider details; those decisions live behind the LangGraph workflows and
@@ -29,8 +30,9 @@ class OrchestratorClient:
     """Async client for the LangGraph orchestrator.
 
     The base URL normally points at the WrkHrs agent-platform service
-    (for example `http://wrkhrs-agent-platform:8000` in docker-compose),
+    (for example `http://ai-gateway-service-agent-platform:8000` in docker-compose),
     but the exact address is provided by `settings.agent_platform_url`
+    (environment **`AGENT_PLATFORM_URL`**, or alias **`ORCHESTRATOR_AGENT_PLATFORM_URL`**)
     so that tests and alternative deployments can override it.
 
     This client is designed to be used as an async context manager to
@@ -45,7 +47,7 @@ class OrchestratorClient:
         resolved = base_url or getattr(
             settings,
             "agent_platform_url",
-            "http://wrkhrs-agent-platform:8000",
+            "http://ai-gateway-service-agent-platform:8000",
         )
         self.base_url = resolved.rstrip("/")
         self.timeout = timeout
@@ -115,3 +117,15 @@ class OrchestratorClient:
         response.raise_for_status()
         return cast(dict[str, Any], response.json())
 
+    async def cancel_workflow(self, workflow_id: str) -> dict[str, Any]:
+        """Request cancellation of an in-flight workflow run on the agent-platform.
+
+        Maps to ``POST /v1/workflows/:id/cancel`` on the TypeScript server.
+        """
+        if not self._client:
+            raise RuntimeError(
+                "Client not initialized. Use OrchestratorClient as an async context manager.",
+            )
+        response = await self._client.post(f"/v1/workflows/{workflow_id}/cancel")
+        response.raise_for_status()
+        return cast(dict[str, Any], response.json())

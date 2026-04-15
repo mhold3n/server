@@ -22,11 +22,11 @@ PINNED_IMAGES = {
 
 IMAGE_POLICY_FILES = [
     ROOT / ".env.example",
-    ROOT / "services" / "wrkhrs" / "env.example",
-    ROOT / "compose" / "docker-compose.worker.yml",
+    ROOT / "services" / "ai-gateway-service" / "env.example",
+    ROOT / "docker" / "compose-profiles" / "docker-compose.worker.yml",
     ROOT / "worker" / "vllm" / "docker-compose.vllm.yml",
-    ROOT / "services" / "wrkhrs" / "compose" / "docker-compose.base.yml",
-    ROOT / "services" / "wrkhrs" / "compose" / "docker-compose.prod.yml",
+    ROOT / "services" / "ai-gateway-service" / "compose" / "docker-compose.base.yml",
+    ROOT / "services" / "ai-gateway-service" / "compose" / "docker-compose.prod.yml",
 ]
 
 HF_RUNTIME_REQUIREMENTS = {

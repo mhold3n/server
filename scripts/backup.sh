@@ -88,8 +88,8 @@ backup_configs() {
         -C /path/to/project \
         docker-compose*.yml \
         .env \
-        infra/ \
-        mcp/config/ \
+        docker/ \
+        mcp-servers/mcp/config/ \
         scripts/ \
         2>/dev/null || true
     

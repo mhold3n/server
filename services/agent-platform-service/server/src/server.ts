@@ -177,6 +177,18 @@ export function buildServer() {
       }),
     })
 
+    const content = (result.final_response ?? "").trim()
+    if (!content) {
+      return reply.status(502).send({
+        detail: {
+          error_code: "orchestrator_empty_response",
+          message: "Orchestrator produced an empty final_response.",
+          debug_hint:
+            "Check wrkhrs-agent-platform logs for workflow execution errors and verify LLM_BACKEND is set to a real backend (not mock).",
+        },
+      })
+    }
+
     const now = Math.floor(Date.now() / 1000)
     return {
       id: `chatcmpl-${now}`,
@@ -188,7 +200,7 @@ export function buildServer() {
           index: 0,
           message: {
             role: "assistant",
-            content: result.final_response ?? "No response generated",
+            content,
           },
           finish_reason: "stop",
         },

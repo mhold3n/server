@@ -15,9 +15,9 @@ import pytest
 import pytest_asyncio
 
 from src.policies.evidence import EvidencePolicy
-from src.wrkhrs.conditioning import NonGenerativeConditioning
-from src.wrkhrs.domain_classifier import DomainClassifier
-from src.wrkhrs.gateway_client import WrkHrsGatewayClient
+from src.ai_gateway_client.conditioning import NonGenerativeConditioning
+from src.ai_gateway_client.domain_classifier import DomainClassifier
+from src.ai_gateway_client.gateway_client import WrkHrsGatewayClient
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("RUN_LIVE_STACK_TESTS") != "1",
@@ -83,7 +83,7 @@ async def test_policy_headers_present_on_http_call() -> None:
                 "model": "mock-model",
                 "messages": [{"role": "user", "content": "Answer with citations."}],
             },
-            headers={"x-trace-id": "wrkhrs-e2e-trace", "x-run-id": "wrkhrs-e2e-run"},
+            headers={"x-trace-id": "ai_gateway_client-e2e-trace", "x-run-id": "ai_gateway_client-e2e-run"},
         )
         assert r.status_code == 200
         assert r.headers.get("x-policy-verdict") == "True"

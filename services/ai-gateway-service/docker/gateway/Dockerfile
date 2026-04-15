@@ -2,16 +2,24 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Build context is services/wrkhrs/, so the live gateway source is under
-# services/gateway/ within that subtree.
+# Build context is services/ai-gateway-service/, so the live gateway source is
+# under services/gateway/ within that subtree.
+
+# sentence-transformers (used lazily in app.py for embeddings) depends on torch.
+# Installing CPU torch from PyTorch's wheel index first avoids huge default PyPI
+# CUDA wheels and reduces ReadTimeoutError during `docker compose build`.
+ENV PIP_DEFAULT_TIMEOUT=300
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-RUN pip install --no-cache-dir \
+# Install Python dependencies: upgrade pip, CPU torch, then the app stack.
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir --retries 10 \
+        torch --index-url https://download.pytorch.org/whl/cpu \
+    && pip install --no-cache-dir --retries 10 \
     fastapi \
     uvicorn[standard] \
     pydantic[dotenv] \

@@ -1,0 +1,93 @@
+{
+  "artifact_id": "bd1292be-ff54-514d-9471-5f901117b0f6",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_code_aster_docker",
+    "artifact://evidence-bundle/code_aster_runtime",
+    "artifact://execution-adapter-spec/code_aster_probe",
+    "artifact://knowledge-pack/code_aster",
+    "artifact://recipe-object/code_aster_structures_pde",
+    "artifact://verification-report/b9b27893-fafa-5bd6-94a9-eae7a2718bc5"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "Code_Aster: solves Code_Aster executable workflows for structures and PDE workflows, Code_Aster case setup, launch, and output capture inside the knowledge runtime. Best for Code_Aster inside structures and PDE workflows. Avoid Using Code_Aster as a substitute for unrelated workflows outside structures and PDE workflows, Treating Code_Aster as implicitly verified without its linked runtime and evidence bundle. Runtime eng-code-aster/docker_image at birtha/knowledge-eng-code-aster:1.0.0; environment ref artifact://environment-spec/eng_code_aster_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_code_aster_docker; verification refs artifact://verification-report/b9b27893-fafa-5bd6-94a9-eae7a2718bc5. Runtime gate: Healthcheck failed for artifact://environment-spec/eng_code_aster_docker: docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"python\": executable file not found in $PATH.",
+    "excluded_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs"
+    ],
+    "retrieval_keys": [
+      "code_aster",
+      "general",
+      "package",
+      "phase3_package_code_aster",
+      "true"
+    ],
+    "role": "general",
+    "role_context_bundle_id": "general_0a111be87b54ab7a",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_code_aster_docker",
+      "artifact://evidence-bundle/code_aster_runtime",
+      "artifact://execution-adapter-spec/code_aster_probe",
+      "artifact://knowledge-pack/code_aster",
+      "artifact://recipe-object/code_aster_structures_pde",
+      "artifact://verification-report/b9b27893-fafa-5bd6-94a9-eae7a2718bc5"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_code_aster_docker",
+        "sha256": "1356c6efc98f57183f1a2a0c08dd9fdaabfa72b8a7582e02fc3dfe7671df1e06"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/code_aster_runtime",
+        "sha256": "db6c6c67af5fbd2669fa2e1ca1629857d0000b76dff4e1fb376aededcc5a17d0"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/code_aster_probe",
+        "sha256": "e4ea4d1616877c2bb6c6543621cdbbb5f89133a8cb24dddf0f28d87c4dad3901"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/code_aster",
+        "sha256": "ac86378e03e8c9802df7e9e65a508840362e9af323ba908bf54d883d23b90a63"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/code_aster_structures_pde",
+        "sha256": "e9cb389705ee320cab8a3906aac1d2b7c670550352df6ca894f088c32416513a"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/b9b27893-fafa-5bd6-94a9-eae7a2718bc5",
+        "sha256": "94498c22a9e3ac1157fffa15033efe646b3e4cc2e66029664b75f987453064a8"
+      }
+    ],
+    "task_class": "phase3_package_code_aster"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

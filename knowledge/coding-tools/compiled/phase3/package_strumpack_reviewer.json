@@ -1,0 +1,99 @@
+{
+  "artifact_id": "8f69fe70-a51b-5bed-b11c-cbd17c7bd58d",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_strumpack_docker",
+    "artifact://evidence-bundle/strumpack_runtime",
+    "artifact://execution-adapter-spec/strumpack_probe",
+    "artifact://knowledge-pack/sparse_direct_family",
+    "artifact://knowledge-pack/strumpack",
+    "artifact://recipe-object/strumpack_solver_backends",
+    "artifact://verification-report/4a36e2c6-2d24-509e-a7da-c5558b4187b7"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "STRUMPACK: review Probe STRUMPACK through artifact://environment-spec/eng_strumpack_docker, Confirm the current Phase 2 gate state for STRUMPACK. Checklist STRUMPACK pack links to the intended environment spec(s), STRUMPACK adapter and evidence bundle reference the same runtime verification report, STRUMPACK anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using STRUMPACK for using strumpack as a substitute for unrelated workflows outside solver-backend workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_strumpack_docker., Crossing the adapter boundary for STRUMPACK without a typed contract tied to strumpack backend kernels reused by solver-backend workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_strumpack_docker. Runtime eng-strumpack/docker_image at birtha/knowledge-eng-strumpack:1.0.0; environment ref artifact://environment-spec/eng_strumpack_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_strumpack_docker; verification refs artifact://verification-report/4a36e2c6-2d24-509e-a7da-c5558b4187b7. Runtime gate: No runtime result captured for artifact://environment-spec/eng_strumpack_docker..",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "included_sections": [
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "retrieval_keys": [
+      "package",
+      "phase3_package_strumpack",
+      "reviewer",
+      "strumpack",
+      "true"
+    ],
+    "role": "reviewer",
+    "role_context_bundle_id": "reviewer_0ff95e5222c238f4",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_strumpack_docker",
+      "artifact://evidence-bundle/strumpack_runtime",
+      "artifact://execution-adapter-spec/strumpack_probe",
+      "artifact://knowledge-pack/sparse_direct_family",
+      "artifact://knowledge-pack/strumpack",
+      "artifact://recipe-object/strumpack_solver_backends",
+      "artifact://verification-report/4a36e2c6-2d24-509e-a7da-c5558b4187b7"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_strumpack_docker",
+        "sha256": "6faa67dd3a29a78ead31f113948668b87e465db36bcaa11587466f0bca452aac"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/strumpack_runtime",
+        "sha256": "a24e2c4a109c61fb34fe811b299b7a03b204af8b96a3f9898247ae27dcdf7f88"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/strumpack_probe",
+        "sha256": "e9a0100eba125e1714c1a9408bcaa34c11e8ead5d6436c1fa949447f633d8100"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/sparse_direct_family",
+        "sha256": "fb791c05ea722b06df44569cdd722715ba6b8f6804097c4810fca3dea45cb812"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/strumpack",
+        "sha256": "6edefc9a5c5105d2ecd2536c602eb35a8d0db1088a7192303b6593dc6a384d07"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/strumpack_solver_backends",
+        "sha256": "05a2661eedf533c7764f925fb609ca7e0fc4094baf783376ca4d070f3e460214"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/4a36e2c6-2d24-509e-a7da-c5558b4187b7",
+        "sha256": "4e070e02cf910fd229ff40ff831bdf16d5e7914b9a1270073351b9d4dd758ea6"
+      }
+    ],
+    "task_class": "phase3_package_strumpack"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

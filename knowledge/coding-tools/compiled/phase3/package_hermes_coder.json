@@ -1,0 +1,93 @@
+{
+  "artifact_id": "a4c45c12-a503-57f4-98f8-840e7749e3d3",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_hermes_docker",
+    "artifact://evidence-bundle/hermes_runtime",
+    "artifact://execution-adapter-spec/hermes_probe",
+    "artifact://knowledge-pack/hermes",
+    "artifact://recipe-object/hermes_structures_pde",
+    "artifact://verification-report/0840c167-114a-59da-84ce-c69726757705"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "Hermes: use hermes, Hermes model object, eng_hermes_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_hermes_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_hermes-container.sh. Recipe Hermes phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_hermes_docker as the canonical runtime surface, Run the linked health check for Hermes, Stop if the runtime verification report is still REWORK, Execute Hermes only inside its declared capability boundary and record the evidence refs. Runtime eng-hermes/docker_image at birtha/knowledge-eng-hermes:1.0.0; environment ref artifact://environment-spec/eng_hermes_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_hermes_docker; verification refs artifact://verification-report/0840c167-114a-59da-84ce-c69726757705. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_hermes_docker: #0 building with \"desktop-linux\" instance using docker driver.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "retrieval_keys": [
+      "coder",
+      "hermes",
+      "package",
+      "phase3_package_hermes",
+      "true"
+    ],
+    "role": "coder",
+    "role_context_bundle_id": "coder_0a8f9b7ecf3d97e9",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_hermes_docker",
+      "artifact://evidence-bundle/hermes_runtime",
+      "artifact://execution-adapter-spec/hermes_probe",
+      "artifact://knowledge-pack/hermes",
+      "artifact://recipe-object/hermes_structures_pde",
+      "artifact://verification-report/0840c167-114a-59da-84ce-c69726757705"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_hermes_docker",
+        "sha256": "71256d9a695d6052490256b15f2d44eba8d75d1c87fd665e4d459dad602d2a82"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/hermes_runtime",
+        "sha256": "539645d5ddc7e4570482dc7788e48094e0f949944dbd3e288f01c35ac3e5634a"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/hermes_probe",
+        "sha256": "2de53ad881ab479e2292ee14036cae4e9b68811deb9511955b14ca84d71b5988"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/hermes",
+        "sha256": "86d3c8d6704bf9753f4fd9a22758d6854a1894134a7a687243d1f959f0f9c177"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/hermes_structures_pde",
+        "sha256": "6898e589acdc59ac071ab2b88674a7e025c24c31558a1352076b7bb8fd867101"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/0840c167-114a-59da-84ce-c69726757705",
+        "sha256": "f42222607a9f6bc2cbe833bacfa061b83f60c21d1e8b21a63be7a1506a95046c"
+      }
+    ],
+    "task_class": "phase3_package_hermes"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

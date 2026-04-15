@@ -164,13 +164,13 @@ docker exec minio mc du /data
 ### Log Management
 ```bash
 # View MLflow logs
-docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml logs mlflow
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml logs mlflow
 
 # View PostgreSQL logs
-docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml logs postgres
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml logs postgres
 
 # View MinIO logs
-docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml logs minio
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml logs minio
 ```
 
 ## Troubleshooting
@@ -185,10 +185,10 @@ docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml logs
 docker ps | grep mlflow
 
 # Check logs
-docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml logs mlflow
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml logs mlflow
 ```
 **Resolution**:
-- Restart MLflow: `docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml restart mlflow`
+- Restart MLflow: `docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml restart mlflow`
 - Check PostgreSQL connectivity
 - Verify MinIO access
 
@@ -203,7 +203,7 @@ docker exec postgres pg_isready -U mlflow
 docker exec postgres psql -U mlflow -c "SELECT 1;"
 ```
 **Resolution**:
-- Restart PostgreSQL: `docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml restart postgres`
+- Restart PostgreSQL: `docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml restart postgres`
 - Check database credentials
 - Verify network connectivity
 
@@ -215,10 +215,10 @@ docker exec postgres psql -U mlflow -c "SELECT 1;"
 curl -f http://localhost:9000/minio/health/live
 
 # Check MinIO logs
-docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml logs minio
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml logs minio
 ```
 **Resolution**:
-- Restart MinIO: `docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml restart minio`
+- Restart MinIO: `docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml restart minio`
 - Check storage permissions
 - Verify S3 credentials
 
@@ -300,7 +300,7 @@ gpg --symmetric --cipher-algo AES256 mlflow_backup.sql
 ### Horizontal Scaling
 ```bash
 # Scale MLflow server
-docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml up -d --scale mlflow=3
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml up -d --scale mlflow=3
 
 # Use load balancer for multiple instances
 # Configure nginx or similar
@@ -308,9 +308,9 @@ docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml up -
 
 ### Vertical Scaling
 ```bash
-# Update resource limits in compose/docker-compose.platform.yml
+# Update resource limits in docker/compose-profiles/docker-compose.platform.yml
 # Then restart services
-docker compose -f docker-compose.yml -f compose/docker-compose.platform.yml up -d
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml up -d
 ```
 
 ## Data Retention

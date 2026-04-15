@@ -323,19 +323,19 @@ class MLflowLogger:
         try:
             # Run specification
             with open(f"{artifacts_dir}/run_spec.json", "w") as f:
-                json.dump(run_spec.dict(), f, indent=2, default=str)
+                json.dump(run_spec.model_dump(), f, indent=2, default=str)
 
             # Environment snapshot
             with open(f"{artifacts_dir}/environment.json", "w") as f:
-                json.dump(environment.dict(), f, indent=2, default=str)
+                json.dump(environment.model_dump(), f, indent=2, default=str)
 
             # Retrieval documents
-            retrieval_data = [doc.dict() for doc in retrieval_docs]
+            retrieval_data = [doc.model_dump() for doc in retrieval_docs]
             with open(f"{artifacts_dir}/retrieval.json", "w") as f:
                 json.dump(retrieval_data, f, indent=2, default=str)
 
             # Tool calls
-            tool_calls_data = [tc.dict() for tc in tool_calls]
+            tool_calls_data = [tc.model_dump() for tc in tool_calls]
             with open(f"{artifacts_dir}/tool_calls.json", "w") as f:
                 json.dump(tool_calls_data, f, indent=2, default=str)
 

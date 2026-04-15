@@ -8,6 +8,7 @@ selected modules, and theory (y1) is derived from selected pools.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -400,10 +401,14 @@ def _select_pools(
 
     scored: list[tuple[int, KnowledgePoolPayload, list[str]]] = []
     for pool in catalog.pools.values():
-        matched = [keyword for keyword in pool.keywords if keyword.lower() in lower]
+        matched = [keyword for keyword in pool.keywords if _keyword_matches(keyword, lower)]
         pool_reasons = [f"pool_keyword:{pool.pool_key}:{keyword}" for keyword in matched]
-        score = len(matched)
-        if selected_mode is ResponseModeKey.ENGINEERING and pool.pool_key in _ENGINEERING_POOL_KEYS:
+        score = len(matched) * 2
+        if (
+            selected_mode is ResponseModeKey.ENGINEERING
+            and pool.pool_key in _ENGINEERING_POOL_KEYS
+            and matched
+        ):
             score += 1
             pool_reasons.append(f"mode_default:engineering:{pool.pool_key}")
         if score > 0:
@@ -442,9 +447,9 @@ def _select_modules(
     selected_pool_refs = {_pool_ref(pool.knowledge_pool_id) for pool in selected_pools}
     scored: list[tuple[int, ModuleCardPayload, list[str]]] = []
     for module in catalog.modules.values():
-        matched = [keyword for keyword in module.keywords if keyword.lower() in lower]
+        matched = [keyword for keyword in module.keywords if _keyword_matches(keyword, lower)]
         pool_fit = bool(selected_pool_refs.intersection(module.pool_refs))
-        score = len(matched) * 2 + (1 if pool_fit else 0)
+        score = len(matched) * 2 + (1 if matched and pool_fit else 0)
         if module.module_card_id == "engineering_orchestration_stack" and (
             "orchestrat" in lower or "devplane" in lower or "claw" in lower
         ):
@@ -458,11 +463,14 @@ def _select_modules(
     selected = [module for _score, module, _reasons in scored[:6]]
     reasons = [reason for _score, _module, module_reasons in scored[:6] for reason in module_reasons]
     if selected_pools and not selected:
-        selected_ref_set = {
-            ref
-            for pool in selected_pools
-            for ref in pool.module_refs[:2]
-        }
+        selected_ref_set = set()
+        for pool in selected_pools:
+            for ref in pool.module_refs[:2]:
+                selected_ref_set.add(ref)
+                if len(selected_ref_set) >= 4:
+                    break
+            if len(selected_ref_set) >= 4:
+                break
         selected = [
             module
             for module in catalog.modules.values()
@@ -478,6 +486,15 @@ def _theory_refs_for_pools(pools: list[KnowledgePoolPayload]) -> list[str]:
 
 def _technique_refs_for_modules(modules: list[ModuleCardPayload]) -> list[str]:
     return list(dict.fromkeys(ref for module in modules for ref in module.technique_refs))
+
+
+def _keyword_matches(keyword: str, lower: str) -> bool:
+    normalized = keyword.lower().strip()
+    if not normalized:
+        return False
+    if " " in normalized:
+        return normalized in lower
+    return re.search(rf"(?<![a-z0-9]){re.escape(normalized)}(?![a-z0-9])", lower) is not None
 
 
 def _pool_ref(pool_id: str) -> str:

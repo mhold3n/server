@@ -23,13 +23,13 @@ This runbook covers operational procedures for Micro-Capability Platform (MCP) s
 ### Initial Setup
 ```bash
 # Start MCP registry
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d wrkhrs-mcp
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml up -d wrkhrs-mcp
 
 # Start tool MCPs
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d mcp-github mcp-filesystem
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml up -d mcp-github mcp-filesystem
 
 # Start resource MCPs
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d mcp-code-resources mcp-doc-resources
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml up -d mcp-code-resources mcp-doc-resources
 ```
 
 ### MCP Registration
@@ -93,13 +93,13 @@ curl http://localhost:8085/v1/mcps/github-mcp
 ### Log Monitoring
 ```bash
 # View MCP registry logs
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs wrkhrs-mcp
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml logs wrkhrs-mcp
 
 # View GitHub MCP logs
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs mcp-github
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml logs mcp-github
 
 # View Filesystem MCP logs
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs mcp-filesystem
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml logs mcp-filesystem
 ```
 
 ## Troubleshooting
@@ -114,10 +114,10 @@ docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs mcp-f
 docker ps | grep wrkhrs-mcp
 
 # Check logs
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs wrkhrs-mcp
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml logs wrkhrs-mcp
 ```
 **Resolution**:
-- Restart registry: `docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml restart wrkhrs-mcp`
+- Restart registry: `docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml restart wrkhrs-mcp`
 - Check database connectivity
 - Verify service dependencies
 
@@ -191,7 +191,7 @@ ping mcp-github
 docker stats mcp-github
 
 # Check logs for OOM errors
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs mcp-github
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml logs mcp-github
 ```
 **Resolution**:
 - Increase memory limits
@@ -274,17 +274,17 @@ curl -X POST http://localhost:7003/v1/resources \
 ### Horizontal Scaling
 ```bash
 # Scale GitHub MCP
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d --scale mcp-github=3
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml up -d --scale mcp-github=3
 
 # Scale Filesystem MCP
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d --scale mcp-filesystem=2
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml up -d --scale mcp-filesystem=2
 ```
 
 ### Vertical Scaling
 ```bash
-# Update resource limits in compose/docker-compose.ai.yml
+# Update resource limits in docker/compose-profiles/docker-compose.ai.yml
 # Then restart services
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml up -d
 ```
 
 ## Security Management
@@ -394,8 +394,8 @@ docker system prune -f
 ```bash
 # Update MCP servers
 git pull origin main
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml build
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml build
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml up -d
 
 # Verify update
 make health

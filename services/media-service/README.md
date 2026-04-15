@@ -1,8 +1,8 @@
 # MartyMedia Automation (services)
 
 This service provides deterministic automation helpers intended to be callable from:
-- the FastAPI control plane (`services/api`)
-- agent-platform tools (`services/agent-platform/server`)
+- the FastAPI control plane (`services/api-service`)
+- agent-platform tools (`services/agent-platform-service/server`)
 - DevPlane/OpenClaw workspaces
 
 ## Whisper captions

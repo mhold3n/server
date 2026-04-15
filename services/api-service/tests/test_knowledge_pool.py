@@ -758,3 +758,58 @@ def test_verify_runtime_returns_pass_report(monkeypatch: pytest.MonkeyPatch) -> 
     report = catalog.verify_runtime("artifact://environment-spec/eng_structures_uv")
     assert report.outcome.value == "PASS"
     assert report.validated_artifact_refs == ["artifact://environment-spec/eng_structures_uv"]
+
+
+def test_docker_environments_have_default_container_gui_sessions() -> None:
+    catalog = load_knowledge_pool()
+    docker_envs = [
+        (ref, artifact.payload)
+        for ref, artifact in catalog.environment_specs.items()
+        if artifact.payload.delivery_kind == "docker_image"
+        and not artifact.payload.environment_spec_id.endswith("_gui")
+    ]
+    assert docker_envs
+    for env_ref, env in docker_envs:
+        assert env.gui_capability_state in {
+            "PLANNED_CONTAINER_GUI",
+            "VERIFIED_CONTAINER_GUI",
+            "BLOCKED_CONTAINER_GUI",
+        }
+        assert env.default_gui_session_ref
+        assert env.default_gui_session_ref in env.gui_session_refs
+        gui = catalog.gui_session_specs[env.default_gui_session_ref].payload
+        assert gui.base_environment_ref == env_ref
+        assert gui.display_protocol == "novnc_web"
+        assert gui.control_provider == "openclaw_browser"
+        assert gui.security_policy.bind_host == "127.0.0.1"
+        assert gui.security_policy.allow_host_desktop is False
+
+
+def test_resolve_gui_session_allows_planned_sessions_when_requested() -> None:
+    catalog = load_knowledge_pool()
+    gui = catalog.resolve_gui_session(
+        "artifact://environment-spec/eng_paraview_docker",
+        {"verified_only": False},
+    )
+    assert gui.gui_session_spec_id == "eng_paraview_gui"
+    assert gui.openclaw_entry_url.startswith("http://127.0.0.1:{novnc_port}/")
+    if not catalog._gui_session_has_passing_verification(
+        "artifact://gui-session-spec/eng_paraview_gui"
+    ):
+        with pytest.raises(ValueError, match="No GUI session matched"):
+            catalog.resolve_gui_session("artifact://environment-spec/eng_paraview_docker")
+
+
+def test_verify_gui_session_returns_pass_report(monkeypatch: pytest.MonkeyPatch) -> None:
+    catalog = load_knowledge_pool()
+
+    def _fake_run(*args: object, **kwargs: object) -> SimpleNamespace:
+        return SimpleNamespace(returncode=0, stdout="OK:gui", stderr="")
+
+    monkeypatch.setattr("src.control_plane.knowledge_pool.subprocess.run", _fake_run)
+    report = catalog.verify_gui_session("artifact://gui-session-spec/eng_paraview_gui")
+    assert report.outcome.value == "PASS"
+    assert report.validated_artifact_refs == [
+        "artifact://gui-session-spec/eng_paraview_gui",
+        "artifact://environment-spec/eng_paraview_gui",
+    ]

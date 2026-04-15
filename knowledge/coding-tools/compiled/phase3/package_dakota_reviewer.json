@@ -1,0 +1,93 @@
+{
+  "artifact_id": "fcf6efce-15c1-5dde-b4b9-d9028dd43256",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_dakota_docker",
+    "artifact://evidence-bundle/dakota_runtime",
+    "artifact://execution-adapter-spec/dakota_probe",
+    "artifact://knowledge-pack/dakota",
+    "artifact://recipe-object/dakota_optimization_uq_backbone",
+    "artifact://verification-report/d1d7536b-86ed-58c0-8e30-78617b778a25"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "Dakota: review Probe Dakota through artifact://environment-spec/eng_dakota_docker, Confirm the current Phase 2 gate state for Dakota. Checklist Dakota pack links to the intended environment spec(s), Dakota adapter and evidence bundle reference the same runtime verification report, Dakota anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using Dakota for using dakota as a substitute for unrelated workflows outside optimization, uq, and numerical-backbone workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_dakota_docker., Crossing the adapter boundary for Dakota without a typed contract tied to dakota executable workflows for optimization, uq, and numerical-backbone workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_dakota_docker. Runtime eng-dakota/docker_image at birtha/knowledge-eng-dakota:1.0.0; environment ref artifact://environment-spec/eng_dakota_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_dakota_docker; verification refs artifact://verification-report/d1d7536b-86ed-58c0-8e30-78617b778a25. Runtime gate: Healthcheck failed for artifact://environment-spec/eng_dakota_docker: docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"python\": executable file not found in $PATH.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "included_sections": [
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "retrieval_keys": [
+      "dakota",
+      "package",
+      "phase3_package_dakota",
+      "reviewer",
+      "true"
+    ],
+    "role": "reviewer",
+    "role_context_bundle_id": "reviewer_a630dca3aaf1bcea",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_dakota_docker",
+      "artifact://evidence-bundle/dakota_runtime",
+      "artifact://execution-adapter-spec/dakota_probe",
+      "artifact://knowledge-pack/dakota",
+      "artifact://recipe-object/dakota_optimization_uq_backbone",
+      "artifact://verification-report/d1d7536b-86ed-58c0-8e30-78617b778a25"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_dakota_docker",
+        "sha256": "3e6f9d598267bf58c846108ac42caa170e0daa8102c4d034a0f615c5f262b330"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/dakota_runtime",
+        "sha256": "2eeaec5ec69bec230561128b4b2742fb77682dae2b17f8871ab0627067430615"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/dakota_probe",
+        "sha256": "a005b020535340fda31ded7a7f540ccf26bd6e6daf43638366b1e28106a05c1f"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/dakota",
+        "sha256": "86f8c166838344cbbce06ed7afeafa2c4577e5cfcb7fed396cd98d9098e51e44"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/dakota_optimization_uq_backbone",
+        "sha256": "d4121fa3041a615b247496de60c9b558366c37a5f35476ea394251d1386506a6"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/d1d7536b-86ed-58c0-8e30-78617b778a25",
+        "sha256": "e9984ed84bc0603e5fc8b1539d1618b92a852798217ea37bbbf9e7e6da1d02ad"
+      }
+    ],
+    "task_class": "phase3_package_dakota"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

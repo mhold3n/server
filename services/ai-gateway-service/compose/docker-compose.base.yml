@@ -1,4 +1,6 @@
 version: "3.9"
+# Standalone WrkHrs stack: persistent dirs default under ${COMPOSE_DATA_ROOT:-.docker-data}/ai-gateway/
+# (override per path with QDRANT_DATA_PATH, RAG_CACHE_PATH, etc.). Run with docker compose --project-directory <this-service-root>.
 name: ai-stack
 networks:
   llm_net:
@@ -15,13 +17,13 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${QDRANT_DATA_PATH:-./data/qdrant}
+      device: ${QDRANT_DATA_PATH:-${COMPOSE_DATA_ROOT:-.docker-data}/ai-gateway/qdrant}
   rag_cache:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${RAG_CACHE_PATH:-./data/rag_cache}
+      device: ${RAG_CACHE_PATH:-${COMPOSE_DATA_ROOT:-.docker-data}/ai-gateway/rag_cache}
   ollama_models:
     driver: local
     driver_opts:
@@ -39,25 +41,25 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: ${PLUGINS_PATH:-./plugins}
+      device: ${PLUGINS_PATH:-${COMPOSE_DATA_ROOT:-.docker-data}/ai-gateway/plugins}
   mcp_data:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${MCP_DATA_PATH:-./data/mcp}
+      device: ${MCP_DATA_PATH:-${COMPOSE_DATA_ROOT:-.docker-data}/ai-gateway/mcp_data}
   logs:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${LOGS_PATH:-./logs}
+      device: ${LOGS_PATH:-${COMPOSE_DATA_ROOT:-.docker-data}/ai-gateway/logs}
   gateway_state:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: ${GATEWAY_STATE_PATH:-./data/gateway_state}
+      device: ${GATEWAY_STATE_PATH:-${COMPOSE_DATA_ROOT:-.docker-data}/ai-gateway/gateway_state}
 
 services:
   gateway-api:
@@ -174,7 +176,13 @@ services:
     environment:
       - QDRANT__SERVICE__HTTP_PORT=6333
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:6333/ready"]
+      test:
+        [
+          "CMD",
+          "bash",
+          "-c",
+          'exec 3<>/dev/tcp/127.0.0.1/6333 && printf "GET /readyz HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 && IFS= read -r -t 5 hdr <&3 && [[ "$$hdr" == *"200"* ]]',
+        ]
       interval: 10s
       timeout: 3s
       retries: 10

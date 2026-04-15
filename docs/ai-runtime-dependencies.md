@@ -43,8 +43,8 @@ the runtime loads with `local_files_only=True`.
 
 | Area | Packages | Tracking mechanism |
 | --- | --- | --- |
-| OpenMultiAgent provider adapters | TypeScript source in `merged claude leak/packages/open-multi-agent` | root `package-lock.json` workspace lock |
-| Agent-platform orchestration | TypeScript source in `services/agent-platform/server` | root `package-lock.json` workspace lock |
+| OpenMultiAgent provider adapters | TypeScript source in `services/agent-platform-service/open-multi-agent` | root `package-lock.json` workspace lock |
+| Agent-platform orchestration | TypeScript source in `services/agent-platform-service/server` | root `package-lock.json` workspace lock |
 
 The hosted Hugging Face route uses the existing OpenAI-compatible adapter with
 `baseURL=https://router.huggingface.co/v1` and auth from `HF_TOKEN` or
@@ -56,10 +56,20 @@ non-tool chat paths that explicitly select an OpenAI-compatible base URL.
 
 | Submodule | Upstream | Why tracked as source |
 | --- | --- | --- |
-| `claw-code-main/` | `https://github.com/ultraworkers/claw-code.git` | External coding operator/client surface |
-| `openclaw/` | `https://github.com/openclaw/openclaw.git` | External orchestration/operator surface |
+| `claw-code-main/` | `https://github.com/mhold3n/claw-code.git` | Forked coding operator/client surface (sync from `ultraworkers/claw-code` as needed) |
+| `openclaw/` | `https://github.com/mhold3n/openclaw.git` | Forked orchestration/operator surface (sync from `openclaw/openclaw` as needed) |
 
 Use `git submodule status` to inspect the pinned commits.
+
+## Isolation Policy
+
+Docker is the default execution surface for heavyweight or risky module runtimes:
+native solver stacks, GUI/noVNC tools, ffmpeg/ASR, document ingest, browser or
+research sandboxes, untrusted file processing, GPU model servers, and
+host-mutating tools. Lightweight deterministic Python tools may use `uv_venv`;
+unavoidable desktop integrations remain `host_app`. Claw Code stays a host-side
+external kernel via `CLAW_CODE_BINARY`, while packet-selected tools/modules use
+their declared environment specs for isolation.
 
 ## Adding A Source Dependency
 

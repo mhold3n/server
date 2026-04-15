@@ -7,10 +7,20 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
 echo "[INFO] Redeploying caddy (agent) with server override..."
-docker compose -f docker-compose.yml -f compose/docker-compose.server.yml up -d caddy
+docker compose --project-directory "$ROOT_DIR" \
+  -f docker-compose.yml \
+  -f docker/compose-profiles/docker-compose.platform.yml \
+  -f docker/compose-profiles/docker-compose.ai.yml \
+  -f docker/compose-profiles/docker-compose.server.yml \
+  up -d caddy
 
 echo "[INFO] Recent caddy logs (last 50 lines):"
-docker compose -f docker-compose.yml -f compose/docker-compose.server.yml logs --tail 50 caddy || true
+docker compose --project-directory "$ROOT_DIR" \
+  -f docker-compose.yml \
+  -f docker/compose-profiles/docker-compose.platform.yml \
+  -f docker/compose-profiles/docker-compose.ai.yml \
+  -f docker/compose-profiles/docker-compose.server.yml \
+  logs --tail 50 caddy || true
 
 echo "[INFO] Probing caddy on localhost:8443 (expect 403 from localhost)"
 set +e
@@ -20,4 +30,3 @@ set -e
 
 echo "[DONE] If running from the Docker VM, test from a LAN client:"
 echo "       curl -sk https://api.lan:8443/health"
-

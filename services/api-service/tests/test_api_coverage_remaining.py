@@ -29,8 +29,8 @@ from src.observability.tracing import (
     get_trace_propagator,
     get_tracing_context,
 )
-from src.wrkhrs.conditioning import NonGenerativeConditioning, RequestConditioner
-from src.wrkhrs.gateway_client import WrkHrsGatewayClient
+from src.ai_gateway_client.conditioning import NonGenerativeConditioning, RequestConditioner
+from src.ai_gateway_client.gateway_client import WrkHrsGatewayClient
 
 
 def test_docker_unavailable_no_sdk(monkeypatch: pytest.MonkeyPatch) -> None:

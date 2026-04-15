@@ -1,0 +1,93 @@
+{
+  "artifact_id": "51f81dd3-73fd-53ea-9f5d-eca6320cd87a",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_kratos_multiphysics_docker",
+    "artifact://evidence-bundle/kratos_multiphysics_runtime",
+    "artifact://execution-adapter-spec/kratos_multiphysics_probe",
+    "artifact://knowledge-pack/kratos_multiphysics",
+    "artifact://recipe-object/kratos_multiphysics_structures_pde",
+    "artifact://verification-report/994a7b42-b754-5d11-87f9-f35e8c138fca"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "Kratos Multiphysics: review Probe Kratos Multiphysics through artifact://environment-spec/eng_kratos_multiphysics_docker, Confirm the current Phase 2 gate state for Kratos Multiphysics. Checklist Kratos Multiphysics pack links to the intended environment spec(s), Kratos Multiphysics adapter and evidence bundle reference the same runtime verification report, Kratos Multiphysics anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using Kratos Multiphysics for using kratos multiphysics as a substitute for unrelated workflows outside structures and pde workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_kratos_multiphysics_docker., Crossing the adapter boundary for Kratos Multiphysics without a typed contract tied to kratos multiphysics api-driven workflows for structures and pde workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_kratos_multiphysics_docker. Runtime eng-kratos-multiphysics/docker_image at birtha/knowledge-eng-kratos-multiphysics:1.0.0; environment ref artifact://environment-spec/eng_kratos_multiphysics_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_kratos_multiphysics_docker; verification refs artifact://verification-report/994a7b42-b754-5d11-87f9-f35e8c138fca. Runtime gate: Healthcheck failed for artifact://environment-spec/eng_kratos_multiphysics_docker: Traceback (most recent call last):.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "included_sections": [
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "retrieval_keys": [
+      "kratos_multiphysics",
+      "package",
+      "phase3_package_kratos_multiphysics",
+      "reviewer",
+      "true"
+    ],
+    "role": "reviewer",
+    "role_context_bundle_id": "reviewer_13e8f8fbbd1c9c48",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_kratos_multiphysics_docker",
+      "artifact://evidence-bundle/kratos_multiphysics_runtime",
+      "artifact://execution-adapter-spec/kratos_multiphysics_probe",
+      "artifact://knowledge-pack/kratos_multiphysics",
+      "artifact://recipe-object/kratos_multiphysics_structures_pde",
+      "artifact://verification-report/994a7b42-b754-5d11-87f9-f35e8c138fca"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_kratos_multiphysics_docker",
+        "sha256": "de2f8fd9a7f29c28952e38e3387b56cce5ee007630c45f37f1aa2c1f673128cc"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/kratos_multiphysics_runtime",
+        "sha256": "ae2bf23496b0c203b6eea9dd70e323e14e212dd5fb314d0a6af2a3325203bc1f"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/kratos_multiphysics_probe",
+        "sha256": "9ae606df6018bab6f9a525168d67b26ef31395f27d0c2924e1a6099b258c7cfb"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/kratos_multiphysics",
+        "sha256": "d201398ac222243d9610e82ca428ccac6deeefa651f2f2689cdea7ceb509bdd7"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/kratos_multiphysics_structures_pde",
+        "sha256": "d2aafe19cf7f36bebaa4453c2e947eadf6a6a05f7d5d8d893714c48c6deaae09"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/994a7b42-b754-5d11-87f9-f35e8c138fca",
+        "sha256": "68898b72fd9e9d6cb2e75d3b877aadef1eb8bbe277427d6917c2e79b863076ab"
+      }
+    ],
+    "task_class": "phase3_package_kratos_multiphysics"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

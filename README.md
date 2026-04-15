@@ -15,8 +15,8 @@
 
 ### External GitHub repos
 
-- **`claw-code-main/`** — Git submodule tracking [`ultraworkers/claw-code`](https://github.com/ultraworkers/claw-code) on `main`.
-- **`openclaw/`** — Git submodule tracking [`openclaw/openclaw`](https://github.com/openclaw/openclaw) on `main`.
+- **`claw-code-main/`** — Git submodule tracking our fork [`mhold3n/claw-code`](https://github.com/mhold3n/claw-code) on `main` (upstream: [`ultraworkers/claw-code`](https://github.com/ultraworkers/claw-code)).
+- **`openclaw/`** — Git submodule tracking our fork [`mhold3n/openclaw`](https://github.com/mhold3n/openclaw) on `main` (upstream: [`openclaw/openclaw`](https://github.com/openclaw/openclaw)).
 - Refresh both with `npm run deps:external`. See [`docs/external-repos.md`](docs/external-repos.md) for the rationale and workflow, and [`docs/external-orchestration-interfaces.md`](docs/external-orchestration-interfaces.md) for how they relate to the active control plane.
 
 ## Project Management
@@ -86,11 +86,11 @@ make ai-up
 # Full server deployment (platform + AI + server)
 make server-up
 
-# addons (security/search/media/etc.)
-docker compose -f compose/docker-compose.addons.yml up -d
+# addons (security/search/media/etc.; host/homelab-only)
+make addons-up
 
-# or bring everything up
-make up-all
+# full AI dev stack (base + platform + AI + local overrides)
+make up
 ```
 
 ### 4) Start GPU worker on workstation
@@ -100,7 +100,7 @@ make up-all
 make worker-up
 
 # Or start with Ollama instead of vLLM
-docker compose -f compose/docker-compose.worker.yml --profile ollama up -d
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml --profile ollama up -d
 ```
 
 ### 5) Test
@@ -128,7 +128,7 @@ open http://localhost:5000
 * The server exposes a unified API through Birtha's API and Router services.
 * WrkHrs AI services handle domain classification, request conditioning, and AI orchestration.
 * Internal services call the **worker** via OpenAI-compatible endpoints for LLM inference.
-* MCP servers are configured in `mcp/config/mcp_servers.yaml`.
+* MCP servers are configured in `mcp-servers/mcp/config/mcp_servers.yaml`.
 * MLflow provides experiment tracking and model registry for all AI operations.
 
 ## WrkHrs AI Stack Integration
@@ -312,6 +312,8 @@ make logs-worker     # View worker logs
 
 # Health and testing
 make health          # Health check all services
+make smoke-orchestration # CLI smoke: orchestrator + gateway (no OpenClaw)
+make bundle-orchestration-logs # Bundle logs + snapshots for debugging
 make seed-corpora    # Seed RAG corpora
 make eval            # Run evaluation harness
 make mlflow-ui       # Open MLflow UI
@@ -353,45 +355,43 @@ make ci              # Run full CI pipeline
 
 ### DNS Blocker Choice (Pi‑hole vs AdGuard)
 
-- Pi‑hole is enabled by default in the server stack. AdGuard Home is scaffolded in its own compose profile and is not started by `make up-addons`.
+- Pi-hole is available in the host/homelab server profile. AdGuard Home is scaffolded in its own add-on profile and is not started by default dev.
 - Use only one DNS blocker at a time. To test AdGuard:
-  1) Stop Pi‑hole: `docker compose -f compose/docker-compose.server.yml stop pihole`
-  2) Start AdGuard: `docker compose -f compose/docker-compose.addons.yml --profile adguard up -d`
+  1) Stop Pi-hole: `docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml -f docker/compose-profiles/docker-compose.ai.yml -f docker/compose-profiles/docker-compose.server.yml stop pihole`
+  2) Start AdGuard: `docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.addons.yml --profile adguard up -d`
   3) Visit https://adguard.local:8443 after adding DNS/hosts entries
 
 ## Project Structure
 
-Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. Use a **single clone** for day-to-day work; optional legacy repos belong **outside** this tree—see [`docs/dev-environment.md`](docs/dev-environment.md). WrkHrs code is only under **`services/wrkhrs/`** ([`docs/migration-wrkhrs-path.md`](docs/migration-wrkhrs-path.md)).
+Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. Use a **single clone** for day-to-day work; optional legacy repos belong **outside** this tree; see [`docs/dev-environment.md`](docs/dev-environment.md). WrkHrs-derived gateway code is only under **`services/ai-gateway-service/`** ([`docs/migration-wrkhrs-path.md`](docs/migration-wrkhrs-path.md)).
 
 ```
 server/   # repository root (suggested clone folder name)
-├── claw-code-main/             # External GitHub submodule: ultraworkers/claw-code
-├── openclaw/                   # External GitHub submodule: openclaw/openclaw
+├── claw-code-main/             # Git submodule: fork mhold3n/claw-code (Birtha-local patches)
+├── openclaw/                   # Git submodule: fork mhold3n/openclaw (Birtha-local patches)
 ├── services/                    # Core services
-│   ├── api/                    # FastAPI control plane with WrkHrs integration
+│   ├── api-service/            # FastAPI control plane with WrkHrs integration
 │   │   ├── src/wrkhrs/         # WrkHrs integration layer
 │   │   ├── src/observability/  # MLflow logging and OpenTelemetry
 │   │   ├── src/policies/       # Policy enforcement middleware
 │   │   └── src/routes/          # API routes for feedback and middleware
-│   ├── router/                 # Agent router with MCP integration
+│   ├── router-service/         # Agent router with MCP integration
 │   │   ├── src/workflows/      # LangChain/LangGraph workflows
 │   │   └── src/observability/  # OpenTelemetry instrumentation
-│   ├── wrkhrs/                 # WrkHrs AI stack (vendored in this monorepo)
+│   ├── ai-gateway-service/     # WrkHrs-derived AI gateway stack
 │   │   ├── services/           # gateway, orchestrator, RAG, ASR, etc.
 │   │   └── compose/            # WrkHrs Docker Compose stacks
-│   ├── mcp-registry/           # MCP registry service
-│   └── queue/                  # Redis configuration
-├── mcp/                        # MCP servers
+│   ├── mcp-registry-service/   # MCP registry service
+│   └── queue-service/          # Redis configuration
+├── mcp-servers/mcp/            # MCP servers
 │   ├── servers/                # Global and per-repo MCP servers
 │   │   ├── github-mcp/         # GitHub MCP with Projects integration
 │   │   ├── code-resources-mcp/ # Code indexing and search
 │   │   └── doc-resources-mcp/  # Document indexing and search
 │   └── config/                 # MCP server configuration
-├── infra/                      # Infrastructure configuration
-│   ├── reverse-proxy/          # Caddy configuration
-│   ├── networking/             # WireGuard, Tailscale
-│   ├── observability/          # Prometheus, Grafana, Loki, Tempo
-│   └── security/               # Fail2ban, CrowdSec
+├── docker/
+│   ├── compose-profiles/       # Canonical repo-level Compose profiles
+│   └── config/                 # Reverse proxy and observability config
 ├── worker/                     # GPU worker configuration
 │   ├── vllm/                   # vLLM setup and docs
 │   └── tgi/                    # TGI alternative

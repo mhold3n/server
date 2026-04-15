@@ -37,7 +37,7 @@ import type { LLMAdapter } from '../types.js'
  * Additional providers can be integrated by implementing {@link LLMAdapter}
  * directly and bypassing this factory.
  */
-export type SupportedProvider = 'anthropic' | 'openai'
+export type SupportedProvider = 'anthropic' | 'openai' | 'ollama'
 
 /**
  * Instantiate the appropriate {@link LLMAdapter} for the given provider.
@@ -64,6 +64,10 @@ export async function createAdapter(
     case 'openai': {
       const { OpenAIAdapter } = await import('./openai.js')
       return new OpenAIAdapter(apiKey)
+    }
+    case 'ollama': {
+      const { OllamaAdapter } = await import('./ollama.js')
+      return new OllamaAdapter(apiKey)
     }
     default: {
       // The `never` cast here makes TypeScript enforce exhaustiveness.

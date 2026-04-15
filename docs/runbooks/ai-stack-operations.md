@@ -3,6 +3,8 @@
 ## Overview
 This runbook covers operational procedures for the WrkHrs AI stack services running on the Birtha platform.
 
+For **cross-service environment variables** (API ↔ agent-platform ↔ control plane ↔ DevPlane ↔ `model-runtime`), see the matrix in [dev-environment.md § Strict engineering, DevPlane, and model-runtime](../dev-environment.md#strict-engineering-devplane-and-model-runtime-env-matrix).
+
 ## Services Overview
 
 ### Core AI Services
@@ -37,10 +39,10 @@ make health
 ### Service-Specific Deployment
 ```bash
 # Deploy only RAG service
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d wrkhrs-rag
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml up -d wrkhrs-rag
 
 # Deploy only ASR service
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d wrkhrs-asr
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml up -d wrkhrs-asr
 ```
 
 ## Health Monitoring
@@ -51,7 +53,7 @@ docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d wrkh
 - **Legacy Python orchestrator** (opt-in profile `legacy-python-orchestrator`): `http://localhost:8081/health`
 - **RAG**: `http://localhost:8082/health`
 - **ASR**: `http://localhost:8084/health`
-- **Model runtime**: `http://localhost:${MODEL_RUNTIME_PORT:-8765}/health`
+- **Model runtime**: `http://localhost:${MODEL_RUNTIME_PORT:-8765}/health` (host port **8765** → container **8000**; in-compose callers use `http://model-runtime:8000`). Full HF smoke sequence: [local-hf-models.md §4](../local-hf-models.md#4-model-runtime-hf-mode).
 - **Tool Registry**: `http://localhost:8086/health`
 - **MCP**: `http://localhost:8085/health`
 
@@ -64,13 +66,81 @@ docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d wrkh
 curl -f http://localhost:8080/health
 ```
 
+### CLI smoke contract (backend-first)
+
+This is the **canonical**, UI-free contract for validating orchestration. Start here before involving
+clients like OpenClaw, browsers, SDKs, or streaming UX.
+
+#### 1) Orchestrator health (must be true)
+
+- **Request**: `GET http://127.0.0.1:8087/health`
+- **Success (HTTP 200)**: JSON with:
+  - `workflow_ready: true`
+  - `llm_backend.healthy: true`
+
+#### 2) Orchestrator LLM backend truth (must not be mock for “real” runs)
+
+- **Request**: `GET http://127.0.0.1:8087/llm/info`
+- **Success (HTTP 200)**:
+  - `backend_info.type` is one of `ollama`, `vllm`, `huggingface` for real backends
+  - `health.healthy: true`
+  - `available_models` includes the expected model(s)
+
+#### 3) Orchestrator chat completion (must return non-empty content)
+
+- **Request**: `POST http://127.0.0.1:8087/chat`
+
+```bash
+curl -sS http://127.0.0.1:8087/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"messages":[{"role":"user","content":"Say only: ok"}]}' | python3 -m json.tool
+```
+
+- **Success (HTTP 200)**:
+  - `choices[0].message.content` is a **non-empty string**
+- **Failure (non-200)**:
+  - The orchestrator should return a structured `detail` payload and **must not**
+    paper over the failure with a fake completion string.
+
+#### 4) Gateway OpenAI-compat (optional, client-compat layer)
+
+- **Request**: `POST http://127.0.0.1:8091/v1/chat/completions`
+
+```bash
+curl -sS http://127.0.0.1:8091/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"messages":[{"role":"user","content":"Say only: ok"}]}' | python3 -m json.tool
+```
+
+- **Success (HTTP 200)**:
+  - `choices[0].message.content` is a **non-empty string**
+
+#### Interpretation
+
+- Orchestrator `/chat` fails, gateway succeeds: **gateway is bypassing orchestrator** (unexpected).
+- Orchestrator succeeds, gateway fails: **gateway translation/config** (model overrides, timeouts, ORCHESTRATOR_URL).
+- Orchestrator + gateway succeed, app-level endpoint fails: **api-service integration**.
+
+#### Recommended local loop (minimum commands)
+
+```bash
+# 0) Bring stack up
+make up
+
+# 1) CLI smoke (backend-only)
+make smoke-orchestration
+
+# 2) If FAIL, bundle logs + snapshots for debugging/sharing
+make bundle-orchestration-logs
+```
+
 ### Log Monitoring
 ```bash
 # View all AI stack logs
 make logs-ai
 
 # View specific service logs
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs -f wrkhrs-gateway
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml logs -f wrkhrs-gateway
 ```
 
 ## Troubleshooting
@@ -85,10 +155,10 @@ docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs -f wr
 docker ps | grep wrkhrs-gateway
 
 # Check logs
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs wrkhrs-gateway
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml logs wrkhrs-gateway
 ```
 **Resolution**:
-- Restart service: `docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml restart wrkhrs-gateway`
+- Restart service: `docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml restart wrkhrs-gateway`
 - Check dependencies: Ensure **wrkhrs-agent-platform**, RAG, ASR services are running
 - Verify `ORCHESTRATOR_URL` (default `http://wrkhrs-agent-platform:8000`)
 
@@ -101,7 +171,7 @@ docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs wrkhr
 - **`POST /llm/switch`**: The TS service does not hot-reload backends; change `LLM_BACKEND` / `LLM_RUNNER_URL` and restart the container (legacy Python supported runtime switch).
 - **RAG embeddings**: Set `EMBEDDING_BACKEND=auto|openai|ollama|local|mock`. Use `EMBEDDING_ENDPOINT_URL` for OpenAI-compatible `/v1/embeddings` or Ollama `/api/embed` endpoints.
 - **RAG reranking**: Set `RERANKER_URL` to a service exposing `/rerank`. RAG falls back to existing BM25 plus embedding scoring if reranking fails.
-- **Model-runtime HF mode**: Keep `MOCK_INFER=1` for dev smoke tests. Set `MOCK_INFER=0` and configure `services/model-runtime/config/models.yaml` with `local_model_path` for offline Transformers loading.
+- **Model-runtime HF mode**: Default `MOCK_INFER=1` (stubs). For real local HF set `MOCK_INFER=0`, cache weights under `./.cache/models/hf`, restart `model-runtime`. Agent-platform uses this service for **`/infer/multimodal`** only when `MODEL_RUNTIME_URL` is set (compose sets it by default). See [local-hf-models.md §4](../local-hf-models.md#4-model-runtime-hf-mode).
 
 #### 2. RAG Service Performance Issues
 **Symptoms**: Slow responses, high memory usage
@@ -126,7 +196,7 @@ curl -f http://localhost:6333/collections
 nvidia-smi
 
 # Check ASR logs
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml logs wrkhrs-asr
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml logs wrkhrs-asr
 ```
 **Resolution**:
 - Verify NVIDIA Container Toolkit installation
@@ -144,7 +214,7 @@ curl -f http://localhost:8086/health
 curl -f http://localhost:8085/health
 ```
 **Resolution**:
-- Restart tool registry: `docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml restart wrkhrs-tool-registry`
+- Restart tool registry: `docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml restart wrkhrs-tool-registry`
 - Check MCP server connectivity
 - Verify tool registration
 
@@ -156,7 +226,7 @@ curl -f http://localhost:8085/health
 docker stats
 
 # Set memory limits
-# In compose/docker-compose.ai.yml:
+# In docker/compose-profiles/docker-compose.ai.yml:
 deploy:
   resources:
     limits:
@@ -171,7 +241,7 @@ deploy:
 docker stats
 
 # Set CPU limits
-# In compose/docker-compose.ai.yml:
+# In docker/compose-profiles/docker-compose.ai.yml:
 deploy:
   resources:
     limits:
@@ -185,17 +255,17 @@ deploy:
 ### Horizontal Scaling
 ```bash
 # Scale RAG service
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d --scale wrkhrs-rag=3
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml up -d --scale wrkhrs-rag=3
 
 # Scale ASR service
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d --scale wrkhrs-asr=2
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml up -d --scale wrkhrs-asr=2
 ```
 
 ### Vertical Scaling
 ```bash
-# Update resource limits in compose/docker-compose.ai.yml
+# Update resource limits in docker/compose-profiles/docker-compose.ai.yml
 # Then restart services
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml up -d
 ```
 
 ## Backup and Recovery
@@ -285,8 +355,8 @@ docker system prune -f
 ```bash
 # Update AI stack
 git pull origin main
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml build
-docker compose -f docker-compose.yml -f compose/docker-compose.ai.yml up -d
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml build
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.ai.yml up -d
 
 # Verify update
 make health

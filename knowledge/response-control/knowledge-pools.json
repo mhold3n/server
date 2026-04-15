@@ -1,0 +1,210 @@
+[
+  {
+    "domain": "engineering",
+    "keywords": [
+      "chemistry",
+      "chemical",
+      "kinetics",
+      "reaction",
+      "thermo",
+      "combustion",
+      "molecule",
+      "mechanism"
+    ],
+    "knowledge_pool_id": "chemistry_chemical_modeling",
+    "label": "Chemistry & Chemical Modeling",
+    "module_refs": [
+      "artifact://module-card/chemical_modeling_stack",
+      "artifact://module-card/numerical_solver_stack",
+      "artifact://module-card/standards_reference_bank"
+    ],
+    "pool_key": "chemistry_chemical_modeling",
+    "schema_version": "1.0.0",
+    "summary": "Chemical kinetics, thermochemistry, reaction mechanisms, molecular data, and chemical-model verification context.",
+    "theory_refs": [
+      "artifact://theory-card/chemistry_chemical_modeling_basis"
+    ]
+  },
+  {
+    "domain": "engineering",
+    "keywords": [
+      "solver",
+      "simulation",
+      "numerical",
+      "finite element",
+      "finite volume",
+      "optimization",
+      "uq",
+      "cfd",
+      "fem",
+      "code"
+    ],
+    "knowledge_pool_id": "computational_engineering",
+    "label": "Computational Engineering",
+    "module_refs": [
+      "artifact://module-card/numerical_solver_stack",
+      "artifact://module-card/fem_solver_stack",
+      "artifact://module-card/cfd_solver_stack",
+      "artifact://module-card/engineering_orchestration_stack"
+    ],
+    "pool_key": "computational_engineering",
+    "schema_version": "1.0.0",
+    "summary": "Numerical solvers, simulation orchestration, PDE/ODE methods, optimization, uncertainty, and runtime verification.",
+    "theory_refs": [
+      "artifact://theory-card/computational_engineering_numerical_methods"
+    ]
+  },
+  {
+    "domain": "engineering",
+    "keywords": [
+      "manufacturing",
+      "machining",
+      "cad",
+      "geometry",
+      "fixture",
+      "process",
+      "inspection",
+      "tolerance"
+    ],
+    "knowledge_pool_id": "manufacturing",
+    "label": "Manufacturing",
+    "module_refs": [
+      "artifact://module-card/manufacturing_geometry_stack",
+      "artifact://module-card/standards_reference_bank"
+    ],
+    "pool_key": "manufacturing",
+    "schema_version": "1.0.0",
+    "summary": "Manufacturing constraints, geometry preparation, process feasibility, and inspection-oriented context.",
+    "theory_refs": [
+      "artifact://theory-card/manufacturing_process_basis"
+    ]
+  },
+  {
+    "domain": "engineering",
+    "keywords": [
+      "mechanical",
+      "mechanics",
+      "force",
+      "friction",
+      "sliding",
+      "rigid body",
+      "normal force",
+      "stress",
+      "strain",
+      "gear",
+      "shaft",
+      "bearing",
+      "tolerance",
+      "load",
+      "structure"
+    ],
+    "knowledge_pool_id": "mechanical_engineering",
+    "label": "Mechanical Engineering",
+    "module_refs": [
+      "artifact://module-card/fem_solver_stack",
+      "artifact://module-card/numerical_solver_stack",
+      "artifact://module-card/standards_reference_bank"
+    ],
+    "pool_key": "mechanical_engineering",
+    "schema_version": "1.0.0",
+    "summary": "Loads, structures, mechanisms, tolerances, materials behavior, and mechanical verification context.",
+    "theory_refs": [
+      "artifact://theory-card/mechanical_engineering_mechanics_basis"
+    ]
+  },
+  {
+    "domain": "research",
+    "keywords": [
+      "corroboration",
+      "source validation",
+      "credibility",
+      "questionable source",
+      "claim",
+      "evidence",
+      "fact check",
+      "rumor",
+      "root artifact",
+      "doi",
+      "preprint",
+      "retraction",
+      "provenance",
+      "warc",
+      "huge if true"
+    ],
+    "knowledge_pool_id": "source_corroboration",
+    "label": "Source Corroboration & Credibility",
+    "module_refs": [
+      "artifact://module-card/source_corroboration_workbench",
+      "artifact://module-card/evidence_provenance_bank",
+      "artifact://module-card/scholarly_metadata_lookup_stack"
+    ],
+    "pool_key": "source_corroboration",
+    "schema_version": "1.0.0",
+    "summary": "Trace-first validation of questionable sources, high-velocity claims, root artifacts, independent evidence families, and audit-grade evidence packets.",
+    "theory_refs": [
+      "artifact://theory-card/source_corroboration_basis"
+    ]
+  },
+  {
+    "domain": "engineering",
+    "keywords": [
+      "standard",
+      "specification",
+      "reference",
+      "material data",
+      "benchmark",
+      "table",
+      "validation",
+      "validate",
+      "validated",
+      "verification",
+      "verify",
+      "units"
+    ],
+    "knowledge_pool_id": "standards_data",
+    "label": "Standards & Data",
+    "module_refs": [
+      "artifact://module-card/standards_reference_bank"
+    ],
+    "pool_key": "standards_data",
+    "schema_version": "1.0.0",
+    "summary": "Standards, reference data, material tables, benchmark cases, and static verification anchors.",
+    "theory_refs": [
+      "artifact://theory-card/standards_data_interpretation_basis"
+    ]
+  },
+  {
+    "domain": "content",
+    "keywords": [
+      "video editing",
+      "rough cut",
+      "transcript",
+      "caption",
+      "subtitle",
+      "timeline",
+      "otio",
+      "edl",
+      "fcpxml",
+      "aaf",
+      "vad",
+      "forced alignment",
+      "whisper",
+      "diarization",
+      "ffmpeg"
+    ],
+    "knowledge_pool_id": "video_editing",
+    "label": "Video Editing",
+    "module_refs": [
+      "artifact://module-card/asr_alignment_stack",
+      "artifact://module-card/transcript_rough_cut_stack",
+      "artifact://module-card/timeline_interchange_stack",
+      "artifact://module-card/caption_subtitle_stack"
+    ],
+    "pool_key": "video_editing",
+    "schema_version": "1.0.0",
+    "summary": "Transcript-driven rough cutting, media timing, non-destructive timelines, captions, alignment, VAD, diarization, and review/export workflow context.",
+    "theory_refs": [
+      "artifact://theory-card/video_editing_timeline_basis"
+    ]
+  }
+]

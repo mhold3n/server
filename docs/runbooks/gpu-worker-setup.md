@@ -90,7 +90,7 @@ nvidia-smi
 ### 2. Deploy Ollama (Alternative)
 ```bash
 # Start Ollama service
-docker compose -f compose/docker-compose.worker.yml --profile ollama up -d
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml --profile ollama up -d
 
 # Verify deployment
 docker ps | grep ollama-runner
@@ -102,7 +102,7 @@ nvidia-smi
 ### 3. Deploy Reverse Proxy
 ```bash
 # Start Caddy proxy
-docker compose -f compose/docker-compose.worker.yml up -d caddy
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml up -d caddy
 
 # Verify deployment
 curl -f http://localhost:8443/health
@@ -126,16 +126,16 @@ tokenizer.save_pretrained('/.cache/models/vllm/Mistral-7B-Instruct-v0.3')
 model.save_pretrained('/.cache/models/vllm/Mistral-7B-Instruct-v0.3')
 "
 
-# Download Ollama model
+# Download Ollama model (Qwen-first; matches docker-compose.worker.yml default OLLAMA_MODEL)
 docker run --rm -v ollama_data:/root/.ollama "${OLLAMA_IMAGE:-ollama/ollama@sha256:1375516e575632dd84ad23b2c1cbd5e36ef34ebe8e41f9857545ab9aa72aeec2}" \
-  ollama pull llama3:8b-instruct-q4_K_M
+  ollama pull qwen3:4b-instruct
 ```
 
 ### 2. Model Configuration
 ```bash
 # Update model settings in .env
 VLLM_MODEL=/.cache/models/vllm/Mistral-7B-Instruct-v0.3
-OLLAMA_MODEL=llama3:8b-instruct-q4_K_M
+OLLAMA_MODEL=qwen3:4b-instruct
 
 # Configure model parameters
 VLLM_MAX_MODEL_LEN=8192
@@ -173,13 +173,13 @@ nvidia-smi --query-gpu=temperature.gpu --format=csv
 ### 3. Log Monitoring
 ```bash
 # View vLLM logs
-docker compose -f compose/docker-compose.worker.yml logs -f llm-runner
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml logs -f llm-runner
 
 # View Ollama logs
-docker compose -f compose/docker-compose.worker.yml logs -f ollama-runner
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml logs -f ollama-runner
 
 # View Caddy logs
-docker compose -f compose/docker-compose.worker.yml logs -f caddy
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml logs -f caddy
 ```
 
 ## Performance Optimization
@@ -240,7 +240,7 @@ docker run --rm --gpus all nvidia/cuda:11.8-base-ubuntu20.04 nvidia-smi
 nvidia-smi --query-gpu=memory.used,memory.total --format=csv
 
 # Check service logs
-docker compose -f compose/docker-compose.worker.yml logs llm-runner
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml logs llm-runner
 ```
 **Resolution**:
 - Reduce model size
@@ -255,7 +255,7 @@ docker compose -f compose/docker-compose.worker.yml logs llm-runner
 ls -la models/
 
 # Check service logs
-docker compose -f compose/docker-compose.worker.yml logs llm-runner
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml logs llm-runner
 ```
 **Resolution**:
 - Verify model path
@@ -287,7 +287,7 @@ curl -f http://localhost:8000/health
 watch -n 1 nvidia-smi
 
 # Check service logs
-docker compose -f compose/docker-compose.worker.yml logs llm-runner
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml logs llm-runner
 ```
 **Resolution**:
 - Optimize model parameters
@@ -312,7 +312,7 @@ iostat -x 1
 ### Horizontal Scaling
 ```bash
 # Scale vLLM service
-docker compose -f compose/docker-compose.worker.yml up -d --scale llm-runner=3
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml up -d --scale llm-runner=3
 
 # Use load balancer for multiple instances
 # Configure nginx or similar
@@ -320,9 +320,9 @@ docker compose -f compose/docker-compose.worker.yml up -d --scale llm-runner=3
 
 ### Vertical Scaling
 ```bash
-# Update resource limits in compose/docker-compose.worker.yml
+# Update resource limits in docker/compose-profiles/docker-compose.worker.yml
 # Then restart services
-docker compose -f compose/docker-compose.worker.yml up -d
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml up -d
 ```
 
 ## Security Management
@@ -395,8 +395,8 @@ docker system prune -f
 ```bash
 # Update worker services
 git pull origin main
-docker compose -f compose/docker-compose.worker.yml build
-docker compose -f compose/docker-compose.worker.yml up -d
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml build
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml up -d
 
 # Verify update
 make health
@@ -426,10 +426,10 @@ curl -X POST http://localhost:8000/v1/chat/completions \
 ### 3. Monitor Integration
 ```bash
 # Check server logs
-docker compose -f docker-compose.yml -f compose/docker-compose.server.yml logs -f
+docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.server.yml logs -f
 
 # Check worker logs
-docker compose -f compose/docker-compose.worker.yml logs -f
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml logs -f
 ```
 
 ## Emergency Procedures

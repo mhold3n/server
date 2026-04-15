@@ -48,7 +48,7 @@ case "$TOOL_NAME" in
   whisper-asr)
     ensure_env
     install_into_env openai-whisper
-    install_into_env -e "$ROOT/services/wrkhrs[asr]" -e "$ROOT/services/martymedia"
+    install_into_env -e "$ROOT/services/ai-gateway-service[asr]" -e "$ROOT/services/media-service"
     ;;
   qwen-runtime)
     ensure_env
@@ -69,7 +69,7 @@ case "$TOOL_NAME" in
     ;;
   larrak-audio)
     ensure_env
-    install_into_env -e "$ROOT/services/larrak-audio[dev,api]"
+    install_into_env -e "$ROOT/services/audio-service[dev,api]"
     ;;
   *)
     echo "Unknown tool env: $TOOL_NAME" >&2

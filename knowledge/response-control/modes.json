@@ -1,0 +1,260 @@
+[
+  {
+    "keywords": [
+      "business",
+      "strategy",
+      "market",
+      "pricing",
+      "revenue",
+      "operations"
+    ],
+    "label": "Business",
+    "mode_key": "business",
+    "policy": {
+      "governance_rules": [
+        "Separate strategic conclusions from supporting analysis."
+      ],
+      "response_posture": "Use structured tradeoffs, assumptions, risks, and decision implications.",
+      "strict_constraints": []
+    },
+    "response_mode_id": "business",
+    "schema_version": "1.0.0",
+    "seed_status": "seeded",
+    "summary": "Strategy, operations, economics, and market framing."
+  },
+  {
+    "keywords": [
+      "chat",
+      "talk",
+      "quick",
+      "simple"
+    ],
+    "label": "Casual Chat",
+    "mode_key": "casual_chat",
+    "policy": {
+      "governance_rules": [
+        "Do not invoke heavy orchestration without evidence of need."
+      ],
+      "response_posture": "Be conversational, useful, and low-overhead.",
+      "strict_constraints": []
+    },
+    "response_mode_id": "casual_chat",
+    "schema_version": "1.0.0",
+    "seed_status": "seeded",
+    "summary": "General conversation and lightweight assistance."
+  },
+  {
+    "keywords": [
+      "content",
+      "video",
+      "video editing",
+      "rough cut",
+      "script",
+      "podcast",
+      "post",
+      "caption",
+      "transcript",
+      "timeline",
+      "otio"
+    ],
+    "label": "Content",
+    "mode_key": "content",
+    "policy": {
+      "governance_rules": [
+        "Keep content craft separate from domain facts, tools, packages, and knowledge banks.",
+        "For video editing, treat media timing, transcript alignment, and non-destructive edit decisions as source-of-truth artifacts.",
+        "Use LLM judgment for editorial scoring and explanation, not as the source of frame or word timecodes."
+      ],
+      "response_posture": "Optimize for audience, format, narrative shape, production constraints, and artifact-safe media workflows.",
+      "strict_constraints": [
+        "Do not invent timecodes, media metadata, captions, or timeline exports without source artifacts.",
+        "Do not collapse video editing theory into package-specific technique cards."
+      ]
+    },
+    "response_mode_id": "content",
+    "schema_version": "1.0.0",
+    "seed_status": "seeded",
+    "summary": "Creation and editorial production across media formats, with video editing seeded as the first formal content pool."
+  },
+  {
+    "keywords": [
+      "define",
+      "definition",
+      "meaning",
+      "what is"
+    ],
+    "label": "Dictionary / Definition",
+    "mode_key": "dictionary_definition",
+    "policy": {
+      "governance_rules": [
+        "Do not over-orchestrate simple definition requests."
+      ],
+      "response_posture": "Define the term plainly, then provide minimal context if useful.",
+      "strict_constraints": []
+    },
+    "response_mode_id": "dictionary_definition",
+    "schema_version": "1.0.0",
+    "seed_status": "seeded",
+    "summary": "Concise definition and disambiguation."
+  },
+  {
+    "keywords": [
+      "engineering",
+      "implement",
+      "refactor",
+      "simulation",
+      "verification",
+      "solver",
+      "manufacturing",
+      "mechanical",
+      "codebase"
+    ],
+    "label": "Engineering",
+    "mode_key": "engineering",
+    "policy": {
+      "governance_rules": [
+        "Treat DevPlane/control-plane artifacts as the source of truth for state and execution.",
+        "Use explicit task packets and routing metadata for governed execution.",
+        "Separate response mode from selected pools, modules, techniques, and theory."
+      ],
+      "response_posture": "Be precise, scoped, verification-oriented, and artifact-first.",
+      "strict_constraints": [
+        "Do not let Claw select response mode, pools, modules, techniques, or theory.",
+        "Do not collapse theory sources into technique cards.",
+        "Do not route coding_model work away from the Claw kernel."
+      ]
+    },
+    "response_mode_id": "engineering",
+    "schema_version": "1.0.0",
+    "seed_status": "formalized",
+    "summary": "Artifact-governed technical work with explicit state, scoped task packets, verification, and publish readiness."
+  },
+  {
+    "keywords": [
+      "brainstorm",
+      "ideas",
+      "concept",
+      "explore",
+      "what if"
+    ],
+    "label": "Ideation",
+    "mode_key": "ideation",
+    "policy": {
+      "governance_rules": [
+        "Avoid premature hard routing unless implementation is requested."
+      ],
+      "response_posture": "Expand the option space before narrowing, and name promising next moves.",
+      "strict_constraints": []
+    },
+    "response_mode_id": "ideation",
+    "schema_version": "1.0.0",
+    "seed_status": "seeded",
+    "summary": "Exploratory option generation and tradeoff surfacing."
+  },
+  {
+    "keywords": [
+      "marketing",
+      "campaign",
+      "brand",
+      "copy",
+      "ads",
+      "positioning"
+    ],
+    "label": "Marketing",
+    "mode_key": "marketing",
+    "policy": {
+      "governance_rules": [
+        "Separate campaign strategy from content production."
+      ],
+      "response_posture": "Tie language choices to audience, channel, offer, and proof.",
+      "strict_constraints": []
+    },
+    "response_mode_id": "marketing",
+    "schema_version": "1.0.0",
+    "seed_status": "seeded",
+    "summary": "Campaign, positioning, messaging, and conversion work."
+  },
+  {
+    "keywords": [
+      "estimate",
+      "calculate",
+      "rough",
+      "back of envelope",
+      "equation"
+    ],
+    "label": "Napkin Math",
+    "mode_key": "napkin_math",
+    "policy": {
+      "governance_rules": [
+        "Keep calculations readable and label approximations."
+      ],
+      "response_posture": "Prefer transparent assumptions, simple equations, and useful order-of-magnitude checks.",
+      "strict_constraints": []
+    },
+    "response_mode_id": "napkin_math",
+    "schema_version": "1.0.0",
+    "seed_status": "seeded",
+    "summary": "Fast approximate quantitative reasoning with stated assumptions and sanity checks."
+  },
+  {
+    "keywords": [
+      "query",
+      "question",
+      "lookup",
+      "answer"
+    ],
+    "label": "Query",
+    "mode_key": "query",
+    "policy": {
+      "governance_rules": [
+        "Keep the answer shape stable and concise."
+      ],
+      "response_posture": "Answer directly and escalate only when confidence or freshness requires it.",
+      "strict_constraints": []
+    },
+    "response_mode_id": "query",
+    "schema_version": "1.0.0",
+    "seed_status": "seeded",
+    "summary": "Direct factual or operational answering."
+  },
+  {
+    "keywords": [
+      "research",
+      "sources",
+      "literature",
+      "evidence",
+      "find papers",
+      "corroborate",
+      "corroboration",
+      "verification",
+      "credibility",
+      "source validation",
+      "claim",
+      "doi",
+      "preprint",
+      "retraction",
+      "provenance",
+      "huge if true"
+    ],
+    "label": "Research",
+    "mode_key": "research",
+    "policy": {
+      "governance_rules": [
+        "Treat questionable sources as leads, not evidence.",
+        "Separate source gathering, root-artifact tracing, evidence-family collapse, and answer synthesis.",
+        "Prefer corroboration states such as untraced, traced, source-consistent, independently corroborated, contested, or corrected over binary true/false.",
+        "Record gaps, uncertainty, capture timestamps, and source lineage in the evidence packet."
+      ],
+      "response_posture": "Prioritize traceable claims, source quality, provenance, independence, and explicit uncertainty.",
+      "strict_constraints": [
+        "Do not label a claim supported unless the root artifact and supporting evidence have been captured or cited.",
+        "Do not count repeated derivative coverage as independent corroboration.",
+        "Do not hide preprint, correction, retraction, or platform-policy caveats."
+      ]
+    },
+    "response_mode_id": "research",
+    "schema_version": "1.0.0",
+    "seed_status": "formalized",
+    "summary": "Source-oriented investigation, credibility assessment, corroboration, and evidence-backed synthesis."
+  }
+]

@@ -1,100 +1,108 @@
-version: "3.9"
+# Local override for the full AI dev stack.
+# This file should be used with docker-compose.yml, platform, and ai profiles.
+# Overrides use COMPOSE_DATA_ROOT (same default .docker-data/ tree as base compose).
 
 services:
-  # Add missing qdrant service
-  qdrant:
-    image: qdrant/qdrant:latest
-    ports:
-      - "6333:6333"
-    volumes:
-      - ./data/qdrant:/qdrant/storage
-
-  router:
-    platform: linux/amd64
-
   api:
-    platform: linux/amd64
     environment:
-      - AI_STACK_URL=http://structure-gateway:8000
+      AI_STACK_URL: http://structure-gateway:8000
 
   wrkhrs-gateway:
-    platform: linux/amd64
     environment:
-      - LLM_BACKEND=mock
-      - ORCHESTRATOR_URL=http://wrkhrs-agent-platform:8000
+      # Keep the gateway in "real" mode; orchestration uses local model-runtime.
+      LLM_BACKEND: ${LLM_BACKEND:-vllm}
+      ORCHESTRATOR_URL: http://wrkhrs-agent-platform:8000
+      # Local dev default: expose OpenAI-compatible endpoints without auth ceremony.
+      ENABLE_AUTHENTICATION: "false"
     volumes:
-      - ./data/gateway_state:/state
-      - ./logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/gateway_state:/state
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
+
+  wrkhrs-agent-platform:
+    environment:
+      # Route local orchestration through model-runtime (OpenAI-compatible shim).
+      LLM_BACKEND: ${LLM_BACKEND:-vllm}
+      LLM_RUNNER_URL: ${LLM_RUNNER_URL:-http://model-runtime:8000}
+      VLLM_MODEL: ${VLLM_MODEL:-Qwen/Qwen3-4B}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://model-runtime:8000/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-local-openai}
+      # Host memory governor (macOS): used to gate Ollama and scale model tags.
+      HOST_MEMORY_GOVERNOR_URL: ${HOST_MEMORY_GOVERNOR_URL:-http://host.docker.internal:8766}
+      HOST_MEMORY_GOVERNOR_TOKEN: ${HOST_MEMORY_GOVERNOR_TOKEN:-}
+      # Optional: profile-based model selection for Ollama. Only used when LLM_BACKEND=ollama.
+      OLLAMA_MODEL_TINY: ${OLLAMA_MODEL_TINY:-}
+      OLLAMA_MODEL_SMALL: ${OLLAMA_MODEL_SMALL:-}
+      OLLAMA_MODEL_MEDIUM: ${OLLAMA_MODEL_MEDIUM:-}
+      OLLAMA_MODEL_LARGE: ${OLLAMA_MODEL_LARGE:-}
+
+  # Local Ollama lane for macOS dev (opt-in).
+  # Enable with: docker compose ... --profile ollama-macos up -d
+  ollama-runner:
+    image: ${OLLAMA_IMAGE:-ollama/ollama@sha256:1375516e575632dd84ad23b2c1cbd5e36ef34ebe8e41f9857545ab9aa72aeec2}
+    restart: unless-stopped
+    profiles:
+      - ollama-macos
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    environment:
+      - OLLAMA_MODELS=/.cache/models/ollama
+      - OLLAMA_ORIGINS=*
+      - OLLAMA_KEEP_ALIVE=30m
+    volumes:
+      - ./.cache/models/ollama:/.cache/models/ollama
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/ollama_data:/root/.ollama
 
   wrkhrs-orchestrator:
     profiles:
       - legacy-python-orchestrator
-    platform: linux/amd64
     environment:
-      - LLM_BACKEND=mock
+      LLM_BACKEND: mock
     volumes:
-      - ./logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
 
   wrkhrs-rag:
-    platform: linux/amd64
-    depends_on:
-      qdrant:
-        condition: service_started
     environment:
-      - HF_HOME=/.cache/models/hf
-      - TRANSFORMERS_CACHE=/.cache/models/hf
-      - MODEL_CACHE_DIR=/.cache/models/hf
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
+      HF_HOME: /.cache/models/hf
+      TRANSFORMERS_CACHE: /.cache/models/hf
+      MODEL_CACHE_DIR: /.cache/models/hf
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
+      # Skip local SentenceTransformer load so `make up` stays reliable (HF/network/OOM).
+      # Override with USE_MOCK_MODELS=false when you need real embeddings in this stack.
+      USE_MOCK_MODELS: ${USE_MOCK_MODELS:-true}
     volumes:
-      - ./data/rag_cache:/cache
-      - ./logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/rag_cache:/cache
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
       - ./.cache/models/hf:/.cache/models/hf
 
   wrkhrs-asr:
-    platform: linux/amd64
     environment:
-      - HF_HOME=/.cache/models/hf
-      - TRANSFORMERS_CACHE=/.cache/models/hf
-      - MODEL_CACHE_DIR=/.cache/models/hf
-      - ASR_MODEL=${ASR_MODEL:-Systran/faster-whisper-small}
+      HF_HOME: /.cache/models/hf
+      TRANSFORMERS_CACHE: /.cache/models/hf
+      MODEL_CACHE_DIR: /.cache/models/hf
+      ASR_MODEL: ${ASR_MODEL:-Systran/faster-whisper-small}
     volumes:
-      - ./logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
       - ./.cache/models/hf:/.cache/models/hf
 
   wrkhrs-tool-registry:
-    platform: linux/amd64
     volumes:
-      - ./plugins:/plugins:rw
-      - ./logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/plugins:/plugins:rw
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
 
   wrkhrs-mcp:
-    platform: linux/amd64
     volumes:
-      - ./data/mcp:/data:rw
-      - ./logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/mcp_data:/data:rw
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
 
   structure-gateway:
-    platform: linux/amd64
     volumes:
-      - ./logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
+
+  model-runtime:
+    volumes:
+      - ./.cache/models/hf:/.cache/models/hf
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
 
   mlflow:
     ports: !reset
       - "5001:5000"
-
-  # Services to exclude completely
-  pihole:
-    profiles:
-      - disabled
-  wireguard:
-    profiles:
-      - disabled
-  homarr:
-    profiles:
-      - disabled
-  node-exporter:
-    profiles:
-      - disabled
-  vault:
-    profiles:
-      - disabled

@@ -186,7 +186,7 @@ export interface ToolDefinition<TInput = Record<string, unknown>> {
 export interface AgentConfig {
   readonly name: string
   readonly model: string
-  readonly provider?: 'anthropic' | 'openai'
+  readonly provider?: 'anthropic' | 'openai' | 'ollama'
   readonly systemPrompt?: string
   /** Names of tools (from the tool registry) available to this agent. */
   readonly tools?: readonly string[]

@@ -1,10 +1,24 @@
 import { defineTool } from "@server/open-multi-agent"
 import { z } from "zod"
 import type { PlatformConfig } from "../config.js"
+import {
+  actOnContainerGui,
+  closeContainerGui,
+  launchContainerGui,
+  listContainerGuiArtifacts,
+  recordContainerGui,
+  resolveContainerGui,
+  screenshotContainerGui,
+} from "../tools/container-gui.js"
 import { getDomainData, searchKnowledgeBase } from "../tools/wrkhrs.js"
 
 /** WrkHrs-backed tools for Open Multi-Agent (no shell / filesystem builtins). */
 export function createWrkhrsOmaTools(cfg: PlatformConfig) {
+  const isToolRegistryFailure = (payload: unknown): boolean => {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) return false
+    return (payload as Record<string, unknown>).success === false
+  }
+
   return [
     defineTool({
       name: "search_knowledge_base",
@@ -29,6 +43,80 @@ export function createWrkhrsOmaTools(cfg: PlatformConfig) {
       }),
     }),
     defineTool({
+      name: "container_gui.launch",
+      description:
+        "Resolve and launch a knowledge-pool container GUI session through noVNC for OpenClaw browser control.",
+      inputSchema: z.object({
+        target_ref: z.string(),
+        allow_unverified: z.boolean().optional(),
+        novnc_port: z.number().int().positive().optional(),
+        artifact_output_dir: z.string().optional(),
+      }),
+      execute: async (input) => launchContainerGui(cfg, input),
+    }),
+    defineTool({
+      name: "container_gui.resolve",
+      description: "Resolve the default knowledge-pool container GUI session for a module or environment ref.",
+      inputSchema: z.object({
+        target_ref: z.string(),
+        allow_unverified: z.boolean().optional(),
+      }),
+      execute: async (input) => resolveContainerGui(cfg, input),
+    }),
+    defineTool({
+      name: "container_gui.screenshot",
+      description:
+        "Open an optional noVNC URL in OpenClaw browser control and capture a screenshot artifact.",
+      inputSchema: z.object({
+        url: z.string().optional(),
+        output: z.string().optional(),
+        target_id: z.string().optional(),
+        trace_path: z.string().optional(),
+        dry_run: z.boolean().optional(),
+      }),
+      execute: async (input) => screenshotContainerGui(cfg, input),
+    }),
+    defineTool({
+      name: "container_gui.act",
+      description:
+        "Perform an OpenClaw browser action against the active noVNC-controlled container GUI.",
+      inputSchema: z.object({
+        action: z.enum(["open", "screenshot", "snapshot", "click", "type", "press", "wait"]),
+        payload: z.record(z.unknown()).optional(),
+        trace_path: z.string().optional(),
+        dry_run: z.boolean().optional(),
+      }),
+      execute: async (input) => actOnContainerGui(cfg, input),
+    }),
+    defineTool({
+      name: "container_gui.record",
+      description: "Capture screenshot and DOM/accessibility snapshot evidence for a container GUI session.",
+      inputSchema: z.object({
+        url: z.string().optional(),
+        screenshot_output: z.string().optional(),
+        snapshot_output: z.string().optional(),
+        trace_path: z.string().optional(),
+        dry_run: z.boolean().optional(),
+      }),
+      execute: async (input) => recordContainerGui(cfg, input),
+    }),
+    defineTool({
+      name: "container_gui.artifacts",
+      description: "List generated artifact files for a knowledge-pool GUI session.",
+      inputSchema: z.object({
+        gui_session_ref: z.string(),
+      }),
+      execute: async (input) => listContainerGuiArtifacts(cfg, input),
+    }),
+    defineTool({
+      name: "container_gui.close",
+      description: "Close a launched knowledge-pool container GUI session.",
+      inputSchema: z.object({
+        container: z.string(),
+      }),
+      execute: async (input) => closeContainerGui(cfg, input),
+    }),
+    defineTool({
       name: "martymedia_whisper_srt",
       description:
         "Generate SRT captions via MartyMedia whisper automation (tool-registry-backed).",
@@ -51,8 +139,8 @@ export function createWrkhrsOmaTools(cfg: PlatformConfig) {
         if (!res.ok) {
           return { data: `tool-registry error: ${res.status}`, isError: true }
         }
-        const payload = (await res.json()) as any
-        return { data: payload, isError: payload?.success === false }
+        const payload: unknown = await res.json()
+        return { data: JSON.stringify(payload), isError: isToolRegistryFailure(payload) }
       },
     }),
     defineTool({
@@ -81,8 +169,8 @@ export function createWrkhrsOmaTools(cfg: PlatformConfig) {
         if (!res.ok) {
           return { data: `tool-registry error: ${res.status}`, isError: true }
         }
-        const payload = (await res.json()) as any
-        return { data: payload, isError: payload?.success === false }
+        const payload: unknown = await res.json()
+        return { data: JSON.stringify(payload), isError: isToolRegistryFailure(payload) }
       },
     }),
     defineTool({
@@ -105,8 +193,8 @@ export function createWrkhrsOmaTools(cfg: PlatformConfig) {
         if (!res.ok) {
           return { data: `tool-registry error: ${res.status}`, isError: true }
         }
-        const payload = (await res.json()) as any
-        return { data: payload, isError: payload?.success === false }
+        const payload: unknown = await res.json()
+        return { data: JSON.stringify(payload), isError: isToolRegistryFailure(payload) }
       },
     }),
   ] as const

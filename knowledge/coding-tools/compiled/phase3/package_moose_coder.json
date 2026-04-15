@@ -1,0 +1,93 @@
+{
+  "artifact_id": "90179c62-3ab8-5010-82bc-3d8358181274",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_moose_docker",
+    "artifact://evidence-bundle/moose_runtime",
+    "artifact://execution-adapter-spec/moose_probe",
+    "artifact://knowledge-pack/moose",
+    "artifact://recipe-object/moose_structures_pde",
+    "artifact://verification-report/d151ac1f-eb5e-59b8-b11f-7892e9db26c3"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "MOOSE: use moose, MOOSE model object, eng_moose_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_moose_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_moose-container.sh. Recipe MOOSE phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_moose_docker as the canonical runtime surface, Run the linked health check for MOOSE, Stop if the runtime verification report is still REWORK, Execute MOOSE only inside its declared capability boundary and record the evidence refs. Runtime eng-moose/docker_image at birtha/knowledge-eng-moose:1.0.0; environment ref artifact://environment-spec/eng_moose_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_moose_docker; verification refs artifact://verification-report/d151ac1f-eb5e-59b8-b11f-7892e9db26c3. Runtime gate: Healthcheck failed for artifact://environment-spec/eng_moose_docker: docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"python\": executable file not found in $PATH.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "retrieval_keys": [
+      "coder",
+      "moose",
+      "package",
+      "phase3_package_moose",
+      "true"
+    ],
+    "role": "coder",
+    "role_context_bundle_id": "coder_27ff54ce3bced25b",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_moose_docker",
+      "artifact://evidence-bundle/moose_runtime",
+      "artifact://execution-adapter-spec/moose_probe",
+      "artifact://knowledge-pack/moose",
+      "artifact://recipe-object/moose_structures_pde",
+      "artifact://verification-report/d151ac1f-eb5e-59b8-b11f-7892e9db26c3"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_moose_docker",
+        "sha256": "d8c040aa4ad86672b8fbc5c97a2552188d36810464883a883e754a93fad2cdab"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/moose_runtime",
+        "sha256": "18e246ef92f204459b094018126f8ece6078f9d1a53cff64a399b1057ab7f94f"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/moose_probe",
+        "sha256": "ce0258de5a49507cd5e03d0c0742aab3507711da91e05a073d9c19efaa0625cd"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/moose",
+        "sha256": "dc20627e680be1766a69b9788c13c7aafecca520545c62396bf71df5eccf01df"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/moose_structures_pde",
+        "sha256": "36fa63fece8965a8a191b4fb483efe190a2dbd5bbd724a71e5bdc49626c95817"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/d151ac1f-eb5e-59b8-b11f-7892e9db26c3",
+        "sha256": "8bbad6fe992a48c94e111f9ec0e3084f3ccf0a39032e9eea09decf12485e1983"
+      }
+    ],
+    "task_class": "phase3_package_moose"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

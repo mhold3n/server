@@ -1,4 +1,5 @@
-version: "3.9"
+# Host/homelab-only profile. Not included in default local dev.
+# Durable state: ${COMPOSE_DATA_ROOT:-.docker-data}/server/* (caddy, pihole, homarr).
 
 services:
   api:
@@ -10,10 +11,10 @@ services:
     ports:
       - "8443:443"
     volumes:
-      - ./infra/reverse-proxy/Caddyfile.server:/etc/caddy/Caddyfile:ro
-      - ./infra/reverse-proxy/Caddyfile.lan:/etc/caddy/Caddyfile.lan:ro
-      - caddy_data:/data
-      - caddy_config:/config
+      - ./docker/config/reverse-proxy/Caddyfile.server:/etc/caddy/Caddyfile:ro
+      - ./docker/config/reverse-proxy/Caddyfile.lan:/etc/caddy/Caddyfile.lan:ro
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/server/caddy_data:/data
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/server/caddy_config:/config
     depends_on:
       - api
       - router
@@ -37,10 +38,10 @@ services:
       - ServerIP=192.168.50.107
       - FTLCONF_dns_listeningMode=ALL
     volumes:
-      - pihole_data:/etc/pihole
-      - pihole_dnsmasq:/etc/dnsmasq.d
-      - ./infra/dns/pihole/custom.list:/etc/pihole/custom.list:ro
-      - ./infra/dns/pihole/local-dns.conf:/etc/dnsmasq.d/99-local-dns.conf:ro
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/server/pihole_data:/etc/pihole
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/server/pihole_dnsmasq:/etc/dnsmasq.d
+      - ./docker/config/dns/pihole/custom.list:/etc/pihole/custom.list:ro
+      - ./docker/config/dns/pihole/local-dns.conf:/etc/dnsmasq.d/99-local-dns.conf:ro
     cap_add:
       - NET_ADMIN
     restart: unless-stopped
@@ -60,7 +61,7 @@ services:
       - PEERDNS=auto
       - INTERNAL_SUBNET=10.0.0.0
     volumes:
-      - ./infra/networking/wireguard:/config
+      - ./docker/config/networking/wireguard:/config
       - /lib/modules:/lib/modules:ro
     cap_add:
       - NET_ADMIN
@@ -72,7 +73,7 @@ services:
   # Global MCP Servers
   mcp-github:
     build:
-      context: ./mcp/servers/github-mcp
+      context: ./mcp-servers/mcp/servers/github-mcp
     environment:
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - GITHUB_OWNER=${GITHUB_OWNER}
@@ -82,25 +83,26 @@ services:
 
   mcp-filesystem:
     build:
-      context: ./mcp/servers/filesystem-mcp
+      context: ./mcp-servers/mcp/servers/filesystem-mcp
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./:/workspace:ro
-      - /mnt/appdata/addons/documents:/mnt/appdata/addons/documents:ro
-      - /mnt/appdata/addons/documents_processed:/mnt/appdata/addons/documents_processed:ro
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/addons/documents:/mnt/appdata/addons/documents:ro
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/addons/documents_processed:/mnt/appdata/addons/documents_processed:ro
     ports:
       - "7001:7001"
     restart: unless-stopped
 
   mcp-secrets:
     build:
-      context: ./mcp/servers/secrets-mcp
+      context: ./mcp-servers/mcp/servers/secrets-mcp
     env_file:
       # Centralized Bitwarden SM access token (host path; not in git)
-      - ${BWS_ENV_FILE:-${SERVER_DATA_ROOT:-/mnt/appdata}/server/secrets/bitwarden-sm/bws.env}
+      - path: ${BWS_ENV_FILE:-${SERVER_DATA_ROOT:-/mnt/appdata}/server/secrets/bitwarden-sm/bws.env}
+        required: false
     environment:
       # Token comes from env_file as BWS_ACCESS_TOKEN.
-      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-}
     depends_on:
       - api
     ports:
@@ -110,22 +112,13 @@ services:
 
   mcp-vector-db:
     build:
-      context: ./mcp/servers/vector-db-mcp
+      context: ./mcp-servers/mcp/servers/vector-db-mcp
     environment:
       - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
     ports:
       - "7003:7003"
     depends_on:
       - qdrant
-    restart: unless-stopped
-
-  # Vector database for embeddings
-  qdrant:
-    image: qdrant/qdrant:latest
-    ports:
-      - "6333:6333"
-    volumes:
-      - qdrant_data:/qdrant/storage
     restart: unless-stopped
 
   # Vault for secrets management
@@ -149,9 +142,9 @@ services:
       - TZ=UTC
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./infra/homarr/configs:/app/data/configs
-      - ./infra/homarr/icons:/app/public/icons
-      - homarr_data:/data
+      - ./docker/config/homarr/configs:/app/data/configs
+      - ./docker/config/homarr/icons:/app/public/icons
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/server/homarr_data:/data
     depends_on:
       - api
       - router
@@ -176,10 +169,3 @@ services:
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
     restart: unless-stopped
 
-volumes:
-  caddy_data:
-  caddy_config:
-  pihole_data:
-  pihole_dnsmasq:
-  qdrant_data:
-  homarr_data:

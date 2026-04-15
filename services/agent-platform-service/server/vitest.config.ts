@@ -3,7 +3,7 @@ import { defineConfig } from "vitest/config"
 
 const openMultiAgentPath = fileURLToPath(
   new URL(
-    "../../../merged claude leak/packages/open-multi-agent/dist/index.js",
+    "../open-multi-agent/dist/index.js",
     import.meta.url,
   ),
 )

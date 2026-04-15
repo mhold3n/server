@@ -1,0 +1,507 @@
+{
+  "artifact_id": "aeff8237-322e-5d70-b68b-901437dffeed",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_backbone_docker",
+    "artifact://environment-spec/eng_backbone_gui",
+    "artifact://environment-spec/eng_backbone_uv",
+    "artifact://environment-spec/eng_calculix_docker",
+    "artifact://environment-spec/eng_calculix_gui",
+    "artifact://environment-spec/eng_ipopt_onemkl_docker",
+    "artifact://environment-spec/eng_ipopt_onemkl_gui",
+    "artifact://environment-spec/eng_openfoam_docker",
+    "artifact://environment-spec/eng_openfoam_gui",
+    "artifact://environment-spec/eng_openmodelica_docker",
+    "artifact://environment-spec/eng_openmodelica_gui",
+    "artifact://environment-spec/eng_petsc_family_docker",
+    "artifact://environment-spec/eng_petsc_family_gui",
+    "artifact://environment-spec/eng_rhino_host",
+    "artifact://environment-spec/eng_salome_docker",
+    "artifact://environment-spec/eng_salome_gui",
+    "artifact://environment-spec/eng_system_docker",
+    "artifact://environment-spec/eng_system_gui",
+    "artifact://environment-spec/eng_system_uv",
+    "artifact://evidence-bundle/medcoupling_runtime",
+    "artifact://evidence-bundle/ompython_runtime",
+    "artifact://evidence-bundle/petsc4py_runtime",
+    "artifact://evidence-bundle/precice_runtime",
+    "artifact://evidence-bundle/pyfmi_runtime",
+    "artifact://evidence-bundle/pyoptsparse_runtime",
+    "artifact://evidence-bundle/rhino_common_runtime",
+    "artifact://evidence-bundle/vtk_runtime",
+    "artifact://execution-adapter-spec/medcoupling_probe",
+    "artifact://execution-adapter-spec/ompython_probe",
+    "artifact://execution-adapter-spec/petsc4py_probe",
+    "artifact://execution-adapter-spec/precice_probe",
+    "artifact://execution-adapter-spec/pyfmi_probe",
+    "artifact://execution-adapter-spec/pyoptsparse_probe",
+    "artifact://execution-adapter-spec/rhino_common_probe",
+    "artifact://execution-adapter-spec/vtk_probe",
+    "artifact://gui-session-spec/eng_backbone_gui",
+    "artifact://gui-session-spec/eng_calculix_gui",
+    "artifact://gui-session-spec/eng_ipopt_onemkl_gui",
+    "artifact://gui-session-spec/eng_openfoam_gui",
+    "artifact://gui-session-spec/eng_openmodelica_gui",
+    "artifact://gui-session-spec/eng_petsc_family_gui",
+    "artifact://gui-session-spec/eng_salome_gui",
+    "artifact://gui-session-spec/eng_system_gui",
+    "artifact://knowledge-pack/medcoupling",
+    "artifact://knowledge-pack/ompython",
+    "artifact://knowledge-pack/petsc4py",
+    "artifact://knowledge-pack/precice",
+    "artifact://knowledge-pack/pyfmi",
+    "artifact://knowledge-pack/pyoptsparse",
+    "artifact://knowledge-pack/rhino_common",
+    "artifact://knowledge-pack/vtk",
+    "artifact://recipe-object/medcoupling_workflow_coupling",
+    "artifact://recipe-object/ompython_electrics_dynamics_system",
+    "artifact://recipe-object/petsc4py_optimization_uq_backbone",
+    "artifact://recipe-object/precice_workflow_coupling",
+    "artifact://recipe-object/pyfmi_workflow_coupling",
+    "artifact://recipe-object/pyoptsparse_optimization_uq_backbone",
+    "artifact://recipe-object/rhino_common_csharp_examples",
+    "artifact://recipe-object/vtk_workflow_coupling",
+    "artifact://verification-report/0c98cc4d-26c9-5ebc-8765-7f588089ebdd",
+    "artifact://verification-report/0e092475-0184-5530-8aa3-008ffd61d27e",
+    "artifact://verification-report/15ad8027-0dbb-5e19-ba79-9ff2daf2f73f",
+    "artifact://verification-report/1a1728ec-4e58-5f5c-a4b9-9e05feeb01df",
+    "artifact://verification-report/1cc1e4ad-a0b3-5a24-b786-c675c6f4099a",
+    "artifact://verification-report/34165a55-7d67-5bdc-ba36-afa6a6790da5",
+    "artifact://verification-report/4b7ebe57-4c34-5c5a-bdc4-01bc7fe48a76",
+    "artifact://verification-report/4d57a4c2-907d-5aea-8549-9b96a7caa9dc",
+    "artifact://verification-report/5754f9b3-58dd-5326-9804-5382e5bf4fda",
+    "artifact://verification-report/99f96715-d395-5c29-b4d3-1534f1ddff7c",
+    "artifact://verification-report/c05fc4d0-daba-578a-8ff5-cdc5dd2526dd",
+    "artifact://verification-report/d27e1fdf-9e1d-540f-88fc-99829a79dfc0",
+    "artifact://verification-report/e380b24d-ce5c-5eb5-9bdc-499eea848294",
+    "artifact://verification-report/e6c38f2a-9fa9-56ce-86d7-d2d31951c82e",
+    "artifact://verification-report/fa26971c-ab93-5345-9676-7d703423f3aa",
+    "artifact://verification-report/ff85002e-061e-5d40-b2d8-6dfb3b48dbe3"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "MEDCoupling: solves MEDCoupling explicit translation boundaries for workflow coupling and cross-runtime integration, MEDCoupling format conversion with auditable runtime provenance. Best for MEDCoupling inside workflow coupling and cross-runtime integration. Avoid Using MEDCoupling as a substitute for unrelated workflows outside workflow coupling and cross-runtime integration, Treating MEDCoupling as implicitly verified without its linked runtime and evidence bundle. Runtime eng-salome/docker_image at birtha/knowledge-eng-salome:1.0.0; environment ref artifact://environment-spec/eng_salome_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_salome_docker; verification refs artifact://verification-report/1cc1e4ad-a0b3-5a24-b786-c675c6f4099a. GUI state VERIFIED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_salome_gui; control provider noVNC via OpenClaw browser.\nOMPython: solves OMPython bridges parent runtimes into typed electrical, dynamic, and system workflows workflows, OMPython exchange boundaries and compatibility checks across linked runtimes. Best for OMPython inside electrical, dynamic, and system workflows. Avoid Using OMPython as a substitute for unrelated workflows outside electrical, dynamic, and system workflows, Treating OMPython as implicitly verified without its linked runtime and evidence bundle. Runtime eng-system/uv_venv at .cache/knowledge-envs/eng-system; environment ref artifact://environment-spec/eng_system_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv; verification refs artifact://verification-report/1a1728ec-4e58-5f5c-a4b9-9e05feeb01df. GUI state NO_GUI.\npetsc4py: solves petsc4py bridges parent runtimes into typed optimization, UQ, and numerical-backbone workflows workflows, petsc4py exchange boundaries and compatibility checks across linked runtimes. Best for petsc4py inside optimization, UQ, and numerical-backbone workflows. Avoid Using petsc4py as a substitute for unrelated workflows outside optimization, UQ, and numerical-backbone workflows, Treating petsc4py as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/fa26971c-ab93-5345-9676-7d703423f3aa. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_petsc_family_gui; control provider noVNC via OpenClaw browser.\npreCICE: solves preCICE bridges parent runtimes into typed workflow coupling and cross-runtime integration workflows, preCICE exchange boundaries and compatibility checks across linked runtimes. Best for preCICE inside workflow coupling and cross-runtime integration. Avoid Using preCICE as a substitute for unrelated workflows outside workflow coupling and cross-runtime integration, Treating preCICE as implicitly verified without its linked runtime and evidence bundle. Runtime eng-backbone/docker_image at birtha/knowledge-eng-backbone:1.0.0; environment ref artifact://environment-spec/eng_backbone_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_backbone_docker; verification refs artifact://verification-report/5754f9b3-58dd-5326-9804-5382e5bf4fda. GUI state VERIFIED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_backbone_gui; control provider noVNC via OpenClaw browser.\nPyFMI: solves PyFMI bridges parent runtimes into typed workflow coupling and cross-runtime integration workflows, PyFMI exchange boundaries and compatibility checks across linked runtimes. Best for PyFMI inside workflow coupling and cross-runtime integration. Avoid Using PyFMI as a substitute for unrelated workflows outside workflow coupling and cross-runtime integration, Treating PyFMI as implicitly verified without its linked runtime and evidence bundle. Runtime eng-system/docker_image at birtha/knowledge-eng-system:1.0.0; environment ref artifact://environment-spec/eng_system_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_docker; verification refs artifact://verification-report/0e092475-0184-5530-8aa3-008ffd61d27e. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_system_gui; control provider noVNC via OpenClaw browser.\npyOptSparse: solves pyOptSparse API-driven workflows for optimization, UQ, and numerical-backbone workflows, pyOptSparse model assembly and orchestration inside a typed runtime boundary. Best for pyOptSparse inside optimization, UQ, and numerical-backbone workflows. Avoid Using pyOptSparse as a substitute for unrelated workflows outside optimization, UQ, and numerical-backbone workflows, Treating pyOptSparse as implicitly verified without its linked runtime and evidence bundle. Runtime eng-ipopt-onemkl/docker_image at birtha/knowledge-eng-ipopt-onemkl:1.0.0; environment ref artifact://environment-spec/eng_ipopt_onemkl_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker; verification refs artifact://verification-report/ff85002e-061e-5d40-b2d8-6dfb3b48dbe3. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_ipopt_onemkl_gui; control provider noVNC via OpenClaw browser.\nRhinoCommon: solves RhinoCommon API-driven workflows for host-side C# and scripting workflows, RhinoCommon model assembly and orchestration inside a typed runtime boundary. Best for RhinoCommon inside host-side C# and scripting workflows. Avoid Using RhinoCommon as a substitute for unrelated workflows outside host-side C# and scripting workflows, Treating RhinoCommon as implicitly verified without its linked runtime and evidence bundle. Runtime eng-rhino/host_app at /Applications/Rhino 8.app; environment ref artifact://environment-spec/eng_rhino_host; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_rhino_host; verification refs artifact://verification-report/e380b24d-ce5c-5eb5-9bdc-499eea848294. GUI state API_ONLY_HOST_PATH.\nVTK: solves VTK API-driven workflows for workflow coupling and cross-runtime integration, VTK model assembly and orchestration inside a typed runtime boundary. Best for VTK inside workflow coupling and cross-runtime integration. Avoid Using VTK as a substitute for unrelated workflows outside workflow coupling and cross-runtime integration, Treating VTK as implicitly verified without its linked runtime and evidence bundle. Runtime eng-backbone/uv_venv at .cache/knowledge-envs/eng-backbone; environment ref artifact://environment-spec/eng_backbone_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_backbone_uv; verification refs artifact://verification-report/34165a55-7d67-5bdc-ba36-afa6a6790da5. GUI state NO_GUI.",
+    "excluded_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs"
+    ],
+    "retrieval_keys": [
+      "general",
+      "kb",
+      "phase2_batch_k4_host_companions",
+      "phase2_kb_phase2_batch_k4_host_companions",
+      "true"
+    ],
+    "role": "general",
+    "role_context_bundle_id": "general_20a1f99b30488c07",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_backbone_docker",
+      "artifact://environment-spec/eng_backbone_gui",
+      "artifact://environment-spec/eng_backbone_uv",
+      "artifact://environment-spec/eng_calculix_docker",
+      "artifact://environment-spec/eng_calculix_gui",
+      "artifact://environment-spec/eng_ipopt_onemkl_docker",
+      "artifact://environment-spec/eng_ipopt_onemkl_gui",
+      "artifact://environment-spec/eng_openfoam_docker",
+      "artifact://environment-spec/eng_openfoam_gui",
+      "artifact://environment-spec/eng_openmodelica_docker",
+      "artifact://environment-spec/eng_openmodelica_gui",
+      "artifact://environment-spec/eng_petsc_family_docker",
+      "artifact://environment-spec/eng_petsc_family_gui",
+      "artifact://environment-spec/eng_rhino_host",
+      "artifact://environment-spec/eng_salome_docker",
+      "artifact://environment-spec/eng_salome_gui",
+      "artifact://environment-spec/eng_system_docker",
+      "artifact://environment-spec/eng_system_gui",
+      "artifact://environment-spec/eng_system_uv",
+      "artifact://evidence-bundle/medcoupling_runtime",
+      "artifact://evidence-bundle/ompython_runtime",
+      "artifact://evidence-bundle/petsc4py_runtime",
+      "artifact://evidence-bundle/precice_runtime",
+      "artifact://evidence-bundle/pyfmi_runtime",
+      "artifact://evidence-bundle/pyoptsparse_runtime",
+      "artifact://evidence-bundle/rhino_common_runtime",
+      "artifact://evidence-bundle/vtk_runtime",
+      "artifact://execution-adapter-spec/medcoupling_probe",
+      "artifact://execution-adapter-spec/ompython_probe",
+      "artifact://execution-adapter-spec/petsc4py_probe",
+      "artifact://execution-adapter-spec/precice_probe",
+      "artifact://execution-adapter-spec/pyfmi_probe",
+      "artifact://execution-adapter-spec/pyoptsparse_probe",
+      "artifact://execution-adapter-spec/rhino_common_probe",
+      "artifact://execution-adapter-spec/vtk_probe",
+      "artifact://gui-session-spec/eng_backbone_gui",
+      "artifact://gui-session-spec/eng_calculix_gui",
+      "artifact://gui-session-spec/eng_ipopt_onemkl_gui",
+      "artifact://gui-session-spec/eng_openfoam_gui",
+      "artifact://gui-session-spec/eng_openmodelica_gui",
+      "artifact://gui-session-spec/eng_petsc_family_gui",
+      "artifact://gui-session-spec/eng_salome_gui",
+      "artifact://gui-session-spec/eng_system_gui",
+      "artifact://knowledge-pack/medcoupling",
+      "artifact://knowledge-pack/ompython",
+      "artifact://knowledge-pack/petsc4py",
+      "artifact://knowledge-pack/precice",
+      "artifact://knowledge-pack/pyfmi",
+      "artifact://knowledge-pack/pyoptsparse",
+      "artifact://knowledge-pack/rhino_common",
+      "artifact://knowledge-pack/vtk",
+      "artifact://recipe-object/medcoupling_workflow_coupling",
+      "artifact://recipe-object/ompython_electrics_dynamics_system",
+      "artifact://recipe-object/petsc4py_optimization_uq_backbone",
+      "artifact://recipe-object/precice_workflow_coupling",
+      "artifact://recipe-object/pyfmi_workflow_coupling",
+      "artifact://recipe-object/pyoptsparse_optimization_uq_backbone",
+      "artifact://recipe-object/rhino_common_csharp_examples",
+      "artifact://recipe-object/vtk_workflow_coupling",
+      "artifact://verification-report/0c98cc4d-26c9-5ebc-8765-7f588089ebdd",
+      "artifact://verification-report/0e092475-0184-5530-8aa3-008ffd61d27e",
+      "artifact://verification-report/15ad8027-0dbb-5e19-ba79-9ff2daf2f73f",
+      "artifact://verification-report/1a1728ec-4e58-5f5c-a4b9-9e05feeb01df",
+      "artifact://verification-report/1cc1e4ad-a0b3-5a24-b786-c675c6f4099a",
+      "artifact://verification-report/34165a55-7d67-5bdc-ba36-afa6a6790da5",
+      "artifact://verification-report/4b7ebe57-4c34-5c5a-bdc4-01bc7fe48a76",
+      "artifact://verification-report/4d57a4c2-907d-5aea-8549-9b96a7caa9dc",
+      "artifact://verification-report/5754f9b3-58dd-5326-9804-5382e5bf4fda",
+      "artifact://verification-report/99f96715-d395-5c29-b4d3-1534f1ddff7c",
+      "artifact://verification-report/c05fc4d0-daba-578a-8ff5-cdc5dd2526dd",
+      "artifact://verification-report/d27e1fdf-9e1d-540f-88fc-99829a79dfc0",
+      "artifact://verification-report/e380b24d-ce5c-5eb5-9bdc-499eea848294",
+      "artifact://verification-report/e6c38f2a-9fa9-56ce-86d7-d2d31951c82e",
+      "artifact://verification-report/fa26971c-ab93-5345-9676-7d703423f3aa",
+      "artifact://verification-report/ff85002e-061e-5d40-b2d8-6dfb3b48dbe3"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_backbone_docker",
+        "sha256": "516815b9233b2d8efaa06b678538d58f0230494a40709bbcf6a1d386acb67c00"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_backbone_gui",
+        "sha256": "09b0fb000c4709043365aac8d08e077dba040965a30851f7687e31ee72bd146d"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_backbone_uv",
+        "sha256": "62d593a7a5226d18aa9a20839e4457b10fa0d857065bafc7cd35d6d23261df50"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_calculix_docker",
+        "sha256": "266eef2b1a7b1c8124488083d9833aaaffad1aacd0f2b017bc0cc550820b4e91"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_calculix_gui",
+        "sha256": "5d845baf945c14d05728d60110a2ea6dd4eb9a57fd45d203aed60ab2522b2aeb"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_ipopt_onemkl_docker",
+        "sha256": "8e4059fb97acb13655ec22ca77c1b70e665209fc96f582c1daacbe09f71d6dd8"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_ipopt_onemkl_gui",
+        "sha256": "105a6bef5732828a98a07d870371a3a3f2ceaa6af1e428c628b4c7d2ef2e4640"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_openfoam_docker",
+        "sha256": "2b332d00b04cf1b8267ff88ea0cb35be8cd85efba84fdd3dadbb1465ef04df76"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_openfoam_gui",
+        "sha256": "a29aeb655084a28ceba3233dc3266fa562797f9d01a2e2ff5d1cf2a795f884fa"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_openmodelica_docker",
+        "sha256": "4b38e7ce718637657ddfbed338a3abe00c4b14cdb978de7fd5ef4632ed2d2b65"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_openmodelica_gui",
+        "sha256": "7ff98d335e1dd2f47c113a0e0dab631128790344af909d90b9f965dff38ad8f4"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_petsc_family_docker",
+        "sha256": "27c972437d1c655433551f6c1d46a60aaa339a3eb63e681b86fb867520da1672"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_petsc_family_gui",
+        "sha256": "24d1bb8aaefb108886d874a9e7b03106d2b1a16b76891f466e071d7fb576b561"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_rhino_host",
+        "sha256": "d6384688094a76d3fab63a7d15dafb6037b0e602d2902db6fabc021820e100bb"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_salome_docker",
+        "sha256": "7b974e6eb0ef9e31be3996ba871fefaacf0ac7988afe4842e90b9ce071e7e45c"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_salome_gui",
+        "sha256": "2948aaad6ee9ed3731059d7648734a191e15fa6b774fe17621aa4126970f72eb"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_system_docker",
+        "sha256": "7bfc5239d62e09a262da746dff43ca3efb17affcdf72cf2b1b0f2370fcaceab4"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_system_gui",
+        "sha256": "b4a7d3b5674c5cd9df8ae86a2e05737dc7964142025e5a165de6572f0b770dd1"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_system_uv",
+        "sha256": "20c6a7a1227a1e6bbe724e3f24df3f37064c1881ca42287b7e0f499e124d2075"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/medcoupling_runtime",
+        "sha256": "b2daa8b541bb26d5b35d4dd1f3a6ac7c367bab802c17cc52877789b0d7e6641e"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/ompython_runtime",
+        "sha256": "e9a02a78acbc585b3a0e11cc2e10768207e98a07320f900d0ee624969e389410"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/petsc4py_runtime",
+        "sha256": "e3a81a1a13057e80ea85d49799e9c454b0ef689612688ca5bd6e1cbbfc79c74b"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/precice_runtime",
+        "sha256": "6e97d31d6a0e55a484efa519680363937a056a08dc9c014c5b2a7a46b02b77ca"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/pyfmi_runtime",
+        "sha256": "e11971ed9fdb7551a281efbc37abf6ed22d7f6c2c42dce619c3521b2d16ac1fe"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/pyoptsparse_runtime",
+        "sha256": "60e1f137eddbde6503f61e06bcd8b9f8432230f4d7cebf8e21b636eb2ca77b6d"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/rhino_common_runtime",
+        "sha256": "a399a57238d2d08d2f70b3f9e396eb56adcce824b44f3bc5d3dec8f06f03aa0b"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/vtk_runtime",
+        "sha256": "5e31e306eccf1d64b234fcbb4e7eaa240f81a5a7c48481aa83e32cf3665146f4"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/medcoupling_probe",
+        "sha256": "e3ee7cfddc7ac62eccb86e095eb4b01300d4ea82139c7b52c8d8715b3336a311"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/ompython_probe",
+        "sha256": "540f17cb9c361b4f3804a4d39a56025640bcf1efb032a9868cb5d2c0894ea451"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/petsc4py_probe",
+        "sha256": "3baa06df14091283ffb4c224046af4a16ff07442d9afea8cf612837a9413f961"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/precice_probe",
+        "sha256": "37d2d35f9877fcb56c759f0718bd19573b6ced0b2458be31d8dd90cbe8846a78"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/pyfmi_probe",
+        "sha256": "e92e6a26df29f11c64b3f8fd0f9fb21a7915c931611b383c56df60518182a75c"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/pyoptsparse_probe",
+        "sha256": "f7861bdfd070f959145533e5b6873a929d951f2d2f70004eceef0e405a9dd7aa"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/rhino_common_probe",
+        "sha256": "dc46792a3957a67129f7b66dc4236c36c8230309f00cf20dfb1bf13ebc41c298"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/vtk_probe",
+        "sha256": "0cc10f993b97ebb41502ff1eecc0fff998c5b4a44e9671572115323d6eb415ab"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_backbone_gui",
+        "sha256": "78c451e73404c8e4ff9b4106c96a7c80636cb24fa8b1cba2a3d90b1151941b8d"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_calculix_gui",
+        "sha256": "61aa81273792c2a6c33e386b9b2713de789e5ba577623cef79e10f37fa9ed0ed"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_ipopt_onemkl_gui",
+        "sha256": "b46548aaa727087964636d21b2f6174f01453c2a8bef7cd0e84672ab6d273e13"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_openfoam_gui",
+        "sha256": "7c505a01d3a61eb5afb356518309358f37ea71f3620aca33177527658c9f9dcc"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_openmodelica_gui",
+        "sha256": "83c958046083b3c04c5142c36d826707b6a38d70b9e6695922ad93f0aaae30af"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_petsc_family_gui",
+        "sha256": "fadccc7035283b4998935e73faa3568fe9ba6630a9ee2128efa32411503b4b80"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_salome_gui",
+        "sha256": "2f8f41189adbd1481deca0cb78ca94c2ce37c406b2b82b1bde41b8a86a6715f1"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_system_gui",
+        "sha256": "047a8734355186e23d395f28a636af4d6cc8fd55198373c6aad308a2aee22bf6"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/medcoupling",
+        "sha256": "f728f45eaf64c1b5867d56b9bc6e11a0d200e817cab05dd97a3b09d2ae735aa1"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ompython",
+        "sha256": "686ccbca3ff2715fbe0578c5f6c5e81d14444bf6c19284cc3ae3711858b76624"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc4py",
+        "sha256": "65494bd481bb5f47d31c41dcae11a7b4057fa8b873b8e76d8bdfbd4c5856d260"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/precice",
+        "sha256": "49d8481fd4cfb36b5221c5b265bc3d56f155dde068c40d8f8be52aaba199d858"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/pyfmi",
+        "sha256": "0865494cd77bd3eab3a80e85f5947cac63671c59d5e44f0811e8e8f8deed93be"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/pyoptsparse",
+        "sha256": "e885dc6ff9b41a5615cbcbddd282b1571e8272df0705ea9d3040d9275036c784"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/rhino_common",
+        "sha256": "b0db226970ffb445d5d4cecc18d0baffb6919cbbb1f48e24fed79b14049c87d2"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/vtk",
+        "sha256": "1acd2f15661cddcfde1d7fcb6b716489b3de371e83f42b47bad852571f275f81"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/medcoupling_workflow_coupling",
+        "sha256": "b398671477ed0983126ff60472711e4422fd792ed95fd5dd310705b85b43c403"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/ompython_electrics_dynamics_system",
+        "sha256": "e42565c513b360c622df38c2053fa8a055fd9ca01063bd4f8ce36379e5285a1c"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/petsc4py_optimization_uq_backbone",
+        "sha256": "e15d1a6c7166cbc8f8c65a8197e4dce34a35a0edcdc095c0aea5dd1b8b3c1238"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/precice_workflow_coupling",
+        "sha256": "150cf04d90cab9efb9b25b520873589c07f0523b8ca95d7c715e1603bda05cb8"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/pyfmi_workflow_coupling",
+        "sha256": "ea987d3cea9b248d784b3bc49532faccde3d3076149fd3adbb7ef164349e49b6"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/pyoptsparse_optimization_uq_backbone",
+        "sha256": "4cafd4096dba6aa6de6e13e1bc84d26291d6bc1a227903bffc3876063df6a6a6"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/rhino_common_csharp_examples",
+        "sha256": "a280cce139eac55f60764befe6f06bdb53ef435e22f92214d3f030062921e538"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/vtk_workflow_coupling",
+        "sha256": "7a8577d246948fac1d164dc7ad26b0c0819922b2ea913d520a3b800f066dfdf7"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/0c98cc4d-26c9-5ebc-8765-7f588089ebdd",
+        "sha256": "4abcb5b2dfeee70746ef1681b8326d55f50e9e5966fad8e28462c53f34f27a81"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/0e092475-0184-5530-8aa3-008ffd61d27e",
+        "sha256": "09e47c7e463986f0eac1834c7f50ee61981823aacc1e62dd03cb33bbafb17dcc"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/15ad8027-0dbb-5e19-ba79-9ff2daf2f73f",
+        "sha256": "9465cc02929972ff829a11b4ec385bb25e45b8e8fee3d8f85a11f9deebea7aef"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/1a1728ec-4e58-5f5c-a4b9-9e05feeb01df",
+        "sha256": "a82aa21f1e3956a352fd6a4e6e9f4bd96b21f16cfd3a1b77cf249ee50126439a"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/1cc1e4ad-a0b3-5a24-b786-c675c6f4099a",
+        "sha256": "ad0da8e699cc2176e6372760e49c35b8f8f28a95843260d2b9815af0a13f161f"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/34165a55-7d67-5bdc-ba36-afa6a6790da5",
+        "sha256": "ebf694eb37aaee25f16163706d3eb697ec642db61c27824a96a872cc94599e8e"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/4b7ebe57-4c34-5c5a-bdc4-01bc7fe48a76",
+        "sha256": "cd67687d27da145e7ae8e87f086db4045692e6c67f9b45e17930a7e4cb233656"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/4d57a4c2-907d-5aea-8549-9b96a7caa9dc",
+        "sha256": "3dd64e015ff15abc0a5f60fdee449a943417aa66a21c9675bd9724a7f9d38239"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/5754f9b3-58dd-5326-9804-5382e5bf4fda",
+        "sha256": "e84211a13f7de4dc65f2897ef0523eca33f10eb96d1f10657158f7650de3f277"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/99f96715-d395-5c29-b4d3-1534f1ddff7c",
+        "sha256": "86bda15ddd39607a76849101ed832e34a28459e700ab8f1cf4130decaf4102bf"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/c05fc4d0-daba-578a-8ff5-cdc5dd2526dd",
+        "sha256": "550ac164d3506dc83234d089a6eaf4d64f16c667151b37f79a3a4d408bfaae32"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/d27e1fdf-9e1d-540f-88fc-99829a79dfc0",
+        "sha256": "ed7d03663c6f5007d9de329d5da5c9b161d8cd8e67021e1fbf87cbcffd6eae25"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/e380b24d-ce5c-5eb5-9bdc-499eea848294",
+        "sha256": "f5641909c80919310bd647b9ccfaf83516252c0042606f9950ec12bd4a6210f7"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/e6c38f2a-9fa9-56ce-86d7-d2d31951c82e",
+        "sha256": "af88e85dddc4265fce02e80483a5e7bd329b6302571d81797fee5f68414b4ba1"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/fa26971c-ab93-5345-9676-7d703423f3aa",
+        "sha256": "5fe0b6c2960aabe4b2e97659047174fc4ede45946bc89f1dfc097c00dae9b74c"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/ff85002e-061e-5d40-b2d8-6dfb3b48dbe3",
+        "sha256": "b0155b1830c9b2d2c8c4bfc76c3f93454a4ec7c6129558371036bf0423da9bcd"
+      }
+    ],
+    "task_class": "phase2_kb_phase2_batch_k4_host_companions"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

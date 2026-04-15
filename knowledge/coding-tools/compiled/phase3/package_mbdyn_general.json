@@ -1,0 +1,93 @@
+{
+  "artifact_id": "a9716037-5bcc-5fae-aa75-e17ee2ced0a2",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_mbdyn_docker",
+    "artifact://evidence-bundle/mbdyn_runtime",
+    "artifact://execution-adapter-spec/mbdyn_probe",
+    "artifact://knowledge-pack/mbdyn",
+    "artifact://recipe-object/mbdyn_reserve",
+    "artifact://verification-report/10fc37a7-bf19-5c98-bb5c-f3f95697809b"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "MBDyn: solves MBDyn executable workflows for reserve engineering workflows, MBDyn case setup, launch, and output capture inside the knowledge runtime. Best for MBDyn inside reserve engineering workflows. Avoid Using MBDyn as a substitute for unrelated workflows outside reserve engineering workflows, Treating MBDyn as implicitly verified without its linked runtime and evidence bundle. Runtime eng-mbdyn/docker_image at birtha/knowledge-eng-mbdyn:1.0.0; environment ref artifact://environment-spec/eng_mbdyn_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mbdyn_docker; verification refs artifact://verification-report/10fc37a7-bf19-5c98-bb5c-f3f95697809b. Runtime gate: Healthcheck failed for artifact://environment-spec/eng_mbdyn_docker: docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"python\": executable file not found in $PATH.",
+    "excluded_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs"
+    ],
+    "retrieval_keys": [
+      "general",
+      "mbdyn",
+      "package",
+      "phase3_package_mbdyn",
+      "true"
+    ],
+    "role": "general",
+    "role_context_bundle_id": "general_63ad2f633e1323fd",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_mbdyn_docker",
+      "artifact://evidence-bundle/mbdyn_runtime",
+      "artifact://execution-adapter-spec/mbdyn_probe",
+      "artifact://knowledge-pack/mbdyn",
+      "artifact://recipe-object/mbdyn_reserve",
+      "artifact://verification-report/10fc37a7-bf19-5c98-bb5c-f3f95697809b"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_mbdyn_docker",
+        "sha256": "f5887ca715c4e8b9b704347d9cb846662a0a4d3f06800246b299e870c8aa71d2"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/mbdyn_runtime",
+        "sha256": "e667b78c55b13e91f252a557a03868b12ce80b09ac1d3ef44627733639c21df7"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/mbdyn_probe",
+        "sha256": "db6293cd226fd4ada3726f6c75e6529a2fb093d367ddf3cd69200a13d3faa2b0"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/mbdyn",
+        "sha256": "64b5df6628f37a35746de01d2fe147721648df56f10cece8deeb3e76b1ff9887"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/mbdyn_reserve",
+        "sha256": "68b86abb0f8b73ccfa02412e42d8ebe57662c10156b731e568dea853d73ffc67"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/10fc37a7-bf19-5c98-bb5c-f3f95697809b",
+        "sha256": "1dde1fb4c0c2593064e12f23e4c0a61dd11e261fcc1014fa080fd3a1174c3bf4"
+      }
+    ],
+    "task_class": "phase3_package_mbdyn"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

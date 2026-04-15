@@ -1,0 +1,123 @@
+{
+  "artifact_id": "d7fdeae4-7e5e-535b-bf95-b63c5b7fbf8d",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_salome_docker",
+    "artifact://evidence-bundle/medcoupling_runtime",
+    "artifact://evidence-bundle/salome_runtime",
+    "artifact://execution-adapter-spec/medcoupling_probe",
+    "artifact://execution-adapter-spec/salome_probe",
+    "artifact://knowledge-pack/medcoupling",
+    "artifact://knowledge-pack/salome",
+    "artifact://recipe-object/medcoupling_workflow_coupling",
+    "artifact://recipe-object/salome_workflow_coupling",
+    "artifact://verification-report/1cc1e4ad-a0b3-5a24-b786-c675c6f4099a",
+    "artifact://verification-report/8b3a6b68-791c-5c89-b034-dd94bb262f38"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "MEDCoupling: use MEDCoupling reader, MEDCoupling writer, eng_salome_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_salome_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_salome-container.sh. Recipe MEDCoupling phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_salome_docker as the canonical runtime surface, Run the linked health check for MEDCoupling, Stop if the parent-runtime compatibility gate is still REWORK, Execute MEDCoupling only inside its declared capability boundary and record the evidence refs. Runtime eng-salome/docker_image at birtha/knowledge-eng-salome:1.0.0; environment ref artifact://environment-spec/eng_salome_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_salome_docker; verification refs artifact://verification-report/1cc1e4ad-a0b3-5a24-b786-c675c6f4099a. Runtime gate: Healthcheck failed for artifact://environment-spec/eng_salome_docker: docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"python\": executable file not found in $PATH.\nSALOME: use SALOME CLI, SALOME case/setup artifact, eng_salome_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_salome_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_salome-container.sh. Recipe SALOME phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_salome_docker as the canonical runtime surface, Run the linked health check for SALOME, Stop if the runtime verification report is still REWORK, Execute SALOME only inside its declared capability boundary and record the evidence refs. Runtime eng-salome/docker_image at birtha/knowledge-eng-salome:1.0.0; environment ref artifact://environment-spec/eng_salome_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_salome_docker; verification refs artifact://verification-report/8b3a6b68-791c-5c89-b034-dd94bb262f38. Runtime gate: Healthcheck failed for artifact://environment-spec/eng_salome_docker: docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"python\": executable file not found in $PATH.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "retrieval_keys": [
+      "coder",
+      "parent_runtime",
+      "phase3_parent_salome",
+      "salome",
+      "true"
+    ],
+    "role": "coder",
+    "role_context_bundle_id": "coder_3467018f30f0a17b",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_salome_docker",
+      "artifact://evidence-bundle/medcoupling_runtime",
+      "artifact://evidence-bundle/salome_runtime",
+      "artifact://execution-adapter-spec/medcoupling_probe",
+      "artifact://execution-adapter-spec/salome_probe",
+      "artifact://knowledge-pack/medcoupling",
+      "artifact://knowledge-pack/salome",
+      "artifact://recipe-object/medcoupling_workflow_coupling",
+      "artifact://recipe-object/salome_workflow_coupling",
+      "artifact://verification-report/1cc1e4ad-a0b3-5a24-b786-c675c6f4099a",
+      "artifact://verification-report/8b3a6b68-791c-5c89-b034-dd94bb262f38"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_salome_docker",
+        "sha256": "f0a181273ea7bae4ef8e0dcdf469e7d894a390748ee976dae1912cd27c61c466"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/medcoupling_runtime",
+        "sha256": "b2daa8b541bb26d5b35d4dd1f3a6ac7c367bab802c17cc52877789b0d7e6641e"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/salome_runtime",
+        "sha256": "5c6920e29d4d57d14ba7ab55aae4b28ca233c52e2e9d3c2a9d2fa4cb518c5d51"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/medcoupling_probe",
+        "sha256": "e3ee7cfddc7ac62eccb86e095eb4b01300d4ea82139c7b52c8d8715b3336a311"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/salome_probe",
+        "sha256": "bbb2a834076a68f84ad244e80e1ea4a1fa9e44932e260290e612f385e3b50bb0"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/medcoupling",
+        "sha256": "f728f45eaf64c1b5867d56b9bc6e11a0d200e817cab05dd97a3b09d2ae735aa1"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/salome",
+        "sha256": "f0089a9e64c54a511f039ecf3e183f51a542b06825399f09ed7d0a25c1fcca8a"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/medcoupling_workflow_coupling",
+        "sha256": "b398671477ed0983126ff60472711e4422fd792ed95fd5dd310705b85b43c403"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/salome_workflow_coupling",
+        "sha256": "63ccd7ba9c0c3382f06572534d30f4fb24883dde33e257128cc85142942b754b"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/1cc1e4ad-a0b3-5a24-b786-c675c6f4099a",
+        "sha256": "610199e42bb85b74eb9366bc871b50ac83965a4afd80802cb7b9adba8140e8c9"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/8b3a6b68-791c-5c89-b034-dd94bb262f38",
+        "sha256": "cd57538c84a90e04e1175531c62d65b82732b7adaa833246391e6275d1bcb49c"
+      }
+    ],
+    "task_class": "phase3_parent_salome"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

@@ -1,0 +1,93 @@
+{
+  "artifact_id": "8c6a280e-f817-560a-8952-74c39c44310c",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_openmodelica_docker",
+    "artifact://evidence-bundle/modelica_standard_library_runtime",
+    "artifact://execution-adapter-spec/modelica_standard_library_probe",
+    "artifact://knowledge-pack/modelica_standard_library",
+    "artifact://recipe-object/modelica_standard_library_electrics_dynamics_system",
+    "artifact://verification-report/e3a03b18-f5f2-5e78-ac2f-d7ccf19b2449"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "Modelica Standard Library: use Modelica Standard Library schema, Modelica Standard Library validator, eng_openmodelica_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_openmodelica_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_openmodelica-container.sh. Recipe Modelica Standard Library phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_openmodelica_docker as the canonical runtime surface, Run the linked health check for Modelica Standard Library, Stop if the parent-runtime compatibility gate is still REWORK, Execute Modelica Standard Library only inside its declared capability boundary and record the evidence refs. Runtime eng-openmodelica/docker_image at birtha/knowledge-eng-openmodelica:1.0.0; environment ref artifact://environment-spec/eng_openmodelica_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_openmodelica_docker; verification refs artifact://verification-report/e3a03b18-f5f2-5e78-ac2f-d7ccf19b2449. Runtime gate: Smoke failed for modelica_standard_library: docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"python\": executable file not found in $PATH.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "retrieval_keys": [
+      "coder",
+      "modelica_standard_library",
+      "package",
+      "phase3_package_modelica_standard_library",
+      "true"
+    ],
+    "role": "coder",
+    "role_context_bundle_id": "coder_9721e1b9faabc13e",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_openmodelica_docker",
+      "artifact://evidence-bundle/modelica_standard_library_runtime",
+      "artifact://execution-adapter-spec/modelica_standard_library_probe",
+      "artifact://knowledge-pack/modelica_standard_library",
+      "artifact://recipe-object/modelica_standard_library_electrics_dynamics_system",
+      "artifact://verification-report/e3a03b18-f5f2-5e78-ac2f-d7ccf19b2449"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_openmodelica_docker",
+        "sha256": "7f6d942584f3203756f9ccfe08bd5cb9b22e238546bb5e6f6a895af1bba51b79"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/modelica_standard_library_runtime",
+        "sha256": "0590a896092a5f87ad34d1347b9452fbe053a8663dade0f6f77ee8fb94b0c904"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/modelica_standard_library_probe",
+        "sha256": "06b17d42449c057304cc3b684bda7dad3b421c1e8de6ae573da75c5168353e1d"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/modelica_standard_library",
+        "sha256": "a9e393c971389ca965f52944795d14f5bf3feecad45f3cf8e1f07d25cec4ee4c"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/modelica_standard_library_electrics_dynamics_system",
+        "sha256": "23e5414ad793e096b105922ee70ecb4a9c5dc0e2008ef5d6dbab72bef5457385"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/e3a03b18-f5f2-5e78-ac2f-d7ccf19b2449",
+        "sha256": "77805484806b3c987bc595f8fec2782517eb96b372bf141566575f6c08afd91c"
+      }
+    ],
+    "task_class": "phase3_package_modelica_standard_library"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

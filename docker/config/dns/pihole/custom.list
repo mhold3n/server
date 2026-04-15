@@ -1,0 +1,2 @@
+# Hostname overrides for the optional host/homelab Pi-hole profile.
+# Keep this file environment-neutral; deployment-specific records can be layered locally.

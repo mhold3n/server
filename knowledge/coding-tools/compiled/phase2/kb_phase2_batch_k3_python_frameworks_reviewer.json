@@ -1,0 +1,651 @@
+{
+  "artifact_id": "68be8a3b-d448-5722-80ec-419085eac7f2",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_backbone_docker",
+    "artifact://environment-spec/eng_backbone_gui",
+    "artifact://environment-spec/eng_backbone_uv",
+    "artifact://environment-spec/eng_geometry_docker",
+    "artifact://environment-spec/eng_geometry_gui",
+    "artifact://environment-spec/eng_geometry_uv",
+    "artifact://environment-spec/eng_mdo_docker",
+    "artifact://environment-spec/eng_mdo_gui",
+    "artifact://environment-spec/eng_mdo_uv",
+    "artifact://environment-spec/eng_rmg_py_docker",
+    "artifact://environment-spec/eng_rmg_py_gui",
+    "artifact://environment-spec/eng_structures_docker",
+    "artifact://environment-spec/eng_structures_gui",
+    "artifact://environment-spec/eng_structures_uv",
+    "artifact://environment-spec/eng_system_docker",
+    "artifact://environment-spec/eng_system_gui",
+    "artifact://environment-spec/eng_system_uv",
+    "artifact://evidence-bundle/botorch_runtime",
+    "artifact://evidence-bundle/compas_runtime",
+    "artifact://evidence-bundle/dymos_runtime",
+    "artifact://evidence-bundle/idaes_runtime",
+    "artifact://evidence-bundle/mphys_runtime",
+    "artifact://evidence-bundle/nevergrad_runtime",
+    "artifact://evidence-bundle/openpnm_runtime",
+    "artifact://evidence-bundle/optas_runtime",
+    "artifact://evidence-bundle/porepy_runtime",
+    "artifact://evidence-bundle/pyphs_runtime",
+    "artifact://evidence-bundle/ray_runtime",
+    "artifact://evidence-bundle/rmg_py_runtime",
+    "artifact://evidence-bundle/simpeg_runtime",
+    "artifact://evidence-bundle/simpy_runtime",
+    "artifact://execution-adapter-spec/botorch_probe",
+    "artifact://execution-adapter-spec/compas_probe",
+    "artifact://execution-adapter-spec/dymos_probe",
+    "artifact://execution-adapter-spec/idaes_probe",
+    "artifact://execution-adapter-spec/mphys_probe",
+    "artifact://execution-adapter-spec/nevergrad_probe",
+    "artifact://execution-adapter-spec/openpnm_probe",
+    "artifact://execution-adapter-spec/optas_probe",
+    "artifact://execution-adapter-spec/porepy_probe",
+    "artifact://execution-adapter-spec/pyphs_probe",
+    "artifact://execution-adapter-spec/ray_probe",
+    "artifact://execution-adapter-spec/rmg_py_probe",
+    "artifact://execution-adapter-spec/simpeg_probe",
+    "artifact://execution-adapter-spec/simpy_probe",
+    "artifact://gui-session-spec/eng_backbone_gui",
+    "artifact://gui-session-spec/eng_geometry_gui",
+    "artifact://gui-session-spec/eng_mdo_gui",
+    "artifact://gui-session-spec/eng_rmg_py_gui",
+    "artifact://gui-session-spec/eng_structures_gui",
+    "artifact://gui-session-spec/eng_system_gui",
+    "artifact://knowledge-pack/botorch",
+    "artifact://knowledge-pack/compas",
+    "artifact://knowledge-pack/dymos",
+    "artifact://knowledge-pack/idaes",
+    "artifact://knowledge-pack/mphys",
+    "artifact://knowledge-pack/nevergrad",
+    "artifact://knowledge-pack/openpnm",
+    "artifact://knowledge-pack/optas",
+    "artifact://knowledge-pack/porepy",
+    "artifact://knowledge-pack/pyphs",
+    "artifact://knowledge-pack/ray",
+    "artifact://knowledge-pack/rmg_py",
+    "artifact://knowledge-pack/simpeg",
+    "artifact://knowledge-pack/simpy",
+    "artifact://recipe-object/botorch_reserve",
+    "artifact://recipe-object/compas_geometry_manufacturing",
+    "artifact://recipe-object/dymos_workflow_coupling",
+    "artifact://recipe-object/idaes_thermofluids_chemistry",
+    "artifact://recipe-object/mphys_workflow_coupling",
+    "artifact://recipe-object/nevergrad_reserve",
+    "artifact://recipe-object/openpnm_reserve",
+    "artifact://recipe-object/optas_optimization_uq_backbone",
+    "artifact://recipe-object/porepy_reserve",
+    "artifact://recipe-object/pyphs_domain_specific",
+    "artifact://recipe-object/ray_workflow_coupling",
+    "artifact://recipe-object/rmg_py_reserve",
+    "artifact://recipe-object/simpeg_domain_specific",
+    "artifact://recipe-object/simpy_reserve",
+    "artifact://verification-report/117e40d3-17fb-53bd-a31c-7d80b2d6db17",
+    "artifact://verification-report/1cb4ea78-6552-5f9d-8799-4b6cf31625d4",
+    "artifact://verification-report/254de163-dc5e-5acb-8541-c146e0564087",
+    "artifact://verification-report/3b8b7f94-9744-5ecf-8a69-ed922697265e",
+    "artifact://verification-report/40569241-3302-5d1d-9132-85492f15f598",
+    "artifact://verification-report/406bee6e-7025-5fbc-a8f3-39fbe0aed479",
+    "artifact://verification-report/53d2a498-a2a7-5b45-9320-1060e548b97d",
+    "artifact://verification-report/59b29add-4700-5fec-b592-41b6b7aa1a31",
+    "artifact://verification-report/61d15ab2-1be8-51ff-961b-4ebed3ccc2ff",
+    "artifact://verification-report/8df308f0-cd7f-5b9f-a887-c657362164ce",
+    "artifact://verification-report/90d65f3f-8bc8-5705-91fc-96288a802818",
+    "artifact://verification-report/90e00736-ba05-5e84-9cb1-f4e93e0d1123",
+    "artifact://verification-report/a3b12f6e-2277-536b-ab92-bb53fb0c3af6",
+    "artifact://verification-report/a6836372-64f7-5810-ba52-06df692cc1ce",
+    "artifact://verification-report/b6cf6993-d9b1-5e39-a288-466a48592214",
+    "artifact://verification-report/bb7d142d-9c88-522c-b9f2-2a52e8c247be",
+    "artifact://verification-report/c05fc4d0-daba-578a-8ff5-cdc5dd2526dd",
+    "artifact://verification-report/da268990-6df1-5c2c-97a1-a75a9ab2165b",
+    "artifact://verification-report/e6c38f2a-9fa9-56ce-86d7-d2d31951c82e",
+    "artifact://verification-report/ea8debd7-b00d-5341-804b-0b11d01aa611"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "BoTorch: review Probe BoTorch through artifact://environment-spec/eng_mdo_uv, Confirm the current Phase 2 gate state for BoTorch. Checklist BoTorch pack links to the intended environment spec(s), BoTorch adapter and evidence bundle reference the same runtime verification report, BoTorch anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using BoTorch for using botorch as a substitute for unrelated workflows outside reserve engineering workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_mdo_uv., Crossing the adapter boundary for BoTorch without a typed contract tied to botorch api-driven workflows for reserve engineering workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv. Runtime eng-mdo/uv_venv at .cache/knowledge-envs/eng-mdo; environment ref artifact://environment-spec/eng_mdo_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv; verification refs artifact://verification-report/b6cf6993-d9b1-5e39-a288-466a48592214. GUI state NO_GUI.\nCompas: review Probe Compas through artifact://environment-spec/eng_geometry_uv, Confirm the current Phase 2 gate state for Compas. Checklist Compas pack links to the intended environment spec(s), Compas adapter and evidence bundle reference the same runtime verification report, Compas anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using Compas for using compas as a substitute for unrelated workflows outside geometry and manufacturing workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_geometry_uv., Crossing the adapter boundary for Compas without a typed contract tied to compas api-driven workflows for geometry and manufacturing workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_uv. Runtime eng-geometry/uv_venv at .cache/knowledge-envs/eng-geometry; environment ref artifact://environment-spec/eng_geometry_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_uv; verification refs artifact://verification-report/90e00736-ba05-5e84-9cb1-f4e93e0d1123. GUI state NO_GUI.\nDymos: review Probe Dymos through artifact://environment-spec/eng_mdo_uv, Confirm the current Phase 2 gate state for Dymos. Checklist Dymos pack links to the intended environment spec(s), Dymos adapter and evidence bundle reference the same runtime verification report, Dymos anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using Dymos for using dymos as a substitute for unrelated workflows outside workflow coupling and cross-runtime integration., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_mdo_uv., Crossing the adapter boundary for Dymos without a typed contract tied to dymos api-driven workflows for workflow coupling and cross-runtime integration.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv. Runtime eng-mdo/uv_venv at .cache/knowledge-envs/eng-mdo; environment ref artifact://environment-spec/eng_mdo_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv; verification refs artifact://verification-report/53d2a498-a2a7-5b45-9320-1060e548b97d. GUI state NO_GUI.\nIDAES: review Probe IDAES through artifact://environment-spec/eng_system_uv, Confirm the current Phase 2 gate state for IDAES. Checklist IDAES pack links to the intended environment spec(s), IDAES adapter and evidence bundle reference the same runtime verification report, IDAES anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using IDAES for using idaes as a substitute for unrelated workflows outside thermofluids and chemistry workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_system_uv., Crossing the adapter boundary for IDAES without a typed contract tied to idaes api-driven workflows for thermofluids and chemistry workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv. Runtime eng-system/uv_venv at .cache/knowledge-envs/eng-system; environment ref artifact://environment-spec/eng_system_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv; verification refs artifact://verification-report/90d65f3f-8bc8-5705-91fc-96288a802818. GUI state NO_GUI.\nMPhys: review Probe MPhys through artifact://environment-spec/eng_mdo_uv, Confirm the current Phase 2 gate state for MPhys. Checklist MPhys pack links to the intended environment spec(s), MPhys adapter and evidence bundle reference the same runtime verification report, MPhys anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using MPhys for using mphys as a substitute for unrelated workflows outside workflow coupling and cross-runtime integration., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_mdo_uv., Crossing the adapter boundary for MPhys without a typed contract tied to mphys bridges parent runtimes into typed workflow coupling and cross-runtime integration workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv. Runtime eng-mdo/uv_venv at .cache/knowledge-envs/eng-mdo; environment ref artifact://environment-spec/eng_mdo_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv; verification refs artifact://verification-report/406bee6e-7025-5fbc-a8f3-39fbe0aed479. GUI state NO_GUI.\nNevergrad: review Probe Nevergrad through artifact://environment-spec/eng_mdo_uv, Confirm the current Phase 2 gate state for Nevergrad. Checklist Nevergrad pack links to the intended environment spec(s), Nevergrad adapter and evidence bundle reference the same runtime verification report, Nevergrad anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using Nevergrad for using nevergrad as a substitute for unrelated workflows outside reserve engineering workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_mdo_uv., Crossing the adapter boundary for Nevergrad without a typed contract tied to nevergrad api-driven workflows for reserve engineering workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv. Runtime eng-mdo/uv_venv at .cache/knowledge-envs/eng-mdo; environment ref artifact://environment-spec/eng_mdo_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv; verification refs artifact://verification-report/117e40d3-17fb-53bd-a31c-7d80b2d6db17. GUI state NO_GUI.\nOpenPNM: review Probe OpenPNM through artifact://environment-spec/eng_structures_uv, Confirm the current Phase 2 gate state for OpenPNM. Checklist OpenPNM pack links to the intended environment spec(s), OpenPNM adapter and evidence bundle reference the same runtime verification report, OpenPNM anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using OpenPNM for using openpnm as a substitute for unrelated workflows outside reserve engineering workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_structures_uv., Crossing the adapter boundary for OpenPNM without a typed contract tied to openpnm api-driven workflows for reserve engineering workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_structures_uv. Runtime eng-structures/uv_venv at .cache/knowledge-envs/eng-structures; environment ref artifact://environment-spec/eng_structures_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_structures_uv; verification refs artifact://verification-report/59b29add-4700-5fec-b592-41b6b7aa1a31. GUI state NO_GUI.\nOptaS: review Probe OptaS through artifact://environment-spec/eng_mdo_uv, Confirm the current Phase 2 gate state for OptaS. Checklist OptaS pack links to the intended environment spec(s), OptaS adapter and evidence bundle reference the same runtime verification report, OptaS anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using OptaS for using optas as a substitute for unrelated workflows outside optimization, uq, and numerical-backbone workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_mdo_uv., Crossing the adapter boundary for OptaS without a typed contract tied to optas api-driven workflows for optimization, uq, and numerical-backbone workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv. Runtime eng-mdo/uv_venv at .cache/knowledge-envs/eng-mdo; environment ref artifact://environment-spec/eng_mdo_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv; verification refs artifact://verification-report/8df308f0-cd7f-5b9f-a887-c657362164ce. GUI state NO_GUI.\nPorePy: review Probe PorePy through artifact://environment-spec/eng_structures_uv, Confirm the current Phase 2 gate state for PorePy. Checklist PorePy pack links to the intended environment spec(s), PorePy adapter and evidence bundle reference the same runtime verification report, PorePy anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using PorePy for using porepy as a substitute for unrelated workflows outside reserve engineering workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_structures_uv., Crossing the adapter boundary for PorePy without a typed contract tied to porepy api-driven workflows for reserve engineering workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_structures_uv. Runtime eng-structures/uv_venv at .cache/knowledge-envs/eng-structures; environment ref artifact://environment-spec/eng_structures_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_structures_uv; verification refs artifact://verification-report/3b8b7f94-9744-5ecf-8a69-ed922697265e. GUI state NO_GUI.\nPyPHS: review Probe PyPHS through artifact://environment-spec/eng_system_uv, Confirm the current Phase 2 gate state for PyPHS. Checklist PyPHS pack links to the intended environment spec(s), PyPHS adapter and evidence bundle reference the same runtime verification report, PyPHS anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using PyPHS for using pyphs as a substitute for unrelated workflows outside domain-specific engineering workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_system_uv., Crossing the adapter boundary for PyPHS without a typed contract tied to pyphs api-driven workflows for domain-specific engineering workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv. Runtime eng-system/uv_venv at .cache/knowledge-envs/eng-system; environment ref artifact://environment-spec/eng_system_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv; verification refs artifact://verification-report/da268990-6df1-5c2c-97a1-a75a9ab2165b. GUI state NO_GUI.\nRay: review Probe Ray through artifact://environment-spec/eng_backbone_uv, Confirm the current Phase 2 gate state for Ray. Checklist Ray pack links to the intended environment spec(s), Ray adapter and evidence bundle reference the same runtime verification report, Ray anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using Ray for using ray as a substitute for unrelated workflows outside workflow coupling and cross-runtime integration., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_backbone_uv., Crossing the adapter boundary for Ray without a typed contract tied to ray bridges parent runtimes into typed workflow coupling and cross-runtime integration workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_backbone_uv. Runtime eng-backbone/uv_venv at .cache/knowledge-envs/eng-backbone; environment ref artifact://environment-spec/eng_backbone_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_backbone_uv; verification refs artifact://verification-report/40569241-3302-5d1d-9132-85492f15f598. GUI state NO_GUI.\nRMG-Py: review Probe RMG-Py through artifact://environment-spec/eng_rmg_py_docker, Confirm the current Phase 2 gate state for RMG-Py. Checklist RMG-Py pack links to the intended environment spec(s), RMG-Py adapter and evidence bundle reference the same runtime verification report, RMG-Py anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using RMG-Py for using rmg-py as a substitute for unrelated workflows outside reserve engineering workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_rmg_py_docker., Crossing the adapter boundary for RMG-Py without a typed contract tied to rmg-py executable workflows for reserve engineering workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_rmg_py_docker. Runtime eng-rmg-py/docker_image at birtha/knowledge-eng-rmg-py:1.0.0; environment ref artifact://environment-spec/eng_rmg_py_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_rmg_py_docker; verification refs artifact://verification-report/254de163-dc5e-5acb-8541-c146e0564087. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_rmg_py_gui; control provider noVNC via OpenClaw browser.\nSimPEG: review Probe SimPEG through artifact://environment-spec/eng_structures_uv, Confirm the current Phase 2 gate state for SimPEG. Checklist SimPEG pack links to the intended environment spec(s), SimPEG adapter and evidence bundle reference the same runtime verification report, SimPEG anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using SimPEG for using simpeg as a substitute for unrelated workflows outside domain-specific engineering workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_structures_uv., Crossing the adapter boundary for SimPEG without a typed contract tied to simpeg api-driven workflows for domain-specific engineering workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_structures_uv. Runtime eng-structures/uv_venv at .cache/knowledge-envs/eng-structures; environment ref artifact://environment-spec/eng_structures_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_structures_uv; verification refs artifact://verification-report/ea8debd7-b00d-5341-804b-0b11d01aa611. GUI state NO_GUI.\nSimPy: review Probe SimPy through artifact://environment-spec/eng_system_uv, Confirm the current Phase 2 gate state for SimPy. Checklist SimPy pack links to the intended environment spec(s), SimPy adapter and evidence bundle reference the same runtime verification report, SimPy anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using SimPy for using simpy as a substitute for unrelated workflows outside reserve engineering workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_system_uv., Crossing the adapter boundary for SimPy without a typed contract tied to simpy api-driven workflows for reserve engineering workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv. Runtime eng-system/uv_venv at .cache/knowledge-envs/eng-system; environment ref artifact://environment-spec/eng_system_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv; verification refs artifact://verification-report/1cb4ea78-6552-5f9d-8799-4b6cf31625d4. GUI state NO_GUI.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "included_sections": [
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "retrieval_keys": [
+      "kb",
+      "phase2_batch_k3_python_frameworks",
+      "phase2_kb_phase2_batch_k3_python_frameworks",
+      "reviewer",
+      "true"
+    ],
+    "role": "reviewer",
+    "role_context_bundle_id": "reviewer_31b94206e7ad681a",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_backbone_docker",
+      "artifact://environment-spec/eng_backbone_gui",
+      "artifact://environment-spec/eng_backbone_uv",
+      "artifact://environment-spec/eng_geometry_docker",
+      "artifact://environment-spec/eng_geometry_gui",
+      "artifact://environment-spec/eng_geometry_uv",
+      "artifact://environment-spec/eng_mdo_docker",
+      "artifact://environment-spec/eng_mdo_gui",
+      "artifact://environment-spec/eng_mdo_uv",
+      "artifact://environment-spec/eng_rmg_py_docker",
+      "artifact://environment-spec/eng_rmg_py_gui",
+      "artifact://environment-spec/eng_structures_docker",
+      "artifact://environment-spec/eng_structures_gui",
+      "artifact://environment-spec/eng_structures_uv",
+      "artifact://environment-spec/eng_system_docker",
+      "artifact://environment-spec/eng_system_gui",
+      "artifact://environment-spec/eng_system_uv",
+      "artifact://evidence-bundle/botorch_runtime",
+      "artifact://evidence-bundle/compas_runtime",
+      "artifact://evidence-bundle/dymos_runtime",
+      "artifact://evidence-bundle/idaes_runtime",
+      "artifact://evidence-bundle/mphys_runtime",
+      "artifact://evidence-bundle/nevergrad_runtime",
+      "artifact://evidence-bundle/openpnm_runtime",
+      "artifact://evidence-bundle/optas_runtime",
+      "artifact://evidence-bundle/porepy_runtime",
+      "artifact://evidence-bundle/pyphs_runtime",
+      "artifact://evidence-bundle/ray_runtime",
+      "artifact://evidence-bundle/rmg_py_runtime",
+      "artifact://evidence-bundle/simpeg_runtime",
+      "artifact://evidence-bundle/simpy_runtime",
+      "artifact://execution-adapter-spec/botorch_probe",
+      "artifact://execution-adapter-spec/compas_probe",
+      "artifact://execution-adapter-spec/dymos_probe",
+      "artifact://execution-adapter-spec/idaes_probe",
+      "artifact://execution-adapter-spec/mphys_probe",
+      "artifact://execution-adapter-spec/nevergrad_probe",
+      "artifact://execution-adapter-spec/openpnm_probe",
+      "artifact://execution-adapter-spec/optas_probe",
+      "artifact://execution-adapter-spec/porepy_probe",
+      "artifact://execution-adapter-spec/pyphs_probe",
+      "artifact://execution-adapter-spec/ray_probe",
+      "artifact://execution-adapter-spec/rmg_py_probe",
+      "artifact://execution-adapter-spec/simpeg_probe",
+      "artifact://execution-adapter-spec/simpy_probe",
+      "artifact://gui-session-spec/eng_backbone_gui",
+      "artifact://gui-session-spec/eng_geometry_gui",
+      "artifact://gui-session-spec/eng_mdo_gui",
+      "artifact://gui-session-spec/eng_rmg_py_gui",
+      "artifact://gui-session-spec/eng_structures_gui",
+      "artifact://gui-session-spec/eng_system_gui",
+      "artifact://knowledge-pack/botorch",
+      "artifact://knowledge-pack/compas",
+      "artifact://knowledge-pack/dymos",
+      "artifact://knowledge-pack/idaes",
+      "artifact://knowledge-pack/mphys",
+      "artifact://knowledge-pack/nevergrad",
+      "artifact://knowledge-pack/openpnm",
+      "artifact://knowledge-pack/optas",
+      "artifact://knowledge-pack/porepy",
+      "artifact://knowledge-pack/pyphs",
+      "artifact://knowledge-pack/ray",
+      "artifact://knowledge-pack/rmg_py",
+      "artifact://knowledge-pack/simpeg",
+      "artifact://knowledge-pack/simpy",
+      "artifact://recipe-object/botorch_reserve",
+      "artifact://recipe-object/compas_geometry_manufacturing",
+      "artifact://recipe-object/dymos_workflow_coupling",
+      "artifact://recipe-object/idaes_thermofluids_chemistry",
+      "artifact://recipe-object/mphys_workflow_coupling",
+      "artifact://recipe-object/nevergrad_reserve",
+      "artifact://recipe-object/openpnm_reserve",
+      "artifact://recipe-object/optas_optimization_uq_backbone",
+      "artifact://recipe-object/porepy_reserve",
+      "artifact://recipe-object/pyphs_domain_specific",
+      "artifact://recipe-object/ray_workflow_coupling",
+      "artifact://recipe-object/rmg_py_reserve",
+      "artifact://recipe-object/simpeg_domain_specific",
+      "artifact://recipe-object/simpy_reserve",
+      "artifact://verification-report/117e40d3-17fb-53bd-a31c-7d80b2d6db17",
+      "artifact://verification-report/1cb4ea78-6552-5f9d-8799-4b6cf31625d4",
+      "artifact://verification-report/254de163-dc5e-5acb-8541-c146e0564087",
+      "artifact://verification-report/3b8b7f94-9744-5ecf-8a69-ed922697265e",
+      "artifact://verification-report/40569241-3302-5d1d-9132-85492f15f598",
+      "artifact://verification-report/406bee6e-7025-5fbc-a8f3-39fbe0aed479",
+      "artifact://verification-report/53d2a498-a2a7-5b45-9320-1060e548b97d",
+      "artifact://verification-report/59b29add-4700-5fec-b592-41b6b7aa1a31",
+      "artifact://verification-report/61d15ab2-1be8-51ff-961b-4ebed3ccc2ff",
+      "artifact://verification-report/8df308f0-cd7f-5b9f-a887-c657362164ce",
+      "artifact://verification-report/90d65f3f-8bc8-5705-91fc-96288a802818",
+      "artifact://verification-report/90e00736-ba05-5e84-9cb1-f4e93e0d1123",
+      "artifact://verification-report/a3b12f6e-2277-536b-ab92-bb53fb0c3af6",
+      "artifact://verification-report/a6836372-64f7-5810-ba52-06df692cc1ce",
+      "artifact://verification-report/b6cf6993-d9b1-5e39-a288-466a48592214",
+      "artifact://verification-report/bb7d142d-9c88-522c-b9f2-2a52e8c247be",
+      "artifact://verification-report/c05fc4d0-daba-578a-8ff5-cdc5dd2526dd",
+      "artifact://verification-report/da268990-6df1-5c2c-97a1-a75a9ab2165b",
+      "artifact://verification-report/e6c38f2a-9fa9-56ce-86d7-d2d31951c82e",
+      "artifact://verification-report/ea8debd7-b00d-5341-804b-0b11d01aa611"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_backbone_docker",
+        "sha256": "516815b9233b2d8efaa06b678538d58f0230494a40709bbcf6a1d386acb67c00"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_backbone_gui",
+        "sha256": "09b0fb000c4709043365aac8d08e077dba040965a30851f7687e31ee72bd146d"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_backbone_uv",
+        "sha256": "62d593a7a5226d18aa9a20839e4457b10fa0d857065bafc7cd35d6d23261df50"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_geometry_docker",
+        "sha256": "448f432de06a9e0619c7905e1bf34114428330b1864a86dd5ceffbe308394904"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_geometry_gui",
+        "sha256": "abb14d87450ad372d3d882d3d801d7766e3023d32fef7806321f536bcf70b22d"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_geometry_uv",
+        "sha256": "57f85a4925572cc494d84fd64b840c9dd5465fa2e0a2648428ded1797207e5f5"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_mdo_docker",
+        "sha256": "d163d8e8552beca59bf1cb9f029d41518f3ccbab8d1e8e4d309a8852efcf8f19"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_mdo_gui",
+        "sha256": "5f99c57ceda63aa3e14261d038382b3580590861b41fd46302b784443c87b566"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_mdo_uv",
+        "sha256": "7529cf3175a2f145cc95bb91870b21f93c0d314d6bebf41c921330ca823e59f6"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_rmg_py_docker",
+        "sha256": "cc1950081a6c0af9bbe83267ad527fcae6421c10826011dbc7fce100bb2f62f7"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_rmg_py_gui",
+        "sha256": "2c873bcbc32cb78fb4d4ddf5f9b710eee100b5beb8d72dc0622cb9b92bed24b9"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_structures_docker",
+        "sha256": "929678c64f3bb5c05c2fca0118841cdd0326630bf506011518f801b1ee622bde"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_structures_gui",
+        "sha256": "6fa9484686a4bce51c0727f5d089330e67359c5c7b769449a6741eb543768598"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_structures_uv",
+        "sha256": "7237533676759d4583292d6122ddc44e8fb52ecc2c487ba741afe523972a1b6c"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_system_docker",
+        "sha256": "7bfc5239d62e09a262da746dff43ca3efb17affcdf72cf2b1b0f2370fcaceab4"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_system_gui",
+        "sha256": "b4a7d3b5674c5cd9df8ae86a2e05737dc7964142025e5a165de6572f0b770dd1"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_system_uv",
+        "sha256": "20c6a7a1227a1e6bbe724e3f24df3f37064c1881ca42287b7e0f499e124d2075"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/botorch_runtime",
+        "sha256": "e40d1424e9e15901d80a433e49a79ac2c2fd35428fcf57bf332642eaea505aec"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/compas_runtime",
+        "sha256": "dbe3b4d8ba659d707c1e852e7b1dbd7ab85433b0b2d1b92d3f3df90c4958a81d"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/dymos_runtime",
+        "sha256": "6c43111440328d0acfa9975db3ceae06b3e37ee9b3d6f6aa54aacb4d032018c4"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/idaes_runtime",
+        "sha256": "003d5a08971b9903a7f9360a18f85dcc9fa43630305e5faeb56211f2582a1863"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/mphys_runtime",
+        "sha256": "ef31a5d98cd1d33fda63080401b5f10d53b723140045f6e9373a858406ea8e00"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/nevergrad_runtime",
+        "sha256": "26ab8f057264c54363d5d9f5d2277bbcbfc08bcf4521ac8e168e1410b5247001"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/openpnm_runtime",
+        "sha256": "71bc2b0604bb4f648943faf93f66f7a4e587d818a2695989b2f01790fe497d4a"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/optas_runtime",
+        "sha256": "7190a14dd2052499071559321383f01bd3428520a4e73b3b3c63b12cf2459478"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/porepy_runtime",
+        "sha256": "d0523953335e673effaa70acfd700b01aabefeb5c0be51af3775da5214e6f557"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/pyphs_runtime",
+        "sha256": "7ffd2a49107b3e6176eb06a8f00289c88e23e178a21a59d02bc744d1a955dc51"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/ray_runtime",
+        "sha256": "70d2210b3147f830a4bf470b36aaaf72e3ddb4e75db4bfb0a37c7727d1cacee6"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/rmg_py_runtime",
+        "sha256": "38e62ecda77369e512dd886c63db84b4cf43fd97a9b9e040251e2cbcfc3e9b3f"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/simpeg_runtime",
+        "sha256": "d359d4263b877a75c5ef41c0370928caf50457d8793fb930b7acbeadb458d9a8"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/simpy_runtime",
+        "sha256": "e48dead8bcd45551fa1f422ec8acf5e2110487fd20b54de4b87bee35c57e77fa"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/botorch_probe",
+        "sha256": "bf01c2382a5865ffb448a62383a8015256787e23203487868d6a765eb74b7d4f"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/compas_probe",
+        "sha256": "d3f682093619e253965e38af58ddc1cdd0522d86b635827d29654a39cb287d9b"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/dymos_probe",
+        "sha256": "2c1216fc257b437f04b7e1813749837f8865a1de8de3f248e92b7a016c13f798"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/idaes_probe",
+        "sha256": "72fe6b95e5cd9ed7d04b9a9f88e9f026367ac24e0706c0a626af1b2950c1e293"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/mphys_probe",
+        "sha256": "21691a2c065d1a50ff3744cda71cb4d4f410a7d32b6be7e789280550da2976f5"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/nevergrad_probe",
+        "sha256": "8a364abe00a0f4b44586eb8c3097f5c868217733c385dff9e99420d898d2f4e8"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/openpnm_probe",
+        "sha256": "57aec5b7fb70412a61a1520fb7e842928ec4290e79a6cb42af8da58d37f96b87"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/optas_probe",
+        "sha256": "65fa3e2e7cf8ff4679eb7055cc5fbc6779548c27cff28df55221887db7041176"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/porepy_probe",
+        "sha256": "c5d6a6db64fa77382572a93595033f3395583363e5eeb78ded41c1b8ba32b905"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/pyphs_probe",
+        "sha256": "258d63072973ce5a0a9f0709bb50492aa3d220e5ef4143cdec178f131b239187"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/ray_probe",
+        "sha256": "41e3b4676d6c52c0d9936d97c64fd924ec3c48d762b2df557ce61b8fec05347c"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/rmg_py_probe",
+        "sha256": "c0076756a24808d8c1bfeae0351a5b76295539e1fb6656f2d1b5519cae1e9e11"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/simpeg_probe",
+        "sha256": "4e679e0d1b675fbe98bae5cb97595be57671de615fd69153df18998862b2c71a"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/simpy_probe",
+        "sha256": "15785a46649deae18dea28f95a9bf52630d5cc3fe2b7c6a493c77e1e0d925af4"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_backbone_gui",
+        "sha256": "78c451e73404c8e4ff9b4106c96a7c80636cb24fa8b1cba2a3d90b1151941b8d"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_geometry_gui",
+        "sha256": "596bf60339da06d4c4e07c2dbc927f931fbaaba88df9efa4b8d212f58bbd7f41"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_mdo_gui",
+        "sha256": "dc1c5fab84515dd6f6231c11aa140105b1cc8d33c4068082d8fda787beace983"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_rmg_py_gui",
+        "sha256": "e1738f13139e1ba285db358ff6295f534f8cd73be79e68b3ecd31fbac17d4d2a"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_structures_gui",
+        "sha256": "395abb4352d8eb33e8c1b351c0ec904a6b07cb84c68e94ac84ea6958f4ce919d"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_system_gui",
+        "sha256": "047a8734355186e23d395f28a636af4d6cc8fd55198373c6aad308a2aee22bf6"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/botorch",
+        "sha256": "da4cc92b3c4d04bacb4c561c4ff2d58136967fef511cb25e606c835eca03a085"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/compas",
+        "sha256": "9b098009d0f93d21985d9cfa4c9141bf52c5ce77d055c9d796c37b889d5fcafd"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/dymos",
+        "sha256": "d6509f4a6e2a121351833dd8e013e4e836df202e8eda1a92c828c152e72f0a1d"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/idaes",
+        "sha256": "020d0e7381103e5ae39e798502c4d529d3a52ef6c908bc69f5d075b50a35141d"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/mphys",
+        "sha256": "c3419c96e95b10d97e4aa4816f2e8042bbf44c603fa696336df14fe5e8067109"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/nevergrad",
+        "sha256": "dd62421bf710696a17b1e6b93f8763d0808fa634f73df650863a6e2d2859452d"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/openpnm",
+        "sha256": "75b395a567dbc3776c6d9eb29b1dd7232ec359881fd7aa8d654e655bcc3820ae"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/optas",
+        "sha256": "d78791a846e5d401d43f3e445a15c97dd3506ab4ddf7c2ced51ae0c31535da0a"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/porepy",
+        "sha256": "19e63514ac3b4b2abaa451b5368af440b5b3d28c5f1daedfdacdcfa4b7e2367d"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/pyphs",
+        "sha256": "31ff7ef2a94be0d9c053d3aaa53d9ce4fe549fbee82e9a5ea196ddab3078bde2"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ray",
+        "sha256": "caaeff81562c5e8975a16065256edb87e9b321d9dbc5b66c49440672ab180bf5"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/rmg_py",
+        "sha256": "51b40dfac02eccc6917909da8b314a28a1eb5c940f2463d9df10db9b22d6d0aa"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/simpeg",
+        "sha256": "cb5d803c6d0afcdbd384ed41d183d2a635b7ef2973024116d22c01a1290fa0f7"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/simpy",
+        "sha256": "b2b34c40ee8761fe69128d65e7f85e9952654eb7e4eb43d27748b476ea07666e"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/botorch_reserve",
+        "sha256": "8b557df8f856d76aa1779081c1437a736d4445877b55c9c6cd803376867a2504"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/compas_geometry_manufacturing",
+        "sha256": "86248e35f6c6721e653b5c0100d8b190349f458cd7a91a7184fb983f739c881e"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/dymos_workflow_coupling",
+        "sha256": "7b0e5d3d6de9717459aeb89f2857e1931df4f35971b770bb6a827d3b366f2b7d"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/idaes_thermofluids_chemistry",
+        "sha256": "3e1e2f9d848d4784e3f11be5b433eaeaebe37053ca3570172b961b6540ec52fb"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/mphys_workflow_coupling",
+        "sha256": "7c22ea99106ad2ca4f58724838a59f996c11a66a5d765d303281a831d59a1fbb"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/nevergrad_reserve",
+        "sha256": "46c0c99ceda8ff82b3a87244caf971e6a8c2a1f71393cfa75e2e8641838feb02"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/openpnm_reserve",
+        "sha256": "d4db2918263171bd7a9b22f7591e449d768a49d8af7f454ec29b8b930c79ca7c"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/optas_optimization_uq_backbone",
+        "sha256": "5abaacce20e6113c0b9ca5e23a686ff5d59197e138f51bd0073d82ee0131be8a"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/porepy_reserve",
+        "sha256": "2c0651b458bd20d494af1515fab4983ec5a5eba290858bd93906c35b2320ab60"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/pyphs_domain_specific",
+        "sha256": "eb5e2c6c101dcae5f76958dc7ec2977e3ae961da6f4ae71b3ba16fd51a059dae"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/ray_workflow_coupling",
+        "sha256": "92cc3b6c05ead821479752fc9758d12c98ff86b702b408b25f5d112aa434c992"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/rmg_py_reserve",
+        "sha256": "c79ce34907283a6722d90bd88959d829ae9857981e6a4197e43d3a879bdd7c32"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/simpeg_domain_specific",
+        "sha256": "d1d1ef87679092cb5bb01fe093186a80bbcc4323ddab17e32adb153988094101"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/simpy_reserve",
+        "sha256": "c58520e45fa6490229d2e97af4b94f1e01b83e8dfe45817893e67217f715c19b"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/117e40d3-17fb-53bd-a31c-7d80b2d6db17",
+        "sha256": "8c605c8f11e13b5148c7566f7bfb0c396d2764cd2fb4fe801421de809fd9df26"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/1cb4ea78-6552-5f9d-8799-4b6cf31625d4",
+        "sha256": "16442eb3cc6ddd6fb89ffae060391dbc2a0aa104f525bef673f023011fa2b00c"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/254de163-dc5e-5acb-8541-c146e0564087",
+        "sha256": "9960bff11ac900a96c2ed6cee4d1ddd9c2ed5e685edb82ded0bb9d65abd7251c"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/3b8b7f94-9744-5ecf-8a69-ed922697265e",
+        "sha256": "8765b33f6cd96ea5ae5ddcb862c23ac8216dfa092c8ad2e496cfcf54b047f59f"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/40569241-3302-5d1d-9132-85492f15f598",
+        "sha256": "825996072f85a41eb64ff145f54922ebc21a2b209e594af73e7e74759c78b73b"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/406bee6e-7025-5fbc-a8f3-39fbe0aed479",
+        "sha256": "0ebf72a62be8fca2f08c978924ccbd4b0421a0ef0f29b55a688e15605f7aee4c"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/53d2a498-a2a7-5b45-9320-1060e548b97d",
+        "sha256": "d23ce075831823c8b443dea95516a863dfe115ab166febc2294f759b19e78c9f"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/59b29add-4700-5fec-b592-41b6b7aa1a31",
+        "sha256": "78e5dad910e57f36e3fa908dbb6c965ba2e5fddb0edd7d86c39592c4f57d5a26"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/61d15ab2-1be8-51ff-961b-4ebed3ccc2ff",
+        "sha256": "db3150f201092b314c36d12953b05f566e44df85cc29ac27c8d80d969a5345df"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/8df308f0-cd7f-5b9f-a887-c657362164ce",
+        "sha256": "7aefe0fec9bd6f8378b86971545f07fdff380e0545fbf58a35f773d5f01e003c"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/90d65f3f-8bc8-5705-91fc-96288a802818",
+        "sha256": "8af746c6b960aaec12bf4b6f5d7f55c4f17062655696a5256a1c772b43cef09f"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/90e00736-ba05-5e84-9cb1-f4e93e0d1123",
+        "sha256": "7f0f95a2573ab2811bd8891773ad272f64cce41870c3147419e7259797884b6b"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/a3b12f6e-2277-536b-ab92-bb53fb0c3af6",
+        "sha256": "70cbe56e9a546b2ba97be5ef065bd2d6f81ffdf0debb7f3939f12b15c9a3fb2d"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/a6836372-64f7-5810-ba52-06df692cc1ce",
+        "sha256": "730b6f2e1ed1aee328fe308ddefbefd4dc95d5332b99c7eabf075c9daad849fd"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/b6cf6993-d9b1-5e39-a288-466a48592214",
+        "sha256": "8dc65ad0d637bcd875f5a47a75f4b20080d0296e257ab34a739b1f44904b9d4e"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/bb7d142d-9c88-522c-b9f2-2a52e8c247be",
+        "sha256": "f294ca1d322d49007928310b4ab00d3084c0fb8dcdb9d00f6d7843bf484c8d52"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/c05fc4d0-daba-578a-8ff5-cdc5dd2526dd",
+        "sha256": "550ac164d3506dc83234d089a6eaf4d64f16c667151b37f79a3a4d408bfaae32"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/da268990-6df1-5c2c-97a1-a75a9ab2165b",
+        "sha256": "e6bd2ae1c90ee8026a363c28a3a31d102dc0eae19e8734e22e5f6245c85419b8"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/e6c38f2a-9fa9-56ce-86d7-d2d31951c82e",
+        "sha256": "af88e85dddc4265fce02e80483a5e7bd329b6302571d81797fee5f68414b4ba1"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/ea8debd7-b00d-5341-804b-0b11d01aa611",
+        "sha256": "cff96816dd0e3ac4dcb667270b6b4e51939f6333b8276e522ef225326a3f545b"
+      }
+    ],
+    "task_class": "phase2_kb_phase2_batch_k3_python_frameworks"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

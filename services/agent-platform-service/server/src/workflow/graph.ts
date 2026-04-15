@@ -222,7 +222,7 @@ export function buildGenerateResponse(cfg: PlatformConfig, engine: Orchestration
         apiKey: routing.apiKey,
       })
       return {
-        final_response: result.output || "No response generated",
+        final_response: result.output,
         current_step: "complete",
       }
     } catch (e) {

@@ -1,0 +1,242 @@
+[
+  {
+    "artifact_id": "cd2e18e4-bec9-5c3b-a323-6405b68fb4ee",
+    "artifact_type": "DECISION_LOG",
+    "created_at": "2026-04-08T00:00:00Z",
+    "input_artifact_refs": [
+      "artifact://knowledge-pack/cadquery",
+      "artifact://knowledge-pack/gmsh"
+    ],
+    "payload": {
+      "chosen_refs": [
+        "artifact://knowledge-pack/cadquery",
+        "artifact://knowledge-pack/gmsh"
+      ],
+      "decision_id": "geometry_cadquery_to_gmsh_pipeline",
+      "rationale": "The pairing keeps geometry authoring and mesh generation explicit, scriptable, and directly tied to the verified geometry runtime.",
+      "rejected_refs": [],
+      "schema_version": "1.0.0",
+      "statement": "Default to CadQuery for parametric CAD and Gmsh for meshing in the implemented runtime-linked set.",
+      "status": "accepted",
+      "title": "Use CadQuery plus Gmsh for scripted geometry-to-mesh flow",
+      "tradeoffs": [
+        "Requires explicit translation and mesh-quality checks at the handoff boundary"
+      ]
+    },
+    "producer": {
+      "component": "knowledge_pool.seed",
+      "executor": "curation_seed_builder"
+    },
+    "schema_version": "1.0.0",
+    "status": "ACTIVE",
+    "supersedes": [],
+    "updated_at": "2026-04-08T00:00:00Z",
+    "validation_state": "VALID"
+  },
+  {
+    "artifact_id": "06fd27a2-9fc7-51aa-865c-16cb42146a0b",
+    "artifact_type": "DECISION_LOG",
+    "created_at": "2026-04-08T00:00:00Z",
+    "input_artifact_refs": [
+      "artifact://knowledge-pack/cantera",
+      "artifact://knowledge-pack/coolprop",
+      "artifact://knowledge-pack/tespy"
+    ],
+    "payload": {
+      "chosen_refs": [
+        "artifact://knowledge-pack/cantera",
+        "artifact://knowledge-pack/coolprop",
+        "artifact://knowledge-pack/tespy"
+      ],
+      "decision_id": "thermochem_cantera_coolprop_tespy_split",
+      "rationale": "Each tool stays inside the use case it is strongest at while sharing one verified thermochemistry runtime profile.",
+      "rejected_refs": [],
+      "schema_version": "1.0.0",
+      "statement": "Use Cantera for chemistry, CoolProp for properties, and TESPy for thermal-system networks in the implemented stack.",
+      "status": "accepted",
+      "title": "Use Cantera, CoolProp, and TESPy for thermochemistry and system thermals",
+      "tradeoffs": [
+        "Requires explicit data contracts between chemistry, property, and system layers"
+      ]
+    },
+    "producer": {
+      "component": "knowledge_pool.seed",
+      "executor": "curation_seed_builder"
+    },
+    "schema_version": "1.0.0",
+    "status": "ACTIVE",
+    "supersedes": [],
+    "updated_at": "2026-04-08T00:00:00Z",
+    "validation_state": "VALID"
+  },
+  {
+    "artifact_id": "abeed798-ed15-541c-8904-159db96dc06b",
+    "artifact_type": "DECISION_LOG",
+    "created_at": "2026-04-08T00:00:00Z",
+    "input_artifact_refs": [
+      "artifact://knowledge-pack/openmdao"
+    ],
+    "payload": {
+      "chosen_refs": [
+        "artifact://knowledge-pack/openmdao"
+      ],
+      "decision_id": "openmdao_for_explicit_workflow_graphs",
+      "rationale": "An auditable model graph is safer than accumulating implicit shell-script orchestration.",
+      "rejected_refs": [],
+      "schema_version": "1.0.0",
+      "statement": "Use OpenMDAO when multiple implemented discipline adapters need one explicit workflow graph.",
+      "status": "accepted",
+      "title": "Prefer OpenMDAO over ad hoc orchestration",
+      "tradeoffs": [
+        "Higher wrapper cost up front but much clearer discipline boundaries"
+      ]
+    },
+    "producer": {
+      "component": "knowledge_pool.seed",
+      "executor": "curation_seed_builder"
+    },
+    "schema_version": "1.0.0",
+    "status": "ACTIVE",
+    "supersedes": [],
+    "updated_at": "2026-04-08T00:00:00Z",
+    "validation_state": "VALID"
+  },
+  {
+    "artifact_id": "60e5f63e-2bc8-595a-8bcc-701d5b023c75",
+    "artifact_type": "DECISION_LOG",
+    "created_at": "2026-04-08T00:00:00Z",
+    "input_artifact_refs": [
+      "artifact://knowledge-pack/casadi",
+      "artifact://knowledge-pack/pymoo"
+    ],
+    "payload": {
+      "chosen_refs": [
+        "artifact://knowledge-pack/casadi",
+        "artifact://knowledge-pack/pymoo"
+      ],
+      "decision_id": "casadi_for_gradients_pymoo_for_black_box",
+      "rationale": "The implemented MDO runtime includes both, but their use cases differ materially and should not be conflated.",
+      "rejected_refs": [],
+      "schema_version": "1.0.0",
+      "statement": "Use CasADi for differentiable graph-based optimization and pymoo for black-box multi-objective search.",
+      "status": "accepted",
+      "title": "Split differentiable and black-box optimization between CasADi and pymoo",
+      "tradeoffs": [
+        "Teams need to choose the optimization mode explicitly per problem class"
+      ]
+    },
+    "producer": {
+      "component": "knowledge_pool.seed",
+      "executor": "curation_seed_builder"
+    },
+    "schema_version": "1.0.0",
+    "status": "ACTIVE",
+    "supersedes": [],
+    "updated_at": "2026-04-08T00:00:00Z",
+    "validation_state": "VALID"
+  },
+  {
+    "artifact_id": "e2ef82e0-fe43-5ee9-aa5e-2ba8230a6738",
+    "artifact_type": "DECISION_LOG",
+    "created_at": "2026-04-08T00:00:00Z",
+    "input_artifact_refs": [
+      "artifact://knowledge-pack/meshio"
+    ],
+    "payload": {
+      "chosen_refs": [
+        "artifact://knowledge-pack/meshio"
+      ],
+      "decision_id": "meshio_for_translation_boundaries",
+      "rationale": "Translation should be a declared artifact boundary, not an opaque side effect.",
+      "rejected_refs": [],
+      "schema_version": "1.0.0",
+      "statement": "Use meshio when the implemented stack crosses mesh or field file formats.",
+      "status": "accepted",
+      "title": "Use meshio for explicit mesh-format translation",
+      "tradeoffs": [
+        "Adds one explicit translation step but makes downstream debugging much easier"
+      ]
+    },
+    "producer": {
+      "component": "knowledge_pool.seed",
+      "executor": "curation_seed_builder"
+    },
+    "schema_version": "1.0.0",
+    "status": "ACTIVE",
+    "supersedes": [],
+    "updated_at": "2026-04-08T00:00:00Z",
+    "validation_state": "VALID"
+  },
+  {
+    "artifact_id": "8362a13d-0952-5b2f-b41e-bd599b96b7d0",
+    "artifact_type": "DECISION_LOG",
+    "created_at": "2026-04-08T00:00:00Z",
+    "input_artifact_refs": [
+      "artifact://knowledge-pack/pint",
+      "artifact://knowledge-pack/unitsnet",
+      "artifact://knowledge-pack/unyt"
+    ],
+    "payload": {
+      "chosen_refs": [
+        "artifact://knowledge-pack/pint",
+        "artifact://knowledge-pack/unyt",
+        "artifact://knowledge-pack/unitsnet"
+      ],
+      "decision_id": "units_discipline_across_python_and_dotnet",
+      "rationale": "Dimensional consistency should be enforced in the runtime, not left to prose conventions.",
+      "rejected_refs": [],
+      "schema_version": "1.0.0",
+      "statement": "Default to Pint and unyt in Python flows and UnitsNet in .NET flows for implemented units discipline.",
+      "status": "accepted",
+      "title": "Use Pint, unyt, and UnitsNet for units discipline",
+      "tradeoffs": [
+        "Teams must normalize unit policies before moving data across runtimes"
+      ]
+    },
+    "producer": {
+      "component": "knowledge_pool.seed",
+      "executor": "curation_seed_builder"
+    },
+    "schema_version": "1.0.0",
+    "status": "ACTIVE",
+    "supersedes": [],
+    "updated_at": "2026-04-08T00:00:00Z",
+    "validation_state": "VALID"
+  },
+  {
+    "artifact_id": "06556f98-d33f-5bee-af6d-d507d0a4660e",
+    "artifact_type": "DECISION_LOG",
+    "created_at": "2026-04-08T00:00:00Z",
+    "input_artifact_refs": [
+      "artifact://knowledge-pack/openturns",
+      "artifact://knowledge-pack/salib",
+      "artifact://knowledge-pack/smt"
+    ],
+    "payload": {
+      "chosen_refs": [
+        "artifact://knowledge-pack/openturns",
+        "artifact://knowledge-pack/smt",
+        "artifact://knowledge-pack/salib"
+      ],
+      "decision_id": "openturns_smt_salib_for_uq_surrogates",
+      "rationale": "These tools complement each other and share one verified MDO runtime profile.",
+      "rejected_refs": [],
+      "schema_version": "1.0.0",
+      "statement": "Use OpenTURNS for probabilistic modeling, SMT for surrogate building, and SALib for sensitivity analysis in the implemented set.",
+      "status": "accepted",
+      "title": "Use OpenTURNS, SMT, and SALib for UQ and surrogate support",
+      "tradeoffs": [
+        "Requires explicit ownership of UQ versus optimization responsibilities"
+      ]
+    },
+    "producer": {
+      "component": "knowledge_pool.seed",
+      "executor": "curation_seed_builder"
+    },
+    "schema_version": "1.0.0",
+    "status": "ACTIVE",
+    "supersedes": [],
+    "updated_at": "2026-04-08T00:00:00Z",
+    "validation_state": "VALID"
+  }
+]

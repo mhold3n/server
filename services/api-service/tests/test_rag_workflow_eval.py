@@ -9,7 +9,7 @@ from typing import Any
 import httpx
 import pytest
 
-# Path to docs/rag_eval_scenarios.yaml (repo root = services/api/tests -> repo root)
+# Path to docs/rag_eval_scenarios.yaml (repo root = services/api-service/tests -> repo root)
 _TESTS_DIR = Path(__file__).resolve().parent
 _REPO_ROOT = _TESTS_DIR.parent.parent.parent
 _SCENARIOS_PATH = _REPO_ROOT / "docs" / "rag_eval_scenarios.yaml"

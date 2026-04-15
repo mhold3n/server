@@ -1,0 +1,93 @@
+{
+  "artifact_id": "3c763aa6-70fc-5cda-9875-6ab6ef188596",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_rmg_py_docker",
+    "artifact://evidence-bundle/rmg_py_runtime",
+    "artifact://execution-adapter-spec/rmg_py_probe",
+    "artifact://knowledge-pack/rmg_py",
+    "artifact://recipe-object/rmg_py_reserve",
+    "artifact://verification-report/254de163-dc5e-5acb-8541-c146e0564087"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "RMG-Py: use RMG-Py CLI, RMG-Py case/setup artifact, eng_rmg_py_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_rmg_py_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_rmg_py-container.sh. Recipe RMG-Py phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_rmg_py_docker as the canonical runtime surface, Run the linked health check for RMG-Py, Stop if the runtime verification report is still REWORK, Execute RMG-Py only inside its declared capability boundary and record the evidence refs. Runtime eng-rmg-py/docker_image at birtha/knowledge-eng-rmg-py:1.0.0; environment ref artifact://environment-spec/eng_rmg_py_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_rmg_py_docker; verification refs artifact://verification-report/254de163-dc5e-5acb-8541-c146e0564087. Runtime gate: reserve-list runtime not prioritized in this sprint.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "retrieval_keys": [
+      "coder",
+      "package",
+      "phase3_package_rmg_py",
+      "rmg_py",
+      "true"
+    ],
+    "role": "coder",
+    "role_context_bundle_id": "coder_63119a9a0d20d4c5",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_rmg_py_docker",
+      "artifact://evidence-bundle/rmg_py_runtime",
+      "artifact://execution-adapter-spec/rmg_py_probe",
+      "artifact://knowledge-pack/rmg_py",
+      "artifact://recipe-object/rmg_py_reserve",
+      "artifact://verification-report/254de163-dc5e-5acb-8541-c146e0564087"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_rmg_py_docker",
+        "sha256": "2d74dbd6db7ae0b5b2e14f95580224cacbd858ac8680d92b9cc1e6a71cb1e232"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/rmg_py_runtime",
+        "sha256": "38e62ecda77369e512dd886c63db84b4cf43fd97a9b9e040251e2cbcfc3e9b3f"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/rmg_py_probe",
+        "sha256": "c0076756a24808d8c1bfeae0351a5b76295539e1fb6656f2d1b5519cae1e9e11"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/rmg_py",
+        "sha256": "51b40dfac02eccc6917909da8b314a28a1eb5c940f2463d9df10db9b22d6d0aa"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/rmg_py_reserve",
+        "sha256": "c79ce34907283a6722d90bd88959d829ae9857981e6a4197e43d3a879bdd7c32"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/254de163-dc5e-5acb-8541-c146e0564087",
+        "sha256": "a36090c071a919eb060c4cd5766b960a639da7ec2f1b1dea64771744b31fef77"
+      }
+    ],
+    "task_class": "phase3_package_rmg_py"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

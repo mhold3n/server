@@ -1,0 +1,111 @@
+{
+  "artifact_id": "f56e02b9-03af-5dcc-b7c2-90c46f1fffc6",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_salome_docker",
+    "artifact://environment-spec/eng_salome_gui",
+    "artifact://evidence-bundle/medcoupling_runtime",
+    "artifact://execution-adapter-spec/medcoupling_probe",
+    "artifact://gui-session-spec/eng_salome_gui",
+    "artifact://knowledge-pack/medcoupling",
+    "artifact://recipe-object/medcoupling_workflow_coupling",
+    "artifact://verification-report/15ad8027-0dbb-5e19-ba79-9ff2daf2f73f",
+    "artifact://verification-report/1cc1e4ad-a0b3-5a24-b786-c675c6f4099a"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "MEDCoupling: review Probe MEDCoupling through artifact://environment-spec/eng_salome_docker, Confirm the current Phase 2 gate state for MEDCoupling. Checklist MEDCoupling pack links to the intended environment spec(s), MEDCoupling adapter and evidence bundle reference the same runtime verification report, MEDCoupling anti-patterns and failure signatures match the module class and runtime path, Parent-runtime gate remains explicit for MEDCoupling. Watch anti-patterns Using MEDCoupling for using medcoupling as a substitute for unrelated workflows outside workflow coupling and cross-runtime integration., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_salome_docker., Crossing the adapter boundary for MEDCoupling without a typed contract tied to medcoupling explicit translation boundaries for workflow coupling and cross-runtime integration.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_salome_docker. Runtime eng-salome/docker_image at birtha/knowledge-eng-salome:1.0.0; environment ref artifact://environment-spec/eng_salome_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_salome_docker; verification refs artifact://verification-report/1cc1e4ad-a0b3-5a24-b786-c675c6f4099a. GUI state VERIFIED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_salome_gui; control provider noVNC via OpenClaw browser.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "included_sections": [
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "retrieval_keys": [
+      "install",
+      "phase1_batch3f_salome_wrapper",
+      "phase2_install_phase1_batch3f_salome_wrapper",
+      "reviewer",
+      "true"
+    ],
+    "role": "reviewer",
+    "role_context_bundle_id": "reviewer_57423b14fe1dcb49",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_salome_docker",
+      "artifact://environment-spec/eng_salome_gui",
+      "artifact://evidence-bundle/medcoupling_runtime",
+      "artifact://execution-adapter-spec/medcoupling_probe",
+      "artifact://gui-session-spec/eng_salome_gui",
+      "artifact://knowledge-pack/medcoupling",
+      "artifact://recipe-object/medcoupling_workflow_coupling",
+      "artifact://verification-report/15ad8027-0dbb-5e19-ba79-9ff2daf2f73f",
+      "artifact://verification-report/1cc1e4ad-a0b3-5a24-b786-c675c6f4099a"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_salome_docker",
+        "sha256": "7b974e6eb0ef9e31be3996ba871fefaacf0ac7988afe4842e90b9ce071e7e45c"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_salome_gui",
+        "sha256": "2948aaad6ee9ed3731059d7648734a191e15fa6b774fe17621aa4126970f72eb"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/medcoupling_runtime",
+        "sha256": "b2daa8b541bb26d5b35d4dd1f3a6ac7c367bab802c17cc52877789b0d7e6641e"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/medcoupling_probe",
+        "sha256": "e3ee7cfddc7ac62eccb86e095eb4b01300d4ea82139c7b52c8d8715b3336a311"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_salome_gui",
+        "sha256": "2f8f41189adbd1481deca0cb78ca94c2ce37c406b2b82b1bde41b8a86a6715f1"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/medcoupling",
+        "sha256": "f728f45eaf64c1b5867d56b9bc6e11a0d200e817cab05dd97a3b09d2ae735aa1"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/medcoupling_workflow_coupling",
+        "sha256": "b398671477ed0983126ff60472711e4422fd792ed95fd5dd310705b85b43c403"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/15ad8027-0dbb-5e19-ba79-9ff2daf2f73f",
+        "sha256": "9465cc02929972ff829a11b4ec385bb25e45b8e8fee3d8f85a11f9deebea7aef"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/1cc1e4ad-a0b3-5a24-b786-c675c6f4099a",
+        "sha256": "ad0da8e699cc2176e6372760e49c35b8f8f28a95843260d2b9815af0a13f161f"
+      }
+    ],
+    "task_class": "phase2_install_phase1_batch3f_salome_wrapper"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

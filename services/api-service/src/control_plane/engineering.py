@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any, Protocol
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
-from ..wrkhrs.domain_classifier import DomainClassifier
+from ..ai_gateway_client.domain_classifier import DomainClassifier
 from .contracts import (
     AnalysisPathway,
     ArtifactType,
@@ -316,6 +316,14 @@ class SessionModeSignalProvider:
 
 
 class DomainClassifierSignalProvider:
+    """
+    Evaluates the input text using an external machine learning classifier to assert
+    the baseline domain (e.g., chemistry, software engineering).
+    
+    If the text overwhelmingly registers as chemistry + engineering (e.g., thermal dynamics),
+    we immediately elevate the boundary to `strict_engineering` because chemical interactions
+    cannot safely be answered casually without rigorous artifact bounding.
+    """
     def __init__(self) -> None:
         self.classifier = DomainClassifier()
 
@@ -356,6 +364,15 @@ class DomainClassifierSignalProvider:
 
 
 class WorkScopeSignalProvider:
+    """
+    Analyzes the requested target file scope (e.g., context boundaries inside the IDE)
+    to decide the strictness of the required orchestration.
+    
+    A user casually mentioning "refactor" across 5 sub-systems implicitly requires
+    `strict_engineering` to enforce test-gates, whereas modifying a single module might
+    only warrant `engineering_task`. If the target involves multimodal extraction
+    (like visual diagrams), we lock to strict rules to prevent hallucinated logic.
+    """
     def collect(self, evaluation: ModeEvaluationContext) -> list[ModeSignal]:
         ctx = evaluation.context
         lower = evaluation.text.lower()
@@ -727,6 +744,15 @@ def _build_knowledge_pool_assessment(
     project_constraints: dict[str, Any],
     rule_matches: list[str],
 ) -> KnowledgePoolAssessment:
+    """
+    Constructs a deterministic assessment of what knowledge resources (tools, physics engines, solvers)
+    are required to safely execute the inferred task class.
+    
+    Why: Rather than letting an LLM guess what adapter to use to run an OpenFOAM mesh generation or
+    a chemistry ODE simulation, this function calls `load_knowledge_pool` and executes a deterministic
+    ranking algorithm (`catalog.resolve_stack`). This returns the top 5 physically verified adapters
+    and environments that the generated packets MUST use, preventing hallucinations during execution.
+    """
     assessment_id = str(
         uuid5(
             NAMESPACE_URL,

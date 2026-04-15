@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir \
     requests \
     httpx
 
-# Legacy Python orchestrator (archived). Build context: services/wrkhrs
+# Legacy Python orchestrator (archived). Build context: services/ai-gateway-service
 COPY _archive/python-orchestrator/ ./
 
 EXPOSE 8000

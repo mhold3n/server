@@ -94,7 +94,7 @@ async def test_observability_tracing_golden_trace_validator(
 async def test_wrkhrs_gateway_client_get_models_and_error_logging(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from src.wrkhrs.gateway_client import WrkHrsGatewayClient
+    from src.ai_gateway_client.gateway_client import WrkHrsGatewayClient
 
     class _Resp:
         def __init__(self, payload: dict[str, Any], ok: bool = True):

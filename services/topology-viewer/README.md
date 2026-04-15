@@ -21,13 +21,13 @@ Output is in `dist/`, including `topology.json` copied from `public/`.
 
 ## Ship behind Birtha API (`/ui/topology/`)
 
-The FastAPI app serves static files under `/ui` from [`services/api/src/static`](../api/src/static). After you change the viewer or `topology.json`, rebuild and copy:
+The FastAPI app serves static files under `/ui` from [`services/api-service/src/static`](../api-service/src/static). After you change the viewer or `topology.json`, rebuild and copy:
 
 ```bash
 npm run deploy-api-static --workspace=topology-viewer
 ```
 
-This runs `vite build` with `base: /ui/topology/` and copies `dist/` into `services/api/src/static/topology/`. Then open `http://localhost:8080/ui/topology/` (or your API host) when the API container is up.
+This runs `vite build` with `base: /ui/topology/` and copies `dist/` into `services/api-service/src/static/topology/`. Then open `http://localhost:8080/ui/topology/` (or your API host) when the API container is up.
 
 ## Keeping docs and JSON in sync
 

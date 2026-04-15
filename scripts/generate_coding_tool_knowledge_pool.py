@@ -2547,6 +2547,184 @@ def build_seed_files() -> None:
     write_text(ACQUISITION_DOSSIERS_MD_PATH, acquisition_dossiers_markdown)
 
 
+def _gui_base_dockerfile() -> str:
+    return "\n".join(
+        [
+            "FROM ubuntu:22.04",
+            "ENV DEBIAN_FRONTEND=noninteractive",
+            "COPY knowledge/coding-tools/runtime/docker/gui/install-gui-stack.sh /usr/local/bin/install-gui-stack",
+            "COPY knowledge/coding-tools/runtime/docker/gui/entrypoint.sh /usr/local/bin/knowledge-gui-entrypoint",
+            "COPY knowledge/coding-tools/runtime/docker/gui/healthcheck.sh /usr/local/bin/knowledge-gui-healthcheck",
+            "RUN chmod +x /usr/local/bin/install-gui-stack /usr/local/bin/knowledge-gui-entrypoint /usr/local/bin/knowledge-gui-healthcheck \\",
+            "    && /usr/local/bin/install-gui-stack",
+            "ENV DISPLAY=:99",
+            "ENV VNC_PORT=5900",
+            "ENV NOVNC_PORT=6080",
+            "ENV SCREEN_GEOMETRY=1440x900x24",
+            "EXPOSE 6080",
+            'ENTRYPOINT ["tini", "--", "/usr/local/bin/knowledge-gui-entrypoint"]',
+            'CMD ["xterm"]',
+            "",
+        ]
+    )
+
+
+def _gui_install_stack_script() -> str:
+    return "\n".join(
+        [
+            "#!/usr/bin/env bash",
+            "set -euo pipefail",
+            "export DEBIAN_FRONTEND=noninteractive",
+            "apt-get update",
+            "apt-get install -y --no-install-recommends \\",
+            "  ca-certificates curl fonts-dejavu-core fonts-liberation fluxbox imagemagick \\",
+            "  mesa-utils novnc procps python3 scrot websockify x11-utils x11vnc \\",
+            "  xdotool xterm xvfb",
+            "if ! command -v tini >/dev/null 2>&1; then",
+            "  if ! apt-get install -y --no-install-recommends tini; then",
+            "    curl -fsSL https://github.com/krallin/tini/releases/download/v0.19.0/tini-amd64 \\",
+            "      -o /usr/local/bin/tini",
+            "    chmod +x /usr/local/bin/tini",
+            "  fi",
+            "fi",
+            "rm -rf /var/lib/apt/lists/*",
+            "",
+        ]
+    )
+
+
+def _gui_entrypoint_script() -> str:
+    return "\n".join(
+        [
+            "#!/usr/bin/env bash",
+            "set -euo pipefail",
+            'export DISPLAY="${DISPLAY:-:99}"',
+            'export VNC_PORT="${VNC_PORT:-5900}"',
+            'export NOVNC_PORT="${NOVNC_PORT:-6080}"',
+            'export SCREEN_GEOMETRY="${SCREEN_GEOMETRY:-1440x900x24}"',
+            'export KNOWLEDGE_GUI_ARTIFACT_DIR="${KNOWLEDGE_GUI_ARTIFACT_DIR:-/artifacts}"',
+            'if [ -z "${NOVNC_PASSWORD:-}" ]; then',
+            '  echo "NOVNC_PASSWORD is required for container GUI sessions" >&2',
+            "  exit 64",
+            "fi",
+            "mkdir -p \"$KNOWLEDGE_GUI_ARTIFACT_DIR\" /tmp/knowledge-gui",
+            'Xvfb "$DISPLAY" -screen 0 "$SCREEN_GEOMETRY" -nolisten tcp >/tmp/knowledge-gui/xvfb.log 2>&1 &',
+            "sleep 1",
+            "fluxbox >/tmp/knowledge-gui/fluxbox.log 2>&1 &",
+            "x11vnc -display \"$DISPLAY\" -localhost -forever -shared -rfbport \"$VNC_PORT\" -passwd \"$NOVNC_PASSWORD\" >/tmp/knowledge-gui/x11vnc.log 2>&1 &",
+            "websockify --web=/usr/share/novnc/ --heartbeat=30 0.0.0.0:\"$NOVNC_PORT\" 127.0.0.1:\"$VNC_PORT\" >/tmp/knowledge-gui/novnc.log 2>&1 &",
+            "sleep 1",
+            "if [ \"$#\" -eq 0 ]; then",
+            "  set -- xterm",
+            "fi",
+            '"$@" &',
+            "app_pid=$!",
+            "wait \"$app_pid\"",
+            "",
+        ]
+    )
+
+
+def _gui_healthcheck_script() -> str:
+    return "\n".join(
+        [
+            "#!/usr/bin/env bash",
+            "set -euo pipefail",
+            'export DISPLAY="${DISPLAY:-:99}"',
+            'export SCREEN_GEOMETRY="${SCREEN_GEOMETRY:-1440x900x24}"',
+            'export KNOWLEDGE_GUI_ARTIFACT_DIR="${KNOWLEDGE_GUI_ARTIFACT_DIR:-/artifacts}"',
+            "mkdir -p \"$KNOWLEDGE_GUI_ARTIFACT_DIR\"",
+            'if ! pgrep -f "Xvfb.*${DISPLAY}" >/dev/null 2>&1; then',
+            '  Xvfb "$DISPLAY" -screen 0 "$SCREEN_GEOMETRY" -nolisten tcp >/tmp/knowledge-gui-health-xvfb.log 2>&1 &',
+            "  sleep 1",
+            "fi",
+            "xdpyinfo >/tmp/knowledge-gui-xdpyinfo.log",
+            "glxinfo -B >/tmp/knowledge-gui-glxinfo.log 2>&1 || true",
+            "scrot \"$KNOWLEDGE_GUI_ARTIFACT_DIR/gui-healthcheck.png\"",
+            "test -s \"$KNOWLEDGE_GUI_ARTIFACT_DIR/gui-healthcheck.png\"",
+            "echo OK:container-gui-healthcheck",
+            "",
+        ]
+    )
+
+
+def _gui_dockerfile_for_profile(profile: dict) -> str:
+    launch_target = _gui_launch_target_command(profile)
+    return "\n".join(
+        [
+            f"FROM {profile['runtime_locator']}",
+            "ENV DEBIAN_FRONTEND=noninteractive",
+            "USER root",
+            "COPY knowledge/coding-tools/runtime/docker/gui/install-gui-stack.sh /usr/local/bin/install-gui-stack",
+            "COPY knowledge/coding-tools/runtime/docker/gui/entrypoint.sh /usr/local/bin/knowledge-gui-entrypoint",
+            "COPY knowledge/coding-tools/runtime/docker/gui/healthcheck.sh /usr/local/bin/knowledge-gui-healthcheck",
+            "RUN chmod +x /usr/local/bin/install-gui-stack /usr/local/bin/knowledge-gui-entrypoint /usr/local/bin/knowledge-gui-healthcheck \\",
+            "    && /usr/local/bin/install-gui-stack",
+            "ENV DISPLAY=:99",
+            "ENV VNC_PORT=5900",
+            "ENV NOVNC_PORT=6080",
+            "ENV SCREEN_GEOMETRY=1440x900x24",
+            "EXPOSE 6080",
+            'ENTRYPOINT ["tini", "--", "/usr/local/bin/knowledge-gui-entrypoint"]',
+            f'CMD ["bash", "-lc", {json.dumps(launch_target)}]',
+            "",
+        ]
+    )
+
+
+def _gui_launcher_for_profile(profile: dict) -> str:
+    gui_id = _gui_env_id(profile)
+    image = _gui_image_for_profile(profile)
+    platform_value = profile.get("docker_platform", "linux/amd64")
+    return "\n".join(
+        [
+            "#!/usr/bin/env bash",
+            "set -euo pipefail",
+            'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"',
+            f'GUI_ID="{gui_id}"',
+            f'IMAGE="{image}"',
+            f'PLATFORM="{platform_value}"',
+            'NOVNC_HOST_PORT="${NOVNC_HOST_PORT:-$(python3 - <<\'PY\'',
+            "import socket",
+            "s = socket.socket()",
+            "s.bind(('127.0.0.1', 0))",
+            "print(s.getsockname()[1])",
+            "s.close()",
+            "PY",
+            ')}"',
+            'NOVNC_PASSWORD="${NOVNC_PASSWORD:-$(python3 - <<\'PY\'',
+            "import secrets",
+            "print(secrets.token_urlsafe(18))",
+            "PY",
+            ')}"',
+            'ARTIFACT_DIR="${KNOWLEDGE_GUI_ARTIFACT_DIR:-$ROOT/.cache/knowledge-gui-artifacts/$GUI_ID}"',
+            'mkdir -p "$ARTIFACT_DIR"',
+            'echo "noVNC URL: http://127.0.0.1:${NOVNC_HOST_PORT}/vnc.html?autoconnect=true&resize=scale" >&2',
+            'echo "noVNC password: ${NOVNC_PASSWORD}" >&2',
+            'exec docker run --rm --platform "$PLATFORM" \\',
+            '  -p "127.0.0.1:${NOVNC_HOST_PORT}:6080" \\',
+            '  -e "NOVNC_PASSWORD=${NOVNC_PASSWORD}" \\',
+            '  -e "KNOWLEDGE_GUI_SESSION_REF=artifact://gui-session-spec/' + gui_id + '" \\',
+            '  -e "KNOWLEDGE_GUI_ARTIFACT_DIR=/artifacts" \\',
+            '  -v "$ROOT:$ROOT" -w "$ROOT" \\',
+            '  -v "$ARTIFACT_DIR:/artifacts" \\',
+            '  "$IMAGE" "$@"',
+            "",
+        ]
+    )
+
+
+def build_gui_runtime_manifests() -> None:
+    gui_docker_root = RUNTIME_ROOT / "docker" / "gui"
+    write_text(gui_docker_root / "base.Dockerfile", _gui_base_dockerfile())
+    write_text(gui_docker_root / "install-gui-stack.sh", _gui_install_stack_script(), executable=True)
+    write_text(gui_docker_root / "entrypoint.sh", _gui_entrypoint_script(), executable=True)
+    write_text(gui_docker_root / "healthcheck.sh", _gui_healthcheck_script(), executable=True)
+    for profile in _base_docker_profiles():
+        write_text(REPO_ROOT / _gui_manifest_path(profile), _gui_dockerfile_for_profile(profile))
+        write_text(REPO_ROOT / _gui_launcher_ref(profile), _gui_launcher_for_profile(profile), executable=True)
+
+
 def build_runtime_manifests() -> None:
     profile_by_id = runtime_profile_map()
     uv_profiles = [profile for profile in RUNTIME_PROFILES if profile["delivery_kind"] == "uv_venv"]
@@ -2711,10 +2889,11 @@ def build_runtime_manifests() -> None:
         ]
     )
     write_text(RUNTIME_ROOT / "launchers" / "eng-dotnet.sh", dotnet_launcher, executable=True)
+    build_gui_runtime_manifests()
 
 
 def build_compiled_contexts() -> None:
-    sys.path.insert(0, str(REPO_ROOT / "services" / "api"))
+    sys.path.insert(0, str(REPO_ROOT / "services" / "api-service"))
     from src.control_plane.knowledge_pool import load_knowledge_pool  # noqa: WPS433
 
     for filename in ("general-context.json", "coder-context.json", "reviewer-context.json"):
@@ -4050,6 +4229,10 @@ def build_gui_session_artifacts(
         gui_env_payload = _gui_environment_payload(profile)
         gui_ref = gui_session_ref(gui_id)
         gui_env_ref = artifact_ref("environment-spec", gui_id)
+        verification_id = gui_verification_payload_id(gui_id)
+        verification_payload = existing_verification_payloads.get(verification_id) or _gui_rework_verification_payload(profile)
+        if verification_payload.get("outcome") == "PASS":
+            gui_env_payload["gui_capability_state"] = "VERIFIED_CONTAINER_GUI"
         gui_env_records.append(
             typed_record("environment-spec", "ENVIRONMENT_SPEC", gui_id, gui_env_payload, [gui_ref])
         )
@@ -4062,8 +4245,6 @@ def build_gui_session_artifacts(
                 [artifact_ref("environment-spec", profile["id"]), gui_env_ref],
             )
         )
-        verification_id = gui_verification_payload_id(gui_id)
-        verification_payload = existing_verification_payloads.get(verification_id) or _gui_rework_verification_payload(profile)
         gui_verification_records.append(
             typed_record(
                 "verification-report",
@@ -5245,10 +5426,11 @@ def build_runtime_manifests() -> None:
         ]
     )
     write_text(RUNTIME_ROOT / "launchers" / "eng-dotnet.sh", dotnet_launcher, executable=True)
+    build_gui_runtime_manifests()
 
 
 def build_compiled_contexts() -> None:
-    sys.path.insert(0, str(REPO_ROOT / "services" / "api"))
+    sys.path.insert(0, str(REPO_ROOT / "services" / "api-service"))
     from src.control_plane.knowledge_pool import load_knowledge_pool  # noqa: WPS433
 
     catalog = load_knowledge_pool()

@@ -57,7 +57,7 @@ describe("orchestration boundaries", () => {
   it("donor package does not import Claw internals", async () => {
     const donorSrc = path.resolve(
       process.cwd(),
-      "../../../merged claude leak/packages/open-multi-agent/src",
+      "../open-multi-agent/src",
     )
     const files = (await collectFiles(donorSrc)).filter((file) => file.endsWith(".ts"))
     for (const file of files) {

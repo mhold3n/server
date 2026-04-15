@@ -1,25 +1,48 @@
-version: "3.9"
+# Persistent Compose data lives under COMPOSE_DATA_ROOT (default .docker-data/); see docs/dev-environment.md.
 name: agent-orchestrator
 
 services:
+  # OpenAI-compatible stub for local dev; api /health calls models.list() against OPENAI_BASE_URL.
+  mock-openai:
+    build:
+      context: ./services/mock-openai
+    ports:
+      - "${MOCK_OPENAI_PORT:-18002}:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
   api:
     build:
-      context: ./services/api
-    user: root
+      context: .
+      dockerfile: services/api-service/Dockerfile
     environment:
-      - OPENAI_BASE_URL=${OPENAI_BASE_URL}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIS_URL=redis://queue:6379
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - DEBUG=${DEBUG:-false}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://mock-openai:8000/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-local-dev-token}
+      REDIS_URL: redis://queue:6379
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DEBUG: ${DEBUG:-false}
+      # Pydantic accepts either name (see Settings.agent_platform_url).
+      AGENT_PLATFORM_URL: ${AGENT_PLATFORM_URL:-${ORCHESTRATOR_AGENT_PLATFORM_URL:-http://wrkhrs-agent-platform:8000}}
+      ORCHESTRATOR_AGENT_PLATFORM_URL: ${ORCHESTRATOR_AGENT_PLATFORM_URL:-http://wrkhrs-agent-platform:8000}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./services/api:/app
+      - ./services/api-service/src:/app/src
+      - ./services/api-service/tests:/app/tests
+      - ./schemas:/app/schemas:ro
+      - ./knowledge:/app/knowledge:ro
     ports:
-      - "8080:8080"
+      - "${API_PORT:-8080}:8080"
     depends_on:
-      - queue
+      queue:
+        condition: service_healthy
+      mock-openai:
+        condition: service_healthy
     command: ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -29,16 +52,16 @@ services:
 
   router:
     build:
-      context: ./services/router
-    user: root
-    volumes:
-      - ./services/router:/app
-    ports:
-      - "8000:8000"
+      context: ./services/router-service
     environment:
-      - API_URL=http://api:8080
-      - REDIS_URL=redis://queue:6379
-      - MCP_SERVERS_CONFIG=/app/config/mcp_servers.yaml
+      API_URL: http://api:8080
+      REDIS_URL: redis://queue:6379
+      MCP_SERVERS_CONFIG: /app/config/mcp_servers.yaml
+    volumes:
+      - ./services/router-service/src:/app/src
+      - ./services/router-service/config:/app/config:ro
+    ports:
+      - "${ROUTER_PORT:-8000}:8000"
     depends_on:
       - api
       - queue
@@ -53,8 +76,8 @@ services:
     image: redis:7-alpine
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     volumes:
-      - ./services/queue/redis.conf:/usr/local/etc/redis/redis.conf:ro
-      - redis_data:/data
+      - ./services/queue-service/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/core/redis:/data
     ports:
       - "${REDIS_PORT:-6379}:6379"
     healthcheck:
@@ -63,38 +86,3 @@ services:
       timeout: 10s
       retries: 3
 
-  prometheus:
-    image: prom/prometheus:latest
-    volumes:
-      - ./infra/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./infra/observability/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
-      - prometheus_data:/prometheus
-    ports:
-      - "${PROMETHEUS_PORT:-9090}:9090"
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=200h'
-      - '--web.enable-lifecycle'
-    depends_on:
-      - api
-
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "${GRAFANA_PORT:-3000}:3000"
-    volumes:
-      - ./infra/observability/grafana:/etc/grafana/provisioning
-      - grafana_data:/var/lib/grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-    depends_on:
-      - prometheus
-
-volumes:
-  redis_data:
-  prometheus_data:
-  grafana_data:

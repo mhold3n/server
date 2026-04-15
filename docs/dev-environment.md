@@ -2,7 +2,7 @@
 
 ## Single clone (recommended)
 
-Work from one repository checkout: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. The active repo holds the Birtha control plane, the WrkHrs AI stack under [`services/wrkhrs/`](../services/wrkhrs/), MCP servers, shared CI, and two managed external GitHub submodules at [`claw-code-main/`](../claw-code-main) and [`openclaw/`](../openclaw). Legacy MBMH training/runtime materials now live in the sibling local archive at `../server-local-archive/2026-04-08/server/`.
+Work from one repository checkout: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. The active repo holds the Birtha control plane, the WrkHrs AI stack under [`services/ai-gateway-service/`](../services/ai-gateway-service/), MCP servers under [`mcp-servers/mcp/`](../mcp-servers/mcp/), shared CI, and two managed external GitHub submodules at [`claw-code-main/`](../claw-code-main) and [`openclaw/`](../openclaw). Legacy MBMH training/runtime materials now live in the sibling local archive at `../server-local-archive/2026-04-08/server/`.
 
 Cloning additional “legacy” projects **inside** this repository root increases confusion (two trees, two sets of commands, easy to edit the wrong copy). The only in-tree exceptions are the managed submodules `claw-code-main/` and `openclaw/`. Prefer:
 
@@ -15,7 +15,86 @@ Cloning additional “legacy” projects **inside** this repository root increas
 - Main Python workspace: `uv sync --python 3.11`
 - Main Node workspace: `npm install`
 - Focused tool envs: `scripts/bootstrap_tool_env.sh marker-pdf|whisper-asr|qwen-runtime|larrak-audio`
-- Shared local caches and model state live under `./.cache/`
+- Full AI Docker dev stack: `make up`
+- Docker topology validation: `make docker-validate`
+- Shared local caches and model state live under `./.cache/` (see below).
+
+## Orchestration wiki (response-control catalogs)
+
+Routing-related **modes**, **knowledge pools** (disciplines), **modules**, **techniques**, and **theory** cards are authored as a **single** markdown wiki under [`knowledge/wiki/`](../knowledge/wiki/). Human-editable sources live in [`knowledge/wiki/orchestration/`](../knowledge/wiki/orchestration/) (see [`SCHEMA.md`](../knowledge/wiki/SCHEMA.md)). Project-facing prose that must **not** affect AI routing belongs under [`knowledge/wiki/projects/`](../knowledge/wiki/projects/).
+
+- **Compile** (regenerate JSON): `make wiki-compile` from the repository root. With [`uv`](https://docs.astral.sh/uv/) on your PATH, this uses `uv run` so Pydantic and `services/api-service` contracts resolve. Without `uv`, install the API package in a local environment and use the same target (the Makefile falls back to `cd services/api-service && PYTHONPATH=src python3 ...`).
+- **Drift check** (CI parity): `make wiki-check` — fails if [`knowledge/response-control/*.json`](../knowledge/response-control/) is out of sync with the wiki sources.
+- **Bootstrap** (rare): `uv run python scripts/wiki_compile_response_control.py --migrate-from-json` recreates orchestration markdown from the current JSON catalogs.
+
+After editing orchestration pages, run **`make wiki-compile`** and commit **both** the wiki sources and the updated `knowledge/response-control/*.json` files. Avoid hand-editing the JSON long-term; treat it as a build artifact of the wiki.
+
+## Local dev caches (`CACHE_ROOT`)
+
+Shell entrypoints (`Makefile`, `scripts/run_ci_local.sh`, `scripts/bootstrap_tool_env.sh`, etc.) use [`scripts/workspace_env.sh`](../scripts/workspace_env.sh), which sources [`scripts/cache_env.sh`](../scripts/cache_env.sh) to export a **single root** and consistent children. Default: **`CACHE_ROOT=<repo>/.cache`**.
+
+**Canonical layout** (do not point `UV_CACHE_DIR` and `NPM_CONFIG_CACHE` at the same directory; each tool owns its subtree):
+
+```text
+.cache/
+  uv/                 # UV_CACHE_DIR — uv wheel/source cache
+  npm/                # NPM_CONFIG_CACHE — npm download cache (node_modules stays at repo root)
+  models/
+    hf/               # HF_HOME, TRANSFORMERS_CACHE, MODEL_CACHE_DIR
+    whisper/          # WHISPER_CACHE_DIR
+  envs/               # TOOL_ENV_ROOT (e.g. qwen-runtime venv)
+  xdg/                # XDG_CACHE_HOME
+  ruff/               # RUFF_CACHE_DIR
+  mypy/               # MYPY_CACHE_ROOT
+  pytest/             # PYTEST_CACHE_ROOT
+```
+
+To move all caches and HF snapshots to a larger disk, set **`CACHE_ROOT`** to an absolute path before sourcing `workspace_env.sh` (or use **`HARNESS_CACHE_ROOT`** for [`scripts/prove_engineering_harness.sh`](../scripts/prove_engineering_harness.sh) only). **`node_modules/`** remains the npm workspace install tree at the repository root.
+
+## Docker persistent data (`COMPOSE_DATA_ROOT`)
+
+Compose stacks store databases, caches, and logs on the host under **`COMPOSE_DATA_ROOT`**. If unset, the default is **`.docker-data/`** at the repository root (ignored by git). Set `COMPOSE_DATA_ROOT` to an absolute path when you want data on a removable drive or a larger disk, for example:
+
+- macOS: `COMPOSE_DATA_ROOT=/Volumes/YourDrive/server-data`
+- Linux: `COMPOSE_DATA_ROOT=/mnt/external/server-data` (existing servers that used `/mnt/appdata` can set `COMPOSE_DATA_ROOT=/mnt/appdata` so addon paths stay `.../addons/...` on disk)
+- Windows (Docker Desktop): `COMPOSE_DATA_ROOT=D:/server-data` (forward slashes are fine in `.env`)
+
+The [`Makefile`](../Makefile) runs `docker compose --project-directory <repo root>` so relative paths in all compose fragments resolve consistently. Copy-pasted `docker compose -f ...` commands from docs should include **`--project-directory "$(pwd)"`** (from the repo root; quoted form is safe if the path contains spaces) for the same behavior.
+
+Subdirectories under the root are stable (`platform/postgres`, `ai/logs`, `addons/...`, `worker/ollama_data`, etc.); see compose files under [`docker/compose-profiles/`](../docker/compose-profiles/).
+
+### Migrating from old Docker named volumes
+
+After pulling these changes, **named volumes** from earlier compose definitions are no longer used for most services; data is read from host paths under `COMPOSE_DATA_ROOT` instead.
+
+1. Stop the stack: `make down`, or from the repo root use the same `-f` files as for `make up` with `docker compose --project-directory "$(pwd)" ... down`.
+2. For each former volume (e.g. `agent-orchestrator_postgres_data`; list with `docker volume ls`), copy data into the new bind path (example for Postgres):
+
+   ```bash
+   docker run --rm \
+     -v agent-orchestrator_postgres_data:/from:ro \
+     -v "$(pwd)/.docker-data/platform/postgres:/to" \
+     alpine cp -a /from/. /to/
+   ```
+
+   Adjust the **left** volume name and the **right** host path to match [docker-compose.platform.yml](../docker/compose-profiles/docker-compose.platform.yml) and your `COMPOSE_DATA_ROOT`.
+3. Bring the stack up again and verify health; only then remove old volumes if you no longer need them.
+
+The standalone WrkHrs compose under [`services/ai-gateway-service/compose/`](../services/ai-gateway-service/compose/) defaults to **`${COMPOSE_DATA_ROOT:-.docker-data}/ai-gateway/`** for its bind-mounted volumes; override with `QDRANT_DATA_PATH`, `RAG_CACHE_PATH`, etc. if you need custom locations.
+
+### Copying large trees to a removable drive (reliable, headless)
+
+**Do not** rely on Finder for multi‑GB trees if the source is under **iCloud Drive** (Desktop/Documents sync, etc.): you can end up with **0‑byte placeholders** on the USB. Ensure files are **fully downloaded** first (e.g. right‑click **Download Now**, or temporarily disable **Optimize Mac Storage**, or copy from a path that is entirely on local disk).
+
+Use **`rsync`** from Terminal for resumable, scriptable copies. This repo includes [`scripts/sync_to_volume.sh`](../scripts/sync_to_volume.sh):
+
+```bash
+chmod +x scripts/sync_to_volume.sh
+DRY_RUN=1 ./scripts/sync_to_volume.sh /path/to/source /Volumes/ESD-USB/destination   # preview
+./scripts/sync_to_volume.sh /path/to/source /Volumes/ESD-USB/destination
+```
+
+Then verify sizes match: `du -sh /path/to/source /Volumes/ESD-USB/destination`.
 
 ## Root `.gitignore` and sibling folders
 
@@ -23,6 +102,42 @@ Patterns for ignored sibling scratch trees are **safety rails**: they reduce the
 
 If you keep an old mirror inside the ignored path for personal reference, treat it as **read-only scratch space**; do not treat it as a second source of truth for platform code.
 
-## WrkHrs location
+## One-shot fullstack e2e (Docker + OpenClaw + checks)
 
-The vendored WrkHrs stack lives only under **`services/wrkhrs/`**. Historical links to `WrkHrs/` at the repository root are obsolete; see [migration-wrkhrs-path.md](migration-wrkhrs-path.md).
+From the repo root, **`make fullstack-e2e`** runs [`dev/scripts/fullstack_e2e_bootstrap.sh`](../dev/scripts/fullstack_e2e_bootstrap.sh): the same compose stack as **`make up`**, ordered **HTTP health waits** (Birtha API, agent-platform, router; optional wrkhrs-gateway with `E2E_WAIT_GATEWAY=1`), a **fast `POST /api/ai/query`** smoke, an optional **strict-engineering** live smoke (`E2E_STRICT_ENGINEERING_SMOKE=1`), optional **SSE** read (`E2E_SSE_SMOKE=1`), a **curated host pytest** subset under `services/api-service` (default on; disable with `E2E_PYTEST=0`), **`pnpm install`** (and **`pnpm build`** if `dist/` is missing) in **`openclaw/`**, then **`pnpm ui:build`** when **`openclaw/dist/control-ui/`** is missing (so OpenClaw **Control** `/chat` has assets; the gateway’s own auto-build often lacks `pnpm` on PATH), then an optional **managed OpenClaw gateway** (`node openclaw.mjs gateway run --port …`, default on via `E2E_MANAGED_OPENCLAW_GATEWAY=1`). **`make fullstack-e2e-down`** stops the managed gateway PID and, only if `E2E_TEARDOWN_DOCKER=1`, runs **`docker compose down`** with the same `-f` files so your default dev stack is not torn down by mistake.
+
+**Ports (host defaults):** Birtha `API_PORT` (8080), agent-platform `WRKHRS_AGENT_PLATFORM_PORT` (8087), router `ROUTER_PORT` (8000), wrkhrs-gateway `WRKHRS_GATEWAY_PORT` (8091). OpenClaw gateway listen port: `OPENCLAW_GATEWAY_PORT` (default 18789).
+
+**OpenClaw managed gateway (isolated state on Apple Silicon + host Ollama):** the bootstrap writes `${CACHE_ROOT:-.cache}/e2e-bootstrap/openclaw-managed-state/openclaw.json` with **`gateway.auth.mode`** **`token`** and **`gateway.auth.token`** (plaintext dev default). Override with **`E2E_OPENCLAW_GATEWAY_TOKEN`**; default is **`openclaw-dev`** — easiest login on **this Mac’s browser** (not the IDE embedded tab): open **`http://127.0.0.1:${OPENCLAW_GATEWAY_PORT:-18789}/#token=openclaw-dev`** (Control reads the token from the URL fragment). Or use the connect form: **`ws://127.0.0.1:${OPENCLAW_GATEWAY_PORT:-18789}`** and paste the token before Connect (empty token yields “gateway token missing”). The same file sets a **relaxed `gateway.auth.rateLimit`** for local dev; repeated wrong attempts can still trigger **“too many failed authentication attempts”** — **restart the managed gateway** (`make fullstack-e2e-down` then `make fullstack-e2e`) to clear in-memory counters, or wait for the lockout window. With **`OPENCLAW_STATE_DIR`** pointing at that managed-state dir, you can run **`openclaw dashboard`** from **`openclaw/`** for a tokenized URL. Set **`E2E_OPENCLAW_USE_HOME_STATE=1`** to skip isolated state and use **`~/.openclaw`** instead (then set **`gateway.auth.token`** or run **`openclaw config set`** as needed).
+
+**Apple Silicon (Darwin arm64):** [`make fullstack-e2e`](../Makefile) and [`dev/scripts/e2e_stack_up.sh`](../dev/scripts/e2e_stack_up.sh) assume **host-installed [Ollama](https://ollama.com)** (CLI on `PATH`). If the daemon is not listening yet, the script runs **`ollama serve`** in the background and waits for **`/api/tags`** (logs under `${CACHE_ROOT:-.cache}/e2e-bootstrap/ollama-serve.log`; disable with **`E2E_AUTO_START_OLLAMA=0`** if you only use the menu-bar app and want a hard failure when it is not already up). Metal-backed inference is not exposed to generic Linux containers on Docker Desktop the way NVIDIA GPUs are on Linux, so containers call the host via `host.docker.internal` (see `extra_hosts` on **wrkhrs-agent-platform** in [`docker/compose-profiles/docker-compose.ai.yml`](../docker/compose-profiles/docker-compose.ai.yml)). The scripts verify `ollama` is on `PATH`, `http://127.0.0.1:${OLLAMA_HOST_PORT:-11434}/api/tags` responds, and **`qwen3:4b-instruct`** is listed (planned Qwen lane, aligned with **`Qwen/Qwen3-4B`** in [`docker-compose.local-ai.yml`](../docker/compose-profiles/docker-compose.local-ai.yml)); run **`ollama pull qwen3:4b-instruct`** first, or set **`OLLAMA_MODEL`** / **`E2E_SMOKE_MODEL`**, or **`E2E_OLLAMA_SKIP_MODEL_CHECK=1`** to skip the name check only. Then they export `LLM_BACKEND=ollama`, `LLM_RUNNER_URL`, `OLLAMA_MODEL`, and `OPENAI_BASE_URL` …`/v1` for compose. To keep the default **model-runtime** lane instead, set `E2E_USE_HOST_OLLAMA=0`. A shell under Rosetta that reports `uname -m` as `x86_64` does **not** enable this path—use a native arm64 terminal. `E2E_USE_GPU_WORKER` does not attach [`docker-compose.worker.yml`](../docker/compose-profiles/docker-compose.worker.yml) on Apple Silicon unless `E2E_ALLOW_GPU_WORKER_ON_DARWIN_ARM64=1`.
+
+**OpenClaw workspace config** (enable `birtha-bridge`, set `birthaApiBaseUrl`) remains **outside git** unless you explicitly opt into a local JSON merge: `E2E_OPENCLAW_CONFIG_PATCH=1` **and** `--i-accept-local-config-merge` **and** `OPENCLAW_CONFIG_JSON` pointing at a file **`jq`** can rewrite. Otherwise the script prints a small JSON snippet matching [`openclaw/extensions/birtha-bridge/openclaw.plugin.json`](../openclaw/extensions/birtha-bridge/openclaw.plugin.json).
+
+**Extension hook:** after a successful run, if [`dev/scripts/e2e_hooks/post_up.sh`](../dev/scripts/e2e_hooks/post_up.sh) exists (gitignored), it is **sourced** non-fatally—copy from [`post_up.sh.example`](../dev/scripts/e2e_hooks/post_up.sh.example) to add IDE-specific steps.
+
+**Compose hygiene:** **`make up`**, **`make up-gpu`**, **`make fullstack-e2e`**, and **`e2e_stack_up.sh`** use `docker compose up -d --remove-orphans` for the same full-dev `-f` chain; **`make down`** uses `down --remove-orphans`. That drops containers for services **removed or renamed** in the compose graph instead of leaving orphans. None of these run `down` before `up`: the project stays **`name: agent-orchestrator`** in [`docker-compose.yml`](../docker-compose.yml), so a normal re-run **reconciles** one stack (not duplicate API containers per run). Runaway counts usually mean different **`COMPOSE_PROJECT_NAME`** / working directories, manual **`docker run`**, or **`--scale`**.
+
+**Typical toggles:** `E2E_SKIP_DOCKER=1` (stack already up), `E2E_SKIP_NODE_BOOTSTRAP=1` (Docker-only; skips Node/OpenClaw), `E2E_UV_SYNC=1` (slow; sync Python env at repo root before pytest), `--` then extra args for `docker compose up -d` (e.g. `--build`).
+
+## Strict engineering, DevPlane, and model-runtime (env matrix)
+
+Canonical operational detail for health checks and ports: [runbooks/ai-stack-operations.md](runbooks/ai-stack-operations.md). Hugging Face weights and **`MOCK_INFER`**: [local-hf-models.md](local-hf-models.md) (especially §4).
+
+Use one Docker network profile so hostnames below resolve (for example root [`docker-compose.yml`](../docker-compose.yml) plus [`docker/compose-profiles/docker-compose.platform.yml`](../docker/compose-profiles/docker-compose.platform.yml) and [`docker/compose-profiles/docker-compose.ai.yml`](../docker/compose-profiles/docker-compose.ai.yml)).
+
+| Variable | Service consuming it | Purpose |
+|----------|------------------------|---------|
+| `AGENT_PLATFORM_URL` or `ORCHESTRATOR_AGENT_PLATFORM_URL` | **`api`** ([`Settings.agent_platform_url`](../services/api-service/src/config.py)) | Base URL for `POST /v1/workflows/execute` and DevPlane `POST /v1/devplane/runs`. **`AGENT_PLATFORM_URL` wins** if both are set. |
+| `ORCHESTRATOR_API_URL` or `DEVPLANE_PUBLIC_BASE_URL` | **`wrkhrs-agent-platform`** ([`engineering-graph.ts`](../services/agent-platform-service/server/src/workflow/engineering-graph.ts)) | Control plane `POST /api/control-plane/engineering/*`, dossier `GET /api/dev/tasks/{id}/dossier`, run events `POST /api/dev/runs/{id}/events`. |
+| `DEVPLANE_PUBLIC_BASE_URL` | **`api`** ([`Settings.devplane_public_base_url`](../services/api-service/src/config.py)) | Callback URLs embedded in DevPlane run create (`/api/dev/runs/.../events`, `/complete`); must be reachable **from** agent-platform (often `http://api:8080` on the compose network). |
+| `MODEL_RUNTIME_URL` | **`wrkhrs-agent-platform`** | Required for strict **`multimodal_model`** (`POST /infer/multimodal` on model-runtime). |
+| `MOCK_INFER` | **`model-runtime`** | `1` = stub `/infer/*` (no torch load); `0` = real HF per [`models.yaml`](../services/model-runtime/config/models.yaml). |
+| `HF_TOKEN` / `HUGGINGFACE_HUB_TOKEN`, `HF_HOME`, cache dirs | **`model-runtime`**, RAG, ASR | Hub auth and shared weight cache; see [Local dev caches](#local-dev-caches-cache_root) above. |
+| `LLM_BACKEND` | **`wrkhrs-agent-platform`** | `mock` (default in compose) skips real Claw/OMA/multimodal inside **DevPlane** `executeBackendRun` ([`runner.ts`](../services/agent-platform-service/server/src/devplane/runner.ts)); use a real backend for executor smoke. |
+| `OMA_DEFAULT_PROVIDER`, `OMA_DEFAULT_MODEL`, `OMA_DEFAULT_API_KEY`, `OMA_DEFAULT_BASE_URL` | **`wrkhrs-agent-platform`** | Merged OMA route for `local_general_model` / `strategic_reviewer` ([`runtime-router.ts`](../services/agent-platform-service/server/src/orchestration/runtime-router.ts)). |
+| `CLAW_CODE_BINARY`, `CLAW_CODE_MODEL`, `CLAW_CODE_TRUSTED_ROOTS`, timeouts | **`wrkhrs-agent-platform`** | `coding_model` → Claw ([`config.ts`](../services/agent-platform-service/server/src/config.ts)). |
+
+## AI stack location
+
+The active WrkHrs-derived gateway stack lives under **`services/ai-gateway-service/`**. Historical links to `WrkHrs/` or `services/wrkhrs/` are obsolete; see [migration-wrkhrs-path.md](migration-wrkhrs-path.md).

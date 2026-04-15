@@ -121,7 +121,7 @@ class PolicyRegistry:
         self.policies[name] = policy_class
         self.policy_configs[name] = config
 
-        logger.info("Registered policy", policy_name=name, config=config.dict())
+        logger.info("Registered policy", policy_name=name, config=config.model_dump())
 
     def get_policy(self, name: str) -> Any | None:
         """Get a policy instance.

@@ -1,0 +1,99 @@
+{
+  "artifact_id": "c4a29f01-4efe-5304-b26d-452aa95342c6",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_petsc_family_docker",
+    "artifact://evidence-bundle/petsc_ksp_runtime",
+    "artifact://execution-adapter-spec/petsc_ksp_probe",
+    "artifact://knowledge-pack/petsc_family",
+    "artifact://knowledge-pack/petsc_ksp",
+    "artifact://recipe-object/petsc_ksp_solver_backends",
+    "artifact://verification-report/9fd86fe1-c58d-5385-8cdb-ba5f2bb2bb3f"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "PETSc KSP: use petsc_ksp, PETSc KSP configuration surface, eng_petsc_family_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_petsc_family-container.sh. Recipe PETSc KSP phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_petsc_family_docker as the canonical runtime surface, Run the linked health check for PETSc KSP, Stop if the runtime verification report is still REWORK, Execute PETSc KSP only inside its declared capability boundary and record the evidence refs. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/9fd86fe1-c58d-5385-8cdb-ba5f2bb2bb3f. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_petsc_family_docker: #0 building with \"desktop-linux\" instance using docker driver.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "retrieval_keys": [
+      "coder",
+      "package",
+      "petsc_ksp",
+      "phase3_package_petsc_ksp",
+      "true"
+    ],
+    "role": "coder",
+    "role_context_bundle_id": "coder_34dc374d5442dec5",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_petsc_family_docker",
+      "artifact://evidence-bundle/petsc_ksp_runtime",
+      "artifact://execution-adapter-spec/petsc_ksp_probe",
+      "artifact://knowledge-pack/petsc_family",
+      "artifact://knowledge-pack/petsc_ksp",
+      "artifact://recipe-object/petsc_ksp_solver_backends",
+      "artifact://verification-report/9fd86fe1-c58d-5385-8cdb-ba5f2bb2bb3f"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_petsc_family_docker",
+        "sha256": "6072a9ec8600f0d5a8cd2fd00b6c11529aa2d6d1dab2f924992030e4aae5f244"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/petsc_ksp_runtime",
+        "sha256": "306fc1a0207916b7a60b3fc164cdb652dddebc8bd13d0aa111500842dc46155d"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/petsc_ksp_probe",
+        "sha256": "f644e89ba72d4e09b43140c07287a44f76c0c5612f58868dcd78f3d0fa3e5112"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc_family",
+        "sha256": "e555bb51cea23d3cafa27b5d60a1d3aaa54f27eee77a92f8d561a1b12e71af1a"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc_ksp",
+        "sha256": "57ced9d1c53fd08c586d9777704db6f909397f322172e874a3d3e7fdb91c666e"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/petsc_ksp_solver_backends",
+        "sha256": "a0e154f465894c31c61ef8fd572c4a324e597b8f72c9c10822d7ddf859c81bf5"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/9fd86fe1-c58d-5385-8cdb-ba5f2bb2bb3f",
+        "sha256": "b48f4285f51890dcc84892cd5328c545322a133f57f8352796b6634a6d5d523b"
+      }
+    ],
+    "task_class": "phase3_package_petsc_ksp"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

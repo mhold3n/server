@@ -1,0 +1,4 @@
+:443 {
+	respond /health "ok" 200
+	reverse_proxy api:8080
+}

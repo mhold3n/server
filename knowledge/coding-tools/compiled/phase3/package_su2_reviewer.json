@@ -1,0 +1,93 @@
+{
+  "artifact_id": "f1b0f387-2131-52f4-b310-e13545bab260",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_su2_docker",
+    "artifact://evidence-bundle/su2_runtime",
+    "artifact://execution-adapter-spec/su2_probe",
+    "artifact://knowledge-pack/su2",
+    "artifact://recipe-object/su2_thermofluids_chemistry",
+    "artifact://verification-report/ed19bcd1-853f-5df4-aad3-0def6dc156b0"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "SU2: review Probe SU2 through artifact://environment-spec/eng_su2_docker, Confirm the current Phase 2 gate state for SU2. Checklist SU2 pack links to the intended environment spec(s), SU2 adapter and evidence bundle reference the same runtime verification report, SU2 anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using SU2 for using su2 as a substitute for unrelated workflows outside thermofluids and chemistry workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_su2_docker., Crossing the adapter boundary for SU2 without a typed contract tied to su2 executable workflows for thermofluids and chemistry workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_su2_docker. Runtime eng-su2/docker_image at birtha/knowledge-eng-su2:1.0.0; environment ref artifact://environment-spec/eng_su2_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_su2_docker; verification refs artifact://verification-report/ed19bcd1-853f-5df4-aad3-0def6dc156b0. Runtime gate: Healthcheck failed for artifact://environment-spec/eng_su2_docker: docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"python\": executable file not found in $PATH.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "included_sections": [
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "retrieval_keys": [
+      "package",
+      "phase3_package_su2",
+      "reviewer",
+      "su2",
+      "true"
+    ],
+    "role": "reviewer",
+    "role_context_bundle_id": "reviewer_207bf09cd6a71f62",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_su2_docker",
+      "artifact://evidence-bundle/su2_runtime",
+      "artifact://execution-adapter-spec/su2_probe",
+      "artifact://knowledge-pack/su2",
+      "artifact://recipe-object/su2_thermofluids_chemistry",
+      "artifact://verification-report/ed19bcd1-853f-5df4-aad3-0def6dc156b0"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_su2_docker",
+        "sha256": "0902099e3b784a814f146b9314530e4bdf2b6ba91e85834066b5e1b90cde05e6"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/su2_runtime",
+        "sha256": "2d51957015037511ba7365a0758b3b2ac8e95b9a83f6907b8d43c9e5f909619b"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/su2_probe",
+        "sha256": "e7593df66ae64bd581f6e874475c634966433108e6bfce6ff59d22a6edc58e5b"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/su2",
+        "sha256": "db9c6a9194dcf09d2973ff8aab4e530a26b729ee436a1373ba059d74a3b6dff6"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/su2_thermofluids_chemistry",
+        "sha256": "abf2666f3da1ed9c447d4900dafaf952650113020318fbdc900e4d8b66f6368e"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/ed19bcd1-853f-5df4-aad3-0def6dc156b0",
+        "sha256": "5440e8e407418f3df9561d09f6d91e3a5ac808447dad22c7d81de9543743a4a1"
+      }
+    ],
+    "task_class": "phase3_package_su2"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

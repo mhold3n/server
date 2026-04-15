@@ -1,0 +1,351 @@
+{
+  "artifact_id": "0923e96a-2efd-53ae-a0c3-fee7dc7de3bc",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_sparse_direct_family_docker",
+    "artifact://environment-spec/eng_sparse_direct_family_gui",
+    "artifact://environment-spec/eng_strumpack_docker",
+    "artifact://environment-spec/eng_strumpack_gui",
+    "artifact://evidence-bundle/cholmod_runtime",
+    "artifact://evidence-bundle/klu_runtime",
+    "artifact://evidence-bundle/mumps_runtime",
+    "artifact://evidence-bundle/strumpack_runtime",
+    "artifact://evidence-bundle/suitesparse_runtime",
+    "artifact://evidence-bundle/superlu_dist_runtime",
+    "artifact://evidence-bundle/superlu_runtime",
+    "artifact://evidence-bundle/umfpack_runtime",
+    "artifact://execution-adapter-spec/cholmod_probe",
+    "artifact://execution-adapter-spec/klu_probe",
+    "artifact://execution-adapter-spec/mumps_probe",
+    "artifact://execution-adapter-spec/strumpack_probe",
+    "artifact://execution-adapter-spec/suitesparse_probe",
+    "artifact://execution-adapter-spec/superlu_dist_probe",
+    "artifact://execution-adapter-spec/superlu_probe",
+    "artifact://execution-adapter-spec/umfpack_probe",
+    "artifact://gui-session-spec/eng_sparse_direct_family_gui",
+    "artifact://gui-session-spec/eng_strumpack_gui",
+    "artifact://knowledge-pack/cholmod",
+    "artifact://knowledge-pack/klu",
+    "artifact://knowledge-pack/mumps",
+    "artifact://knowledge-pack/sparse_direct_family",
+    "artifact://knowledge-pack/strumpack",
+    "artifact://knowledge-pack/suitesparse",
+    "artifact://knowledge-pack/superlu",
+    "artifact://knowledge-pack/superlu_dist",
+    "artifact://knowledge-pack/umfpack",
+    "artifact://recipe-object/cholmod_solver_backends",
+    "artifact://recipe-object/klu_solver_backends",
+    "artifact://recipe-object/mumps_solver_backends",
+    "artifact://recipe-object/strumpack_solver_backends",
+    "artifact://recipe-object/suitesparse_solver_backends",
+    "artifact://recipe-object/superlu_dist_solver_backends",
+    "artifact://recipe-object/superlu_solver_backends",
+    "artifact://recipe-object/umfpack_solver_backends",
+    "artifact://verification-report/33a10d27-2e1f-5dcd-a03f-3237f98bf3ae",
+    "artifact://verification-report/4a36e2c6-2d24-509e-a7da-c5558b4187b7",
+    "artifact://verification-report/55d718ea-ecde-5e4c-b7bb-71e96dfb0f03",
+    "artifact://verification-report/6120cb05-37d0-51f3-a0ce-597858b4f397",
+    "artifact://verification-report/8a2153ca-db40-56fc-89e3-86be7c1582b0",
+    "artifact://verification-report/8d397c88-d6eb-53c7-aaa0-cb0e052d232a",
+    "artifact://verification-report/8fab1a64-6d9b-54df-adc9-183cf9db429e",
+    "artifact://verification-report/92f0c329-1a2f-5218-bc37-df09fbca6c50",
+    "artifact://verification-report/94c00315-8014-5d40-8a5b-589be218600b",
+    "artifact://verification-report/dcbac0f5-39d6-59dc-8a57-425aa9eb053b"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "CHOLMOD: solves CHOLMOD backend kernels reused by solver-backend workflows, CHOLMOD low-level numeric or geometric primitives inside a linked execution adapter. Best for CHOLMOD inside solver-backend workflows. Avoid Using CHOLMOD as a substitute for unrelated workflows outside solver-backend workflows, Treating CHOLMOD as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/dcbac0f5-39d6-59dc-8a57-425aa9eb053b. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.\nKLU: solves KLU backend kernels reused by solver-backend workflows, KLU low-level numeric or geometric primitives inside a linked execution adapter. Best for KLU inside solver-backend workflows. Avoid Using KLU as a substitute for unrelated workflows outside solver-backend workflows, Treating KLU as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/33a10d27-2e1f-5dcd-a03f-3237f98bf3ae. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.\nMUMPS: solves MUMPS backend kernels reused by solver-backend workflows, MUMPS low-level numeric or geometric primitives inside a linked execution adapter. Best for MUMPS inside solver-backend workflows. Avoid Using MUMPS as a substitute for unrelated workflows outside solver-backend workflows, Treating MUMPS as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/8fab1a64-6d9b-54df-adc9-183cf9db429e. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.\nSTRUMPACK: solves STRUMPACK backend kernels reused by solver-backend workflows, STRUMPACK low-level numeric or geometric primitives inside a linked execution adapter. Best for STRUMPACK inside solver-backend workflows. Avoid Using STRUMPACK as a substitute for unrelated workflows outside solver-backend workflows, Treating STRUMPACK as implicitly verified without its linked runtime and evidence bundle. Runtime eng-strumpack/docker_image at birtha/knowledge-eng-strumpack:1.0.0; environment ref artifact://environment-spec/eng_strumpack_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_strumpack_docker; verification refs artifact://verification-report/4a36e2c6-2d24-509e-a7da-c5558b4187b7. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_strumpack_gui; control provider noVNC via OpenClaw browser.\nSuiteSparse: solves SuiteSparse backend kernels reused by solver-backend workflows, SuiteSparse low-level numeric or geometric primitives inside a linked execution adapter. Best for SuiteSparse inside solver-backend workflows. Avoid Using SuiteSparse as a substitute for unrelated workflows outside solver-backend workflows, Treating SuiteSparse as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/94c00315-8014-5d40-8a5b-589be218600b. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.\nSuperLU: solves SuperLU backend kernels reused by solver-backend workflows, SuperLU low-level numeric or geometric primitives inside a linked execution adapter. Best for SuperLU inside solver-backend workflows. Avoid Using SuperLU as a substitute for unrelated workflows outside solver-backend workflows, Treating SuperLU as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/8a2153ca-db40-56fc-89e3-86be7c1582b0. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.\nSuperLU_DIST: solves SuperLU_DIST backend kernels reused by solver-backend workflows, SuperLU_DIST low-level numeric or geometric primitives inside a linked execution adapter. Best for SuperLU_DIST inside solver-backend workflows. Avoid Using SuperLU_DIST as a substitute for unrelated workflows outside solver-backend workflows, Treating SuperLU_DIST as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/55d718ea-ecde-5e4c-b7bb-71e96dfb0f03. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.\nUMFPACK: solves UMFPACK backend kernels reused by solver-backend workflows, UMFPACK low-level numeric or geometric primitives inside a linked execution adapter. Best for UMFPACK inside solver-backend workflows. Avoid Using UMFPACK as a substitute for unrelated workflows outside solver-backend workflows, Treating UMFPACK as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/8d397c88-d6eb-53c7-aaa0-cb0e052d232a. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.",
+    "excluded_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs"
+    ],
+    "retrieval_keys": [
+      "general",
+      "install",
+      "phase1_batch1c_sparse_direct_family",
+      "phase2_install_phase1_batch1c_sparse_direct_family",
+      "true"
+    ],
+    "role": "general",
+    "role_context_bundle_id": "general_21b9997e5280d515",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_sparse_direct_family_docker",
+      "artifact://environment-spec/eng_sparse_direct_family_gui",
+      "artifact://environment-spec/eng_strumpack_docker",
+      "artifact://environment-spec/eng_strumpack_gui",
+      "artifact://evidence-bundle/cholmod_runtime",
+      "artifact://evidence-bundle/klu_runtime",
+      "artifact://evidence-bundle/mumps_runtime",
+      "artifact://evidence-bundle/strumpack_runtime",
+      "artifact://evidence-bundle/suitesparse_runtime",
+      "artifact://evidence-bundle/superlu_dist_runtime",
+      "artifact://evidence-bundle/superlu_runtime",
+      "artifact://evidence-bundle/umfpack_runtime",
+      "artifact://execution-adapter-spec/cholmod_probe",
+      "artifact://execution-adapter-spec/klu_probe",
+      "artifact://execution-adapter-spec/mumps_probe",
+      "artifact://execution-adapter-spec/strumpack_probe",
+      "artifact://execution-adapter-spec/suitesparse_probe",
+      "artifact://execution-adapter-spec/superlu_dist_probe",
+      "artifact://execution-adapter-spec/superlu_probe",
+      "artifact://execution-adapter-spec/umfpack_probe",
+      "artifact://gui-session-spec/eng_sparse_direct_family_gui",
+      "artifact://gui-session-spec/eng_strumpack_gui",
+      "artifact://knowledge-pack/cholmod",
+      "artifact://knowledge-pack/klu",
+      "artifact://knowledge-pack/mumps",
+      "artifact://knowledge-pack/sparse_direct_family",
+      "artifact://knowledge-pack/strumpack",
+      "artifact://knowledge-pack/suitesparse",
+      "artifact://knowledge-pack/superlu",
+      "artifact://knowledge-pack/superlu_dist",
+      "artifact://knowledge-pack/umfpack",
+      "artifact://recipe-object/cholmod_solver_backends",
+      "artifact://recipe-object/klu_solver_backends",
+      "artifact://recipe-object/mumps_solver_backends",
+      "artifact://recipe-object/strumpack_solver_backends",
+      "artifact://recipe-object/suitesparse_solver_backends",
+      "artifact://recipe-object/superlu_dist_solver_backends",
+      "artifact://recipe-object/superlu_solver_backends",
+      "artifact://recipe-object/umfpack_solver_backends",
+      "artifact://verification-report/33a10d27-2e1f-5dcd-a03f-3237f98bf3ae",
+      "artifact://verification-report/4a36e2c6-2d24-509e-a7da-c5558b4187b7",
+      "artifact://verification-report/55d718ea-ecde-5e4c-b7bb-71e96dfb0f03",
+      "artifact://verification-report/6120cb05-37d0-51f3-a0ce-597858b4f397",
+      "artifact://verification-report/8a2153ca-db40-56fc-89e3-86be7c1582b0",
+      "artifact://verification-report/8d397c88-d6eb-53c7-aaa0-cb0e052d232a",
+      "artifact://verification-report/8fab1a64-6d9b-54df-adc9-183cf9db429e",
+      "artifact://verification-report/92f0c329-1a2f-5218-bc37-df09fbca6c50",
+      "artifact://verification-report/94c00315-8014-5d40-8a5b-589be218600b",
+      "artifact://verification-report/dcbac0f5-39d6-59dc-8a57-425aa9eb053b"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_sparse_direct_family_docker",
+        "sha256": "7e86971929d43f88c3f099624e73d546156dac4caeb5f9e9584cc79321d30dbc"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_sparse_direct_family_gui",
+        "sha256": "f9f0551ab1cc19cfaf1e35602385785e0053a7185ad1cc8e2c768555cc0ca568"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_strumpack_docker",
+        "sha256": "b9aa2b3b39bde9b88a4f8e2470970d1817fd892542c9e78e272a0426dd2370bf"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_strumpack_gui",
+        "sha256": "e16c8cee2c22344887449cccc8e96cb7a9e18bae1759e3d5e9d0f6d6273f4111"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/cholmod_runtime",
+        "sha256": "a08704b3435384b4e4b8f6b504b5096277fef614285f9f91cbc85a5501a77aba"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/klu_runtime",
+        "sha256": "edfd9748b8748ef5c15ff063facd937e6da279f8575b22b82693d507bb6af594"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/mumps_runtime",
+        "sha256": "4a57d5d90dd497fef0904f213d3c3fda935a020ac8680d8a4d7ce8afdd149f1c"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/strumpack_runtime",
+        "sha256": "a24e2c4a109c61fb34fe811b299b7a03b204af8b96a3f9898247ae27dcdf7f88"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/suitesparse_runtime",
+        "sha256": "513fad5a5f98258284ffdfa59ea4f90808a91a5b6eca5924c09f5805533246df"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/superlu_dist_runtime",
+        "sha256": "9a1f4402ae6e9624a131638832bbbe0cc56ab8b56fc0a509755837bc851f67fb"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/superlu_runtime",
+        "sha256": "0aa210077e475a725a61c59d323b8e73b0bfa96e5f25133c39cb80aaa7c229db"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/umfpack_runtime",
+        "sha256": "f2cc1cbbbda869dca7320efe2ea66bbd90fb15ba36796587b4c59f1ac7c0f8b3"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/cholmod_probe",
+        "sha256": "ef7030ea68e54d300e63e86ace74e4793683a5bee8251d77567395a18eb94d96"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/klu_probe",
+        "sha256": "a0a8bc09fb9609f866749910df266297a4ff818450bbae0bb8b07c2aa40c83d9"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/mumps_probe",
+        "sha256": "f46807d423299ca5f789239fd5a8889ea5ee5141c8c97f4fe56e0e4aa63b57da"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/strumpack_probe",
+        "sha256": "e9a0100eba125e1714c1a9408bcaa34c11e8ead5d6436c1fa949447f633d8100"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/suitesparse_probe",
+        "sha256": "610dd27d4089eb0c99bb1da4fbac69aafd7e220c35c4a6fc19f0f527e521fe58"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/superlu_dist_probe",
+        "sha256": "6dcacc49569ac1356bf369ce3f3b270a232e4a7e66490c2b352a22a5a175ec11"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/superlu_probe",
+        "sha256": "0eb77f0303b774d6940673a31056cda38cf24cbb2456f0ece9ed4ff34bfd3b0f"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/umfpack_probe",
+        "sha256": "a8b9e8e7d06e0f2c57a6de73af21e6a87c5b118a5944ec693e99dc5e2f050a58"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_sparse_direct_family_gui",
+        "sha256": "56b101e5dd97e99b8698507b731896ed919243acf45263d3b5982f06844f588a"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_strumpack_gui",
+        "sha256": "eae6d6701a7b062a075323121f74c718ef222eb68c3be08288245d99d121e7d5"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/cholmod",
+        "sha256": "a8e18c6335a8035551ba07f9b1e254ec212bac37b1207b58ba62dfcce7a0147e"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/klu",
+        "sha256": "9d84a9346086e864be172c290987bf746fdc00a9e828686d04e784f020d09028"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/mumps",
+        "sha256": "cc58b69b09ab6198712088e730c0324a44c55b55997ec8ee23b24d13975c033b"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/sparse_direct_family",
+        "sha256": "fb791c05ea722b06df44569cdd722715ba6b8f6804097c4810fca3dea45cb812"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/strumpack",
+        "sha256": "6edefc9a5c5105d2ecd2536c602eb35a8d0db1088a7192303b6593dc6a384d07"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/suitesparse",
+        "sha256": "00120fed1dab5a3465e573c29ab7b1ffc918378fc0c682da3666ae372b9c1184"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/superlu",
+        "sha256": "2597f152c6efa31338dec8936251f20d18d672e0498e1f0985004563ad93dee3"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/superlu_dist",
+        "sha256": "0323323d721b71f0f6bbc3e2a6c18b422231bef767f2924b0e7f671a3fa09314"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/umfpack",
+        "sha256": "6b65d869c2ababff81b5a4536f7d1356b78974078505250d5b6202e656fd3fe5"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/cholmod_solver_backends",
+        "sha256": "8ee9ff4b21d5b44a4f137dbe355ea920566352c82e6681461f8352684647436b"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/klu_solver_backends",
+        "sha256": "55d4465f104b47ccc5c26d9ff6e05d5c66972f0a19f47499d0b9db3b23a97cc6"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/mumps_solver_backends",
+        "sha256": "3ccf4f2e86eaecc7076277c8efbbed0128cd99226c304b66844fcea384f5c528"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/strumpack_solver_backends",
+        "sha256": "05a2661eedf533c7764f925fb609ca7e0fc4094baf783376ca4d070f3e460214"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/suitesparse_solver_backends",
+        "sha256": "e5463fb46dbca19d74fdbdf0e1c7a20d0dba38db312554677c0e17c3875a7fdc"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/superlu_dist_solver_backends",
+        "sha256": "e952d502adfadea8c13ee6ee0a140aa2d79829615451b529fa9d938b3dc16c1d"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/superlu_solver_backends",
+        "sha256": "fae0541de76388d256b082942e3ce48eb2b9019b00c1c02dfaff925af8a67fa4"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/umfpack_solver_backends",
+        "sha256": "4d490077c3b36651268644dc4e6245c1e293fdb41b6b37c1bd2c5fa32d887e74"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/33a10d27-2e1f-5dcd-a03f-3237f98bf3ae",
+        "sha256": "370c4cd258818a0f279a4760f3d4448adb20786027da63fb1b4e0fac767792a6"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/4a36e2c6-2d24-509e-a7da-c5558b4187b7",
+        "sha256": "5023d9e90075cf0392616747842ecaff25af4f88f15cbc7dad733f52bd121a5e"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/55d718ea-ecde-5e4c-b7bb-71e96dfb0f03",
+        "sha256": "40a4f88feaaca2e0a3bdf8a1f1f95ed4f7d2bef724aee6459569c76f8492fad8"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/6120cb05-37d0-51f3-a0ce-597858b4f397",
+        "sha256": "29d988c9413e47cb035423a43ac07ddac48f5a961360d37fdcb716b4e1502f23"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/8a2153ca-db40-56fc-89e3-86be7c1582b0",
+        "sha256": "41b380eeef54f6fd39c3beaebf9aa4091b2eb782d93b12c3a0d0bf77f09a5403"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/8d397c88-d6eb-53c7-aaa0-cb0e052d232a",
+        "sha256": "70d1c9fa13852f428948d8ede02dd3b11d3a6091933e0e501195cf2d08c1d26f"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/8fab1a64-6d9b-54df-adc9-183cf9db429e",
+        "sha256": "989ada1504d8a6c2b8996268df0df75abb3cd40b289fdae0d526394f2c9839a8"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/92f0c329-1a2f-5218-bc37-df09fbca6c50",
+        "sha256": "11a2ed94dc274cbab2957f0eed6e005d5aad93ad301c457a3734937d4bb950e9"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/94c00315-8014-5d40-8a5b-589be218600b",
+        "sha256": "ae368a4d6f6945510c7e82fc4dd3295408b2d68998979b9abb73d02b03e32bec"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/dcbac0f5-39d6-59dc-8a57-425aa9eb053b",
+        "sha256": "f3064a67a0bfa4dfa79bfdbd1065aac49f67d92c2fd2fc803c03282391bc3209"
+      }
+    ],
+    "task_class": "phase2_install_phase1_batch1c_sparse_direct_family"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

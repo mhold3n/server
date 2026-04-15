@@ -7,7 +7,8 @@ models:
     model_id: Qwen/Qwen3-4B
     backend: transformers
     max_input_tokens: 8192
-    max_output_tokens: 1024
+    # Keep CPU inference responsive by default.
+    max_output_tokens: 128
     local_model_path: null
 
   coding:

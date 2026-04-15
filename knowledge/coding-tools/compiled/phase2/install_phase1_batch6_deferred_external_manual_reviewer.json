@@ -1,0 +1,231 @@
+{
+  "artifact_id": "74b7ba54-a0ea-5cf3-8dad-b358e8020ad2",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_ipopt_onemkl_docker",
+    "artifact://environment-spec/eng_ipopt_onemkl_gui",
+    "artifact://environment-spec/eng_system_docker",
+    "artifact://environment-spec/eng_system_gui",
+    "artifact://environment-spec/eng_system_uv",
+    "artifact://environment-spec/eng_wine_docker",
+    "artifact://environment-spec/eng_wine_gui",
+    "artifact://evidence-bundle/femm_runtime",
+    "artifact://evidence-bundle/ma87_runtime",
+    "artifact://evidence-bundle/pyleecan_runtime",
+    "artifact://execution-adapter-spec/femm_probe",
+    "artifact://execution-adapter-spec/ma87_probe",
+    "artifact://execution-adapter-spec/pyleecan_probe",
+    "artifact://gui-session-spec/eng_ipopt_onemkl_gui",
+    "artifact://gui-session-spec/eng_system_gui",
+    "artifact://gui-session-spec/eng_wine_gui",
+    "artifact://knowledge-pack/coinhsl_family",
+    "artifact://knowledge-pack/femm",
+    "artifact://knowledge-pack/ma87",
+    "artifact://knowledge-pack/pyleecan",
+    "artifact://recipe-object/femm_electrics_dynamics_system",
+    "artifact://recipe-object/ma87_solver_backends",
+    "artifact://recipe-object/pyleecan_electrics_dynamics_system",
+    "artifact://verification-report/17d76d15-356c-52e1-aa61-5f721be86349",
+    "artifact://verification-report/3d7bd3e6-4784-50aa-9222-51ab356a54a9",
+    "artifact://verification-report/4eba97e1-4659-5d48-9804-2b5dc3b28a6e",
+    "artifact://verification-report/623621e6-1f88-5ae9-8717-96d842b23efe",
+    "artifact://verification-report/d27e1fdf-9e1d-540f-88fc-99829a79dfc0",
+    "artifact://verification-report/e6c38f2a-9fa9-56ce-86d7-d2d31951c82e"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "FEMM: review Probe FEMM through artifact://environment-spec/eng_wine_docker, Confirm the current Phase 2 gate state for FEMM. Checklist FEMM pack links to the intended environment spec(s), FEMM adapter and evidence bundle reference the same runtime verification report, FEMM anti-patterns and failure signatures match the module class and runtime path, Manual acquisition gate remains explicit for FEMM. Watch anti-patterns Using FEMM for using femm as a substitute for unrelated workflows outside electrical, dynamic, and system workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_wine_docker., Crossing the adapter boundary for FEMM without a typed contract tied to femm executable workflows for electrical, dynamic, and system workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_wine_docker. Runtime eng-wine/docker_image at birtha/knowledge-eng-wine:1.0.0; environment ref artifact://environment-spec/eng_wine_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_wine_docker; verification refs artifact://verification-report/4eba97e1-4659-5d48-9804-2b5dc3b28a6e. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_wine_gui; control provider noVNC via OpenClaw browser. Runtime gate: website-delivered Windows installer has not yet been mirrored into the wine-backed canonical runtime.\nMA87: review Probe MA87 through artifact://environment-spec/eng_ipopt_onemkl_docker, Confirm the current Phase 2 gate state for MA87. Checklist MA87 pack links to the intended environment spec(s), MA87 adapter and evidence bundle reference the same runtime verification report, MA87 anti-patterns and failure signatures match the module class and runtime path, Manual acquisition gate remains explicit for MA87. Watch anti-patterns Using MA87 for using ma87 as a substitute for unrelated workflows outside solver-backend workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_ipopt_onemkl_docker., Crossing the adapter boundary for MA87 without a typed contract tied to ma87 backend kernels reused by solver-backend workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker. Runtime eng-ipopt-onemkl/docker_image at birtha/knowledge-eng-ipopt-onemkl:1.0.0; environment ref artifact://environment-spec/eng_ipopt_onemkl_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker; verification refs artifact://verification-report/623621e6-1f88-5ae9-8717-96d842b23efe. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_ipopt_onemkl_gui; control provider noVNC via OpenClaw browser. Runtime gate: licensed sparse direct solver backend not packaged in this sprint.\nPYLEECAN: review Probe PYLEECAN through artifact://environment-spec/eng_system_uv, Confirm the current Phase 2 gate state for PYLEECAN. Checklist PYLEECAN pack links to the intended environment spec(s), PYLEECAN adapter and evidence bundle reference the same runtime verification report, PYLEECAN anti-patterns and failure signatures match the module class and runtime path, Manual acquisition gate remains explicit for PYLEECAN. Watch anti-patterns Using PYLEECAN for using pyleecan as a substitute for unrelated workflows outside electrical, dynamic, and system workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_system_uv., Crossing the adapter boundary for PYLEECAN without a typed contract tied to pyleecan executable workflows for electrical, dynamic, and system workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv. Runtime eng-system/uv_venv at .cache/knowledge-envs/eng-system; environment ref artifact://environment-spec/eng_system_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv; verification refs artifact://verification-report/3d7bd3e6-4784-50aa-9222-51ab356a54a9. GUI state NO_GUI. Runtime gate: package depends on a URL-only swat-em source that was not locked into a canonical isolated runtime in this sprint.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "included_sections": [
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "retrieval_keys": [
+      "install",
+      "phase1_batch6_deferred_external_manual",
+      "phase2_install_phase1_batch6_deferred_external_manual",
+      "reviewer",
+      "true"
+    ],
+    "role": "reviewer",
+    "role_context_bundle_id": "reviewer_d67eb2e9f7a67bab",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_ipopt_onemkl_docker",
+      "artifact://environment-spec/eng_ipopt_onemkl_gui",
+      "artifact://environment-spec/eng_system_docker",
+      "artifact://environment-spec/eng_system_gui",
+      "artifact://environment-spec/eng_system_uv",
+      "artifact://environment-spec/eng_wine_docker",
+      "artifact://environment-spec/eng_wine_gui",
+      "artifact://evidence-bundle/femm_runtime",
+      "artifact://evidence-bundle/ma87_runtime",
+      "artifact://evidence-bundle/pyleecan_runtime",
+      "artifact://execution-adapter-spec/femm_probe",
+      "artifact://execution-adapter-spec/ma87_probe",
+      "artifact://execution-adapter-spec/pyleecan_probe",
+      "artifact://gui-session-spec/eng_ipopt_onemkl_gui",
+      "artifact://gui-session-spec/eng_system_gui",
+      "artifact://gui-session-spec/eng_wine_gui",
+      "artifact://knowledge-pack/coinhsl_family",
+      "artifact://knowledge-pack/femm",
+      "artifact://knowledge-pack/ma87",
+      "artifact://knowledge-pack/pyleecan",
+      "artifact://recipe-object/femm_electrics_dynamics_system",
+      "artifact://recipe-object/ma87_solver_backends",
+      "artifact://recipe-object/pyleecan_electrics_dynamics_system",
+      "artifact://verification-report/17d76d15-356c-52e1-aa61-5f721be86349",
+      "artifact://verification-report/3d7bd3e6-4784-50aa-9222-51ab356a54a9",
+      "artifact://verification-report/4eba97e1-4659-5d48-9804-2b5dc3b28a6e",
+      "artifact://verification-report/623621e6-1f88-5ae9-8717-96d842b23efe",
+      "artifact://verification-report/d27e1fdf-9e1d-540f-88fc-99829a79dfc0",
+      "artifact://verification-report/e6c38f2a-9fa9-56ce-86d7-d2d31951c82e"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_ipopt_onemkl_docker",
+        "sha256": "8e4059fb97acb13655ec22ca77c1b70e665209fc96f582c1daacbe09f71d6dd8"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_ipopt_onemkl_gui",
+        "sha256": "105a6bef5732828a98a07d870371a3a3f2ceaa6af1e428c628b4c7d2ef2e4640"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_system_docker",
+        "sha256": "7bfc5239d62e09a262da746dff43ca3efb17affcdf72cf2b1b0f2370fcaceab4"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_system_gui",
+        "sha256": "b4a7d3b5674c5cd9df8ae86a2e05737dc7964142025e5a165de6572f0b770dd1"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_system_uv",
+        "sha256": "20c6a7a1227a1e6bbe724e3f24df3f37064c1881ca42287b7e0f499e124d2075"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_wine_docker",
+        "sha256": "d74fd0b0b8c6ba02587d07064192a6758633bf8d127d8226a938dc641941a449"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_wine_gui",
+        "sha256": "0d43bd17e7130d45d19513ba711e3c59b67bc00519c2bac340f0ff12e2d0d389"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/femm_runtime",
+        "sha256": "fe6aeb54265c1bf3d0aa925570a78b30e7ed96e3fd1f9bfed48722a6289c5d68"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/ma87_runtime",
+        "sha256": "151e4d48a5390397491824f0f8d3de80f42ab6c04490962168882e4c735de2ef"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/pyleecan_runtime",
+        "sha256": "63d07127f5b98a1e3afa889e2a04dcad8374eec24b309315706c79e996d40355"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/femm_probe",
+        "sha256": "34937cc653eb62dd9291d30802df7a1669e5088f1881cc2a268da603c33117a2"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/ma87_probe",
+        "sha256": "96ff2d3f583bc0c165c0733e362446ffce197031cd297a88275d7f13db6d8584"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/pyleecan_probe",
+        "sha256": "f64e8d130f51069fbe412fe6b6e8e26344571c5ef599385de3ff9a300020e489"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_ipopt_onemkl_gui",
+        "sha256": "b46548aaa727087964636d21b2f6174f01453c2a8bef7cd0e84672ab6d273e13"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_system_gui",
+        "sha256": "047a8734355186e23d395f28a636af4d6cc8fd55198373c6aad308a2aee22bf6"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_wine_gui",
+        "sha256": "2a29f55d99777c59ddf26404be62e2e39f1cfd469733af3c900d54aabb8ac3a5"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/coinhsl_family",
+        "sha256": "8341aee06ed45a0fe2b8c6a951a8cdfa3622f3117e9244ca7b4829bfaf60e572"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/femm",
+        "sha256": "ee43606891887551a084b5f5f14a9cd97f86dcc8a664f3d2689f299321d35af0"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ma87",
+        "sha256": "982e71408d5998d2c096345b6125ad336c29165f6ff490172a13765fe1743ca2"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/pyleecan",
+        "sha256": "15d02feb7409302b429bc45509c824bb27e7f333a6718c1aec42b411332de30f"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/femm_electrics_dynamics_system",
+        "sha256": "0c8445a40cf71de2931be310d4d7ff500dbde6c85a430e39d3e2c38364983daf"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/ma87_solver_backends",
+        "sha256": "1c263f5d1473fcee3c13128e3a1eb61e43c26424d989cf1de5ce6068a6cf04c4"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/pyleecan_electrics_dynamics_system",
+        "sha256": "5ec51191a2a019667e38be9a738efdb240bd58dade995c1bc70cf7633cbc1427"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/17d76d15-356c-52e1-aa61-5f721be86349",
+        "sha256": "788c2b9c5ee966700dd7ead364a879327d848d0019f35ebce949f52c9c68a440"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/3d7bd3e6-4784-50aa-9222-51ab356a54a9",
+        "sha256": "16856ad30206d063f3ba5b7caa8bfc422982c2e194054e0cc5538dad55bc1987"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/4eba97e1-4659-5d48-9804-2b5dc3b28a6e",
+        "sha256": "a7f3b95e49c6b7752f334d48f07753cfff12a8ecceb8c4206c36ed62a55b24b6"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/623621e6-1f88-5ae9-8717-96d842b23efe",
+        "sha256": "55f7801053f3fe6a7c64bcb4823180106d93a074ef5a8b51f4a8adef5515ceff"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/d27e1fdf-9e1d-540f-88fc-99829a79dfc0",
+        "sha256": "ed7d03663c6f5007d9de329d5da5c9b161d8cd8e67021e1fbf87cbcffd6eae25"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/e6c38f2a-9fa9-56ce-86d7-d2d31951c82e",
+        "sha256": "af88e85dddc4265fce02e80483a5e7bd329b6302571d81797fee5f68414b4ba1"
+      }
+    ],
+    "task_class": "phase2_install_phase1_batch6_deferred_external_manual"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

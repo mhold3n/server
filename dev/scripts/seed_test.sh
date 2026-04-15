@@ -9,6 +9,14 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 cd "$PROJECT_ROOT"
 
+SEED_COMPOSE=(
+  --project-directory "$PROJECT_ROOT"
+  -f docker-compose.yml
+  -f docker/compose-profiles/docker-compose.platform.yml
+  -f docker/compose-profiles/docker-compose.ai.yml
+  -f docker/compose-profiles/docker-compose.local-ai.yml
+)
+
 echo "🌱 Seeding test data and running basic tests..."
 
 # Wait for services to be ready
@@ -88,7 +96,7 @@ echo ""
 echo "🎉 Test seeding completed!"
 echo ""
 echo "📊 Service status:"
-docker compose ps
+docker compose "${SEED_COMPOSE[@]}" ps
 
 echo ""
 echo "🔗 Available endpoints:"

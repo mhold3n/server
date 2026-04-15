@@ -14,6 +14,8 @@ from typing import List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from sentence_transformers import CrossEncoder
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
 
 logging.basicConfig(
     level=logging.INFO,
@@ -21,10 +23,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    _get_model()
+    yield
+
+
 api = FastAPI(
     title="Reranker API",
     description="Cross-encoder reranker for RAG retrieval pipelines",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 
@@ -62,11 +71,6 @@ def _get_model() -> CrossEncoder:
         _model = CrossEncoder(model_name)
         logger.info("Cross-encoder model loaded")
     return _model
-
-
-@api.on_event("startup")
-async def startup():
-    _get_model()
 
 
 @api.get("/health")

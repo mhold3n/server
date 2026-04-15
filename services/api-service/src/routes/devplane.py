@@ -53,7 +53,11 @@ def reset_devplane_service_for_tests() -> None:
 def get_service() -> DevPlaneService:
     """Return the lazily initialized dev-plane service singleton."""
     global _service
-    control_plane_root = Path(__file__).resolve().parents[4]
+    # When running in-container, this file resolves to /app/src/routes/devplane.py,
+    # so parents only goes up to /app (parents[2]). Older code assumed a deeper
+    # monorepo path and crashed with IndexError, yielding 500s on /api/ai/query.
+    resolved = Path(__file__).resolve()
+    control_plane_root = resolved.parents[4] if len(resolved.parents) > 4 else resolved.parents[2]
     desired = (
         str(Path(settings.devplane_db_path).expanduser().resolve()),
         str(Path(settings.devplane_root).expanduser().resolve()),

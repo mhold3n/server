@@ -17,10 +17,9 @@ dependencies = [
     "engineering-core[dev]",
     "ai-stack",
     "structure[dev]",
-    "wrkhrs[dev]",
-    "filesystem-mcp-server[dev]",
-    "secrets-mcp-server[dev]",
-    "vector-db-mcp-server[dev]",
+    "ai-gateway-service[dev]",
+    "larrak-audio[dev]",
+    "martymedia[dev]",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -39,23 +38,21 @@ model-runtime = { workspace = true }
 engineering-core = { workspace = true }
 ai-stack = { workspace = true }
 structure = { workspace = true }
-wrkhrs = { workspace = true }
-filesystem-mcp-server = { workspace = true }
-secrets-mcp-server = { workspace = true }
-vector-db-mcp-server = { workspace = true }
+ai-gateway-service = { workspace = true }
+larrak-audio = { workspace = true }
+martymedia = { workspace = true }
 
 [tool.uv.workspace]
 members = [
-    "services/api",
-    "services/router",
-    "services/worker_client",
-    "services/mcp-registry",
+    "services/api-service",
+    "services/router-service",
+    "services/worker-service",
+    "services/mcp-registry-service",
     "services/model-runtime",
     "services/engineering-core",
-    "services/ai_stack",
-    "services/structure",
-    "services/wrkhrs",
-    "mcp/servers/filesystem-mcp",
-    "mcp/servers/secrets-mcp",
-    "mcp/servers/vector-db-mcp",
+    "services/ai-shared-service",
+    "services/structure-service",
+    "services/ai-gateway-service",
+    "services/audio-service",
+    "services/media-service",
 ]

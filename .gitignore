@@ -31,11 +31,15 @@ ENV/
 env.bak/
 venv.bak/
 
+# Local-only fullstack e2e hook (copy from dev/scripts/e2e_hooks/post_up.sh.example)
+dev/scripts/e2e_hooks/post_up.sh
+
 # IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
+*.iml
 *~
 
 # OS
@@ -47,20 +51,20 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
+# Docker Compose persistent data (COMPOSE_DATA_ROOT default); large and machine-local
+.docker-data/
+
 # Local-only scratch / exports (never commit)
 CLAUDE RIP/
 
 # Vendored donor orchestration package: track only the open-multi-agent package,
 # ignore the surrounding donor snapshot and preserved upstream git metadata.
-/merged claude leak/*
-!/merged claude leak/packages/
-/merged claude leak/packages/*
-!/merged claude leak/packages/open-multi-agent/
-!/merged claude leak/packages/open-multi-agent/**
-/merged claude leak/packages/open-multi-agent/.git.upstream.backup/
-
-# Docker
-.dockerignore
+/docs/archive/claude-reference/*
+!/docs/archive/claude-reference/packages/
+/docs/archive/claude-reference/packages/*
+!/docs/archive/claude-reference/packages/open-multi-agent/
+!/docs/archive/claude-reference/packages/open-multi-agent/**
+/docs/archive/claude-reference/packages/open-multi-agent/.git.upstream.backup/
 
 # Secrets and certificates
 *.pem
@@ -257,6 +261,12 @@ docker-compose.local.yml
 # Monorepo JSON Schema contracts (control-plane + model-runtime registries and fixtures)
 !schemas/control-plane/**/*.json
 !schemas/model-runtime/**/*.json
+# Response-control catalogs are source inputs for mode/pool/module selection.
+!knowledge/response-control/**/*.json
+# Coding-tool knowledge artifacts are repo-native source data for the knowledge pool.
+!knowledge/coding-tools/**/*.json
+knowledge/coding-tools/runtime/dotnet/**/bin/
+knowledge/coding-tools/runtime/dotnet/**/obj/
 !services/structure/policies/**/*.yaml
 
 # Cache and temporary files

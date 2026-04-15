@@ -1,0 +1,111 @@
+{
+  "artifact_id": "f4d6ec45-f544-598b-9b63-b6e41ccd5c0e",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_wine_docker",
+    "artifact://environment-spec/eng_wine_gui",
+    "artifact://evidence-bundle/femm_runtime",
+    "artifact://execution-adapter-spec/femm_probe",
+    "artifact://gui-session-spec/eng_wine_gui",
+    "artifact://knowledge-pack/femm",
+    "artifact://recipe-object/femm_electrics_dynamics_system",
+    "artifact://verification-report/17d76d15-356c-52e1-aa61-5f721be86349",
+    "artifact://verification-report/4eba97e1-4659-5d48-9804-2b5dc3b28a6e"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "FEMM: solves FEMM executable workflows for electrical, dynamic, and system workflows, FEMM case setup, launch, and output capture inside the knowledge runtime. Best for FEMM inside electrical, dynamic, and system workflows. Avoid Using FEMM as a substitute for unrelated workflows outside electrical, dynamic, and system workflows, Treating FEMM as implicitly verified without its linked runtime and evidence bundle. Runtime eng-wine/docker_image at birtha/knowledge-eng-wine:1.0.0; environment ref artifact://environment-spec/eng_wine_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_wine_docker; verification refs artifact://verification-report/4eba97e1-4659-5d48-9804-2b5dc3b28a6e. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_wine_gui; control provider noVNC via OpenClaw browser. Runtime gate: website-delivered Windows installer has not yet been mirrored into the wine-backed canonical runtime.",
+    "excluded_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs"
+    ],
+    "retrieval_keys": [
+      "femm",
+      "general",
+      "package",
+      "phase3_package_femm",
+      "true"
+    ],
+    "role": "general",
+    "role_context_bundle_id": "general_18cf2412eddb03b0",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_wine_docker",
+      "artifact://environment-spec/eng_wine_gui",
+      "artifact://evidence-bundle/femm_runtime",
+      "artifact://execution-adapter-spec/femm_probe",
+      "artifact://gui-session-spec/eng_wine_gui",
+      "artifact://knowledge-pack/femm",
+      "artifact://recipe-object/femm_electrics_dynamics_system",
+      "artifact://verification-report/17d76d15-356c-52e1-aa61-5f721be86349",
+      "artifact://verification-report/4eba97e1-4659-5d48-9804-2b5dc3b28a6e"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_wine_docker",
+        "sha256": "d74fd0b0b8c6ba02587d07064192a6758633bf8d127d8226a938dc641941a449"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_wine_gui",
+        "sha256": "0d43bd17e7130d45d19513ba711e3c59b67bc00519c2bac340f0ff12e2d0d389"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/femm_runtime",
+        "sha256": "fe6aeb54265c1bf3d0aa925570a78b30e7ed96e3fd1f9bfed48722a6289c5d68"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/femm_probe",
+        "sha256": "34937cc653eb62dd9291d30802df7a1669e5088f1881cc2a268da603c33117a2"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_wine_gui",
+        "sha256": "2a29f55d99777c59ddf26404be62e2e39f1cfd469733af3c900d54aabb8ac3a5"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/femm",
+        "sha256": "ee43606891887551a084b5f5f14a9cd97f86dcc8a664f3d2689f299321d35af0"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/femm_electrics_dynamics_system",
+        "sha256": "0c8445a40cf71de2931be310d4d7ff500dbde6c85a430e39d3e2c38364983daf"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/17d76d15-356c-52e1-aa61-5f721be86349",
+        "sha256": "788c2b9c5ee966700dd7ead364a879327d848d0019f35ebce949f52c9c68a440"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/4eba97e1-4659-5d48-9804-2b5dc3b28a6e",
+        "sha256": "a7f3b95e49c6b7752f334d48f07753cfff12a8ecceb8c4206c36ed62a55b24b6"
+      }
+    ],
+    "task_class": "phase3_package_femm"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

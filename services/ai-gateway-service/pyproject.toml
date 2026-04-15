@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "wrkhrs"
+name = "ai-gateway-service"
 version = "0.1.0"
-description = "WrkHrs services (gateway + legacy scripts) for the server monorepo"
+description = "AI Gateway services for the server monorepo"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -55,7 +55,7 @@ addopts = [
   "--strict-markers",
   "--strict-config",
   "-o",
-  "cache_dir=../../.cache/pytest/services-wrkhrs",
+  "cache_dir=../../.cache/pytest/services-ai-gateway-service",
   "--ignore=scripts",
   "--cov=services/gateway",
   "--cov=services/prompt_middleware",

@@ -3,6 +3,8 @@
 import asyncio
 import os
 from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -60,6 +62,86 @@ structlog.configure(
 )
 
 logger = structlog.get_logger()
+
+
+async def _startup(app_: FastAPI) -> None:
+    """Shared startup for lifespan + tests."""
+    global redis_client, openai_client, mlflow_logger, provenance_logger
+
+    logger.info("Starting Agent Orchestrator API", version="0.1.0")
+
+    # Initialize OpenTelemetry tracing
+    try:
+        trace_context = get_trace_context()
+        trace_context.instrument_fastapi(app_)
+        trace_context.instrument_httpx()
+        trace_context.instrument_requests()
+        logger.info("OpenTelemetry tracing initialized")
+    except Exception as e:
+        logger.error("Failed to initialize OpenTelemetry", error=str(e))
+
+    # Initialize MLflow logger
+    try:
+        mlflow_logger = MLflowLogger(
+            tracking_uri=getattr(settings, "mlflow_tracking_uri", "http://mlflow:5000"),
+            experiment_name="birtha-ai-runs",
+        )
+        logger.info("MLflow logger initialized")
+    except Exception as e:
+        logger.error("Failed to initialize MLflow logger", error=str(e))
+        mlflow_logger = None
+
+    # Initialize provenance logger
+    try:
+        if mlflow_logger:
+            provenance_logger = ProvenanceLogger(mlflow_logger)
+            logger.info("Provenance logger initialized")
+    except Exception as e:
+        logger.error("Failed to initialize provenance logger", error=str(e))
+        provenance_logger = None
+
+    # Initialize Redis client
+    try:
+        redis_client = Redis.from_url(settings.redis_url, decode_responses=True)
+        await redis_client.ping()
+        logger.info("Connected to Redis", url=settings.redis_url)
+    except Exception as e:
+        logger.error("Failed to connect to Redis", error=str(e))
+        redis_client = None
+
+    # Initialize OpenAI client
+    try:
+        worker_cfg = get_worker_settings(settings)
+        openai_client = AsyncOpenAI(
+            base_url=worker_cfg.base_url,
+            api_key=settings.openai_api_key,
+        )
+        logger.info(
+            "Initialized OpenAI client",
+            base_url=worker_cfg.base_url,
+            profile=str(settings.orch_profile),
+            default_model=worker_cfg.default_model,
+        )
+    except Exception as e:
+        logger.error("Failed to initialize OpenAI client", error=str(e))
+        openai_client = None
+
+
+async def _shutdown() -> None:
+    """Shared shutdown for lifespan + tests."""
+    global redis_client
+    if redis_client:
+        await redis_client.close()
+        logger.info("Closed Redis connection")
+
+
+# Backwards-compatible test hooks (some tests call these directly)
+async def startup_event() -> None:
+    await _startup(app)
+
+
+async def shutdown_event() -> None:
+    await _shutdown()
 
 
 def _usage_for_log(usage: Any) -> dict[str, Any] | None:
@@ -143,12 +225,24 @@ openai_client: AsyncOpenAI | None = None
 mlflow_logger: MLflowLogger | None = None
 provenance_logger: ProvenanceLogger | None = None
 
+@asynccontextmanager
+async def lifespan(app_: FastAPI) -> AsyncIterator[None]:
+    """Lifespan hook replacing deprecated on_event handlers."""
+    await _startup(app_)
+
+    try:
+        yield
+    finally:
+        await _shutdown()
+
+
 app = FastAPI(
     title="Agent Orchestrator API",
     description="Control plane for agent orchestration with OpenAI-compatible endpoints",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 # CORS middleware
@@ -243,80 +337,6 @@ async def metrics_middleware(
     ).observe(duration)
 
     return response
-
-
-@app.on_event("startup")
-async def startup_event() -> None:
-    """Initialize clients on startup."""
-    global redis_client, openai_client, mlflow_logger, provenance_logger
-
-    logger.info("Starting Agent Orchestrator API", version="0.1.0")
-
-    # Initialize OpenTelemetry tracing
-    try:
-        trace_context = get_trace_context()
-        trace_context.instrument_fastapi(app)
-        trace_context.instrument_httpx()
-        trace_context.instrument_requests()
-        logger.info("OpenTelemetry tracing initialized")
-    except Exception as e:
-        logger.error("Failed to initialize OpenTelemetry", error=str(e))
-
-    # Initialize MLflow logger
-    try:
-        mlflow_logger = MLflowLogger(
-            tracking_uri=getattr(settings, "mlflow_tracking_uri", "http://mlflow:5000"),
-            experiment_name="birtha-ai-runs",
-        )
-        logger.info("MLflow logger initialized")
-    except Exception as e:
-        logger.error("Failed to initialize MLflow logger", error=str(e))
-        mlflow_logger = None
-
-    # Initialize provenance logger
-    try:
-        if mlflow_logger:
-            provenance_logger = ProvenanceLogger(mlflow_logger)
-            logger.info("Provenance logger initialized")
-    except Exception as e:
-        logger.error("Failed to initialize provenance logger", error=str(e))
-        provenance_logger = None
-
-    # Initialize Redis client
-    try:
-        redis_client = Redis.from_url(settings.redis_url, decode_responses=True)
-        await redis_client.ping()
-        logger.info("Connected to Redis", url=settings.redis_url)
-    except Exception as e:
-        logger.error("Failed to connect to Redis", error=str(e))
-        redis_client = None
-
-    # Initialize OpenAI client
-    try:
-        worker_cfg = get_worker_settings(settings)
-        openai_client = AsyncOpenAI(
-            base_url=worker_cfg.base_url,
-            api_key=settings.openai_api_key,
-        )
-        logger.info(
-            "Initialized OpenAI client",
-            base_url=worker_cfg.base_url,
-            profile=str(settings.orch_profile),
-            default_model=worker_cfg.default_model,
-        )
-    except Exception as e:
-        logger.error("Failed to initialize OpenAI client", error=str(e))
-        openai_client = None
-
-
-@app.on_event("shutdown")
-async def shutdown_event() -> None:
-    """Cleanup on shutdown."""
-    global redis_client
-
-    if redis_client:
-        await redis_client.close()
-        logger.info("Closed Redis connection")
 
 
 @app.get("/health", response_model=HealthResponse)

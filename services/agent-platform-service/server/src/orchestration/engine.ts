@@ -225,12 +225,12 @@ export class OrchestrationEngine {
     return new OpenMultiAgent({
       defaultModel: route.model,
       defaultProvider: route.provider,
-      defaultBaseURL: route.baseURL,
-      defaultApiKey: route.apiKey,
-      maxTokenBudget: route.maxTokenBudget,
       enableBuiltInTools: false,
       extraTools: input.extraTools,
-    })
+      ...(route.baseURL ? { defaultBaseURL: route.baseURL } : {}),
+      ...(route.apiKey ? { defaultApiKey: route.apiKey } : {}),
+      ...(route.maxTokenBudget ? { maxTokenBudget: route.maxTokenBudget } : {}),
+    } as any)
   }
 
   private async runMockAgent(input: DirectAgentInput): Promise<EngineRunResult> {
@@ -296,14 +296,15 @@ export class OrchestrationEngine {
         name: input.name,
         model: route.model,
         provider: route.provider,
-        baseURL: route.baseURL,
-        apiKey: route.apiKey,
+        ...(route.apiKey ? { apiKey: route.apiKey } : {}),
+        ...(route.baseURL ? { baseURL: route.baseURL } : {}),
         systemPrompt: input.systemPrompt,
         tools: input.toolNames,
         maxTurns: input.maxTurns ?? 6,
         maxTokens: input.maxTokens,
         temperature: input.temperature,
-      },
+        ...(route.maxTokenBudget ? { maxTokenBudget: route.maxTokenBudget } : {}),
+      } as any,
       input.prompt,
     )
 
@@ -316,7 +317,7 @@ export class OrchestrationEngine {
         result.tokenUsage.input_tokens,
         result.tokenUsage.output_tokens,
       ),
-      structuredOutput: toStructuredRecord(result.structured),
+      structuredOutput: toStructuredRecord((result as any).structured),
       toolCalls: result.toolCalls,
       agentResults: { [input.name]: result },
       agentOutputs: { [input.name]: result.output },
@@ -390,15 +391,15 @@ export class OrchestrationEngine {
           name: agent.name,
           model: route.model,
           provider: route.provider,
-          baseURL: route.baseURL,
-          apiKey: route.apiKey,
+          ...(route.apiKey ? { apiKey: route.apiKey } : {}),
+          ...(route.baseURL ? { baseURL: route.baseURL } : {}),
           systemPrompt: agent.systemPrompt,
           tools: agent.toolNames,
           maxTurns: agent.maxTurns ?? 6,
           maxTokens: agent.maxTokens,
           temperature: agent.temperature,
-          maxTokenBudget: route.maxTokenBudget,
-        }
+          ...(route.maxTokenBudget ? { maxTokenBudget: route.maxTokenBudget } : {}),
+        } as any
       }),
     })
     const result = await orchestration.runTeam(team, input.goal)

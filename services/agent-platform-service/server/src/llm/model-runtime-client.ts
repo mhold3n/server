@@ -2,6 +2,11 @@
  * HTTP client for Python model-runtime: strict /infer and /solve routes.
  *
  * For agents: no model IDs here — server resolves from models.yaml.
+ *
+ * Wiring note (v1): only `postInferMultimodal` is used by the orchestration engine
+ * (`multimodal_model` → model-runtime). `postInferGeneral` and `postInferCoding` are
+ * exported for symmetry and future/local tooling; they are not called from
+ * `runtime-router.ts` / `engine.ts` today.
  */
 
 import type { PlatformConfig } from "../config.js"

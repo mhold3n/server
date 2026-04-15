@@ -1,0 +1,99 @@
+{
+  "artifact_id": "04f859d0-709e-5381-87b6-201c00e1a6d9",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_ipopt_onemkl_docker",
+    "artifact://evidence-bundle/ma77_runtime",
+    "artifact://execution-adapter-spec/ma77_probe",
+    "artifact://knowledge-pack/coinhsl_family",
+    "artifact://knowledge-pack/ma77",
+    "artifact://recipe-object/ma77_solver_backends",
+    "artifact://verification-report/7b30475b-e9d0-5b2f-89c0-48a106ea4c2c"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "MA77: review Probe MA77 through artifact://environment-spec/eng_ipopt_onemkl_docker, Confirm the current Phase 2 gate state for MA77. Checklist MA77 pack links to the intended environment spec(s), MA77 adapter and evidence bundle reference the same runtime verification report, MA77 anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using MA77 for using ma77 as a substitute for unrelated workflows outside solver-backend workflows., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_ipopt_onemkl_docker., Crossing the adapter boundary for MA77 without a typed contract tied to ma77 backend kernels reused by solver-backend workflows.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker. Runtime eng-ipopt-onemkl/docker_image at birtha/knowledge-eng-ipopt-onemkl:1.0.0; environment ref artifact://environment-spec/eng_ipopt_onemkl_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker; verification refs artifact://verification-report/7b30475b-e9d0-5b2f-89c0-48a106ea4c2c. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_ipopt_onemkl_docker: #0 building with \"desktop-linux\" instance using docker driver.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "included_sections": [
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "retrieval_keys": [
+      "ma77",
+      "package",
+      "phase3_package_ma77",
+      "reviewer",
+      "true"
+    ],
+    "role": "reviewer",
+    "role_context_bundle_id": "reviewer_839afc3a3aae9001",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_ipopt_onemkl_docker",
+      "artifact://evidence-bundle/ma77_runtime",
+      "artifact://execution-adapter-spec/ma77_probe",
+      "artifact://knowledge-pack/coinhsl_family",
+      "artifact://knowledge-pack/ma77",
+      "artifact://recipe-object/ma77_solver_backends",
+      "artifact://verification-report/7b30475b-e9d0-5b2f-89c0-48a106ea4c2c"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_ipopt_onemkl_docker",
+        "sha256": "32569f4f18dadca67c1db0183ba8513468d6c59b4d93da352bd18c3faddbabf5"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/ma77_runtime",
+        "sha256": "8758169f1625a99dc6c4e54c0915275cced5f03d20b123f7087f28497ad24c57"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/ma77_probe",
+        "sha256": "e7bf1794c21da2b01c52395307ccb2056911332ceb13d1c563447f0c5d0fb10d"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/coinhsl_family",
+        "sha256": "8341aee06ed45a0fe2b8c6a951a8cdfa3622f3117e9244ca7b4829bfaf60e572"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ma77",
+        "sha256": "a5bff20bbe78d72976134c3e707c90fee6b7d5bc75b9a930dfa9f7b287ab55d3"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/ma77_solver_backends",
+        "sha256": "8e72e8dfa8020297c2277b5b371d4f0a4167433227bafe059b45e85146d8afea"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/7b30475b-e9d0-5b2f-89c0-48a106ea4c2c",
+        "sha256": "f68025fe6ff69c53031a551eec2d72274cb01a2f02b36bd6188766b4ea223330"
+      }
+    ],
+    "task_class": "phase3_package_ma77"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

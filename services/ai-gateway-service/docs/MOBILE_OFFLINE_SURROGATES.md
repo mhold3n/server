@@ -23,7 +23,7 @@ Use this profile to validate mobile-side behavior when desktop/server infrastruc
 ## Start mobile profile
 
 ```bash
-cd services/wrkhrs
+cd services/ai-gateway-service
 make up-mobile
 ```
 

@@ -1,13 +1,12 @@
-version: "3.9"
-
 # WrkHrs AI Stack Services
-# Integrates WrkHrs microservices with Birtha platform
+# Integrates WrkHrs microservices with Birtha platform.
+# Durable state: ${COMPOSE_DATA_ROOT:-.docker-data}/ai/* (gateway_state, rag_cache, plugins, mcp_data, logs).
 
 services:
   # Structure Gateway - Deterministic Scientific Reasoning Engine
   structure-gateway:
     build:
-      context: ./services/structure
+      context: ./services/structure-service
     ports:
       - "${STRUCTURE_GATEWAY_PORT:-8090}:8000"
     environment:
@@ -19,7 +18,7 @@ services:
       wrkhrs-gateway:
         condition: service_healthy
     volumes:
-      - logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/docs" ]
@@ -31,7 +30,7 @@ services:
   # WrkHrs Gateway - OpenAI-compatible API with domain weighting
   wrkhrs-gateway:
     build:
-      context: ./services/wrkhrs
+      context: ./services/ai-gateway-service
       dockerfile: docker/gateway/Dockerfile
     ports:
       - "${WRKHRS_GATEWAY_PORT:-8091}:8000"
@@ -48,8 +47,8 @@ services:
       wrkhrs-agent-platform:
         condition: service_healthy
     volumes:
-      - gateway_state:/state
-      - logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/gateway_state:/state
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
@@ -61,25 +60,37 @@ services:
   # TypeScript agent-platform (Open Multi-Agent + LangGraph JS) — default orchestrator
   wrkhrs-agent-platform:
     build:
-      context: ..
-      dockerfile: services/agent-platform/Dockerfile
+      context: .
+      dockerfile: services/agent-platform-service/Dockerfile
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${WRKHRS_AGENT_PLATFORM_PORT:-8087}:8000"
     environment:
       - AGENT_PLATFORM_PORT=8000
-      - LLM_BACKEND=${LLM_BACKEND:-mock}
-      - LLM_RUNNER_URL=${LLM_RUNNER_URL:-http://llm-runner:11434}
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3:8b-instruct}
-      - VLLM_MODEL=${VLLM_MODEL:-default}
+      # Qwen generation routing:
+      # - CPU/local: model-runtime OpenAI shim (default)
+      # - GPU worker: vLLM OpenAI server (enable docker-compose.worker.yml and set
+      #   LLM_RUNNER_URL=http://llm-runner-gen:8000 and OPENAI_BASE_URL=http://llm-runner-gen:8000/v1)
+      - LLM_BACKEND=${LLM_BACKEND:-vllm}
+      - LLM_RUNNER_URL=${LLM_RUNNER_URL:-http://model-runtime:8000}
+      - VLLM_MODEL=${VLLM_MODEL:-Qwen/Qwen3-4B}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-}
+      # open-multi-agent's OpenAI adapter reads baseURL/apiKey from env (not from per-request baseURL).
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-http://model-runtime:8000/v1}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-local-openai}
       - HF_TOKEN=${HF_TOKEN:-}
       - HUGGINGFACE_HUB_TOKEN=${HUGGINGFACE_HUB_TOKEN:-}
       - HF_INFERENCE_MODEL=${HF_INFERENCE_MODEL:-Qwen/Qwen3-8B}
       - HF_INFERENCE_BASE_URL=${HF_INFERENCE_BASE_URL:-https://router.huggingface.co/v1}
       - MODEL_RUNTIME_URL=${MODEL_RUNTIME_URL:-http://model-runtime:8000}
+      - ORCHESTRATOR_API_URL=http://api:8080
       - TOOL_REGISTRY_URL=http://wrkhrs-tool-registry:8000
       - RAG_URL=http://wrkhrs-rag:8000
       - ASR_URL=http://wrkhrs-asr:8000
       - MCP_URL=http://wrkhrs-mcp:8000
+      - CLAW_CODE_BINARY=${CLAW_CODE_BINARY:-claw}
+      - CLAW_CODE_MODEL=${CLAW_CODE_MODEL:-}
       - OMA_DEFAULT_MODEL=${OMA_DEFAULT_MODEL:-gpt-4o-mini}
       - OMA_DEFAULT_PROVIDER=${OMA_DEFAULT_PROVIDER:-openai}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
@@ -95,7 +106,7 @@ services:
       model-runtime:
         condition: service_healthy
     volumes:
-      - logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -109,7 +120,7 @@ services:
     profiles:
       - legacy-python-orchestrator
     build:
-      context: ./services/wrkhrs
+      context: ./services/ai-gateway-service
       dockerfile: docker/orchestrator/Dockerfile
     ports:
       - "${WRKHRS_ORCH_PORT:-8081}:8000"
@@ -133,7 +144,7 @@ services:
       wrkhrs-mcp:
         condition: service_healthy
     volumes:
-      - logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
@@ -145,7 +156,7 @@ services:
   # WrkHrs RAG API - Document retrieval with Qdrant
   wrkhrs-rag:
     build:
-      context: ./services/wrkhrs
+      context: ./services/ai-gateway-service
       dockerfile: docker/rag/Dockerfile
     ports:
       - "${WRKHRS_RAG_PORT:-8082}:8000"
@@ -162,22 +173,24 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     depends_on:
       qdrant:
+        # RAG startup connects to Qdrant immediately; wait until /ready passes.
         condition: service_healthy
     volumes:
-      - rag_cache:/cache
-      - logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/rag_cache:/cache
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-      start_period: 30s
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      # First boot may download HF weights + NLTK; block startup until initialize() finishes.
+      start_period: 300s
 
   # WrkHrs ASR API - Speech recognition with Whisper
   wrkhrs-asr:
     build:
-      context: ./services/wrkhrs
+      context: ./services/ai-gateway-service
       dockerfile: docker/asr/Dockerfile
     ports:
       - "${WRKHRS_ASR_PORT:-8084}:8000"
@@ -189,7 +202,7 @@ services:
       - ASR_EXTRACT_TECHNICAL=${ASR_EXTRACT_TECHNICAL:-true}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
-      - logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
@@ -209,7 +222,14 @@ services:
       - MODEL_RUNTIME_HOST=0.0.0.0
       - MODEL_RUNTIME_PORT=8000
       - MODEL_RUNTIME_CONFIG_PATH=/app/services/model-runtime/config/models.yaml
-      - MOCK_INFER=${MOCK_INFER:-1}
+      # Keep first-token latency acceptable on CPU.
+      - MODEL_RUNTIME_GENERAL_MAX_NEW_TOKENS=${MODEL_RUNTIME_GENERAL_MAX_NEW_TOKENS:-64}
+      # CPU-friendly dtype (avoid bf16/auto surprises on Apple Silicon).
+      - MODEL_RUNTIME_TORCH_DTYPE=${MODEL_RUNTIME_TORCH_DTYPE:-float32}
+      # Avoid mkldnn bf16 matmul crashes on CPUs without bf16 support.
+      - TORCH_DISABLE_MKLDNN=1
+      # Default to real inference when local weights are present.
+      - MOCK_INFER=${MOCK_INFER:-0}
       - HF_HOME=/.cache/models/hf
       - TRANSFORMERS_CACHE=/.cache/models/hf
       - MODEL_CACHE_DIR=/.cache/models/hf
@@ -217,7 +237,8 @@ services:
       - HUGGINGFACE_HUB_TOKEN=${HUGGINGFACE_HUB_TOKEN:-}
     volumes:
       - ./.cache/models/hf:/.cache/models/hf
-      - logs:/logs
+      - ./services/model-runtime/config:/app/services/model-runtime/config:ro
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -229,7 +250,7 @@ services:
   # WrkHrs Tool Registry - Pluggy-based tool discovery
   wrkhrs-tool-registry:
     build:
-      context: ./services/wrkhrs
+      context: ./services/ai-gateway-service
       dockerfile: docker/tool-registry/Dockerfile
     ports:
       - "${WRKHRS_TOOLS_PORT:-8086}:8000"
@@ -239,8 +260,8 @@ services:
       - PLUGINS_SCAN_INTERVAL=${PLUGINS_SCAN_INTERVAL:-300}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
-      - plugins:/plugins:rw
-      - logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/plugins:/plugins:rw
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
@@ -252,7 +273,7 @@ services:
   # WrkHrs MCP Server - Multi-Context Protocol for domain tools
   wrkhrs-mcp:
     build:
-      context: ./services/wrkhrs
+      context: ./services/ai-gateway-service
       dockerfile: docker/mcp/Dockerfile
     ports:
       - "${WRKHRS_MCP_PORT:-8085}:8000"
@@ -263,8 +284,8 @@ services:
       - MECHANICAL_PRECISION=${MECHANICAL_PRECISION:-6}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
-      - mcp_data:/data:rw
-      - logs:/logs
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/mcp_data:/data:rw
+      - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
@@ -275,7 +296,7 @@ services:
 
   # MCP Registry - Auto-registration and discovery
   mcp-registry:
-    build: ./services/mcp-registry
+    build: ./services/mcp-registry-service
     ports:
       - "${MCP_REGISTRY_PORT:-8001}:8000"
     environment:
@@ -283,7 +304,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
       - MLFLOW_TRACKING_URI=http://mlflow:5000
     volumes:
-      - ./mcp/config:/mcp/config:ro
+      - ./mcp-servers/mcp/config:/mcp/config:ro
     depends_on:
       - mlflow
       - tempo
@@ -295,25 +316,7 @@ services:
       retries: 10
       start_period: 20s
 
-  # LLM Runner - Placeholder for GPU worker (defined in worker compose)
-  llm-runner:
-    image: alpine:latest
-    command: [ "sh", "-c", "echo 'LLM Runner placeholder - use docker-compose.worker.yml for GPU deployment' && sleep infinity" ]
-    environment:
-      - LLM_BACKEND=${LLM_BACKEND:-vllm}
-      - ENABLE_GPU=${ENABLE_GPU:-false}
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-    restart: unless-stopped
+  # Note: we intentionally do not define a standalone `llm-runner` service here.
+  # For local stacks, the LLM surface is provided by `model-runtime` (mounted HF cache)
+  # via its minimal OpenAI-compatible `/v1/chat/completions`.
 
-volumes:
-  gateway_state:
-    driver: local
-  rag_cache:
-    driver: local
-  plugins:
-    driver: local
-  mcp_data:
-    driver: local
-  logs:
-    driver: local

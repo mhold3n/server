@@ -13,7 +13,7 @@ class WrkHrsGatewayClient:
 
     def __init__(
         self,
-        base_url: str = "http://wrkhrs-gateway:8000",
+        base_url: str = "http://ai-gateway-service-gateway:8000",
         timeout: float = 60.0,
     ):
         """Initialize WrkHrs Gateway client.

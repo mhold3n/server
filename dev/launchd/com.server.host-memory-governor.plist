@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.server.host-memory-governor</string>
+
+    <key>ProgramArguments</key>
+    <array>
+      <string>/usr/bin/python3</string>
+      <string>/Users/maxholden/GitHub/server/services/host-memory-governor/src/server.py</string>
+      <string>--host</string>
+      <string>0.0.0.0</string>
+      <string>--port</string>
+      <string>8766</string>
+      <string>--token</string>
+      <string>__REPLACE_WITH_TOKEN__</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/host-memory-governor.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/host-memory-governor.err.log</string>
+  </dict>
+</plist>
+

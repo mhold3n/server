@@ -2,6 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# sentence-transformers / transformers need torch. Default PyPI torch2.x pulls CUDA metapackages
+# (nvidia-*, triton, …) — multi‑GB downloads that often hit ReadTimeoutError in Docker builds.
+# Install CPU-only torch from PyTorch's wheel index first, then the rest (do not list `torch` again).
+ENV PIP_DEFAULT_TIMEOUT=300
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
@@ -10,14 +15,16 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-RUN pip install --no-cache-dir \
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir --retries 10 \
+        torch --index-url https://download.pytorch.org/whl/cpu \
+    && pip install --no-cache-dir --retries 10 \
     fastapi \
     uvicorn[standard] \
     haystack-ai \
     qdrant-client \
     sentence-transformers \
     transformers \
-    torch \
     pydantic \
     requests \
     numpy \

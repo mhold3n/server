@@ -616,7 +616,15 @@ class KnowledgePoolCatalog:
         problem_spec: dict[str, Any],
         project_constraints: dict[str, Any],
     ) -> list[RankedCandidate]:
-        """Rank valid packs that have linked, passing runtime verification."""
+        """
+        Rank valid knowledge packs based on deterministic runtime verification and constraint matching.
+        
+        Why: We cannot rely on LLMs to invent tool chains. This algorithm tokenizes the incoming problem
+        spec (e.g., 'simulate fluid flow') and scores it strictly against the `positive_text` 
+        and `negative_text` of explicitly modeled `knowledge_packs` within the `coding-tools` pool.
+        Any tool lacking a verified runtime environment (`_pack_has_passing_runtime_verification`) is 
+        instantly stripped from the candidate list.
+        """
         problem_terms = _tokenize_structure(problem_spec)
         constraint_terms = _tokenize_structure(project_constraints)
         language_terms = {
@@ -757,7 +765,14 @@ class KnowledgePoolCatalog:
         module_or_adapter_ref: str,
         host_profile: dict[str, Any] | None = None,
     ) -> EnvironmentSpecPayload:
-        """Resolve the best linked environment for a module or adapter."""
+        """
+        Resolve the best linked environment for a module or adapter.
+        
+        Why: An agent needs to know not just *what* tool to run, but *where* to run it.
+        This function evaluates the target's preferred execution profile (e.g. docker vs native uv_venv)
+        and scores environments against the host's actual capability profile, guaranteeing the returned
+        Launcher/GUI ref will actually execute on the user's OS infrastructure.
+        """
         host_profile = host_profile or {}
         preferred_kinds = host_profile.get(
             "preferred_delivery_kinds",
@@ -871,6 +886,111 @@ class KnowledgePoolCatalog:
             ranked,
             key=lambda item: (-item[0], item[1].gui_session_spec_id),
         )[0][1]
+
+    def launch_gui_session(
+        self,
+        gui_session_ref: str,
+        launch_profile: dict[str, Any] | None = None,
+    ) -> GuiSessionHandle:
+        """Launch a noVNC/OpenClaw-controlled GUI container and return its handle."""
+        launch_profile = launch_profile or {}
+        artifact = self.gui_session_specs.get(gui_session_ref)
+        if artifact is None:
+            raise ValueError(f"Unknown GUI session ref: {gui_session_ref}")
+        payload = artifact.payload
+        assert isinstance(payload, GuiSessionSpecPayload)
+        if payload.security_policy.allow_host_desktop:
+            raise ValueError("Host desktop GUI control is not allowed for canonical GUI sessions")
+        if payload.security_policy.bind_host != "127.0.0.1":
+            raise ValueError("GUI sessions must bind noVNC to 127.0.0.1")
+
+        docker_bin = subprocess.run(
+            ["which", "docker"],
+            cwd=_repo_root(),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if docker_bin.returncode != 0:
+            raise RuntimeError("docker CLI is not available in this environment")
+
+        novnc_port = int(launch_profile.get("novnc_port") or _free_loopback_port())
+        password = str(launch_profile.get("password") or secrets.token_urlsafe(18))
+        session_suffix = secrets.token_hex(4)
+        container_name = (
+            f"knowledge-gui-{payload.gui_session_spec_id.replace('_', '-')}-{session_suffix}"
+        )
+        artifact_dir = _resolve_repo_path(
+            str(launch_profile.get("artifact_output_dir") or payload.artifact_output_dir)
+        )
+        artifact_dir.mkdir(parents=True, exist_ok=True)
+
+        display_env = dict(payload.display_env)
+        display_env["NOVNC_PASSWORD"] = password
+        display_env["KNOWLEDGE_GUI_SESSION_REF"] = gui_session_ref
+        display_env["KNOWLEDGE_GUI_ARTIFACT_DIR"] = "/artifacts"
+
+        docker_cmd = [
+            "docker",
+            "run",
+            "-d",
+            "--rm",
+            "--platform",
+            payload.docker_platform,
+            "--name",
+            container_name,
+            "-p",
+            f"127.0.0.1:{novnc_port}:{payload.container_ports.novnc}",
+            "-v",
+            f"{_repo_root()}:{_repo_root()}",
+            "-w",
+            str(_repo_root()),
+            "-v",
+            f"{artifact_dir}:/artifacts",
+        ]
+        for key, value in sorted(display_env.items()):
+            docker_cmd.extend(["-e", f"{key}={value}"])
+        docker_cmd.append(payload.docker_image)
+
+        result = subprocess.run(
+            docker_cmd,
+            cwd=_repo_root(),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout).strip()
+            raise RuntimeError(f"GUI container launch failed for {gui_session_ref}: {detail}")
+
+        container_id = result.stdout.strip()
+        url = payload.openclaw_entry_url.format(novnc_port=novnc_port)
+        separator = "&" if "?" in url else "?"
+        url = f"{url}{separator}password={password}"
+        return GuiSessionHandle(
+            gui_session_ref=gui_session_ref,
+            container_id=container_id,
+            container_name=container_name,
+            url=url,
+            novnc_port=novnc_port,
+            password=password,
+            artifact_output_dir=str(artifact_dir),
+        )
+
+    def close_gui_session(self, container_id_or_name: str) -> None:
+        """Close a launched GUI container."""
+        if not container_id_or_name.strip():
+            raise ValueError("container_id_or_name must not be empty")
+        result = subprocess.run(
+            ["docker", "rm", "-f", container_id_or_name],
+            cwd=_repo_root(),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout).strip()
+            raise RuntimeError(f"Failed to close GUI container {container_id_or_name}: {detail}")
 
     def verify_runtime(self, environment_ref: str) -> VerificationReportPayload:
         """Run the environment health check command and return a verification report."""
@@ -1299,6 +1419,17 @@ def resolve_gui_session(
     return load_knowledge_pool().resolve_gui_session(module_or_environment_ref, host_profile)
 
 
+def launch_gui_session(
+    gui_session_ref: str,
+    launch_profile: dict[str, Any] | None = None,
+) -> GuiSessionHandle:
+    return load_knowledge_pool().launch_gui_session(gui_session_ref, launch_profile)
+
+
+def close_gui_session(container_id_or_name: str) -> None:
+    return load_knowledge_pool().close_gui_session(container_id_or_name)
+
+
 def verify_gui_session(gui_session_ref: str) -> VerificationReportPayload:
     return load_knowledge_pool().verify_gui_session(gui_session_ref)
 
@@ -1323,6 +1454,17 @@ def _repo_root() -> Path:
         if (path / "knowledge").exists() and (path / "schemas" / "control-plane" / "v1").exists():
             return path
     raise RuntimeError("Could not locate repo root for knowledge pool")
+
+
+def _resolve_repo_path(path_str: str) -> Path:
+    path = Path(path_str).expanduser()
+    return path if path.is_absolute() else (_repo_root() / path).resolve()
+
+
+def _free_loopback_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return int(sock.getsockname()[1])
 
 
 def _artifact_ref_for(

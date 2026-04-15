@@ -4,8 +4,8 @@ FROM node:22-bookworm-slim AS builder
 WORKDIR /build
 
 COPY package.json package-lock.json ./
-COPY services/agent-platform/server ./services/agent-platform/server
-COPY ["merged claude leak/packages/open-multi-agent", "./merged claude leak/packages/open-multi-agent"]
+COPY services/agent-platform-service/server ./services/agent-platform-service/server
+COPY services/agent-platform-service/open-multi-agent ./services/agent-platform-service/open-multi-agent
 
 RUN npm ci
 RUN npm run build -w @server/open-multi-agent && npm run build -w @server/agent-platform-server
@@ -19,10 +19,10 @@ WORKDIR /app
 
 COPY --from=builder /build/package.json /build/package-lock.json ./
 COPY --from=builder /build/node_modules ./node_modules
-COPY --from=builder /build/services/agent-platform/server ./services/agent-platform/server
-COPY --from=builder ["/build/merged claude leak", "./merged claude leak"]
+COPY --from=builder /build/services/agent-platform-service/server ./services/agent-platform-service/server
+COPY --from=builder /build/services/agent-platform-service/open-multi-agent ./services/agent-platform-service/open-multi-agent
 
-WORKDIR /app/services/agent-platform/server
+WORKDIR /app/services/agent-platform-service/server
 
 ENV NODE_ENV=production
 EXPOSE 8000

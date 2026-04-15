@@ -33,6 +33,7 @@ from src.control_plane.validation import (
     get_schema_store,
     validate_environment_spec_json,
     validate_engineering_state_json,
+    validate_gui_session_spec_json,
     validate_knowledge_pool_assessment_json,
     validate_problem_brief_json,
     validate_response_control_assessment_json,
@@ -131,6 +132,25 @@ def test_response_control_explicit_mode_dissonance_does_not_reroute() -> None:
     assert payload["mode_selection"]["user_override"] is True
     assert payload["mode_selection"]["mode_dissonance"]["suggested_mode"] == "engineering"
     assert payload["assembly_order"] == ["mode", "knowledge_pool", "module", "technique", "theory"]
+
+
+def test_response_control_does_not_match_short_module_keywords_inside_words() -> None:
+    assessment = evaluate_response_control(
+        prompt=(
+            "Assess whether a 1 m steel cube slides on rough concrete under a "
+            "40 kN horizontal force."
+        ),
+        requested_mode="engineering",
+    )
+    payload = assessment.model_dump(mode="json")
+    assert (
+        "artifact://module-card/caption_subtitle_stack"
+        not in payload["module_selection"]["selected_module_refs"]
+    )
+    assert (
+        "artifact://technique-card/caption_sync_and_style_workflow"
+        not in payload["technique_selection"]["selected_technique_refs"]
+    )
 
 
 def test_lifecycle_task_packet_illegal() -> None:
@@ -261,6 +281,16 @@ def test_golden_environment_spec_round_trip() -> None:
     )
     spec = validate_environment_spec_json(data)
     assert spec.environment_spec_id == "eng_mdo_uv"
+
+
+def test_golden_gui_session_spec_round_trip() -> None:
+    data = _load_fixture(
+        "schemas/control-plane/v1/fixtures/gui-session-spec/valid-minimal.json"
+    )
+    spec = validate_gui_session_spec_json(data)
+    assert spec.display_protocol == "novnc_web"
+    assert spec.control_provider == "openclaw_browser"
+    assert spec.security_policy.allow_host_desktop is False
 
 
 def test_golden_verification_report_round_trip() -> None:

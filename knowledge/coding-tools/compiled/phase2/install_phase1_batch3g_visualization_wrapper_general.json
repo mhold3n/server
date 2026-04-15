@@ -1,0 +1,117 @@
+{
+  "artifact_id": "539e2235-fc95-5b47-9443-838faf5c81b6",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_backbone_docker",
+    "artifact://environment-spec/eng_backbone_gui",
+    "artifact://environment-spec/eng_backbone_uv",
+    "artifact://evidence-bundle/vtk_runtime",
+    "artifact://execution-adapter-spec/vtk_probe",
+    "artifact://gui-session-spec/eng_backbone_gui",
+    "artifact://knowledge-pack/vtk",
+    "artifact://recipe-object/vtk_workflow_coupling",
+    "artifact://verification-report/34165a55-7d67-5bdc-ba36-afa6a6790da5",
+    "artifact://verification-report/c05fc4d0-daba-578a-8ff5-cdc5dd2526dd"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "VTK: solves VTK API-driven workflows for workflow coupling and cross-runtime integration, VTK model assembly and orchestration inside a typed runtime boundary. Best for VTK inside workflow coupling and cross-runtime integration. Avoid Using VTK as a substitute for unrelated workflows outside workflow coupling and cross-runtime integration, Treating VTK as implicitly verified without its linked runtime and evidence bundle. Runtime eng-backbone/uv_venv at .cache/knowledge-envs/eng-backbone; environment ref artifact://environment-spec/eng_backbone_uv; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_backbone_uv; verification refs artifact://verification-report/34165a55-7d67-5bdc-ba36-afa6a6790da5. GUI state NO_GUI.",
+    "excluded_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs"
+    ],
+    "retrieval_keys": [
+      "general",
+      "install",
+      "phase1_batch3g_visualization_wrapper",
+      "phase2_install_phase1_batch3g_visualization_wrapper",
+      "true"
+    ],
+    "role": "general",
+    "role_context_bundle_id": "general_b5f149354c4e4927",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_backbone_docker",
+      "artifact://environment-spec/eng_backbone_gui",
+      "artifact://environment-spec/eng_backbone_uv",
+      "artifact://evidence-bundle/vtk_runtime",
+      "artifact://execution-adapter-spec/vtk_probe",
+      "artifact://gui-session-spec/eng_backbone_gui",
+      "artifact://knowledge-pack/vtk",
+      "artifact://recipe-object/vtk_workflow_coupling",
+      "artifact://verification-report/34165a55-7d67-5bdc-ba36-afa6a6790da5",
+      "artifact://verification-report/c05fc4d0-daba-578a-8ff5-cdc5dd2526dd"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_backbone_docker",
+        "sha256": "516815b9233b2d8efaa06b678538d58f0230494a40709bbcf6a1d386acb67c00"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_backbone_gui",
+        "sha256": "09b0fb000c4709043365aac8d08e077dba040965a30851f7687e31ee72bd146d"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_backbone_uv",
+        "sha256": "62d593a7a5226d18aa9a20839e4457b10fa0d857065bafc7cd35d6d23261df50"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/vtk_runtime",
+        "sha256": "5e31e306eccf1d64b234fcbb4e7eaa240f81a5a7c48481aa83e32cf3665146f4"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/vtk_probe",
+        "sha256": "0cc10f993b97ebb41502ff1eecc0fff998c5b4a44e9671572115323d6eb415ab"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_backbone_gui",
+        "sha256": "78c451e73404c8e4ff9b4106c96a7c80636cb24fa8b1cba2a3d90b1151941b8d"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/vtk",
+        "sha256": "1acd2f15661cddcfde1d7fcb6b716489b3de371e83f42b47bad852571f275f81"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/vtk_workflow_coupling",
+        "sha256": "7a8577d246948fac1d164dc7ad26b0c0819922b2ea913d520a3b800f066dfdf7"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/34165a55-7d67-5bdc-ba36-afa6a6790da5",
+        "sha256": "ebf694eb37aaee25f16163706d3eb697ec642db61c27824a96a872cc94599e8e"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/c05fc4d0-daba-578a-8ff5-cdc5dd2526dd",
+        "sha256": "550ac164d3506dc83234d089a6eaf4d64f16c667151b37f79a3a4d408bfaae32"
+      }
+    ],
+    "task_class": "phase2_install_phase1_batch3g_visualization_wrapper"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

@@ -1,0 +1,183 @@
+{
+  "artifact_id": "557edb82-fbd4-5e2d-beac-d2b36a5a838d",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_dotnet_sdk",
+    "artifact://environment-spec/eng_geometry_native_family_docker",
+    "artifact://environment-spec/eng_geometry_native_family_gui",
+    "artifact://evidence-bundle/cgal_runtime",
+    "artifact://evidence-bundle/opencamlib_runtime",
+    "artifact://evidence-bundle/picogk_shapekernel_runtime",
+    "artifact://execution-adapter-spec/cgal_probe",
+    "artifact://execution-adapter-spec/opencamlib_probe",
+    "artifact://execution-adapter-spec/picogk_shapekernel_probe",
+    "artifact://gui-session-spec/eng_geometry_native_family_gui",
+    "artifact://knowledge-pack/cgal",
+    "artifact://knowledge-pack/geometry_native_family",
+    "artifact://knowledge-pack/opencamlib",
+    "artifact://knowledge-pack/picogk_shapekernel",
+    "artifact://recipe-object/cgal_geometry_manufacturing",
+    "artifact://recipe-object/opencamlib_geometry_manufacturing",
+    "artifact://recipe-object/picogk_shapekernel_seed_stack",
+    "artifact://verification-report/6ae0462a-91b7-5693-afed-edab36b3d6d9",
+    "artifact://verification-report/7bbb7d4b-1ccf-57aa-8b5b-a84762770916",
+    "artifact://verification-report/9b9f8c7c-845b-5487-9d8c-29810365ba5d",
+    "artifact://verification-report/9ce5bf75-b169-5e53-bd3e-f678dfc7f1f1"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "CGAL: solves CGAL backend kernels reused by geometry and manufacturing workflows, CGAL low-level numeric or geometric primitives inside a linked execution adapter. Best for CGAL inside geometry and manufacturing workflows. Avoid Using CGAL as a substitute for unrelated workflows outside geometry and manufacturing workflows, Treating CGAL as implicitly verified without its linked runtime and evidence bundle. Runtime eng-geometry-native-family/docker_image at birtha/knowledge-eng-geometry-native-family:1.0.0; environment ref artifact://environment-spec/eng_geometry_native_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_native_family_docker; verification refs artifact://verification-report/9b9f8c7c-845b-5487-9d8c-29810365ba5d. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_geometry_native_family_gui; control provider noVNC via OpenClaw browser.\nOpenCAMLib: solves OpenCAMLib backend kernels reused by geometry and manufacturing workflows, OpenCAMLib low-level numeric or geometric primitives inside a linked execution adapter. Best for OpenCAMLib inside geometry and manufacturing workflows. Avoid Using OpenCAMLib as a substitute for unrelated workflows outside geometry and manufacturing workflows, Treating OpenCAMLib as implicitly verified without its linked runtime and evidence bundle. Runtime eng-geometry-native-family/docker_image at birtha/knowledge-eng-geometry-native-family:1.0.0; environment ref artifact://environment-spec/eng_geometry_native_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_native_family_docker; verification refs artifact://verification-report/6ae0462a-91b7-5693-afed-edab36b3d6d9. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_geometry_native_family_gui; control provider noVNC via OpenClaw browser.\nPicoGK / ShapeKernel: solves PicoGK / ShapeKernel executable workflows for core engineering workflows, PicoGK / ShapeKernel case setup, launch, and output capture inside the knowledge runtime. Best for PicoGK / ShapeKernel inside core engineering workflows. Avoid Using PicoGK / ShapeKernel as a substitute for unrelated workflows outside core engineering workflows, Treating PicoGK / ShapeKernel as implicitly verified without its linked runtime and evidence bundle. Runtime eng-dotnet/dotnet_toolchain at knowledge/coding-tools/runtime/dotnet/eng-dotnet/bin/Release/net9.0; environment ref artifact://environment-spec/eng_dotnet_sdk; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_dotnet_sdk; verification refs artifact://verification-report/9ce5bf75-b169-5e53-bd3e-f678dfc7f1f1. GUI state NO_GUI.",
+    "excluded_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs"
+    ],
+    "retrieval_keys": [
+      "general",
+      "install",
+      "phase1_batch1e_geometry_native_family",
+      "phase2_install_phase1_batch1e_geometry_native_family",
+      "true"
+    ],
+    "role": "general",
+    "role_context_bundle_id": "general_9952617632468cf2",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_dotnet_sdk",
+      "artifact://environment-spec/eng_geometry_native_family_docker",
+      "artifact://environment-spec/eng_geometry_native_family_gui",
+      "artifact://evidence-bundle/cgal_runtime",
+      "artifact://evidence-bundle/opencamlib_runtime",
+      "artifact://evidence-bundle/picogk_shapekernel_runtime",
+      "artifact://execution-adapter-spec/cgal_probe",
+      "artifact://execution-adapter-spec/opencamlib_probe",
+      "artifact://execution-adapter-spec/picogk_shapekernel_probe",
+      "artifact://gui-session-spec/eng_geometry_native_family_gui",
+      "artifact://knowledge-pack/cgal",
+      "artifact://knowledge-pack/geometry_native_family",
+      "artifact://knowledge-pack/opencamlib",
+      "artifact://knowledge-pack/picogk_shapekernel",
+      "artifact://recipe-object/cgal_geometry_manufacturing",
+      "artifact://recipe-object/opencamlib_geometry_manufacturing",
+      "artifact://recipe-object/picogk_shapekernel_seed_stack",
+      "artifact://verification-report/6ae0462a-91b7-5693-afed-edab36b3d6d9",
+      "artifact://verification-report/7bbb7d4b-1ccf-57aa-8b5b-a84762770916",
+      "artifact://verification-report/9b9f8c7c-845b-5487-9d8c-29810365ba5d",
+      "artifact://verification-report/9ce5bf75-b169-5e53-bd3e-f678dfc7f1f1"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_dotnet_sdk",
+        "sha256": "030d9ac939da07c14cc33660bfd36aba774b23d63b157b3889e347b4c071ffe1"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_geometry_native_family_docker",
+        "sha256": "bae05010b6b2e635f1c19fbfb302dccef5740ac956cd75cfe9c67d527fcdacdf"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_geometry_native_family_gui",
+        "sha256": "a60ce47a5f1c48a7d07747c42c31f6b950dfc780c00a95de79feac2d94554bdd"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/cgal_runtime",
+        "sha256": "59109995cc0e28108e03fa0b2b4aef4cdb5b24d5b47eae9e8624fe14c70d3302"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/opencamlib_runtime",
+        "sha256": "444521bcf9b8f4796aa085ec1128f53d96b3ee2db59e9c8482e318ac3fdbd117"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/picogk_shapekernel_runtime",
+        "sha256": "91df17b68463d56712b0156fe01382d115053aa0d9cb3ddd72359332fef5cc1f"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/cgal_probe",
+        "sha256": "229dd68aca4c15d9a51d53c16dd1ed022cb42c78574db8919e677b3e239d980a"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/opencamlib_probe",
+        "sha256": "192911eadfb3fbf8d1c6e51fea8c56080c9d661f2a48527886cd088b1a57ac54"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/picogk_shapekernel_probe",
+        "sha256": "ca7c2a7ff56556c7af7e534dc3467a6d2f3b562114a898d56f9e661f16d664c1"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_geometry_native_family_gui",
+        "sha256": "51b7dac1d0ce2bfcbe2768bce96ead5f6394b3dbde099f7563809054cac0417b"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/cgal",
+        "sha256": "d0898dd503796e238e08c835b4b75a066c79e535098aab61374f85bd084dcc8a"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/geometry_native_family",
+        "sha256": "4e4a14e5a58c7111530b8cd29f59d7a265e4bf0438f216951bf4c651412c0b46"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/opencamlib",
+        "sha256": "2a378d921f726995c443461a7708f12da557c5fa66a8e9a58904286dff3ef85e"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/picogk_shapekernel",
+        "sha256": "dffef655118077bda0f05946d82392551011c9173bea53d2005da8e1626fef05"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/cgal_geometry_manufacturing",
+        "sha256": "57efb71e057f691638c5a145d0584b4ad9f54f779aab8277258cf9122d336bab"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/opencamlib_geometry_manufacturing",
+        "sha256": "2524710de603421164494ef46da9efa9252b4cfc839ba74f8bf656532e8a9d63"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/picogk_shapekernel_seed_stack",
+        "sha256": "c4365190ee4e4083427a2e352bf4f32856d8d11a6ea33ac08c4cc8c119c96d45"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/6ae0462a-91b7-5693-afed-edab36b3d6d9",
+        "sha256": "ef2164c083a4fd6542957b4854a583ba67b05b20fb4c65ba20ea274d083bdac4"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/7bbb7d4b-1ccf-57aa-8b5b-a84762770916",
+        "sha256": "9154fd2bd2a5cc4b51d30bebf5a145b019cc319f7e8f6ee770e5bdb78b6b5032"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/9b9f8c7c-845b-5487-9d8c-29810365ba5d",
+        "sha256": "e009454d70ff219ba9a329c2fef0ca32d581f80f9f17e0a382515a2ca20adb6f"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/9ce5bf75-b169-5e53-bd3e-f678dfc7f1f1",
+        "sha256": "dd4caa9422b73bc15ee13747020a883b08e992708abcb0d5ae19acc6486e60c1"
+      }
+    ],
+    "task_class": "phase2_install_phase1_batch1e_geometry_native_family"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

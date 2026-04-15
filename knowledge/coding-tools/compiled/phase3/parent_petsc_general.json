@@ -1,0 +1,219 @@
+{
+  "artifact_id": "0e45e773-9c78-50d5-80d9-d7c0270a3462",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_petsc_family_docker",
+    "artifact://evidence-bundle/petsc4py_runtime",
+    "artifact://evidence-bundle/petsc_gamg_runtime",
+    "artifact://evidence-bundle/petsc_ksp_runtime",
+    "artifact://evidence-bundle/petsc_runtime",
+    "artifact://evidence-bundle/slepc_runtime",
+    "artifact://execution-adapter-spec/petsc4py_probe",
+    "artifact://execution-adapter-spec/petsc_gamg_probe",
+    "artifact://execution-adapter-spec/petsc_ksp_probe",
+    "artifact://execution-adapter-spec/petsc_probe",
+    "artifact://execution-adapter-spec/slepc_probe",
+    "artifact://knowledge-pack/petsc",
+    "artifact://knowledge-pack/petsc4py",
+    "artifact://knowledge-pack/petsc_family",
+    "artifact://knowledge-pack/petsc_gamg",
+    "artifact://knowledge-pack/petsc_ksp",
+    "artifact://knowledge-pack/slepc",
+    "artifact://recipe-object/petsc4py_optimization_uq_backbone",
+    "artifact://recipe-object/petsc_gamg_solver_backends",
+    "artifact://recipe-object/petsc_ksp_solver_backends",
+    "artifact://recipe-object/petsc_optimization_uq_backbone",
+    "artifact://recipe-object/slepc_solver_backends",
+    "artifact://verification-report/29999cb5-52c7-5345-9aaf-d4dead355b41",
+    "artifact://verification-report/9f060f30-f8e0-5486-80ee-2689af957002",
+    "artifact://verification-report/9fd86fe1-c58d-5385-8cdb-ba5f2bb2bb3f",
+    "artifact://verification-report/dd57c6c3-bfb2-559f-991e-deb729bc8996",
+    "artifact://verification-report/fa26971c-ab93-5345-9676-7d703423f3aa"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "PETSc: solves PETSc backend kernels reused by optimization, UQ, and numerical-backbone workflows, PETSc low-level numeric or geometric primitives inside a linked execution adapter. Best for PETSc inside optimization, UQ, and numerical-backbone workflows. Avoid Using PETSc as a substitute for unrelated workflows outside optimization, UQ, and numerical-backbone workflows, Treating PETSc as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/9f060f30-f8e0-5486-80ee-2689af957002. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_petsc_family_docker: #0 building with \"desktop-linux\" instance using docker driver.\npetsc4py: solves petsc4py bridges parent runtimes into typed optimization, UQ, and numerical-backbone workflows workflows, petsc4py exchange boundaries and compatibility checks across linked runtimes. Best for petsc4py inside optimization, UQ, and numerical-backbone workflows. Avoid Using petsc4py as a substitute for unrelated workflows outside optimization, UQ, and numerical-backbone workflows, Treating petsc4py as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/fa26971c-ab93-5345-9676-7d703423f3aa. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_petsc_family_docker: #0 building with \"desktop-linux\" instance using docker driver.\nPETSc GAMG: solves PETSc GAMG backend kernels reused by solver-backend workflows, PETSc GAMG low-level numeric or geometric primitives inside a linked execution adapter. Best for PETSc GAMG inside solver-backend workflows. Avoid Using PETSc GAMG as a substitute for unrelated workflows outside solver-backend workflows, Treating PETSc GAMG as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/dd57c6c3-bfb2-559f-991e-deb729bc8996. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_petsc_family_docker: #0 building with \"desktop-linux\" instance using docker driver.\nPETSc KSP: solves PETSc KSP backend kernels reused by solver-backend workflows, PETSc KSP low-level numeric or geometric primitives inside a linked execution adapter. Best for PETSc KSP inside solver-backend workflows. Avoid Using PETSc KSP as a substitute for unrelated workflows outside solver-backend workflows, Treating PETSc KSP as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/9fd86fe1-c58d-5385-8cdb-ba5f2bb2bb3f. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_petsc_family_docker: #0 building with \"desktop-linux\" instance using docker driver.\nSLEPc: solves SLEPc backend kernels reused by solver-backend workflows, SLEPc low-level numeric or geometric primitives inside a linked execution adapter. Best for SLEPc inside solver-backend workflows. Avoid Using SLEPc as a substitute for unrelated workflows outside solver-backend workflows, Treating SLEPc as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/29999cb5-52c7-5345-9aaf-d4dead355b41. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_petsc_family_docker: #0 building with \"desktop-linux\" instance using docker driver.",
+    "excluded_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs"
+    ],
+    "retrieval_keys": [
+      "general",
+      "parent_runtime",
+      "petsc",
+      "phase3_parent_petsc",
+      "true"
+    ],
+    "role": "general",
+    "role_context_bundle_id": "general_1d1f55ee4a0535f6",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_petsc_family_docker",
+      "artifact://evidence-bundle/petsc4py_runtime",
+      "artifact://evidence-bundle/petsc_gamg_runtime",
+      "artifact://evidence-bundle/petsc_ksp_runtime",
+      "artifact://evidence-bundle/petsc_runtime",
+      "artifact://evidence-bundle/slepc_runtime",
+      "artifact://execution-adapter-spec/petsc4py_probe",
+      "artifact://execution-adapter-spec/petsc_gamg_probe",
+      "artifact://execution-adapter-spec/petsc_ksp_probe",
+      "artifact://execution-adapter-spec/petsc_probe",
+      "artifact://execution-adapter-spec/slepc_probe",
+      "artifact://knowledge-pack/petsc",
+      "artifact://knowledge-pack/petsc4py",
+      "artifact://knowledge-pack/petsc_family",
+      "artifact://knowledge-pack/petsc_gamg",
+      "artifact://knowledge-pack/petsc_ksp",
+      "artifact://knowledge-pack/slepc",
+      "artifact://recipe-object/petsc4py_optimization_uq_backbone",
+      "artifact://recipe-object/petsc_gamg_solver_backends",
+      "artifact://recipe-object/petsc_ksp_solver_backends",
+      "artifact://recipe-object/petsc_optimization_uq_backbone",
+      "artifact://recipe-object/slepc_solver_backends",
+      "artifact://verification-report/29999cb5-52c7-5345-9aaf-d4dead355b41",
+      "artifact://verification-report/9f060f30-f8e0-5486-80ee-2689af957002",
+      "artifact://verification-report/9fd86fe1-c58d-5385-8cdb-ba5f2bb2bb3f",
+      "artifact://verification-report/dd57c6c3-bfb2-559f-991e-deb729bc8996",
+      "artifact://verification-report/fa26971c-ab93-5345-9676-7d703423f3aa"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_petsc_family_docker",
+        "sha256": "6072a9ec8600f0d5a8cd2fd00b6c11529aa2d6d1dab2f924992030e4aae5f244"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/petsc4py_runtime",
+        "sha256": "e3a81a1a13057e80ea85d49799e9c454b0ef689612688ca5bd6e1cbbfc79c74b"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/petsc_gamg_runtime",
+        "sha256": "c9891febd908345b398caa8d64196b90454d40cb8c85a782ac9a8a0de0fdc371"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/petsc_ksp_runtime",
+        "sha256": "306fc1a0207916b7a60b3fc164cdb652dddebc8bd13d0aa111500842dc46155d"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/petsc_runtime",
+        "sha256": "b88b646daf8ecfa4864613ec904dd85a383dbb55cd21b360e493dd3d4d5faa03"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/slepc_runtime",
+        "sha256": "3659872d866206686c3b4d6718989bb768aa7785bd8ec72fa84e1fa8c4ff1867"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/petsc4py_probe",
+        "sha256": "3baa06df14091283ffb4c224046af4a16ff07442d9afea8cf612837a9413f961"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/petsc_gamg_probe",
+        "sha256": "bbd5611152a79da8f7c2bd466cca64e95175024b07b58c3f3745f4f59f086038"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/petsc_ksp_probe",
+        "sha256": "f644e89ba72d4e09b43140c07287a44f76c0c5612f58868dcd78f3d0fa3e5112"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/petsc_probe",
+        "sha256": "1f28102885e2387e94dae4c904e44320b149a1c6aba32a330878b345d93bc80e"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/slepc_probe",
+        "sha256": "37c10eb31d76780fc6a5944287e70dac1dc860d31f92799fae72095680ad93c5"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc",
+        "sha256": "a195d73cdec46f87c7fa832e2ebbbad95acdacf327f45e2328a6cee6d1483b73"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc4py",
+        "sha256": "65494bd481bb5f47d31c41dcae11a7b4057fa8b873b8e76d8bdfbd4c5856d260"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc_family",
+        "sha256": "e555bb51cea23d3cafa27b5d60a1d3aaa54f27eee77a92f8d561a1b12e71af1a"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc_gamg",
+        "sha256": "0d88b56608aafe1dd68e248de4439a884c7ec0cf1dd7080b0c5f953f75cba545"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc_ksp",
+        "sha256": "57ced9d1c53fd08c586d9777704db6f909397f322172e874a3d3e7fdb91c666e"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/slepc",
+        "sha256": "5ffc193fa4ba95819b17b8c31a5ef56c2a262e01f7f78b939e52df4430207e3c"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/petsc4py_optimization_uq_backbone",
+        "sha256": "e15d1a6c7166cbc8f8c65a8197e4dce34a35a0edcdc095c0aea5dd1b8b3c1238"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/petsc_gamg_solver_backends",
+        "sha256": "e08cb5a864b3ce2314f667261e846b71a21082a403a47f0fe5b8246cafbb85a8"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/petsc_ksp_solver_backends",
+        "sha256": "a0e154f465894c31c61ef8fd572c4a324e597b8f72c9c10822d7ddf859c81bf5"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/petsc_optimization_uq_backbone",
+        "sha256": "72a8042512bf154a2c7771248f667090069fccc1296fcfce44adf5f2590f0535"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/slepc_solver_backends",
+        "sha256": "fa647a9e7eddaf5d38f10a5c8ef7e4d0bf774b7cad9600cfa201f5be6c24c853"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/29999cb5-52c7-5345-9aaf-d4dead355b41",
+        "sha256": "76e726108d23c193d22822dce7a8ba14b53295a5161c438a12f633a4d9959f5b"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/9f060f30-f8e0-5486-80ee-2689af957002",
+        "sha256": "1c0a95d5c31e8453a721d533bff89887f225d35192aff8b7e8033f4b42a7ee28"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/9fd86fe1-c58d-5385-8cdb-ba5f2bb2bb3f",
+        "sha256": "b48f4285f51890dcc84892cd5328c545322a133f57f8352796b6634a6d5d523b"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/dd57c6c3-bfb2-559f-991e-deb729bc8996",
+        "sha256": "117438ce480781bb530667a1022fcca39beaf3c159dc0918eb90190af3608398"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/fa26971c-ab93-5345-9676-7d703423f3aa",
+        "sha256": "778dcff2601c5554785dae354363c7e7b77dacc577f1f1e7a2d4d88365a5d6b1"
+      }
+    ],
+    "task_class": "phase3_parent_petsc"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

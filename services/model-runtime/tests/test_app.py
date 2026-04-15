@@ -34,6 +34,20 @@ def client() -> TestClient:
     return TestClient(app)
 
 
+def test_health_reports_roles_and_infer_backends(client: TestClient) -> None:
+    r = client.get("/health")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["mock_infer"] == "true"
+    assert body["generators_loaded"] == []
+    assert body["roles"]["general"]["infer_backend"] == "causal_lm"
+    assert body["roles"]["coding"]["infer_backend"] == "causal_lm"
+    assert body["roles"]["multimodal"]["infer_backend"] == "qwen2_5_vl"
+    for role in ("general", "coding", "multimodal"):
+        assert "model_id" in body["roles"][role]
+        assert body["roles"][role]["model_id"].startswith("Qwen/")
+
+
 def test_infer_general_root_and_solve_e2e(client: TestClient) -> None:
     orch = {
         "packet_id": "11111111-1111-4111-8111-111111111111",

@@ -1,0 +1,99 @@
+{
+  "artifact_id": "b195324a-56ee-5ac9-9099-e9ace6349f87",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_petsc_family_docker",
+    "artifact://evidence-bundle/primme_runtime",
+    "artifact://execution-adapter-spec/primme_probe",
+    "artifact://knowledge-pack/petsc_family",
+    "artifact://knowledge-pack/primme",
+    "artifact://recipe-object/primme_solver_backends",
+    "artifact://verification-report/af41d13c-b085-5121-b16e-be105b3b5d78"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "PRIMME: solves PRIMME backend kernels reused by solver-backend workflows, PRIMME low-level numeric or geometric primitives inside a linked execution adapter. Best for PRIMME inside solver-backend workflows. Avoid Using PRIMME as a substitute for unrelated workflows outside solver-backend workflows, Treating PRIMME as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/af41d13c-b085-5121-b16e-be105b3b5d78. Runtime gate: Smoke failed for primme: Traceback (most recent call last):.",
+    "excluded_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs"
+    ],
+    "retrieval_keys": [
+      "general",
+      "package",
+      "phase3_package_primme",
+      "primme",
+      "true"
+    ],
+    "role": "general",
+    "role_context_bundle_id": "general_0be4d098248dc0f9",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_petsc_family_docker",
+      "artifact://evidence-bundle/primme_runtime",
+      "artifact://execution-adapter-spec/primme_probe",
+      "artifact://knowledge-pack/petsc_family",
+      "artifact://knowledge-pack/primme",
+      "artifact://recipe-object/primme_solver_backends",
+      "artifact://verification-report/af41d13c-b085-5121-b16e-be105b3b5d78"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_petsc_family_docker",
+        "sha256": "6072a9ec8600f0d5a8cd2fd00b6c11529aa2d6d1dab2f924992030e4aae5f244"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/primme_runtime",
+        "sha256": "476717cf129232291c2bcd501d25d46699231e4c3b2fad12a96ec7771c389adc"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/primme_probe",
+        "sha256": "e606e87776a8fd69145b7bd26bcae4220c14372040b9f53739575f47f4be9967"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc_family",
+        "sha256": "e555bb51cea23d3cafa27b5d60a1d3aaa54f27eee77a92f8d561a1b12e71af1a"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/primme",
+        "sha256": "5670619326cc7bb5f442e153a66d2cdf92316ceecbf920931782d9a96b6e22e1"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/primme_solver_backends",
+        "sha256": "46b92c23202945a94ac15a9a99f66e429e3debdd534d08668029da7fd0efb213"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/af41d13c-b085-5121-b16e-be105b3b5d78",
+        "sha256": "eef43c073f86546e837b1142b2bac21e98751e4badb09ac874303fd03718ca73"
+      }
+    ],
+    "task_class": "phase3_package_primme"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

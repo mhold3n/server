@@ -1,0 +1,99 @@
+{
+  "artifact_id": "0eeefd9e-a1e8-5c4f-9aee-58280d19b166",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_tchem_docker",
+    "artifact://evidence-bundle/tchem_runtime",
+    "artifact://execution-adapter-spec/tchem_probe",
+    "artifact://knowledge-pack/nlp_time_chem_family",
+    "artifact://knowledge-pack/tchem",
+    "artifact://recipe-object/tchem_thermofluids_chemistry",
+    "artifact://verification-report/48b2a72b-c04d-5c5e-ad9b-bc2d851d0baf"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "TChem: use tchem, TChem configuration surface, eng_tchem_docker. Adapter python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_tchem_docker takes working_dir, problem. Launcher knowledge/coding-tools/runtime/launchers/eng_tchem-container.sh. Recipe TChem phase 2 runtime-linked recipe follows Resolve artifact://environment-spec/eng_tchem_docker as the canonical runtime surface, Run the linked health check for TChem, Stop if the runtime verification report is still REWORK, Execute TChem only inside its declared capability boundary and record the evidence refs. Runtime eng-tchem/docker_image at birtha/knowledge-eng-tchem:1.0.0; environment ref artifact://environment-spec/eng_tchem_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_tchem_docker; verification refs artifact://verification-report/48b2a72b-c04d-5c5e-ad9b-bc2d851d0baf. Runtime gate: Bootstrap failed for artifact://environment-spec/eng_tchem_docker: #0 building with \"desktop-linux\" instance using docker driver.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "retrieval_keys": [
+      "coder",
+      "package",
+      "phase3_package_tchem",
+      "tchem",
+      "true"
+    ],
+    "role": "coder",
+    "role_context_bundle_id": "coder_7d425f6020d82827",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_tchem_docker",
+      "artifact://evidence-bundle/tchem_runtime",
+      "artifact://execution-adapter-spec/tchem_probe",
+      "artifact://knowledge-pack/nlp_time_chem_family",
+      "artifact://knowledge-pack/tchem",
+      "artifact://recipe-object/tchem_thermofluids_chemistry",
+      "artifact://verification-report/48b2a72b-c04d-5c5e-ad9b-bc2d851d0baf"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_tchem_docker",
+        "sha256": "ba82e8890c4933ea0e76970322670d2c0f48aa79930c816115c67878c6472d4b"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/tchem_runtime",
+        "sha256": "864b5f69b4db28f5a044caa8e7ac63e07a196514a27ec959fb1c612cd2b44eca"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/tchem_probe",
+        "sha256": "2e48a2dbe768b55481ddd691d5931d3391e5afba967ea29f9ba18f4143b159ab"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/nlp_time_chem_family",
+        "sha256": "ae753921bf274193c7f330b99a74f02760e1ee93cd8aa51c51e2e7392edda7cc"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/tchem",
+        "sha256": "3cc6e6ae832e0fb36c55bc935aab6ca718094e1d065655f28f559435e97b167e"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/tchem_thermofluids_chemistry",
+        "sha256": "7155ef50a3183f014d0eb48d18ef3064bdcc91596dcf5d7ac38971c4d4544516"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/48b2a72b-c04d-5c5e-ad9b-bc2d851d0baf",
+        "sha256": "564403fc029c18adc4fb9703c058ac09bc68f3afdf55a55456a43d0e12b02560"
+      }
+    ],
+    "task_class": "phase3_package_tchem"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

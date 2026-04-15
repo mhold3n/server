@@ -1,0 +1,93 @@
+{
+  "artifact_id": "83ef680b-5f04-5566-af00-09a837b29853",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_code_saturne_docker",
+    "artifact://evidence-bundle/code_saturne_runtime",
+    "artifact://execution-adapter-spec/code_saturne_probe",
+    "artifact://knowledge-pack/code_saturne",
+    "artifact://recipe-object/code_saturne_thermofluids_chemistry",
+    "artifact://verification-report/d5acca68-a7bb-5126-81d8-cc4fcd23060c"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "code_saturne: solves code_saturne executable workflows for thermofluids and chemistry workflows, code_saturne case setup, launch, and output capture inside the knowledge runtime. Best for code_saturne inside thermofluids and chemistry workflows. Avoid Using code_saturne as a substitute for unrelated workflows outside thermofluids and chemistry workflows, Treating code_saturne as implicitly verified without its linked runtime and evidence bundle. Runtime eng-code-saturne/docker_image at birtha/knowledge-eng-code-saturne:1.0.0; environment ref artifact://environment-spec/eng_code_saturne_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_code_saturne_docker; verification refs artifact://verification-report/d5acca68-a7bb-5126-81d8-cc4fcd23060c. Runtime gate: Healthcheck failed for artifact://environment-spec/eng_code_saturne_docker: command exited with 1.",
+    "excluded_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs"
+    ],
+    "retrieval_keys": [
+      "code_saturne",
+      "general",
+      "package",
+      "phase3_package_code_saturne",
+      "true"
+    ],
+    "role": "general",
+    "role_context_bundle_id": "general_b6e9ceba9d375b4a",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_code_saturne_docker",
+      "artifact://evidence-bundle/code_saturne_runtime",
+      "artifact://execution-adapter-spec/code_saturne_probe",
+      "artifact://knowledge-pack/code_saturne",
+      "artifact://recipe-object/code_saturne_thermofluids_chemistry",
+      "artifact://verification-report/d5acca68-a7bb-5126-81d8-cc4fcd23060c"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_code_saturne_docker",
+        "sha256": "52487c238008fbf72951df10b4004a1bee9f4c309e4a07ec54d1f066bf72609e"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/code_saturne_runtime",
+        "sha256": "080f99c5460bd35d7c34f0062e9129633ce9f6dbf49b5ce23c3ac7853e20b71b"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/code_saturne_probe",
+        "sha256": "9ee1e962c3cee581500676c46d8a5ab7cc4e864e224a615dce73ad314e5c8b93"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/code_saturne",
+        "sha256": "8047204a30b3140f54f7e794ffbf582c0a5f5602a172d14a215f86cc0eb44224"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/code_saturne_thermofluids_chemistry",
+        "sha256": "f8a37c3988efd0814eb3f141ba6f236eb48a79426123ece7c2c75418d586b723"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/d5acca68-a7bb-5126-81d8-cc4fcd23060c",
+        "sha256": "27fbbdec13a06f45152800dcc0485c8edbdd9e3764f98a402a0e83bca6fd820e"
+      }
+    ],
+    "task_class": "phase3_package_code_saturne"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

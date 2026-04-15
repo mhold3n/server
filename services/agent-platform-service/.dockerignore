@@ -1,0 +1,7 @@
+node_modules
+**/node_modules
+open-multi-agent/examples
+open-multi-agent/README*.md
+**/*.test.ts
+.git
+.DS_Store

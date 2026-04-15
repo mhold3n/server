@@ -273,6 +273,14 @@ class ResponseControlAssessment(BaseModel):
 
     @model_validator(mode="after")
     def _response_control_invariants(self) -> ResponseControlAssessment:
+        """
+        Validates the semantic coherence of a response control formulation.
+        
+        Why: We mandate a strict assembly order because the conceptual reasoning must flow
+        from abstract (theory/pool) to concrete implementation (module/technique).
+        Additionally, techniques cannot be derived from modules that were not explicitly selected,
+        ensuring that the workflow doesn't hallucinate method applications from disjoint libraries.
+        """
         expected = ["mode", "knowledge_pool", "module", "technique", "theory"]
         if self.assembly_order != expected:
             raise ValueError("response_control assembly_order must be mode, knowledge_pool, module, technique, theory")
@@ -284,7 +292,13 @@ class ResponseControlAssessment(BaseModel):
 
 
 class TaskPacket(BaseModel):
-    """Specialist execution contract."""
+    """
+    The atomic unit of work dispatched to an execution agent or deterministic solver.
+    
+    Why: Instead of streaming messy chat history to an agent, the control plane synthesizes
+    all constraints, required tools, and domain boundaries into a TaskPacket. This acts
+    as a strict, auditable contract that agents are evaluated against in the verification stage.
+    """
 
     task_packet_id: UUID
     schema_version: str = Field(default="1.0.0", pattern=r"^1\.0\.0$")
@@ -316,7 +330,14 @@ class TaskPacket(BaseModel):
 
     @model_validator(mode="after")
     def _invariants(self) -> TaskPacket:
-        """Runtime invariants beyond JSON Schema (consumer conformance)."""
+        """
+        Runtime invariants beyond JSON Schema (consumer conformance).
+        
+        Why: These invariants explicitly block invalid state configurations before they hit the agent engine.
+        For example:
+        - If knowledge is required but coverage is WEAK, we block the packet rather than letting the agent guess.
+        - If the coding_model runs with a response_control boundary, it MUST have module_refs so it knows what libraries to use.
+        """
         if self.task_type is TaskType.ESCALATION_REVIEW and not self.budget_policy.allow_escalation:
             raise ValueError("ESCALATION_REVIEW requires budget_policy.allow_escalation=true")
         if self.task_type is TaskType.VALIDATION and len(self.validation_requirements) < 1:

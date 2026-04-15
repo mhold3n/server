@@ -1,0 +1,93 @@
+{
+  "artifact_id": "f60b03f1-14d9-5c13-8214-f6c513276ed3",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_paraview_docker",
+    "artifact://evidence-bundle/paraview_runtime",
+    "artifact://execution-adapter-spec/paraview_probe",
+    "artifact://knowledge-pack/paraview",
+    "artifact://recipe-object/paraview_workflow_coupling",
+    "artifact://verification-report/2217364c-bd8c-53be-b282-1be083e9ef04"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "ParaView: review Probe ParaView through artifact://environment-spec/eng_paraview_docker, Confirm the current Phase 2 gate state for ParaView. Checklist ParaView pack links to the intended environment spec(s), ParaView adapter and evidence bundle reference the same runtime verification report, ParaView anti-patterns and failure signatures match the module class and runtime path. Watch anti-patterns Using ParaView for using paraview as a substitute for unrelated workflows outside workflow coupling and cross-runtime integration., Skipping the linked health check and provenance capture for artifact://environment-spec/eng_paraview_docker., Crossing the adapter boundary for ParaView without a typed contract tied to paraview executable workflows for workflow coupling and cross-runtime integration.. Healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_paraview_docker. Runtime eng-paraview/docker_image at birtha/knowledge-eng-paraview:1.0.0; environment ref artifact://environment-spec/eng_paraview_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_paraview_docker; verification refs artifact://verification-report/2217364c-bd8c-53be-b282-1be083e9ef04. Runtime gate: Healthcheck failed for artifact://environment-spec/eng_paraview_docker: docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"python\": executable file not found in $PATH.",
+    "excluded_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs",
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes"
+    ],
+    "included_sections": [
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "retrieval_keys": [
+      "package",
+      "paraview",
+      "phase3_package_paraview",
+      "reviewer",
+      "true"
+    ],
+    "role": "reviewer",
+    "role_context_bundle_id": "reviewer_b4b4ced572dbe494",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_paraview_docker",
+      "artifact://evidence-bundle/paraview_runtime",
+      "artifact://execution-adapter-spec/paraview_probe",
+      "artifact://knowledge-pack/paraview",
+      "artifact://recipe-object/paraview_workflow_coupling",
+      "artifact://verification-report/2217364c-bd8c-53be-b282-1be083e9ef04"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_paraview_docker",
+        "sha256": "81379afa7f014499b57c142c4762e4fa0612a160c8dabd7fcc22c6daa6c484c4"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/paraview_runtime",
+        "sha256": "5c00a4b1fdeec2a9963a2ceee4eb33ae30560561c1881aedfafcba7bdbec56fa"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/paraview_probe",
+        "sha256": "dc77f1fa2944c047e8a145c3e2aae2d477a6d1882f24cb26fa4cf7efbedc72e1"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/paraview",
+        "sha256": "3528be3142c383bc7122fc5cc0aa19a423805bfb899f10c23035c41b33e60de3"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/paraview_workflow_coupling",
+        "sha256": "1c45ad276a90daf77bbdb00fdd61c61b876e1cbb897d6258e6df32df3839674c"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/2217364c-bd8c-53be-b282-1be083e9ef04",
+        "sha256": "2f397a61f3bc6fc39784ed914febfbd482b6f230264fdc4f76195aa9deaa16d4"
+      }
+    ],
+    "task_class": "phase3_package_paraview"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

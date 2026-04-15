@@ -1,0 +1,57 @@
+{
+  "entries": [
+    {
+      "acquisition_status": "awaiting_website_downloadable_windows_installer",
+      "blocked_by_refs": [],
+      "install_method_category": "I6_deferred_external_manual",
+      "kb_build_method_category": "K6_acquisition_deferred_pack",
+      "minutes_source_refs": [
+        "minutes://table1#L327"
+      ],
+      "module_ref": "minutes-module://femm",
+      "name": "FEMM",
+      "next_sprint_entry_condition": "A non-interactive FEMM installer artifact is available for canonical packaging into the wine runtime.",
+      "phase_state": "deferred",
+      "phase_target": "next_sprint",
+      "recommended_runtime_target": "wine_backed_docker_runtime",
+      "requested_from_user": "Provide the approved FEMM installer URL, mirrored binary, or downloaded installer artifact so it can be staged inside the wine-backed runtime.",
+      "slug": "femm"
+    },
+    {
+      "acquisition_status": "awaiting_license_and_binary_delivery",
+      "blocked_by_refs": [],
+      "install_method_category": "I6_deferred_external_manual",
+      "kb_build_method_category": "K6_acquisition_deferred_pack",
+      "minutes_source_refs": [
+        "minutes://solver_table#L821"
+      ],
+      "module_ref": "minutes-module://ma87",
+      "name": "MA87",
+      "next_sprint_entry_condition": "Licensed source or binaries are available for canonical build automation.",
+      "phase_state": "deferred",
+      "phase_target": "next_sprint",
+      "recommended_runtime_target": "licensed_containerized_backend_family",
+      "requested_from_user": "Provide HSL license entitlement plus source or binaries for MA87 packaging.",
+      "slug": "ma87"
+    },
+    {
+      "acquisition_status": "awaiting_website_or_git_dependency_source",
+      "blocked_by_refs": [],
+      "install_method_category": "I6_deferred_external_manual",
+      "kb_build_method_category": "K6_acquisition_deferred_pack",
+      "minutes_source_refs": [
+        "minutes://table1#L326"
+      ],
+      "module_ref": "minutes-module://pyleecan",
+      "name": "PYLEECAN",
+      "next_sprint_entry_condition": "The swat-em dependency is pinned to a canonical source that can be installed non-interactively.",
+      "phase_state": "deferred",
+      "phase_target": "next_sprint",
+      "recommended_runtime_target": "uv_venv_with_locked_dependency_source",
+      "requested_from_user": "Provide a pinned vendored swat-em source or an internal mirror that can replace the current URL dependency with a reproducible CLI install input.",
+      "slug": "pyleecan"
+    }
+  ],
+  "schema_version": "1.0.0",
+  "source": "Derived from the excluded-module recovery ledger."
+}

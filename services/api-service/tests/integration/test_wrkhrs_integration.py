@@ -13,9 +13,9 @@ from src.observability.mlflow_logger import (
     RunSpec,
 )
 from src.policies.evidence import EvidencePolicy
-from src.wrkhrs.conditioning import NonGenerativeConditioning, RequestConditioner
-from src.wrkhrs.domain_classifier import DomainClassifier
-from src.wrkhrs.gateway_client import WrkHrsGatewayClient
+from src.ai_gateway_client.conditioning import NonGenerativeConditioning, RequestConditioner
+from src.ai_gateway_client.domain_classifier import DomainClassifier
+from src.ai_gateway_client.gateway_client import WrkHrsGatewayClient
 
 
 class TestWrkHrsIntegration:

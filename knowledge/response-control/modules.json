@@ -1,0 +1,369 @@
+[
+  {
+    "keywords": [
+      "asr",
+      "whisper",
+      "whisperx",
+      "faster-whisper",
+      "stable-ts",
+      "vad",
+      "silero",
+      "forced alignment",
+      "word timestamp",
+      "diarization",
+      "pyannote"
+    ],
+    "label": "ASR Alignment Stack",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "asr_alignment_stack",
+    "module_key": "asr_alignment_stack",
+    "module_kind": "package",
+    "pool_refs": [
+      "artifact://knowledge-pool/video_editing"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "ASR, VAD, diarization, and forced-alignment packages used to produce edit-safe word timings and speech structure.",
+    "technique_refs": [
+      "artifact://technique-card/word_level_alignment_for_edits"
+    ]
+  },
+  {
+    "keywords": [
+      "caption",
+      "subtitle",
+      "srt",
+      "vtt",
+      "ass",
+      "libass",
+      "pysubs2",
+      "ffsubsync",
+      "aegisub",
+      "burn-in"
+    ],
+    "label": "Caption & Subtitle Stack",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "caption_subtitle_stack",
+    "module_key": "caption_subtitle_stack",
+    "module_kind": "package",
+    "pool_refs": [
+      "artifact://knowledge-pool/video_editing"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "Package/tool module for sidecar captions, ASS styling, subtitle sync repair, burn-in rendering, and caption QA.",
+    "technique_refs": [
+      "artifact://technique-card/caption_sync_and_style_workflow"
+    ]
+  },
+  {
+    "keywords": [
+      "cfd",
+      "finite volume",
+      "flow",
+      "fluid",
+      "turbulence",
+      "openfoam",
+      "conservation",
+      "residual"
+    ],
+    "label": "CFD Solver Stack",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "cfd_solver_stack",
+    "module_key": "cfd_solver_stack",
+    "module_kind": "package",
+    "pool_refs": [
+      "artifact://knowledge-pool/computational_engineering"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "Flow simulation setup, discretization choices, turbulence/transport assumptions, residual checks, and conservation verification.",
+    "technique_refs": [
+      "artifact://technique-card/cfd_conservation_verification"
+    ]
+  },
+  {
+    "keywords": [
+      "cantera",
+      "rdkit",
+      "kinetics",
+      "thermochemistry",
+      "reaction mechanism",
+      "species",
+      "combustion"
+    ],
+    "label": "Chemical Modeling Stack",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "chemical_modeling_stack",
+    "module_key": "chemical_modeling_stack",
+    "module_kind": "package",
+    "pool_refs": [
+      "artifact://knowledge-pool/chemistry_chemical_modeling"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "Reaction mechanisms, thermochemical properties, kinetic models, molecular data, and chemically scoped numerical execution.",
+    "technique_refs": [
+      "artifact://technique-card/chemical_model_verification"
+    ]
+  },
+  {
+    "keywords": [
+      "orchestration",
+      "devplane",
+      "control-plane",
+      "task packet",
+      "claw",
+      "merged oma",
+      "multi-agent"
+    ],
+    "label": "Engineering Orchestration Stack",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "engineering_orchestration_stack",
+    "module_key": "engineering_orchestration_stack",
+    "module_kind": "knowledge_bank",
+    "pool_refs": [
+      "artifact://knowledge-pool/computational_engineering"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "DevPlane/control-plane task DAGs, task packets, routing metadata, donor orchestration policy, and Claw execution-kernel boundary knowledge.",
+    "technique_refs": [
+      "artifact://technique-card/artifact_first_task_graph_execution"
+    ]
+  },
+  {
+    "keywords": [
+      "provenance",
+      "warc",
+      "snapshot",
+      "hash",
+      "lineage",
+      "evidence family",
+      "independence",
+      "source chain",
+      "audit"
+    ],
+    "label": "Evidence Provenance Bank",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "evidence_provenance_bank",
+    "module_key": "evidence_provenance_bank",
+    "module_kind": "knowledge_bank",
+    "pool_refs": [
+      "artifact://knowledge-pool/source_corroboration"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "Knowledge-bank module for provenance capture, WARC/snapshot discipline, lineage collapse, source independence, and replayable evidence records.",
+    "technique_refs": [
+      "artifact://technique-card/evidence_family_collapse_and_provenance"
+    ]
+  },
+  {
+    "keywords": [
+      "fem",
+      "finite element",
+      "mesh",
+      "boundary condition",
+      "stress",
+      "thermal",
+      "fenics",
+      "calculix"
+    ],
+    "label": "FEM Solver Stack",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "fem_solver_stack",
+    "module_key": "fem_solver_stack",
+    "module_kind": "package",
+    "pool_refs": [
+      "artifact://knowledge-pool/mechanical_engineering",
+      "artifact://knowledge-pool/computational_engineering"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "Finite-element model setup, meshing, boundary-condition discipline, convergence checks, and structural/thermal simulation handoff.",
+    "technique_refs": [
+      "artifact://technique-card/fem_model_verification"
+    ]
+  },
+  {
+    "keywords": [
+      "cadquery",
+      "occt",
+      "gmsh",
+      "mesh",
+      "cad",
+      "geometry",
+      "manufacturing",
+      "tolerance"
+    ],
+    "label": "Manufacturing Geometry Stack",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "manufacturing_geometry_stack",
+    "module_key": "manufacturing_geometry_stack",
+    "module_kind": "tool",
+    "pool_refs": [
+      "artifact://knowledge-pool/manufacturing"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "CAD/mesh/geometry tooling for manufacturing-aware modeling, tolerancing, and downstream simulation preparation.",
+    "technique_refs": [
+      "artifact://technique-card/geometry_to_manufacturing_handoff"
+    ]
+  },
+  {
+    "keywords": [
+      "scipy",
+      "numpy",
+      "solver",
+      "optimization",
+      "ode",
+      "pde",
+      "nonlinear",
+      "uq"
+    ],
+    "label": "Numerical Solver Stack",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "numerical_solver_stack",
+    "module_key": "numerical_solver_stack",
+    "module_kind": "package",
+    "pool_refs": [
+      "artifact://knowledge-pool/mechanical_engineering",
+      "artifact://knowledge-pool/computational_engineering",
+      "artifact://knowledge-pool/chemistry_chemical_modeling"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "Python and runtime-backed numerical packages for optimization, ODE/PDE solving, nonlinear systems, and sensitivity checks.",
+    "technique_refs": [
+      "artifact://technique-card/numerical_solver_selection"
+    ]
+  },
+  {
+    "keywords": [
+      "crossref",
+      "doi",
+      "crossmark",
+      "retraction",
+      "preprint",
+      "arxiv",
+      "medrxiv",
+      "semantic scholar",
+      "pubmed",
+      "metadata"
+    ],
+    "label": "Scholarly Metadata Lookup Stack",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "scholarly_metadata_lookup_stack",
+    "module_key": "scholarly_metadata_lookup_stack",
+    "module_kind": "package",
+    "pool_refs": [
+      "artifact://knowledge-pool/source_corroboration"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "Package/API module for DOI, preprint, citation, correction, retraction, and publication-status lookup during source corroboration.",
+    "technique_refs": [
+      "artifact://technique-card/root_artifact_update_checks"
+    ]
+  },
+  {
+    "keywords": [
+      "corroboration",
+      "source validation",
+      "credibility",
+      "fact check",
+      "claim extraction",
+      "atomic claim",
+      "root artifact",
+      "evidence packet",
+      "huge if true"
+    ],
+    "label": "Source Corroboration Workbench",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "source_corroboration_workbench",
+    "module_key": "source_corroboration_workbench",
+    "module_kind": "tool",
+    "pool_refs": [
+      "artifact://knowledge-pool/source_corroboration"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "Research workflow module for turning questionable sources into atomic claims, traced root artifacts, evidence-family analysis, and auditable evidence packets.",
+    "technique_refs": [
+      "artifact://technique-card/trace_first_evidence_packet_assembly"
+    ]
+  },
+  {
+    "keywords": [
+      "standard",
+      "astm",
+      "iso",
+      "asme",
+      "units",
+      "reference data",
+      "benchmark",
+      "material table"
+    ],
+    "label": "Standards Reference Bank",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "standards_reference_bank",
+    "module_key": "standards_reference_bank",
+    "module_kind": "knowledge_bank",
+    "pool_refs": [
+      "artifact://knowledge-pool/mechanical_engineering",
+      "artifact://knowledge-pool/manufacturing",
+      "artifact://knowledge-pool/chemistry_chemical_modeling",
+      "artifact://knowledge-pool/standards_data"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "Static standards, benchmark cases, material tables, units policy, and acceptance-reference material used for verification anchoring.",
+    "technique_refs": [
+      "artifact://technique-card/standards_anchored_verification"
+    ]
+  },
+  {
+    "keywords": [
+      "otio",
+      "opentimelineio",
+      "timeline",
+      "edl",
+      "fcpxml",
+      "aaf",
+      "ffmpeg",
+      "timebase",
+      "vfr",
+      "non-destructive"
+    ],
+    "label": "Timeline Interchange Stack",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "timeline_interchange_stack",
+    "module_key": "timeline_interchange_stack",
+    "module_kind": "package",
+    "pool_refs": [
+      "artifact://knowledge-pool/video_editing"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "Package module for non-destructive timeline representation, OTIO/FCPXML/EDL/AAF export, timebase handling, and render handoff.",
+    "technique_refs": [
+      "artifact://technique-card/non_destructive_timeline_export"
+    ]
+  },
+  {
+    "keywords": [
+      "rough cut",
+      "auto-editor",
+      "retake",
+      "restart",
+      "filler",
+      "low-flow",
+      "keep interval",
+      "cut interval",
+      "llm scoring",
+      "human review"
+    ],
+    "label": "Transcript Rough-Cut Stack",
+    "legacy_knowledge_pack_refs": [],
+    "module_card_id": "transcript_rough_cut_stack",
+    "module_key": "transcript_rough_cut_stack",
+    "module_kind": "tool",
+    "pool_refs": [
+      "artifact://knowledge-pool/video_editing"
+    ],
+    "schema_version": "1.0.0",
+    "summary": "Tool module for transcript-driven keep/cut decisions, retake detection, filler cleanup, low-flow scoring, and human review handoff.",
+    "technique_refs": [
+      "artifact://technique-card/transcript_rough_cut_decisioning"
+    ]
+  }
+]

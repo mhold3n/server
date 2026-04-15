@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import json
 import time
-from typing import Any
+from datetime import datetime, timezone
+from typing import Any, AsyncIterator
 
 import httpx
-from fastapi import APIRouter, HTTPException
+import structlog
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
+from starlette.responses import StreamingResponse
 
 from ..config import get_worker_settings, settings
 from ..control_plane.engineering import evaluate_engagement_mode
@@ -17,8 +20,18 @@ from ..workflows import (
     get_task_card,
     list_task_cards,
 )
+from ..openclaw_bridge import (
+    extract_post_completion_events,
+    idempotency_payload_hash,
+    load_idempotency_record,
+    resolve_idempotency_lookup,
+    save_idempotency_record,
+    validate_and_merge_openclaw_bridge,
+)
+from ..openclaw_bridge.stream_adapter import build_cancel_ack_dict, iter_query_stream_events
 
 router = APIRouter(prefix="/api/ai", tags=["AI"])
+logger = structlog.get_logger(__name__)
 
 _worker_settings = get_worker_settings(settings)
 DEFAULT_LLM_MODEL = _worker_settings.default_model
@@ -150,27 +163,19 @@ class QueryRequest(BaseModel):
     )
 
 
-@router.post("/query")
-async def ai_query(req: QueryRequest) -> dict[str, Any]:
-    """Primary chat/query endpoint backed by the LangGraph orchestrator.
 
-    This endpoint no longer talks directly to the Python router or AI stack
-    workers. Instead it delegates to the `wrkhrs_chat` workflow, which owns
-    tool selection and provider routing.
-    """
-    if not req.prompt and not req.messages:
-        raise HTTPException(status_code=400, detail="Provide 'prompt' or 'messages'")
 
+async def execute_ai_query_pipeline(req: QueryRequest) -> dict[str, Any]:
     # Normalise into a messages-style payload for the orchestrator.
     if req.messages:
         messages = list(req.messages)
     else:
         messages = [{"role": "user", "content": req.prompt or ""}]
-
+    
     # Prepend system message if provided.
     if req.system:
         messages = [{"role": "system", "content": req.system}] + messages
-
+    
     required_tool_results: list[dict[str, Any]] = []
     if req.tools:
         try:
@@ -184,7 +189,7 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
                 status_code=502,
                 detail=f"Required tool execution failed: {exc}",
             ) from exc
-
+    
     input_data: dict[str, Any] = {
         "messages": messages,
         "model": req.model,
@@ -303,7 +308,7 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
     elif selected_mode == "napkin_math":
         workflow_config["analytical_mode"] = True
         workflow_config["non_mutating_only"] = True
-
+    
     async with OrchestratorClient() as client:
         try:
             result = await client.execute_workflow(
@@ -316,7 +321,7 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
                 status_code=502,
                 detail=f"Orchestrator workflow '{workflow_name}' failed: {exc}",
             ) from exc
-
+    
     if selected_mode in {"engineering_task", "strict_engineering"} and engineering_task_id and engineering_run_id:
         result_payload = result.get("result", {}) if isinstance(result, dict) else {}
         if isinstance(result_payload, dict):
@@ -491,6 +496,7 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
     elif isinstance(result, dict):
         result_payload = result.get("result", {})
         if isinstance(result_payload, dict):
+            result_payload.setdefault("referential_state", {})
             result_payload.setdefault("engagement_mode", selected_mode)
             result_payload.setdefault(
                 "engagement_mode_source",
@@ -558,6 +564,131 @@ async def ai_query(req: QueryRequest) -> dict[str, Any]:
                 )
 
     return result
+
+
+@router.post("/query")
+async def ai_query(req: QueryRequest) -> dict[str, Any]:
+    """Primary chat/query endpoint backed by the LangGraph orchestrator.
+
+    This endpoint no longer talks directly to the Python router or AI stack
+    workers. Instead it delegates to the `wrkhrs_chat` workflow, which owns
+    tool selection and provider routing.
+
+    When ``context.openclaw_bridge`` is present, the payload is validated against
+    ``schemas/openclaw-bridge/v1`` and optional Redis-backed idempotency applies
+    for OpenClaw-originated turns (replay on identical payload hash; 409 on
+    conflicting reuse of the same idempotency key).
+    """
+    if not req.prompt and not req.messages:
+        raise HTTPException(status_code=400, detail="Provide 'prompt' or 'messages'")
+
+    req, idem_key = validate_and_merge_openclaw_bridge(req)
+
+    if idem_key:
+        from .. import app as app_module
+
+        redis = app_module.redis_client
+        if redis is not None:
+            payload_hash = idempotency_payload_hash(req)
+            record = await load_idempotency_record(redis, idem_key)
+            outcome = resolve_idempotency_lookup(record, payload_hash)
+            if outcome == "conflict":
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "error": "idempotency_key_conflict",
+                        "message": (
+                            "idempotency_key reused with a different request payload"
+                        ),
+                        "idempotency_key": idem_key,
+                    },
+                )
+            if isinstance(outcome, dict):
+                return outcome
+
+    result = await execute_ai_query_pipeline(req)
+
+    if idem_key and isinstance(result, dict):
+        try:
+            from .. import app as app_module
+
+            redis = app_module.redis_client
+            if redis is not None:
+                await save_idempotency_record(
+                    redis,
+                    idempotency_key=idem_key,
+                    payload_hash=idempotency_payload_hash(req),
+                    response=result,
+                )
+        except Exception as exc:  # pragma: no cover - Redis optional path
+            logger.warning("openclaw_bridge_idempotency_save_failed", error=str(exc))
+
+    return result
+
+
+@router.post("/query/stream")
+async def ai_query_stream(req: QueryRequest, request: Request) -> StreamingResponse:
+    """Typed SSE wrapper around the same orchestration path as ``POST /api/ai/query``.
+
+    For agents: MVP emits ``run.started``, then executes the pipeline once (no
+    mid-run LangGraph deltas until agent-platform supports streaming). Optional
+    ``pending_mode_change`` may follow ``run.completed``. Idempotency **replay**
+    is not applied on this route; use ``POST /api/ai/query`` for Redis replay.
+    """
+
+    if not req.prompt and not req.messages:
+        raise HTTPException(status_code=400, detail="Provide 'prompt' or 'messages'")
+
+    last_event_id = request.headers.get("Last-Event-ID") or request.headers.get("Last-Event-Id")
+    event_cursor = request.query_params.get("event_cursor")
+
+    async def event_gen() -> AsyncIterator[str]:
+        req_merged, _idem = validate_and_merge_openclaw_bridge(req)
+        async for chunk in iter_query_stream_events(
+            req_merged=req_merged,
+            execute_pipeline=execute_ai_query_pipeline,
+            extract_post_completion_events_fn=extract_post_completion_events,
+            last_event_id=last_event_id,
+            event_cursor=event_cursor,
+        ):
+            yield chunk
+
+    return StreamingResponse(
+        event_gen(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.post("/workflows/{workflow_id}/cancel")
+async def cancel_workflow_run(workflow_id: str) -> dict[str, Any]:
+    """Proxy cancel to the agent-platform ``POST /v1/workflows/:id/cancel``.
+
+    For agents: on success, includes ``cancel_ack`` — same typed shape as SSE
+    ``cancel.ack`` (OpenClaw bridge stream-event schema) for clients that want
+    a single JSON envelope without subscribing to a stream.
+    """
+    async with OrchestratorClient() as client:
+        try:
+            upstream = await client.cancel_workflow(workflow_id)
+        except httpx.HTTPStatusError as exc:
+            raise HTTPException(
+                status_code=exc.response.status_code,
+                detail=exc.response.text or str(exc),
+            ) from exc
+        except httpx.HTTPError as exc:
+            raise HTTPException(
+                status_code=502,
+                detail=f"Orchestrator cancel failed: {exc}",
+            ) from exc
+    return {
+        "orchestrator": upstream,
+        "cancel_ack": build_cancel_ack_dict(workflow_id=workflow_id),
+    }
 
 
 class WorkflowRunRequest(BaseModel):

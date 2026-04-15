@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-API_SRC = REPO_ROOT / "services" / "api"
+API_SRC = REPO_ROOT / "services" / "api-service"
 if str(API_SRC) not in sys.path:
     sys.path.insert(0, str(API_SRC))
 

@@ -1,0 +1,1161 @@
+{
+  "artifact_id": "71ac8cad-3db6-50d3-b417-55eaf424445a",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_dotnet_sdk",
+    "artifact://environment-spec/eng_geometry_native_family_docker",
+    "artifact://environment-spec/eng_geometry_native_family_gui",
+    "artifact://environment-spec/eng_ipopt_onemkl_docker",
+    "artifact://environment-spec/eng_ipopt_onemkl_gui",
+    "artifact://environment-spec/eng_nlp_time_chem_family_docker",
+    "artifact://environment-spec/eng_nlp_time_chem_family_gui",
+    "artifact://environment-spec/eng_petsc_family_docker",
+    "artifact://environment-spec/eng_petsc_family_gui",
+    "artifact://environment-spec/eng_sparse_direct_family_docker",
+    "artifact://environment-spec/eng_sparse_direct_family_gui",
+    "artifact://environment-spec/eng_strumpack_docker",
+    "artifact://environment-spec/eng_strumpack_gui",
+    "artifact://environment-spec/eng_tchem_docker",
+    "artifact://environment-spec/eng_tchem_gui",
+    "artifact://environment-spec/eng_trilinos_family_docker",
+    "artifact://environment-spec/eng_trilinos_family_gui",
+    "artifact://evidence-bundle/cgal_runtime",
+    "artifact://evidence-bundle/cholmod_runtime",
+    "artifact://evidence-bundle/hypre_runtime",
+    "artifact://evidence-bundle/ipopt_runtime",
+    "artifact://evidence-bundle/klu_runtime",
+    "artifact://evidence-bundle/ma57_runtime",
+    "artifact://evidence-bundle/ma77_runtime",
+    "artifact://evidence-bundle/ma86_runtime",
+    "artifact://evidence-bundle/ma97_runtime",
+    "artifact://evidence-bundle/mumps_runtime",
+    "artifact://evidence-bundle/onemkl_runtime",
+    "artifact://evidence-bundle/opencamlib_runtime",
+    "artifact://evidence-bundle/petsc_gamg_runtime",
+    "artifact://evidence-bundle/petsc_ksp_runtime",
+    "artifact://evidence-bundle/petsc_runtime",
+    "artifact://evidence-bundle/picogk_shapekernel_runtime",
+    "artifact://evidence-bundle/primme_runtime",
+    "artifact://evidence-bundle/slepc_runtime",
+    "artifact://evidence-bundle/strumpack_runtime",
+    "artifact://evidence-bundle/suitesparse_runtime",
+    "artifact://evidence-bundle/sundials_runtime",
+    "artifact://evidence-bundle/superlu_dist_runtime",
+    "artifact://evidence-bundle/superlu_runtime",
+    "artifact://evidence-bundle/tchem_runtime",
+    "artifact://evidence-bundle/trilinos_belos_runtime",
+    "artifact://evidence-bundle/trilinos_ifpack2_runtime",
+    "artifact://evidence-bundle/trilinos_muelu_runtime",
+    "artifact://evidence-bundle/trilinos_runtime",
+    "artifact://evidence-bundle/umfpack_runtime",
+    "artifact://execution-adapter-spec/cgal_probe",
+    "artifact://execution-adapter-spec/cholmod_probe",
+    "artifact://execution-adapter-spec/hypre_probe",
+    "artifact://execution-adapter-spec/ipopt_probe",
+    "artifact://execution-adapter-spec/klu_probe",
+    "artifact://execution-adapter-spec/ma57_probe",
+    "artifact://execution-adapter-spec/ma77_probe",
+    "artifact://execution-adapter-spec/ma86_probe",
+    "artifact://execution-adapter-spec/ma97_probe",
+    "artifact://execution-adapter-spec/mumps_probe",
+    "artifact://execution-adapter-spec/onemkl_probe",
+    "artifact://execution-adapter-spec/opencamlib_probe",
+    "artifact://execution-adapter-spec/petsc_gamg_probe",
+    "artifact://execution-adapter-spec/petsc_ksp_probe",
+    "artifact://execution-adapter-spec/petsc_probe",
+    "artifact://execution-adapter-spec/picogk_shapekernel_probe",
+    "artifact://execution-adapter-spec/primme_probe",
+    "artifact://execution-adapter-spec/slepc_probe",
+    "artifact://execution-adapter-spec/strumpack_probe",
+    "artifact://execution-adapter-spec/suitesparse_probe",
+    "artifact://execution-adapter-spec/sundials_probe",
+    "artifact://execution-adapter-spec/superlu_dist_probe",
+    "artifact://execution-adapter-spec/superlu_probe",
+    "artifact://execution-adapter-spec/tchem_probe",
+    "artifact://execution-adapter-spec/trilinos_belos_probe",
+    "artifact://execution-adapter-spec/trilinos_ifpack2_probe",
+    "artifact://execution-adapter-spec/trilinos_muelu_probe",
+    "artifact://execution-adapter-spec/trilinos_probe",
+    "artifact://execution-adapter-spec/umfpack_probe",
+    "artifact://gui-session-spec/eng_geometry_native_family_gui",
+    "artifact://gui-session-spec/eng_ipopt_onemkl_gui",
+    "artifact://gui-session-spec/eng_nlp_time_chem_family_gui",
+    "artifact://gui-session-spec/eng_petsc_family_gui",
+    "artifact://gui-session-spec/eng_sparse_direct_family_gui",
+    "artifact://gui-session-spec/eng_strumpack_gui",
+    "artifact://gui-session-spec/eng_tchem_gui",
+    "artifact://gui-session-spec/eng_trilinos_family_gui",
+    "artifact://knowledge-pack/cgal",
+    "artifact://knowledge-pack/cholmod",
+    "artifact://knowledge-pack/coinhsl_family",
+    "artifact://knowledge-pack/geometry_native_family",
+    "artifact://knowledge-pack/hypre",
+    "artifact://knowledge-pack/ipopt",
+    "artifact://knowledge-pack/klu",
+    "artifact://knowledge-pack/ma57",
+    "artifact://knowledge-pack/ma77",
+    "artifact://knowledge-pack/ma86",
+    "artifact://knowledge-pack/ma97",
+    "artifact://knowledge-pack/mumps",
+    "artifact://knowledge-pack/nlp_time_chem_family",
+    "artifact://knowledge-pack/onemkl",
+    "artifact://knowledge-pack/opencamlib",
+    "artifact://knowledge-pack/petsc",
+    "artifact://knowledge-pack/petsc_family",
+    "artifact://knowledge-pack/petsc_gamg",
+    "artifact://knowledge-pack/petsc_ksp",
+    "artifact://knowledge-pack/picogk_shapekernel",
+    "artifact://knowledge-pack/primme",
+    "artifact://knowledge-pack/slepc",
+    "artifact://knowledge-pack/sparse_direct_family",
+    "artifact://knowledge-pack/strumpack",
+    "artifact://knowledge-pack/suitesparse",
+    "artifact://knowledge-pack/sundials",
+    "artifact://knowledge-pack/superlu",
+    "artifact://knowledge-pack/superlu_dist",
+    "artifact://knowledge-pack/tchem",
+    "artifact://knowledge-pack/trilinos",
+    "artifact://knowledge-pack/trilinos_belos",
+    "artifact://knowledge-pack/trilinos_family",
+    "artifact://knowledge-pack/trilinos_ifpack2",
+    "artifact://knowledge-pack/trilinos_muelu",
+    "artifact://knowledge-pack/umfpack",
+    "artifact://recipe-object/cgal_geometry_manufacturing",
+    "artifact://recipe-object/cholmod_solver_backends",
+    "artifact://recipe-object/hypre_solver_backends",
+    "artifact://recipe-object/ipopt_seed_stack",
+    "artifact://recipe-object/klu_solver_backends",
+    "artifact://recipe-object/ma57_solver_backends",
+    "artifact://recipe-object/ma77_solver_backends",
+    "artifact://recipe-object/ma86_solver_backends",
+    "artifact://recipe-object/ma97_solver_backends",
+    "artifact://recipe-object/mumps_solver_backends",
+    "artifact://recipe-object/onemkl_solver_backends",
+    "artifact://recipe-object/opencamlib_geometry_manufacturing",
+    "artifact://recipe-object/petsc_gamg_solver_backends",
+    "artifact://recipe-object/petsc_ksp_solver_backends",
+    "artifact://recipe-object/petsc_optimization_uq_backbone",
+    "artifact://recipe-object/picogk_shapekernel_seed_stack",
+    "artifact://recipe-object/primme_solver_backends",
+    "artifact://recipe-object/slepc_solver_backends",
+    "artifact://recipe-object/strumpack_solver_backends",
+    "artifact://recipe-object/suitesparse_solver_backends",
+    "artifact://recipe-object/sundials_optimization_uq_backbone",
+    "artifact://recipe-object/superlu_dist_solver_backends",
+    "artifact://recipe-object/superlu_solver_backends",
+    "artifact://recipe-object/tchem_thermofluids_chemistry",
+    "artifact://recipe-object/trilinos_belos_solver_backends",
+    "artifact://recipe-object/trilinos_ifpack2_solver_backends",
+    "artifact://recipe-object/trilinos_muelu_solver_backends",
+    "artifact://recipe-object/trilinos_solver_backends",
+    "artifact://recipe-object/umfpack_solver_backends",
+    "artifact://verification-report/0f6cf327-433a-5629-8437-44c3e9e10bc5",
+    "artifact://verification-report/13e291c6-0601-59ca-86fb-8cb8235c0fa8",
+    "artifact://verification-report/1ab9479e-2f22-536a-9652-bc50b8fd5b38",
+    "artifact://verification-report/29999cb5-52c7-5345-9aaf-d4dead355b41",
+    "artifact://verification-report/33a10d27-2e1f-5dcd-a03f-3237f98bf3ae",
+    "artifact://verification-report/355071ee-e939-5741-a7ed-9ad38dd17563",
+    "artifact://verification-report/40b15f72-67ef-51ed-8b63-f428c0579f91",
+    "artifact://verification-report/48b2a72b-c04d-5c5e-ad9b-bc2d851d0baf",
+    "artifact://verification-report/4a36e2c6-2d24-509e-a7da-c5558b4187b7",
+    "artifact://verification-report/4d57a4c2-907d-5aea-8549-9b96a7caa9dc",
+    "artifact://verification-report/5487d998-75b1-5bc3-8487-d1a3efd23574",
+    "artifact://verification-report/55d718ea-ecde-5e4c-b7bb-71e96dfb0f03",
+    "artifact://verification-report/5c78579f-7723-5692-a495-3788a20d1313",
+    "artifact://verification-report/6120cb05-37d0-51f3-a0ce-597858b4f397",
+    "artifact://verification-report/61f5f4f6-8ea3-5f43-bdda-99c885bce432",
+    "artifact://verification-report/6ae0462a-91b7-5693-afed-edab36b3d6d9",
+    "artifact://verification-report/7b30475b-e9d0-5b2f-89c0-48a106ea4c2c",
+    "artifact://verification-report/7bbb7d4b-1ccf-57aa-8b5b-a84762770916",
+    "artifact://verification-report/82b7a37e-2324-56ad-a62e-ef2d3ae8414a",
+    "artifact://verification-report/8a2153ca-db40-56fc-89e3-86be7c1582b0",
+    "artifact://verification-report/8d397c88-d6eb-53c7-aaa0-cb0e052d232a",
+    "artifact://verification-report/8fab1a64-6d9b-54df-adc9-183cf9db429e",
+    "artifact://verification-report/92f0c329-1a2f-5218-bc37-df09fbca6c50",
+    "artifact://verification-report/9363b120-faa6-54bf-9900-ee5d76de6ac9",
+    "artifact://verification-report/94c00315-8014-5d40-8a5b-589be218600b",
+    "artifact://verification-report/9b9f8c7c-845b-5487-9d8c-29810365ba5d",
+    "artifact://verification-report/9ce5bf75-b169-5e53-bd3e-f678dfc7f1f1",
+    "artifact://verification-report/9f060f30-f8e0-5486-80ee-2689af957002",
+    "artifact://verification-report/9fd86fe1-c58d-5385-8cdb-ba5f2bb2bb3f",
+    "artifact://verification-report/a61dc9c1-2765-5e62-9952-ab677730ed31",
+    "artifact://verification-report/a66ea0c0-7455-5f3c-96a3-10834faf9ed1",
+    "artifact://verification-report/af41d13c-b085-5121-b16e-be105b3b5d78",
+    "artifact://verification-report/bd12c942-b6e5-51da-9379-9aecbd8429ba",
+    "artifact://verification-report/d27e1fdf-9e1d-540f-88fc-99829a79dfc0",
+    "artifact://verification-report/d9f4a6b8-b4f7-5ed6-b693-602695bbd299",
+    "artifact://verification-report/dcbac0f5-39d6-59dc-8a57-425aa9eb053b",
+    "artifact://verification-report/dd57c6c3-bfb2-559f-991e-deb729bc8996"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "CGAL: solves CGAL backend kernels reused by geometry and manufacturing workflows, CGAL low-level numeric or geometric primitives inside a linked execution adapter. Best for CGAL inside geometry and manufacturing workflows. Avoid Using CGAL as a substitute for unrelated workflows outside geometry and manufacturing workflows, Treating CGAL as implicitly verified without its linked runtime and evidence bundle. Runtime eng-geometry-native-family/docker_image at birtha/knowledge-eng-geometry-native-family:1.0.0; environment ref artifact://environment-spec/eng_geometry_native_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_native_family_docker; verification refs artifact://verification-report/9b9f8c7c-845b-5487-9d8c-29810365ba5d. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_geometry_native_family_gui; control provider noVNC via OpenClaw browser.\nCHOLMOD: solves CHOLMOD backend kernels reused by solver-backend workflows, CHOLMOD low-level numeric or geometric primitives inside a linked execution adapter. Best for CHOLMOD inside solver-backend workflows. Avoid Using CHOLMOD as a substitute for unrelated workflows outside solver-backend workflows, Treating CHOLMOD as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/dcbac0f5-39d6-59dc-8a57-425aa9eb053b. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.\nhypre: solves hypre backend kernels reused by solver-backend workflows, hypre low-level numeric or geometric primitives inside a linked execution adapter. Best for hypre inside solver-backend workflows. Avoid Using hypre as a substitute for unrelated workflows outside solver-backend workflows, Treating hypre as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/d9f4a6b8-b4f7-5ed6-b693-602695bbd299. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_petsc_family_gui; control provider noVNC via OpenClaw browser.\nIPOPT: solves IPOPT backend kernels reused by core engineering workflows, IPOPT low-level numeric or geometric primitives inside a linked execution adapter. Best for IPOPT inside core engineering workflows. Avoid Using IPOPT as a substitute for unrelated workflows outside core engineering workflows, Treating IPOPT as implicitly verified without its linked runtime and evidence bundle. Runtime eng-ipopt-onemkl/docker_image at birtha/knowledge-eng-ipopt-onemkl:1.0.0; environment ref artifact://environment-spec/eng_ipopt_onemkl_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker; verification refs artifact://verification-report/5487d998-75b1-5bc3-8487-d1a3efd23574. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_ipopt_onemkl_gui; control provider noVNC via OpenClaw browser.\nKLU: solves KLU backend kernels reused by solver-backend workflows, KLU low-level numeric or geometric primitives inside a linked execution adapter. Best for KLU inside solver-backend workflows. Avoid Using KLU as a substitute for unrelated workflows outside solver-backend workflows, Treating KLU as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/33a10d27-2e1f-5dcd-a03f-3237f98bf3ae. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.\nMA57: solves MA57 backend kernels reused by solver-backend workflows, MA57 low-level numeric or geometric primitives inside a linked execution adapter. Best for MA57 inside solver-backend workflows. Avoid Using MA57 as a substitute for unrelated workflows outside solver-backend workflows, Treating MA57 as implicitly verified without its linked runtime and evidence bundle. Runtime eng-ipopt-onemkl/docker_image at birtha/knowledge-eng-ipopt-onemkl:1.0.0; environment ref artifact://environment-spec/eng_ipopt_onemkl_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker; verification refs artifact://verification-report/5c78579f-7723-5692-a495-3788a20d1313. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_ipopt_onemkl_gui; control provider noVNC via OpenClaw browser.\nMA77: solves MA77 backend kernels reused by solver-backend workflows, MA77 low-level numeric or geometric primitives inside a linked execution adapter. Best for MA77 inside solver-backend workflows. Avoid Using MA77 as a substitute for unrelated workflows outside solver-backend workflows, Treating MA77 as implicitly verified without its linked runtime and evidence bundle. Runtime eng-ipopt-onemkl/docker_image at birtha/knowledge-eng-ipopt-onemkl:1.0.0; environment ref artifact://environment-spec/eng_ipopt_onemkl_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker; verification refs artifact://verification-report/7b30475b-e9d0-5b2f-89c0-48a106ea4c2c. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_ipopt_onemkl_gui; control provider noVNC via OpenClaw browser.\nMA86: solves MA86 backend kernels reused by solver-backend workflows, MA86 low-level numeric or geometric primitives inside a linked execution adapter. Best for MA86 inside solver-backend workflows. Avoid Using MA86 as a substitute for unrelated workflows outside solver-backend workflows, Treating MA86 as implicitly verified without its linked runtime and evidence bundle. Runtime eng-ipopt-onemkl/docker_image at birtha/knowledge-eng-ipopt-onemkl:1.0.0; environment ref artifact://environment-spec/eng_ipopt_onemkl_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker; verification refs artifact://verification-report/40b15f72-67ef-51ed-8b63-f428c0579f91. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_ipopt_onemkl_gui; control provider noVNC via OpenClaw browser.\nMA97: solves MA97 backend kernels reused by solver-backend workflows, MA97 low-level numeric or geometric primitives inside a linked execution adapter. Best for MA97 inside solver-backend workflows. Avoid Using MA97 as a substitute for unrelated workflows outside solver-backend workflows, Treating MA97 as implicitly verified without its linked runtime and evidence bundle. Runtime eng-ipopt-onemkl/docker_image at birtha/knowledge-eng-ipopt-onemkl:1.0.0; environment ref artifact://environment-spec/eng_ipopt_onemkl_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker; verification refs artifact://verification-report/9363b120-faa6-54bf-9900-ee5d76de6ac9. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_ipopt_onemkl_gui; control provider noVNC via OpenClaw browser.\nMUMPS: solves MUMPS backend kernels reused by solver-backend workflows, MUMPS low-level numeric or geometric primitives inside a linked execution adapter. Best for MUMPS inside solver-backend workflows. Avoid Using MUMPS as a substitute for unrelated workflows outside solver-backend workflows, Treating MUMPS as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/8fab1a64-6d9b-54df-adc9-183cf9db429e. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.\nIntel oneMKL: solves Dense and sparse numerical kernels reused across containerized optimization backends, Canonical BLAS/LAPACK and sparse backend surface for the Phase 2 nonlinear stack. Best for Canonical substitute runtime for the prior PARDISO lane, Shared numeric backend support inside the IPOPT plus CoinHSL container path. Avoid Treating oneMKL as a standalone engineering solver without a host algorithm. Runtime eng-ipopt-onemkl/docker_image at birtha/knowledge-eng-ipopt-onemkl:1.0.0; environment ref artifact://environment-spec/eng_ipopt_onemkl_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker; verification refs artifact://verification-report/82b7a37e-2324-56ad-a62e-ef2d3ae8414a. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_ipopt_onemkl_gui; control provider noVNC via OpenClaw browser. Aliases: PARDISO. Substitution: Canonical pack used in place of the previously planned PARDISO acquisition path..\nOpenCAMLib: solves OpenCAMLib backend kernels reused by geometry and manufacturing workflows, OpenCAMLib low-level numeric or geometric primitives inside a linked execution adapter. Best for OpenCAMLib inside geometry and manufacturing workflows. Avoid Using OpenCAMLib as a substitute for unrelated workflows outside geometry and manufacturing workflows, Treating OpenCAMLib as implicitly verified without its linked runtime and evidence bundle. Runtime eng-geometry-native-family/docker_image at birtha/knowledge-eng-geometry-native-family:1.0.0; environment ref artifact://environment-spec/eng_geometry_native_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_native_family_docker; verification refs artifact://verification-report/6ae0462a-91b7-5693-afed-edab36b3d6d9. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_geometry_native_family_gui; control provider noVNC via OpenClaw browser.\nPETSc: solves PETSc backend kernels reused by optimization, UQ, and numerical-backbone workflows, PETSc low-level numeric or geometric primitives inside a linked execution adapter. Best for PETSc inside optimization, UQ, and numerical-backbone workflows. Avoid Using PETSc as a substitute for unrelated workflows outside optimization, UQ, and numerical-backbone workflows, Treating PETSc as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/9f060f30-f8e0-5486-80ee-2689af957002. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_petsc_family_gui; control provider noVNC via OpenClaw browser.\nPETSc GAMG: solves PETSc GAMG backend kernels reused by solver-backend workflows, PETSc GAMG low-level numeric or geometric primitives inside a linked execution adapter. Best for PETSc GAMG inside solver-backend workflows. Avoid Using PETSc GAMG as a substitute for unrelated workflows outside solver-backend workflows, Treating PETSc GAMG as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/dd57c6c3-bfb2-559f-991e-deb729bc8996. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_petsc_family_gui; control provider noVNC via OpenClaw browser.\nPETSc KSP: solves PETSc KSP backend kernels reused by solver-backend workflows, PETSc KSP low-level numeric or geometric primitives inside a linked execution adapter. Best for PETSc KSP inside solver-backend workflows. Avoid Using PETSc KSP as a substitute for unrelated workflows outside solver-backend workflows, Treating PETSc KSP as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/9fd86fe1-c58d-5385-8cdb-ba5f2bb2bb3f. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_petsc_family_gui; control provider noVNC via OpenClaw browser.\nPicoGK / ShapeKernel: solves PicoGK / ShapeKernel executable workflows for core engineering workflows, PicoGK / ShapeKernel case setup, launch, and output capture inside the knowledge runtime. Best for PicoGK / ShapeKernel inside core engineering workflows. Avoid Using PicoGK / ShapeKernel as a substitute for unrelated workflows outside core engineering workflows, Treating PicoGK / ShapeKernel as implicitly verified without its linked runtime and evidence bundle. Runtime eng-dotnet/dotnet_toolchain at knowledge/coding-tools/runtime/dotnet/eng-dotnet/bin/Release/net9.0; environment ref artifact://environment-spec/eng_dotnet_sdk; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_dotnet_sdk; verification refs artifact://verification-report/9ce5bf75-b169-5e53-bd3e-f678dfc7f1f1. GUI state NO_GUI.\nPRIMME: solves PRIMME backend kernels reused by solver-backend workflows, PRIMME low-level numeric or geometric primitives inside a linked execution adapter. Best for PRIMME inside solver-backend workflows. Avoid Using PRIMME as a substitute for unrelated workflows outside solver-backend workflows, Treating PRIMME as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/af41d13c-b085-5121-b16e-be105b3b5d78. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_petsc_family_gui; control provider noVNC via OpenClaw browser.\nSLEPc: solves SLEPc backend kernels reused by solver-backend workflows, SLEPc low-level numeric or geometric primitives inside a linked execution adapter. Best for SLEPc inside solver-backend workflows. Avoid Using SLEPc as a substitute for unrelated workflows outside solver-backend workflows, Treating SLEPc as implicitly verified without its linked runtime and evidence bundle. Runtime eng-petsc-family/docker_image at birtha/knowledge-eng-petsc-family:1.0.0; environment ref artifact://environment-spec/eng_petsc_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_petsc_family_docker; verification refs artifact://verification-report/29999cb5-52c7-5345-9aaf-d4dead355b41. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_petsc_family_gui; control provider noVNC via OpenClaw browser.\nSTRUMPACK: solves STRUMPACK backend kernels reused by solver-backend workflows, STRUMPACK low-level numeric or geometric primitives inside a linked execution adapter. Best for STRUMPACK inside solver-backend workflows. Avoid Using STRUMPACK as a substitute for unrelated workflows outside solver-backend workflows, Treating STRUMPACK as implicitly verified without its linked runtime and evidence bundle. Runtime eng-strumpack/docker_image at birtha/knowledge-eng-strumpack:1.0.0; environment ref artifact://environment-spec/eng_strumpack_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_strumpack_docker; verification refs artifact://verification-report/4a36e2c6-2d24-509e-a7da-c5558b4187b7. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_strumpack_gui; control provider noVNC via OpenClaw browser.\nSuiteSparse: solves SuiteSparse backend kernels reused by solver-backend workflows, SuiteSparse low-level numeric or geometric primitives inside a linked execution adapter. Best for SuiteSparse inside solver-backend workflows. Avoid Using SuiteSparse as a substitute for unrelated workflows outside solver-backend workflows, Treating SuiteSparse as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/94c00315-8014-5d40-8a5b-589be218600b. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.\nSUNDIALS: solves SUNDIALS backend kernels reused by optimization, UQ, and numerical-backbone workflows, SUNDIALS low-level numeric or geometric primitives inside a linked execution adapter. Best for SUNDIALS inside optimization, UQ, and numerical-backbone workflows. Avoid Using SUNDIALS as a substitute for unrelated workflows outside optimization, UQ, and numerical-backbone workflows, Treating SUNDIALS as implicitly verified without its linked runtime and evidence bundle. Runtime eng-nlp-time-chem-family/docker_image at birtha/knowledge-eng-nlp-time-chem-family:1.0.0; environment ref artifact://environment-spec/eng_nlp_time_chem_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_nlp_time_chem_family_docker; verification refs artifact://verification-report/13e291c6-0601-59ca-86fb-8cb8235c0fa8. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_nlp_time_chem_family_gui; control provider noVNC via OpenClaw browser.\nSuperLU: solves SuperLU backend kernels reused by solver-backend workflows, SuperLU low-level numeric or geometric primitives inside a linked execution adapter. Best for SuperLU inside solver-backend workflows. Avoid Using SuperLU as a substitute for unrelated workflows outside solver-backend workflows, Treating SuperLU as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/8a2153ca-db40-56fc-89e3-86be7c1582b0. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.\nSuperLU_DIST: solves SuperLU_DIST backend kernels reused by solver-backend workflows, SuperLU_DIST low-level numeric or geometric primitives inside a linked execution adapter. Best for SuperLU_DIST inside solver-backend workflows. Avoid Using SuperLU_DIST as a substitute for unrelated workflows outside solver-backend workflows, Treating SuperLU_DIST as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/55d718ea-ecde-5e4c-b7bb-71e96dfb0f03. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.\nTChem: solves TChem backend kernels reused by thermofluids and chemistry workflows, TChem low-level numeric or geometric primitives inside a linked execution adapter. Best for TChem inside thermofluids and chemistry workflows. Avoid Using TChem as a substitute for unrelated workflows outside thermofluids and chemistry workflows, Treating TChem as implicitly verified without its linked runtime and evidence bundle. Runtime eng-tchem/docker_image at birtha/knowledge-eng-tchem:1.0.0; environment ref artifact://environment-spec/eng_tchem_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_tchem_docker; verification refs artifact://verification-report/48b2a72b-c04d-5c5e-ad9b-bc2d851d0baf. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_tchem_gui; control provider noVNC via OpenClaw browser.\nTrilinos: solves Trilinos backend kernels reused by solver-backend workflows, Trilinos low-level numeric or geometric primitives inside a linked execution adapter. Best for Trilinos inside solver-backend workflows. Avoid Using Trilinos as a substitute for unrelated workflows outside solver-backend workflows, Treating Trilinos as implicitly verified without its linked runtime and evidence bundle. Runtime eng-trilinos-family/docker_image at birtha/knowledge-eng-trilinos-family:1.0.0; environment ref artifact://environment-spec/eng_trilinos_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker; verification refs artifact://verification-report/a66ea0c0-7455-5f3c-96a3-10834faf9ed1. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_trilinos_family_gui; control provider noVNC via OpenClaw browser.\nTrilinos Belos: solves Trilinos Belos backend kernels reused by solver-backend workflows, Trilinos Belos low-level numeric or geometric primitives inside a linked execution adapter. Best for Trilinos Belos inside solver-backend workflows. Avoid Using Trilinos Belos as a substitute for unrelated workflows outside solver-backend workflows, Treating Trilinos Belos as implicitly verified without its linked runtime and evidence bundle. Runtime eng-trilinos-family/docker_image at birtha/knowledge-eng-trilinos-family:1.0.0; environment ref artifact://environment-spec/eng_trilinos_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker; verification refs artifact://verification-report/61f5f4f6-8ea3-5f43-bdda-99c885bce432. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_trilinos_family_gui; control provider noVNC via OpenClaw browser.\nTrilinos Ifpack2: solves Trilinos Ifpack2 backend kernels reused by solver-backend workflows, Trilinos Ifpack2 low-level numeric or geometric primitives inside a linked execution adapter. Best for Trilinos Ifpack2 inside solver-backend workflows. Avoid Using Trilinos Ifpack2 as a substitute for unrelated workflows outside solver-backend workflows, Treating Trilinos Ifpack2 as implicitly verified without its linked runtime and evidence bundle. Runtime eng-trilinos-family/docker_image at birtha/knowledge-eng-trilinos-family:1.0.0; environment ref artifact://environment-spec/eng_trilinos_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker; verification refs artifact://verification-report/bd12c942-b6e5-51da-9379-9aecbd8429ba. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_trilinos_family_gui; control provider noVNC via OpenClaw browser.\nTrilinos MueLu: solves Trilinos MueLu backend kernels reused by solver-backend workflows, Trilinos MueLu low-level numeric or geometric primitives inside a linked execution adapter. Best for Trilinos MueLu inside solver-backend workflows. Avoid Using Trilinos MueLu as a substitute for unrelated workflows outside solver-backend workflows, Treating Trilinos MueLu as implicitly verified without its linked runtime and evidence bundle. Runtime eng-trilinos-family/docker_image at birtha/knowledge-eng-trilinos-family:1.0.0; environment ref artifact://environment-spec/eng_trilinos_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker; verification refs artifact://verification-report/355071ee-e939-5741-a7ed-9ad38dd17563. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_trilinos_family_gui; control provider noVNC via OpenClaw browser.\nUMFPACK: solves UMFPACK backend kernels reused by solver-backend workflows, UMFPACK low-level numeric or geometric primitives inside a linked execution adapter. Best for UMFPACK inside solver-backend workflows. Avoid Using UMFPACK as a substitute for unrelated workflows outside solver-backend workflows, Treating UMFPACK as implicitly verified without its linked runtime and evidence bundle. Runtime eng-sparse-direct-family/docker_image at birtha/knowledge-eng-sparse-direct-family:1.0.0; environment ref artifact://environment-spec/eng_sparse_direct_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_sparse_direct_family_docker; verification refs artifact://verification-report/8d397c88-d6eb-53c7-aaa0-cb0e052d232a. GUI state PLANNED_CONTAINER_GUI; default GUI session artifact://gui-session-spec/eng_sparse_direct_family_gui; control provider noVNC via OpenClaw browser.",
+    "excluded_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs"
+    ],
+    "retrieval_keys": [
+      "general",
+      "kb",
+      "phase2_batch_k2_backend_families",
+      "phase2_kb_phase2_batch_k2_backend_families",
+      "true"
+    ],
+    "role": "general",
+    "role_context_bundle_id": "general_c65cf9ed3456c2c5",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_dotnet_sdk",
+      "artifact://environment-spec/eng_geometry_native_family_docker",
+      "artifact://environment-spec/eng_geometry_native_family_gui",
+      "artifact://environment-spec/eng_ipopt_onemkl_docker",
+      "artifact://environment-spec/eng_ipopt_onemkl_gui",
+      "artifact://environment-spec/eng_nlp_time_chem_family_docker",
+      "artifact://environment-spec/eng_nlp_time_chem_family_gui",
+      "artifact://environment-spec/eng_petsc_family_docker",
+      "artifact://environment-spec/eng_petsc_family_gui",
+      "artifact://environment-spec/eng_sparse_direct_family_docker",
+      "artifact://environment-spec/eng_sparse_direct_family_gui",
+      "artifact://environment-spec/eng_strumpack_docker",
+      "artifact://environment-spec/eng_strumpack_gui",
+      "artifact://environment-spec/eng_tchem_docker",
+      "artifact://environment-spec/eng_tchem_gui",
+      "artifact://environment-spec/eng_trilinos_family_docker",
+      "artifact://environment-spec/eng_trilinos_family_gui",
+      "artifact://evidence-bundle/cgal_runtime",
+      "artifact://evidence-bundle/cholmod_runtime",
+      "artifact://evidence-bundle/hypre_runtime",
+      "artifact://evidence-bundle/ipopt_runtime",
+      "artifact://evidence-bundle/klu_runtime",
+      "artifact://evidence-bundle/ma57_runtime",
+      "artifact://evidence-bundle/ma77_runtime",
+      "artifact://evidence-bundle/ma86_runtime",
+      "artifact://evidence-bundle/ma97_runtime",
+      "artifact://evidence-bundle/mumps_runtime",
+      "artifact://evidence-bundle/onemkl_runtime",
+      "artifact://evidence-bundle/opencamlib_runtime",
+      "artifact://evidence-bundle/petsc_gamg_runtime",
+      "artifact://evidence-bundle/petsc_ksp_runtime",
+      "artifact://evidence-bundle/petsc_runtime",
+      "artifact://evidence-bundle/picogk_shapekernel_runtime",
+      "artifact://evidence-bundle/primme_runtime",
+      "artifact://evidence-bundle/slepc_runtime",
+      "artifact://evidence-bundle/strumpack_runtime",
+      "artifact://evidence-bundle/suitesparse_runtime",
+      "artifact://evidence-bundle/sundials_runtime",
+      "artifact://evidence-bundle/superlu_dist_runtime",
+      "artifact://evidence-bundle/superlu_runtime",
+      "artifact://evidence-bundle/tchem_runtime",
+      "artifact://evidence-bundle/trilinos_belos_runtime",
+      "artifact://evidence-bundle/trilinos_ifpack2_runtime",
+      "artifact://evidence-bundle/trilinos_muelu_runtime",
+      "artifact://evidence-bundle/trilinos_runtime",
+      "artifact://evidence-bundle/umfpack_runtime",
+      "artifact://execution-adapter-spec/cgal_probe",
+      "artifact://execution-adapter-spec/cholmod_probe",
+      "artifact://execution-adapter-spec/hypre_probe",
+      "artifact://execution-adapter-spec/ipopt_probe",
+      "artifact://execution-adapter-spec/klu_probe",
+      "artifact://execution-adapter-spec/ma57_probe",
+      "artifact://execution-adapter-spec/ma77_probe",
+      "artifact://execution-adapter-spec/ma86_probe",
+      "artifact://execution-adapter-spec/ma97_probe",
+      "artifact://execution-adapter-spec/mumps_probe",
+      "artifact://execution-adapter-spec/onemkl_probe",
+      "artifact://execution-adapter-spec/opencamlib_probe",
+      "artifact://execution-adapter-spec/petsc_gamg_probe",
+      "artifact://execution-adapter-spec/petsc_ksp_probe",
+      "artifact://execution-adapter-spec/petsc_probe",
+      "artifact://execution-adapter-spec/picogk_shapekernel_probe",
+      "artifact://execution-adapter-spec/primme_probe",
+      "artifact://execution-adapter-spec/slepc_probe",
+      "artifact://execution-adapter-spec/strumpack_probe",
+      "artifact://execution-adapter-spec/suitesparse_probe",
+      "artifact://execution-adapter-spec/sundials_probe",
+      "artifact://execution-adapter-spec/superlu_dist_probe",
+      "artifact://execution-adapter-spec/superlu_probe",
+      "artifact://execution-adapter-spec/tchem_probe",
+      "artifact://execution-adapter-spec/trilinos_belos_probe",
+      "artifact://execution-adapter-spec/trilinos_ifpack2_probe",
+      "artifact://execution-adapter-spec/trilinos_muelu_probe",
+      "artifact://execution-adapter-spec/trilinos_probe",
+      "artifact://execution-adapter-spec/umfpack_probe",
+      "artifact://gui-session-spec/eng_geometry_native_family_gui",
+      "artifact://gui-session-spec/eng_ipopt_onemkl_gui",
+      "artifact://gui-session-spec/eng_nlp_time_chem_family_gui",
+      "artifact://gui-session-spec/eng_petsc_family_gui",
+      "artifact://gui-session-spec/eng_sparse_direct_family_gui",
+      "artifact://gui-session-spec/eng_strumpack_gui",
+      "artifact://gui-session-spec/eng_tchem_gui",
+      "artifact://gui-session-spec/eng_trilinos_family_gui",
+      "artifact://knowledge-pack/cgal",
+      "artifact://knowledge-pack/cholmod",
+      "artifact://knowledge-pack/coinhsl_family",
+      "artifact://knowledge-pack/geometry_native_family",
+      "artifact://knowledge-pack/hypre",
+      "artifact://knowledge-pack/ipopt",
+      "artifact://knowledge-pack/klu",
+      "artifact://knowledge-pack/ma57",
+      "artifact://knowledge-pack/ma77",
+      "artifact://knowledge-pack/ma86",
+      "artifact://knowledge-pack/ma97",
+      "artifact://knowledge-pack/mumps",
+      "artifact://knowledge-pack/nlp_time_chem_family",
+      "artifact://knowledge-pack/onemkl",
+      "artifact://knowledge-pack/opencamlib",
+      "artifact://knowledge-pack/petsc",
+      "artifact://knowledge-pack/petsc_family",
+      "artifact://knowledge-pack/petsc_gamg",
+      "artifact://knowledge-pack/petsc_ksp",
+      "artifact://knowledge-pack/picogk_shapekernel",
+      "artifact://knowledge-pack/primme",
+      "artifact://knowledge-pack/slepc",
+      "artifact://knowledge-pack/sparse_direct_family",
+      "artifact://knowledge-pack/strumpack",
+      "artifact://knowledge-pack/suitesparse",
+      "artifact://knowledge-pack/sundials",
+      "artifact://knowledge-pack/superlu",
+      "artifact://knowledge-pack/superlu_dist",
+      "artifact://knowledge-pack/tchem",
+      "artifact://knowledge-pack/trilinos",
+      "artifact://knowledge-pack/trilinos_belos",
+      "artifact://knowledge-pack/trilinos_family",
+      "artifact://knowledge-pack/trilinos_ifpack2",
+      "artifact://knowledge-pack/trilinos_muelu",
+      "artifact://knowledge-pack/umfpack",
+      "artifact://recipe-object/cgal_geometry_manufacturing",
+      "artifact://recipe-object/cholmod_solver_backends",
+      "artifact://recipe-object/hypre_solver_backends",
+      "artifact://recipe-object/ipopt_seed_stack",
+      "artifact://recipe-object/klu_solver_backends",
+      "artifact://recipe-object/ma57_solver_backends",
+      "artifact://recipe-object/ma77_solver_backends",
+      "artifact://recipe-object/ma86_solver_backends",
+      "artifact://recipe-object/ma97_solver_backends",
+      "artifact://recipe-object/mumps_solver_backends",
+      "artifact://recipe-object/onemkl_solver_backends",
+      "artifact://recipe-object/opencamlib_geometry_manufacturing",
+      "artifact://recipe-object/petsc_gamg_solver_backends",
+      "artifact://recipe-object/petsc_ksp_solver_backends",
+      "artifact://recipe-object/petsc_optimization_uq_backbone",
+      "artifact://recipe-object/picogk_shapekernel_seed_stack",
+      "artifact://recipe-object/primme_solver_backends",
+      "artifact://recipe-object/slepc_solver_backends",
+      "artifact://recipe-object/strumpack_solver_backends",
+      "artifact://recipe-object/suitesparse_solver_backends",
+      "artifact://recipe-object/sundials_optimization_uq_backbone",
+      "artifact://recipe-object/superlu_dist_solver_backends",
+      "artifact://recipe-object/superlu_solver_backends",
+      "artifact://recipe-object/tchem_thermofluids_chemistry",
+      "artifact://recipe-object/trilinos_belos_solver_backends",
+      "artifact://recipe-object/trilinos_ifpack2_solver_backends",
+      "artifact://recipe-object/trilinos_muelu_solver_backends",
+      "artifact://recipe-object/trilinos_solver_backends",
+      "artifact://recipe-object/umfpack_solver_backends",
+      "artifact://verification-report/0f6cf327-433a-5629-8437-44c3e9e10bc5",
+      "artifact://verification-report/13e291c6-0601-59ca-86fb-8cb8235c0fa8",
+      "artifact://verification-report/1ab9479e-2f22-536a-9652-bc50b8fd5b38",
+      "artifact://verification-report/29999cb5-52c7-5345-9aaf-d4dead355b41",
+      "artifact://verification-report/33a10d27-2e1f-5dcd-a03f-3237f98bf3ae",
+      "artifact://verification-report/355071ee-e939-5741-a7ed-9ad38dd17563",
+      "artifact://verification-report/40b15f72-67ef-51ed-8b63-f428c0579f91",
+      "artifact://verification-report/48b2a72b-c04d-5c5e-ad9b-bc2d851d0baf",
+      "artifact://verification-report/4a36e2c6-2d24-509e-a7da-c5558b4187b7",
+      "artifact://verification-report/4d57a4c2-907d-5aea-8549-9b96a7caa9dc",
+      "artifact://verification-report/5487d998-75b1-5bc3-8487-d1a3efd23574",
+      "artifact://verification-report/55d718ea-ecde-5e4c-b7bb-71e96dfb0f03",
+      "artifact://verification-report/5c78579f-7723-5692-a495-3788a20d1313",
+      "artifact://verification-report/6120cb05-37d0-51f3-a0ce-597858b4f397",
+      "artifact://verification-report/61f5f4f6-8ea3-5f43-bdda-99c885bce432",
+      "artifact://verification-report/6ae0462a-91b7-5693-afed-edab36b3d6d9",
+      "artifact://verification-report/7b30475b-e9d0-5b2f-89c0-48a106ea4c2c",
+      "artifact://verification-report/7bbb7d4b-1ccf-57aa-8b5b-a84762770916",
+      "artifact://verification-report/82b7a37e-2324-56ad-a62e-ef2d3ae8414a",
+      "artifact://verification-report/8a2153ca-db40-56fc-89e3-86be7c1582b0",
+      "artifact://verification-report/8d397c88-d6eb-53c7-aaa0-cb0e052d232a",
+      "artifact://verification-report/8fab1a64-6d9b-54df-adc9-183cf9db429e",
+      "artifact://verification-report/92f0c329-1a2f-5218-bc37-df09fbca6c50",
+      "artifact://verification-report/9363b120-faa6-54bf-9900-ee5d76de6ac9",
+      "artifact://verification-report/94c00315-8014-5d40-8a5b-589be218600b",
+      "artifact://verification-report/9b9f8c7c-845b-5487-9d8c-29810365ba5d",
+      "artifact://verification-report/9ce5bf75-b169-5e53-bd3e-f678dfc7f1f1",
+      "artifact://verification-report/9f060f30-f8e0-5486-80ee-2689af957002",
+      "artifact://verification-report/9fd86fe1-c58d-5385-8cdb-ba5f2bb2bb3f",
+      "artifact://verification-report/a61dc9c1-2765-5e62-9952-ab677730ed31",
+      "artifact://verification-report/a66ea0c0-7455-5f3c-96a3-10834faf9ed1",
+      "artifact://verification-report/af41d13c-b085-5121-b16e-be105b3b5d78",
+      "artifact://verification-report/bd12c942-b6e5-51da-9379-9aecbd8429ba",
+      "artifact://verification-report/d27e1fdf-9e1d-540f-88fc-99829a79dfc0",
+      "artifact://verification-report/d9f4a6b8-b4f7-5ed6-b693-602695bbd299",
+      "artifact://verification-report/dcbac0f5-39d6-59dc-8a57-425aa9eb053b",
+      "artifact://verification-report/dd57c6c3-bfb2-559f-991e-deb729bc8996"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_dotnet_sdk",
+        "sha256": "030d9ac939da07c14cc33660bfd36aba774b23d63b157b3889e347b4c071ffe1"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_geometry_native_family_docker",
+        "sha256": "bae05010b6b2e635f1c19fbfb302dccef5740ac956cd75cfe9c67d527fcdacdf"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_geometry_native_family_gui",
+        "sha256": "a60ce47a5f1c48a7d07747c42c31f6b950dfc780c00a95de79feac2d94554bdd"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_ipopt_onemkl_docker",
+        "sha256": "8e4059fb97acb13655ec22ca77c1b70e665209fc96f582c1daacbe09f71d6dd8"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_ipopt_onemkl_gui",
+        "sha256": "105a6bef5732828a98a07d870371a3a3f2ceaa6af1e428c628b4c7d2ef2e4640"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_nlp_time_chem_family_docker",
+        "sha256": "196c7f574e01da37e6e27b7af6c583c971f480ff57c5686e94afc8d9fcd1ef71"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_nlp_time_chem_family_gui",
+        "sha256": "9ec14573e2cb647cf4f646a7154da7135073a8c2a7174f287a93202da768857a"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_petsc_family_docker",
+        "sha256": "27c972437d1c655433551f6c1d46a60aaa339a3eb63e681b86fb867520da1672"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_petsc_family_gui",
+        "sha256": "24d1bb8aaefb108886d874a9e7b03106d2b1a16b76891f466e071d7fb576b561"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_sparse_direct_family_docker",
+        "sha256": "7e86971929d43f88c3f099624e73d546156dac4caeb5f9e9584cc79321d30dbc"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_sparse_direct_family_gui",
+        "sha256": "f9f0551ab1cc19cfaf1e35602385785e0053a7185ad1cc8e2c768555cc0ca568"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_strumpack_docker",
+        "sha256": "b9aa2b3b39bde9b88a4f8e2470970d1817fd892542c9e78e272a0426dd2370bf"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_strumpack_gui",
+        "sha256": "e16c8cee2c22344887449cccc8e96cb7a9e18bae1759e3d5e9d0f6d6273f4111"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_tchem_docker",
+        "sha256": "238f4f6ac8f8c5d8e821a5547739742e848d738e5719d41e7ba62a3e97424f9f"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_tchem_gui",
+        "sha256": "316c24d4211bafb656faa6da57e69415722b7b8ca1318f6b5822acb8b4bdc0f3"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_trilinos_family_docker",
+        "sha256": "1dfdee49a480ba658a71a33440d141d0d1338567230bb4790702b99e0b402071"
+      },
+      {
+        "artifact_ref": "artifact://environment-spec/eng_trilinos_family_gui",
+        "sha256": "b69b59dcbc31b99dbab857ffcc85ad5f355cc606c7c8637649c3213879cc3422"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/cgal_runtime",
+        "sha256": "59109995cc0e28108e03fa0b2b4aef4cdb5b24d5b47eae9e8624fe14c70d3302"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/cholmod_runtime",
+        "sha256": "a08704b3435384b4e4b8f6b504b5096277fef614285f9f91cbc85a5501a77aba"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/hypre_runtime",
+        "sha256": "aceffad47822658a4bb643cbd0154e605ffee6527dc0a83ba9292ee996f98d7d"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/ipopt_runtime",
+        "sha256": "827a714077c61b1dc93d99d4b0824c3ece9b7c915ad3063727eff97a28da7e6e"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/klu_runtime",
+        "sha256": "edfd9748b8748ef5c15ff063facd937e6da279f8575b22b82693d507bb6af594"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/ma57_runtime",
+        "sha256": "f708e26e21205c6da2a0a24b00475e30a1645d6c790c6ac3b26b206623b682d9"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/ma77_runtime",
+        "sha256": "8758169f1625a99dc6c4e54c0915275cced5f03d20b123f7087f28497ad24c57"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/ma86_runtime",
+        "sha256": "0eb5535be3cbccb79ca850b9ec2a997dec509f5866504378ee80402a4c957c7b"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/ma97_runtime",
+        "sha256": "da870740908a23c01033486309c637ea33d88a2cc195fb2e577fde5d88fc5ef3"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/mumps_runtime",
+        "sha256": "4a57d5d90dd497fef0904f213d3c3fda935a020ac8680d8a4d7ce8afdd149f1c"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/onemkl_runtime",
+        "sha256": "6a337375f2003f48509bb12255616f089c1f68f8d66c711291f918c8a4222557"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/opencamlib_runtime",
+        "sha256": "444521bcf9b8f4796aa085ec1128f53d96b3ee2db59e9c8482e318ac3fdbd117"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/petsc_gamg_runtime",
+        "sha256": "c9891febd908345b398caa8d64196b90454d40cb8c85a782ac9a8a0de0fdc371"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/petsc_ksp_runtime",
+        "sha256": "306fc1a0207916b7a60b3fc164cdb652dddebc8bd13d0aa111500842dc46155d"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/petsc_runtime",
+        "sha256": "b88b646daf8ecfa4864613ec904dd85a383dbb55cd21b360e493dd3d4d5faa03"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/picogk_shapekernel_runtime",
+        "sha256": "91df17b68463d56712b0156fe01382d115053aa0d9cb3ddd72359332fef5cc1f"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/primme_runtime",
+        "sha256": "476717cf129232291c2bcd501d25d46699231e4c3b2fad12a96ec7771c389adc"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/slepc_runtime",
+        "sha256": "3659872d866206686c3b4d6718989bb768aa7785bd8ec72fa84e1fa8c4ff1867"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/strumpack_runtime",
+        "sha256": "a24e2c4a109c61fb34fe811b299b7a03b204af8b96a3f9898247ae27dcdf7f88"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/suitesparse_runtime",
+        "sha256": "513fad5a5f98258284ffdfa59ea4f90808a91a5b6eca5924c09f5805533246df"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/sundials_runtime",
+        "sha256": "a8554239d4573a7d70088f44fe8bd92e564843af4ac200fc7dfa51c0ddc3f245"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/superlu_dist_runtime",
+        "sha256": "9a1f4402ae6e9624a131638832bbbe0cc56ab8b56fc0a509755837bc851f67fb"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/superlu_runtime",
+        "sha256": "0aa210077e475a725a61c59d323b8e73b0bfa96e5f25133c39cb80aaa7c229db"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/tchem_runtime",
+        "sha256": "864b5f69b4db28f5a044caa8e7ac63e07a196514a27ec959fb1c612cd2b44eca"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/trilinos_belos_runtime",
+        "sha256": "b85b0586ea697e2cdb64f77f5c177eb4b3339abd496518cd00d9d1fddc3ee2f9"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/trilinos_ifpack2_runtime",
+        "sha256": "254f587efd438da774db4ebd4e0ced52ac6dbd0e67e1e5955060987aafdaa825"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/trilinos_muelu_runtime",
+        "sha256": "6da72888425d24f09bdde561c4e5d330618181b6f44d608a8288b4b1f1affc31"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/trilinos_runtime",
+        "sha256": "4f1d0ea8b8994b402b6c40d5e15975fa868ae63e4579890d4b5cafbf031ef846"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/umfpack_runtime",
+        "sha256": "f2cc1cbbbda869dca7320efe2ea66bbd90fb15ba36796587b4c59f1ac7c0f8b3"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/cgal_probe",
+        "sha256": "229dd68aca4c15d9a51d53c16dd1ed022cb42c78574db8919e677b3e239d980a"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/cholmod_probe",
+        "sha256": "ef7030ea68e54d300e63e86ace74e4793683a5bee8251d77567395a18eb94d96"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/hypre_probe",
+        "sha256": "9d59522eb2874cb13a3cbd643602ad1d2e36f4eef8a77cbbf4532d7d7c77e085"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/ipopt_probe",
+        "sha256": "7093b9833fc49be0fcee46718b7056931d3ffe737595620b09e94197cf72650b"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/klu_probe",
+        "sha256": "a0a8bc09fb9609f866749910df266297a4ff818450bbae0bb8b07c2aa40c83d9"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/ma57_probe",
+        "sha256": "cf383e0f91afba35496950e3e73751957fd4c182265ede46c7dd819767aab979"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/ma77_probe",
+        "sha256": "e7bf1794c21da2b01c52395307ccb2056911332ceb13d1c563447f0c5d0fb10d"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/ma86_probe",
+        "sha256": "c0b9d2df76168226a364c40b71fa928cbe52a64634dae6ffe007a08351fab7de"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/ma97_probe",
+        "sha256": "86a99a6a4b916b0f910278f7eff1352e982f0391af31860fe6e82c3454ad7751"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/mumps_probe",
+        "sha256": "f46807d423299ca5f789239fd5a8889ea5ee5141c8c97f4fe56e0e4aa63b57da"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/onemkl_probe",
+        "sha256": "92fdd75d22108a583616a7f86090880d9e8872a139221292618e7485b21ee3b6"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/opencamlib_probe",
+        "sha256": "192911eadfb3fbf8d1c6e51fea8c56080c9d661f2a48527886cd088b1a57ac54"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/petsc_gamg_probe",
+        "sha256": "bbd5611152a79da8f7c2bd466cca64e95175024b07b58c3f3745f4f59f086038"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/petsc_ksp_probe",
+        "sha256": "f644e89ba72d4e09b43140c07287a44f76c0c5612f58868dcd78f3d0fa3e5112"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/petsc_probe",
+        "sha256": "1f28102885e2387e94dae4c904e44320b149a1c6aba32a330878b345d93bc80e"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/picogk_shapekernel_probe",
+        "sha256": "ca7c2a7ff56556c7af7e534dc3467a6d2f3b562114a898d56f9e661f16d664c1"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/primme_probe",
+        "sha256": "e606e87776a8fd69145b7bd26bcae4220c14372040b9f53739575f47f4be9967"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/slepc_probe",
+        "sha256": "37c10eb31d76780fc6a5944287e70dac1dc860d31f92799fae72095680ad93c5"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/strumpack_probe",
+        "sha256": "e9a0100eba125e1714c1a9408bcaa34c11e8ead5d6436c1fa949447f633d8100"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/suitesparse_probe",
+        "sha256": "610dd27d4089eb0c99bb1da4fbac69aafd7e220c35c4a6fc19f0f527e521fe58"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/sundials_probe",
+        "sha256": "43afda7d2dd218d556e8cbfe1b7eb031a60246d3423d01c79d8b7faea92678aa"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/superlu_dist_probe",
+        "sha256": "6dcacc49569ac1356bf369ce3f3b270a232e4a7e66490c2b352a22a5a175ec11"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/superlu_probe",
+        "sha256": "0eb77f0303b774d6940673a31056cda38cf24cbb2456f0ece9ed4ff34bfd3b0f"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/tchem_probe",
+        "sha256": "2e48a2dbe768b55481ddd691d5931d3391e5afba967ea29f9ba18f4143b159ab"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/trilinos_belos_probe",
+        "sha256": "1adca91cb37060bb4b5b9a28ebfbd64cfc152bf859a22f8dc10b66b4433ff351"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/trilinos_ifpack2_probe",
+        "sha256": "dd538bfe93641989e1ac9f003827d71f45461a3b005087eb60448eae5ae4fde4"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/trilinos_muelu_probe",
+        "sha256": "eaef85d0fb6c0ba6b1582c0aa3869d79823fd3af87fbe23914160dc8be80ecd7"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/trilinos_probe",
+        "sha256": "da680ba906bbb476f702f291cf843f2db00804b58cb107048a409c0b1877e982"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/umfpack_probe",
+        "sha256": "a8b9e8e7d06e0f2c57a6de73af21e6a87c5b118a5944ec693e99dc5e2f050a58"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_geometry_native_family_gui",
+        "sha256": "51b7dac1d0ce2bfcbe2768bce96ead5f6394b3dbde099f7563809054cac0417b"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_ipopt_onemkl_gui",
+        "sha256": "b46548aaa727087964636d21b2f6174f01453c2a8bef7cd0e84672ab6d273e13"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_nlp_time_chem_family_gui",
+        "sha256": "c184a338341c58c2b67948332c1f5dbea1c778fb4918f792917e5cd584db78be"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_petsc_family_gui",
+        "sha256": "fadccc7035283b4998935e73faa3568fe9ba6630a9ee2128efa32411503b4b80"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_sparse_direct_family_gui",
+        "sha256": "56b101e5dd97e99b8698507b731896ed919243acf45263d3b5982f06844f588a"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_strumpack_gui",
+        "sha256": "eae6d6701a7b062a075323121f74c718ef222eb68c3be08288245d99d121e7d5"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_tchem_gui",
+        "sha256": "84fdf59ee4c6b4534eb2d18eb46235459c6c14149e51d639a38efade5fd5a1b3"
+      },
+      {
+        "artifact_ref": "artifact://gui-session-spec/eng_trilinos_family_gui",
+        "sha256": "0fa4db4bdccc182cadbf4124db502ef089425737d153b28841186fa276d72fd7"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/cgal",
+        "sha256": "d0898dd503796e238e08c835b4b75a066c79e535098aab61374f85bd084dcc8a"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/cholmod",
+        "sha256": "a8e18c6335a8035551ba07f9b1e254ec212bac37b1207b58ba62dfcce7a0147e"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/coinhsl_family",
+        "sha256": "8341aee06ed45a0fe2b8c6a951a8cdfa3622f3117e9244ca7b4829bfaf60e572"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/geometry_native_family",
+        "sha256": "4e4a14e5a58c7111530b8cd29f59d7a265e4bf0438f216951bf4c651412c0b46"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/hypre",
+        "sha256": "637f42d1146b2ab3d4f2314d97f34aeee33a42a0581b586ec9f37d886fcedeb0"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ipopt",
+        "sha256": "7bbe6fe7c6a52cd6c401076b4cfa96356ed31c107955ec9f8e95e14e85c3e6ab"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/klu",
+        "sha256": "9d84a9346086e864be172c290987bf746fdc00a9e828686d04e784f020d09028"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ma57",
+        "sha256": "d41ceb0249b87b709bde30e7119610931d1524128ca4838dc963801a776d3be9"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ma77",
+        "sha256": "a5bff20bbe78d72976134c3e707c90fee6b7d5bc75b9a930dfa9f7b287ab55d3"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ma86",
+        "sha256": "e150b4606b13c13b25f75fc5ff0dcfb38b062c6e92bf6e803e5875ac2945bdf6"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/ma97",
+        "sha256": "baca56b0fd3cf3654b5e0e610cf17c5a166facff344d8e884be98b31a4e6afca"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/mumps",
+        "sha256": "cc58b69b09ab6198712088e730c0324a44c55b55997ec8ee23b24d13975c033b"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/nlp_time_chem_family",
+        "sha256": "ae753921bf274193c7f330b99a74f02760e1ee93cd8aa51c51e2e7392edda7cc"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/onemkl",
+        "sha256": "33c9bee9f7f1ed92234f65c8c2b9f23f7679731fcb1bd38dfbbbaf65c35b27e9"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/opencamlib",
+        "sha256": "2a378d921f726995c443461a7708f12da557c5fa66a8e9a58904286dff3ef85e"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc",
+        "sha256": "a195d73cdec46f87c7fa832e2ebbbad95acdacf327f45e2328a6cee6d1483b73"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc_family",
+        "sha256": "e555bb51cea23d3cafa27b5d60a1d3aaa54f27eee77a92f8d561a1b12e71af1a"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc_gamg",
+        "sha256": "0d88b56608aafe1dd68e248de4439a884c7ec0cf1dd7080b0c5f953f75cba545"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/petsc_ksp",
+        "sha256": "57ced9d1c53fd08c586d9777704db6f909397f322172e874a3d3e7fdb91c666e"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/picogk_shapekernel",
+        "sha256": "dffef655118077bda0f05946d82392551011c9173bea53d2005da8e1626fef05"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/primme",
+        "sha256": "5670619326cc7bb5f442e153a66d2cdf92316ceecbf920931782d9a96b6e22e1"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/slepc",
+        "sha256": "5ffc193fa4ba95819b17b8c31a5ef56c2a262e01f7f78b939e52df4430207e3c"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/sparse_direct_family",
+        "sha256": "fb791c05ea722b06df44569cdd722715ba6b8f6804097c4810fca3dea45cb812"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/strumpack",
+        "sha256": "6edefc9a5c5105d2ecd2536c602eb35a8d0db1088a7192303b6593dc6a384d07"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/suitesparse",
+        "sha256": "00120fed1dab5a3465e573c29ab7b1ffc918378fc0c682da3666ae372b9c1184"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/sundials",
+        "sha256": "28eae9262bddc88d0362df23abbc01b6a34e1e4c823f883ac4d6921d09b7ed05"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/superlu",
+        "sha256": "2597f152c6efa31338dec8936251f20d18d672e0498e1f0985004563ad93dee3"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/superlu_dist",
+        "sha256": "0323323d721b71f0f6bbc3e2a6c18b422231bef767f2924b0e7f671a3fa09314"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/tchem",
+        "sha256": "3cc6e6ae832e0fb36c55bc935aab6ca718094e1d065655f28f559435e97b167e"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos",
+        "sha256": "624ba323b5aef2971113caf68cd65e8c4604a9546d12345b5f4ede01ba879d90"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_belos",
+        "sha256": "26f15ce0d7b2dd4c6b52e379d1734fafea06e8b820b222a4446bc59f35e3ac7f"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_family",
+        "sha256": "a0e8bccdaa5171332af458bf810f765200943e493fdf84c0cd5efd22100b1349"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_ifpack2",
+        "sha256": "750d859b144b480e7ca5684a797e4c11c17e5c03b75b0b34b5bda21ee560f8af"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_muelu",
+        "sha256": "82ec87e738bcba0a4a923bb016bc7d82bb552d2de957e585345f513c6e5dd656"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/umfpack",
+        "sha256": "6b65d869c2ababff81b5a4536f7d1356b78974078505250d5b6202e656fd3fe5"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/cgal_geometry_manufacturing",
+        "sha256": "57efb71e057f691638c5a145d0584b4ad9f54f779aab8277258cf9122d336bab"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/cholmod_solver_backends",
+        "sha256": "8ee9ff4b21d5b44a4f137dbe355ea920566352c82e6681461f8352684647436b"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/hypre_solver_backends",
+        "sha256": "5ba7a5a2690018ae31570fe9ae42d1df61a22439a4472ce9b88725ef920aba3d"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/ipopt_seed_stack",
+        "sha256": "c6cd9b57cbd100c12fa41c78b1fa19db6ab4de1426ade4b06465e0da8ec36b50"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/klu_solver_backends",
+        "sha256": "55d4465f104b47ccc5c26d9ff6e05d5c66972f0a19f47499d0b9db3b23a97cc6"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/ma57_solver_backends",
+        "sha256": "3d988fab9c84c34653eede94b78d4ede9c7fed5af2b026d30add25f591e163c3"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/ma77_solver_backends",
+        "sha256": "8e72e8dfa8020297c2277b5b371d4f0a4167433227bafe059b45e85146d8afea"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/ma86_solver_backends",
+        "sha256": "f6bd5b1221bb3101181e2c0253e91c9549d7a185129883c741212bd1f86c4b0c"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/ma97_solver_backends",
+        "sha256": "34e86175743eecd3ebcea4d2642f99f2f244664dd7be1bdce4f590a6397bdef4"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/mumps_solver_backends",
+        "sha256": "3ccf4f2e86eaecc7076277c8efbbed0128cd99226c304b66844fcea384f5c528"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/onemkl_solver_backends",
+        "sha256": "694e7b76ded1048f9878277dffbf3e0cf4a7297d41c55f4aa90e34c8c42867ff"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/opencamlib_geometry_manufacturing",
+        "sha256": "2524710de603421164494ef46da9efa9252b4cfc839ba74f8bf656532e8a9d63"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/petsc_gamg_solver_backends",
+        "sha256": "e08cb5a864b3ce2314f667261e846b71a21082a403a47f0fe5b8246cafbb85a8"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/petsc_ksp_solver_backends",
+        "sha256": "a0e154f465894c31c61ef8fd572c4a324e597b8f72c9c10822d7ddf859c81bf5"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/petsc_optimization_uq_backbone",
+        "sha256": "72a8042512bf154a2c7771248f667090069fccc1296fcfce44adf5f2590f0535"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/picogk_shapekernel_seed_stack",
+        "sha256": "c4365190ee4e4083427a2e352bf4f32856d8d11a6ea33ac08c4cc8c119c96d45"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/primme_solver_backends",
+        "sha256": "46b92c23202945a94ac15a9a99f66e429e3debdd534d08668029da7fd0efb213"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/slepc_solver_backends",
+        "sha256": "fa647a9e7eddaf5d38f10a5c8ef7e4d0bf774b7cad9600cfa201f5be6c24c853"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/strumpack_solver_backends",
+        "sha256": "05a2661eedf533c7764f925fb609ca7e0fc4094baf783376ca4d070f3e460214"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/suitesparse_solver_backends",
+        "sha256": "e5463fb46dbca19d74fdbdf0e1c7a20d0dba38db312554677c0e17c3875a7fdc"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/sundials_optimization_uq_backbone",
+        "sha256": "88ef4d61603fc4e3449bab54810b9787f2491cb2196212f00bfc19e1af3c80b8"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/superlu_dist_solver_backends",
+        "sha256": "e952d502adfadea8c13ee6ee0a140aa2d79829615451b529fa9d938b3dc16c1d"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/superlu_solver_backends",
+        "sha256": "fae0541de76388d256b082942e3ce48eb2b9019b00c1c02dfaff925af8a67fa4"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/tchem_thermofluids_chemistry",
+        "sha256": "7155ef50a3183f014d0eb48d18ef3064bdcc91596dcf5d7ac38971c4d4544516"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/trilinos_belos_solver_backends",
+        "sha256": "de3bc79439f32770dfe4f5289982391102908ceba66b5afeda6a4f0aedef8f7c"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/trilinos_ifpack2_solver_backends",
+        "sha256": "13469e3ca6b13b583a9a062158aa40a82d8908a7af5cf0ec329be447f920e3ba"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/trilinos_muelu_solver_backends",
+        "sha256": "cfce5f1fbce7b9b2556c4df9093d48409e0bef45d767af0622898d9e915cf82a"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/trilinos_solver_backends",
+        "sha256": "412b46fa576a4f9becc6343586f6e6ebf9660ae8ec87f4c15ae31c59c301c01b"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/umfpack_solver_backends",
+        "sha256": "4d490077c3b36651268644dc4e6245c1e293fdb41b6b37c1bd2c5fa32d887e74"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/0f6cf327-433a-5629-8437-44c3e9e10bc5",
+        "sha256": "84fdf2c7510f1c7b9698b56d9f124698eb91f398cedbb6cd0904a92355d29477"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/13e291c6-0601-59ca-86fb-8cb8235c0fa8",
+        "sha256": "9fd7fe55027ac5d23a4fbb92cf639c27e5eed4ec6855901e21ffac34aed5822f"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/1ab9479e-2f22-536a-9652-bc50b8fd5b38",
+        "sha256": "ac90813498789e1d61cab078b9c55924648cd3dc3b158665a6394ad6a55c2317"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/29999cb5-52c7-5345-9aaf-d4dead355b41",
+        "sha256": "bf7a7ba8bc110d6a65c4c5705b570c09cfde81f7dc7c4f0aca3b802927ae1a67"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/33a10d27-2e1f-5dcd-a03f-3237f98bf3ae",
+        "sha256": "370c4cd258818a0f279a4760f3d4448adb20786027da63fb1b4e0fac767792a6"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/355071ee-e939-5741-a7ed-9ad38dd17563",
+        "sha256": "285a4024367419a83a6511eb929b689876bcbd3bc482a74e43638a2f78881455"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/40b15f72-67ef-51ed-8b63-f428c0579f91",
+        "sha256": "022516c1315954fa704fc4402a373ddd229eeb0c0dfce6ae9ce75b8ab7ee8d46"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/48b2a72b-c04d-5c5e-ad9b-bc2d851d0baf",
+        "sha256": "aa0416841a8faaeb71d7b6d9694bb5742ee82b5529230656ceade3474dc25d20"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/4a36e2c6-2d24-509e-a7da-c5558b4187b7",
+        "sha256": "5023d9e90075cf0392616747842ecaff25af4f88f15cbc7dad733f52bd121a5e"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/4d57a4c2-907d-5aea-8549-9b96a7caa9dc",
+        "sha256": "3dd64e015ff15abc0a5f60fdee449a943417aa66a21c9675bd9724a7f9d38239"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/5487d998-75b1-5bc3-8487-d1a3efd23574",
+        "sha256": "8e60d5a21e7e99c9bfcf6f65aa36201718cec7ba3a61fdad313e467c239c58c6"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/55d718ea-ecde-5e4c-b7bb-71e96dfb0f03",
+        "sha256": "40a4f88feaaca2e0a3bdf8a1f1f95ed4f7d2bef724aee6459569c76f8492fad8"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/5c78579f-7723-5692-a495-3788a20d1313",
+        "sha256": "76bf8e195a4e5f99640e5ca3848eed1b70ceaa81c6c23d1a955de1741b0a06a0"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/6120cb05-37d0-51f3-a0ce-597858b4f397",
+        "sha256": "29d988c9413e47cb035423a43ac07ddac48f5a961360d37fdcb716b4e1502f23"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/61f5f4f6-8ea3-5f43-bdda-99c885bce432",
+        "sha256": "51689f849e6b2b32734a946e7d8a3843e6eb508588c06860c40720b9c76a7055"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/6ae0462a-91b7-5693-afed-edab36b3d6d9",
+        "sha256": "ef2164c083a4fd6542957b4854a583ba67b05b20fb4c65ba20ea274d083bdac4"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/7b30475b-e9d0-5b2f-89c0-48a106ea4c2c",
+        "sha256": "e8325210e4c4ae459152575ddb413e702175b59e37285a2c6cd0a5c3574937c9"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/7bbb7d4b-1ccf-57aa-8b5b-a84762770916",
+        "sha256": "9154fd2bd2a5cc4b51d30bebf5a145b019cc319f7e8f6ee770e5bdb78b6b5032"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/82b7a37e-2324-56ad-a62e-ef2d3ae8414a",
+        "sha256": "e0d3f45a622dcc0fadec9f337496840114fca1b5a1bc812ab784d4bc0fb14fa3"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/8a2153ca-db40-56fc-89e3-86be7c1582b0",
+        "sha256": "41b380eeef54f6fd39c3beaebf9aa4091b2eb782d93b12c3a0d0bf77f09a5403"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/8d397c88-d6eb-53c7-aaa0-cb0e052d232a",
+        "sha256": "70d1c9fa13852f428948d8ede02dd3b11d3a6091933e0e501195cf2d08c1d26f"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/8fab1a64-6d9b-54df-adc9-183cf9db429e",
+        "sha256": "989ada1504d8a6c2b8996268df0df75abb3cd40b289fdae0d526394f2c9839a8"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/92f0c329-1a2f-5218-bc37-df09fbca6c50",
+        "sha256": "11a2ed94dc274cbab2957f0eed6e005d5aad93ad301c457a3734937d4bb950e9"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/9363b120-faa6-54bf-9900-ee5d76de6ac9",
+        "sha256": "a9d28da7bdea979b9d7270bff4357e7fe5b5601514e7c29f079f0ac612443dde"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/94c00315-8014-5d40-8a5b-589be218600b",
+        "sha256": "ae368a4d6f6945510c7e82fc4dd3295408b2d68998979b9abb73d02b03e32bec"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/9b9f8c7c-845b-5487-9d8c-29810365ba5d",
+        "sha256": "e009454d70ff219ba9a329c2fef0ca32d581f80f9f17e0a382515a2ca20adb6f"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/9ce5bf75-b169-5e53-bd3e-f678dfc7f1f1",
+        "sha256": "dd4caa9422b73bc15ee13747020a883b08e992708abcb0d5ae19acc6486e60c1"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/9f060f30-f8e0-5486-80ee-2689af957002",
+        "sha256": "b759481dc75956631c7c6ef822d301f8bf932472b62b27722292e8947cf59853"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/9fd86fe1-c58d-5385-8cdb-ba5f2bb2bb3f",
+        "sha256": "436e08499dff7ca33963ea8875799275c1f2921d169ad3f75a4322828f571482"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/a61dc9c1-2765-5e62-9952-ab677730ed31",
+        "sha256": "3b1848d2c0cb9ae6f4a78691d12adb0a828f5d5d57b9383341ed1a3806d9d01b"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/a66ea0c0-7455-5f3c-96a3-10834faf9ed1",
+        "sha256": "1e583dffb9f4465995af3d935539c94434d3031413045bc203f2f99ed7e2cbb1"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/af41d13c-b085-5121-b16e-be105b3b5d78",
+        "sha256": "381ec591aee21d9a45dd629d350b02a67f04482d81d9b7057d30dcdf641eda97"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/bd12c942-b6e5-51da-9379-9aecbd8429ba",
+        "sha256": "fbf9a2204bb7997c81c790abd6281e156623a32e9dfefb1dfbb97ade707a9684"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/d27e1fdf-9e1d-540f-88fc-99829a79dfc0",
+        "sha256": "ed7d03663c6f5007d9de329d5da5c9b161d8cd8e67021e1fbf87cbcffd6eae25"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/d9f4a6b8-b4f7-5ed6-b693-602695bbd299",
+        "sha256": "37e6c2923964eb3be7df01edded00bcf708c946ccfe245960adf712a4871f232"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/dcbac0f5-39d6-59dc-8a57-425aa9eb053b",
+        "sha256": "f3064a67a0bfa4dfa79bfdbd1065aac49f67d92c2fd2fc803c03282391bc3209"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/dd57c6c3-bfb2-559f-991e-deb729bc8996",
+        "sha256": "30be06f316a8e8a12b850907cfecf8006bb49ed4018d73a629cf273640981b1f"
+      }
+    ],
+    "task_class": "phase2_kb_phase2_batch_k2_backend_families"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}

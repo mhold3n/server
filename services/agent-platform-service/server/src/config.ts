@@ -1,3 +1,7 @@
+import fs from "node:fs"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+
 export interface PlatformConfig {
   ragUrl: string
   asrUrl: string
@@ -30,7 +34,21 @@ export interface PlatformConfig {
   clawCodePollIntervalMs: number
   clawCodeTimeoutMs: number
   clawCodeMaxConcurrentLanes: number
+  /** Repo root used for knowledge-pool GUI scripts. */
+  repoRoot?: string
+  /** Python executable used for knowledge-pool GUI script wrappers. */
+  knowledgeGuiPython?: string
 }
+
+const DEFAULT_REPO_ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../../..",
+)
+const DEFAULT_KNOWLEDGE_GUI_PYTHON = fs.existsSync(
+  path.join(DEFAULT_REPO_ROOT, ".venv", "bin", "python"),
+)
+  ? path.join(DEFAULT_REPO_ROOT, ".venv", "bin", "python")
+  : "python3"
 
 function parseCsv(value: string | undefined): string[] {
   return (value ?? "")
@@ -52,7 +70,8 @@ export function loadConfig(): PlatformConfig {
     ).replace(/\/$/, ""),
     llmRunnerApiKey: process.env.LLM_RUNNER_API_KEY,
     llmBackend: (process.env.LLM_BACKEND ?? "mock").toLowerCase(),
-    ollamaModel: process.env.OLLAMA_MODEL ?? "llama3:8b-instruct",
+    // Default Ollama tag matches planned Qwen local lane (see docker-compose.local-ai Qwen/Qwen3-4B, e2e_mac_host_ollama.sh).
+    ollamaModel: process.env.OLLAMA_MODEL ?? "qwen3:4b-instruct",
     vllmModel: process.env.VLLM_MODEL ?? "default",
     huggingfaceModel:
       process.env.HF_INFERENCE_MODEL ?? process.env.HUGGINGFACE_MODEL ?? "Qwen/Qwen3-8B",
@@ -94,5 +113,7 @@ export function loadConfig(): PlatformConfig {
     clawCodePollIntervalMs: Number(process.env.CLAW_CODE_POLL_INTERVAL_MS ?? "1000"),
     clawCodeTimeoutMs: Number(process.env.CLAW_CODE_TIMEOUT_MS ?? "120000"),
     clawCodeMaxConcurrentLanes: Number(process.env.CLAW_CODE_MAX_CONCURRENT_LANES ?? "4"),
+    repoRoot: process.env.REPO_ROOT ?? DEFAULT_REPO_ROOT,
+    knowledgeGuiPython: process.env.KNOWLEDGE_GUI_PYTHON ?? DEFAULT_KNOWLEDGE_GUI_PYTHON,
   }
 }

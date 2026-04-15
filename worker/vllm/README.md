@@ -92,13 +92,13 @@ ENABLE_PREFIX_CACHING=true
 ### Using Docker Compose
 
 ```bash
-cd Birtha_bigger_n_badder/worker/vllm
+cd /path/to/server
 
-# Start Qwen3.5-9B vLLM worker on GPU host
-docker compose -f docker-compose.vllm.yml up -d
+# Start Qwen3.5-9B vLLM worker on GPU host (paths assume repo root as project directory)
+docker compose --project-directory "$(pwd)" -f worker/vllm/docker-compose.vllm.yml up -d
 
 # View logs
-docker compose -f docker-compose.vllm.yml logs -f qwen-vllm
+docker compose --project-directory "$(pwd)" -f worker/vllm/docker-compose.vllm.yml logs -f qwen-vllm
 ```
 
 ### Manual Docker Run
@@ -290,9 +290,9 @@ curl http://localhost:8000/health
 
 ### Configuration Backup
 ```bash
-# Backup configuration
+# From repository root — backup configuration
 cp .env .env.backup
-cp compose/docker-compose.worker.yml compose/docker-compose.worker.yml.backup
+cp docker/compose-profiles/docker-compose.worker.yml docker/compose-profiles/docker-compose.worker.yml.backup
 ```
 
 ## Updates
@@ -303,14 +303,14 @@ cp compose/docker-compose.worker.yml compose/docker-compose.worker.yml.backup
 docker pull "${VLLM_IMAGE:-vllm/vllm-openai@sha256:7a0f0fdd2771464b6976625c2b2d5dd46f566aa00fbc53eceab86ef50883da90}"
 
 # Restart with new image
-docker compose -f compose/docker-compose.worker.yml up -d --force-recreate
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml up -d --force-recreate
 ```
 
 ### Model Updates
 ```bash
-# Clear model cache
-docker volume rm vllm_model_cache
+# Clear model cache (vLLM container cache is a bind mount under .docker-data/worker/vllm_cache by default)
+rm -rf "${COMPOSE_DATA_ROOT:-.docker-data}/worker/vllm_cache"/*
 
-# Restart with new model
-docker compose -f compose/docker-compose.worker.yml up -d
+# Restart with new model (from repository root)
+docker compose --project-directory "$(pwd)" -f docker/compose-profiles/docker-compose.worker.yml up -d
 ```

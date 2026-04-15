@@ -1,0 +1,99 @@
+{
+  "artifact_id": "3a5982a9-4dce-5cb7-a6e0-f247ce49e4a8",
+  "artifact_type": "ROLE_CONTEXT_BUNDLE",
+  "created_at": "2026-04-08T00:00:00Z",
+  "expires_at": null,
+  "input_artifact_refs": [
+    "artifact://environment-spec/eng_trilinos_family_docker",
+    "artifact://evidence-bundle/trilinos_ifpack2_runtime",
+    "artifact://execution-adapter-spec/trilinos_ifpack2_probe",
+    "artifact://knowledge-pack/trilinos_family",
+    "artifact://knowledge-pack/trilinos_ifpack2",
+    "artifact://recipe-object/trilinos_ifpack2_solver_backends",
+    "artifact://verification-report/bd12c942-b6e5-51da-9379-9aecbd8429ba"
+  ],
+  "invalid_reasons": [],
+  "payload": {
+    "compiled_summary": "Trilinos Ifpack2: solves Trilinos Ifpack2 backend kernels reused by solver-backend workflows, Trilinos Ifpack2 low-level numeric or geometric primitives inside a linked execution adapter. Best for Trilinos Ifpack2 inside solver-backend workflows. Avoid Using Trilinos Ifpack2 as a substitute for unrelated workflows outside solver-backend workflows, Treating Trilinos Ifpack2 as implicitly verified without its linked runtime and evidence bundle. Runtime eng-trilinos-family/docker_image at birtha/knowledge-eng-trilinos-family:1.0.0; environment ref artifact://environment-spec/eng_trilinos_family_docker; healthcheck commands python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_trilinos_family_docker; verification refs artifact://verification-report/bd12c942-b6e5-51da-9379-9aecbd8429ba. Runtime gate: Healthcheck failed for artifact://environment-spec/eng_trilinos_family_docker: docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: exec: \"python\": executable file not found in $PATH.",
+    "excluded_sections": [
+      "apis and objects",
+      "file contracts",
+      "adapter usage",
+      "minimal scaffolds",
+      "implementation failure modes",
+      "invariants",
+      "unit checks",
+      "validation cases",
+      "anti-patterns",
+      "acceptance thresholds"
+    ],
+    "included_sections": [
+      "capability boundaries",
+      "tradeoffs",
+      "fidelity and cost",
+      "integration fit",
+      "expected outputs"
+    ],
+    "retrieval_keys": [
+      "general",
+      "package",
+      "phase3_package_trilinos_ifpack2",
+      "trilinos_ifpack2",
+      "true"
+    ],
+    "role": "general",
+    "role_context_bundle_id": "general_4bfbf2381f7fcf8a",
+    "schema_version": "1.0.0",
+    "source_artifact_refs": [
+      "artifact://environment-spec/eng_trilinos_family_docker",
+      "artifact://evidence-bundle/trilinos_ifpack2_runtime",
+      "artifact://execution-adapter-spec/trilinos_ifpack2_probe",
+      "artifact://knowledge-pack/trilinos_family",
+      "artifact://knowledge-pack/trilinos_ifpack2",
+      "artifact://recipe-object/trilinos_ifpack2_solver_backends",
+      "artifact://verification-report/bd12c942-b6e5-51da-9379-9aecbd8429ba"
+    ],
+    "source_hashes": [
+      {
+        "artifact_ref": "artifact://environment-spec/eng_trilinos_family_docker",
+        "sha256": "698e541222f13d8054998a70ca2e31e99fcbd1da3404a1d0c15ab4f8f46c907f"
+      },
+      {
+        "artifact_ref": "artifact://evidence-bundle/trilinos_ifpack2_runtime",
+        "sha256": "254f587efd438da774db4ebd4e0ced52ac6dbd0e67e1e5955060987aafdaa825"
+      },
+      {
+        "artifact_ref": "artifact://execution-adapter-spec/trilinos_ifpack2_probe",
+        "sha256": "dd538bfe93641989e1ac9f003827d71f45461a3b005087eb60448eae5ae4fde4"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_family",
+        "sha256": "a0e8bccdaa5171332af458bf810f765200943e493fdf84c0cd5efd22100b1349"
+      },
+      {
+        "artifact_ref": "artifact://knowledge-pack/trilinos_ifpack2",
+        "sha256": "750d859b144b480e7ca5684a797e4c11c17e5c03b75b0b34b5bda21ee560f8af"
+      },
+      {
+        "artifact_ref": "artifact://recipe-object/trilinos_ifpack2_solver_backends",
+        "sha256": "13469e3ca6b13b583a9a062158aa40a82d8908a7af5cf0ec329be447f920e3ba"
+      },
+      {
+        "artifact_ref": "artifact://verification-report/bd12c942-b6e5-51da-9379-9aecbd8429ba",
+        "sha256": "8aebea90404ae72c2292886583bf85d82dae34f83c2ee607754e794533cfe40e"
+      }
+    ],
+    "task_class": "phase3_package_trilinos_ifpack2"
+  },
+  "producer": {
+    "component": "control_plane.knowledge_pool",
+    "executor": "deterministic_compiler",
+    "run_id": null,
+    "task_packet_id": null
+  },
+  "schema_version": "1.0.0",
+  "status": "ACTIVE",
+  "supersedes": [],
+  "updated_at": "2026-04-08T00:00:00Z",
+  "validation_state": "VALID"
+}
