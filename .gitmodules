@@ -6,3 +6,7 @@
 	path = openclaw
 	url = https://github.com/mhold3n/openclaw.git
 	branch = main
+[submodule "void"]
+	path = void
+	url = https://github.com/mhold3n/void.git
+	branch = main
