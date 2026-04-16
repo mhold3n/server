@@ -11,14 +11,15 @@
 ### Active vs archived code
 
 - **This repo** — Active platform code: Birtha API, router, queue, worker client, media (`martymedia`), MCP servers, observability, networking/media compose profiles, and deployment glue.
-- **`xlotyl/`** — WrkHrs AI stack (gateway, agent-platform, domains, `model-runtime`, orchestration wiki, response-control, MCP registry config). Use a **symlink** to a sibling clone (`../xlotyl`) for local dev, or check out [`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl) into `./xlotyl` (CI uses tag `v0.1.2`). Compose build contexts and API bind mounts read from `./xlotyl/...`.
 - **Legacy archive** — The historical MBMH training/runtime tree and the retired `engineering_physics_v1` harness were moved out of this repo into the sibling legacy archive at `../server-local-archive/2026-04-08/server/`.
 
 ### External GitHub repos
 
 - **`claw-code-main/`** — Git submodule tracking our fork [`mhold3n/claw-code`](https://github.com/mhold3n/claw-code) on `main` (upstream: [`ultraworkers/claw-code`](https://github.com/ultraworkers/claw-code)).
 - **`openclaw/`** — Git submodule tracking our fork [`mhold3n/openclaw`](https://github.com/mhold3n/openclaw) on `main` (upstream: [`openclaw/openclaw`](https://github.com/openclaw/openclaw)).
-- Refresh both with `npm run deps:external`. See [`docs/external-repos.md`](docs/external-repos.md) for the rationale and workflow, and [`docs/external-orchestration-interfaces.md`](docs/external-orchestration-interfaces.md) for how they relate to the active control plane.
+- **`void/`** — Git submodule tracking [`mhold3n/void`](https://github.com/mhold3n/void) on `main`.
+- **`xlotyl/`** — Git submodule tracking [`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl) on `main` (WrkHrs AI stack: gateway, agent-platform, domains, `model-runtime`, orchestration wiki, response-control, MCP registry config). The super-project pins an exact submodule commit for CI and releases; compose build contexts and API bind mounts read from `./xlotyl/...`.
+- Refresh all with `npm run deps:external`. See [`docs/external-repos.md`](docs/external-repos.md) for the rationale and workflow, and [`docs/external-orchestration-interfaces.md`](docs/external-orchestration-interfaces.md) for how they relate to the active control plane.
 
 ## Project Management
 
@@ -370,6 +371,8 @@ Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/s
 server/   # repository root (suggested clone folder name)
 ├── claw-code-main/             # Git submodule: fork mhold3n/claw-code (Birtha-local patches)
 ├── openclaw/                   # Git submodule: fork mhold3n/openclaw (Birtha-local patches)
+├── void/                       # Git submodule: mhold3n/void
+├── xlotyl/                     # Git submodule: mhold3n/xlotyl (WrkHrs AI stack sources)
 ├── services/                    # Core services
 │   ├── api-service/            # FastAPI control plane with WrkHrs integration
 │   │   ├── src/wrkhrs/         # WrkHrs integration layer

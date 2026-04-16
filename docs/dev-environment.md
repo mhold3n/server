@@ -2,9 +2,9 @@
 
 ## Single clone (recommended)
 
-Work from the **[github.com/mhold3n/server](https://github.com/mhold3n/server)** checkout. The Birtha control plane, router, queue, media, and MCP servers live here. **AI stack sources** live in the companion repo **[github.com/mhold3n/xlotyl](https://github.com/mhold3n/xlotyl)** and must appear at **`./xlotyl`** (git clone, submodule, or `ln -s ../xlotyl xlotyl` next to this repo). Compose and the API image expect `xlotyl/services/…`, `xlotyl/knowledge/…`, and `xlotyl/schemas/…`. Managed submodules: [`claw-code-main/`](../claw-code-main), [`openclaw/`](../openclaw). Legacy MBMH materials: `../server-local-archive/2026-04-08/server/`.
+Work from the **[github.com/mhold3n/server](https://github.com/mhold3n/server)** checkout. The Birtha control plane, router, queue, media, and MCP servers live here. **AI stack sources** live in **`./xlotyl`**, tracked as a **Git submodule** ([`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl)) alongside [`claw-code-main/`](../claw-code-main), [`openclaw/`](../openclaw), and [`void/`](../void). After cloning this repo, run **`npm run deps:external`** (or `git submodule update --init --recursive`) so `xlotyl/` is populated. Compose and the API image expect `xlotyl/services/…`, `xlotyl/knowledge/…`, and `xlotyl/schemas/…`. Legacy MBMH materials: `../server-local-archive/2026-04-08/server/`.
 
-Cloning additional “legacy” projects **inside** this repository root increases confusion (two trees, two sets of commands, easy to edit the wrong copy). The only in-tree exceptions are the managed submodules `claw-code-main/` and `openclaw/`. Prefer:
+Cloning additional “legacy” projects **inside** this repository root increases confusion (two trees, two sets of commands, easy to edit the wrong copy). The only in-tree exceptions are the managed submodules `claw-code-main/`, `openclaw/`, `void/`, and `xlotyl/`. Prefer:
 
 - **Same machine:** clone other projects under a sibling directory, e.g. `~/work/server` and `~/work/some-other-repo`, not inside `server/`.
 - **This repo only:** run CI parity with [`scripts/run_ci_local.sh`](../scripts/run_ci_local.sh) from the repository root.

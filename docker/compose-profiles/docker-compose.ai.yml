@@ -1,4 +1,4 @@
-# WrkHrs AI Stack — build contexts point at ./xlotyl (symlink or submodule to github.com/mhold3n/xlotyl).
+# WrkHrs AI Stack — build contexts point at ./xlotyl (Git submodule: github.com/mhold3n/xlotyl).
 # Canonical copy: xlotyl/docker/compose-profiles/docker-compose.ai.yml
 
 services:

@@ -10,3 +10,7 @@
 	path = void
 	url = https://github.com/mhold3n/void.git
 	branch = main
+[submodule "xlotyl"]
+	path = xlotyl
+	url = https://github.com/mhold3n/xlotyl.git
+	branch = main

@@ -1,9 +1,11 @@
 # External GitHub repos
 
-This workspace keeps two codebases as **Git submodules** pinned to our **forks’** `main` branches (see `.gitmodules`), so Birtha can carry local patches without pointing submodule remotes at third-party default repos:
+This workspace keeps several codebases as **Git submodules** (see `.gitmodules`). Most track our **forks’** `main` branches so Birtha can carry local patches without pointing submodule remotes at third-party default repos:
 
 - `claw-code-main/` → `https://github.com/mhold3n/claw-code.git` (fork of [`ultraworkers/claw-code`](https://github.com/ultraworkers/claw-code))
 - `openclaw/` → `https://github.com/mhold3n/openclaw.git` (fork of [`openclaw/openclaw`](https://github.com/openclaw/openclaw))
+- `void/` → `https://github.com/mhold3n/void.git`
+- `xlotyl/` → `https://github.com/mhold3n/xlotyl.git` (WrkHrs AI stack: gateway, domains, model-runtime, orchestration wiki; the **super-project commit** pins the exact `xlotyl` revision for CI and releases—`branch = main` in `.gitmodules` is the default remote branch for `git submodule update --remote`, not an implicit “always latest” in CI)
 
 The `branch = main` entries in `.gitmodules` refer to **`main` on each fork**, not the upstream organizations’ remotes.
 
@@ -20,7 +22,7 @@ tracking.
 
 **`claw-code-main`:** Fork [`ultraworkers/claw-code`](https://github.com/ultraworkers/claw-code) → **`mhold3n/claw-code`**. In the fork, add **`upstream`** → `https://github.com/ultraworkers/claw-code.git`.
 
-**Contributors:** After cloning this repo, run `npm run deps:external` (or `git submodule sync --recursive && git submodule update --init --recursive claw-code-main openclaw`) so submodule `origin` URLs match `.gitmodules`.
+**Contributors:** After cloning this repo, run `npm run deps:external` (or `git submodule sync --recursive && git submodule update --init --recursive claw-code-main openclaw void xlotyl`) so submodule `origin` URLs match `.gitmodules`.
 
 ## Refresh
 

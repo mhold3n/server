@@ -13,13 +13,8 @@ jobs:
         node: ["20"]
     steps:
       - uses: actions/checkout@v4
-
-      # AI stack sources (pin tag in production); required for uv workspace + wiki/schemas.
-      - uses: actions/checkout@v4
         with:
-          repository: mhold3n/xlotyl
-          path: xlotyl
-          ref: v0.1.2
+          submodules: recursive
 
       # Python services
       - uses: actions/setup-python@v5
