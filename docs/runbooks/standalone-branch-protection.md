@@ -10,7 +10,11 @@ These five repos should require green CI on `main` before merge:
 
 ## Required check name
 
-After `.github/workflows/ci.yml` is merged, open any PR and note the **exact** check name shown (for example `CI / package-ci` or the reusable workflow’s job name). Use that string in protection rules.
+After `.github/workflows/ci.yml` is merged, open any PR and note the **exact** check name shown. For the current thin callers (job id `package-ci` calling the reusable workflow’s `lint-typecheck-test`), GitHub reports:
+
+**`package-ci / lint-typecheck-test`**
+
+Use that string as the required status check context in rulesets or classic branch protection.
 
 ## Organization ruleset (recommended)
 

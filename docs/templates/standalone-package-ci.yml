@@ -19,5 +19,10 @@ jobs:
       python-version: "3.11"
       extras-name: dev
       mypy-target: src
+      mypy-extra-args: "--strict"
       ruff-paths: .
       pytest-args: pytest -q
+      job-timeout-minutes: 360
+      run-mypy: true
+      # run-mypy: false   # if the package does not yet pass mypy
+      # job-timeout-minutes: 480  # e.g. domain-engineering
