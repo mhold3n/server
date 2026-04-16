@@ -58,9 +58,9 @@ jobs:
           set -euo pipefail
           extra="${{ inputs.extras-name }}"
           if [ -n "$extra" ]; then
-            uv pip install -e ".[$extra]"
+            uv pip install --system -e ".[$extra]"
           else
-            uv pip install -e .
+            uv pip install --system -e .
           fi
 
       - name: Ruff
