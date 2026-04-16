@@ -8,7 +8,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
 from domain_engineering import core as engineering_module
 from response_control_framework.knowledge_pool import (
     load_knowledge_pool,
@@ -17,9 +16,10 @@ from response_control_framework.knowledge_pool import (
     resolve_stack,
 )
 
+from test_paths import engineering_coding_tools_root, server_repo_root
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-KNOWLEDGE_ROOT = REPO_ROOT / "services" / "domain-engineering" / "src" / "domain_engineering" / "data" / "coding-tools"
+REPO_ROOT = server_repo_root()
+KNOWLEDGE_ROOT = engineering_coding_tools_root()
 EXCLUDED_PATH = REPO_ROOT / "KNOWLEGE MINUTES EXCLUDED.md"
 ACQUISITION_DOSSIERS_JSON_PATH = (
     KNOWLEDGE_ROOT / "substrate" / "deferred-acquisition-dossiers.json"

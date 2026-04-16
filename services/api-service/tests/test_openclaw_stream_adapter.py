@@ -3,21 +3,21 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any
 
 import pytest
 from fastapi import HTTPException
 from jsonschema import Draft202012Validator
+
 from src.openclaw_bridge.stream_adapter import (
     build_cancel_ack_dict,
     format_sse_data_line,
     iter_query_stream_events,
 )
 from src.routes.ai import QueryRequest
+from test_paths import openclaw_stream_event_schema_path
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-_SCHEMA_PATH = _REPO_ROOT / "schemas/openclaw-bridge/v1/events/stream-event.schema.json"
+_SCHEMA_PATH = openclaw_stream_event_schema_path()
 
 
 @pytest.fixture(scope="module")

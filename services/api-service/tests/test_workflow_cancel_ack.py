@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
 from jsonschema import Draft202012Validator
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from src.main import app
+from test_paths import openclaw_stream_event_schema_path
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-_SCHEMA_PATH = _REPO_ROOT / "schemas/openclaw-bridge/v1/events/stream-event.schema.json"
+_SCHEMA_PATH = openclaw_stream_event_schema_path()
 
 
 def test_cancel_workflow_wraps_upstream_and_cancel_ack() -> None:

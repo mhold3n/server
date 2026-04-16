@@ -8,9 +8,10 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-_SCHEMA_PATH = _REPO_ROOT / "schemas/openclaw-bridge/v1/events/stream-event.schema.json"
-_FIXTURE_DIR = _REPO_ROOT / "schemas/openclaw-bridge/v1/events/fixtures"
+from test_paths import openclaw_event_fixtures_dir, openclaw_stream_event_schema_path
+
+_SCHEMA_PATH = openclaw_stream_event_schema_path()
+_FIXTURE_DIR = openclaw_event_fixtures_dir()
 
 
 @pytest.fixture(scope="module")

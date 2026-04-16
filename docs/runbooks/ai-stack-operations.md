@@ -8,7 +8,7 @@ For **cross-service environment variables** (API ↔ agent-platform ↔ control 
 ### Repository split (`xlotyl`)
 
 - **Sources:** AI services, domains, orchestration wiki, and compiled routing JSON live in [`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl). The server repo’s compose files build from **`./xlotyl/...`** (symlink, submodule, or rsync — see `deploy/ci/scripts/remote_deploy.sh`).
-- **CI:** `.github/workflows/ci.yml` checks out `xlotyl` at tag **`v0.1.1`**; bump that ref when cutting coordinated releases.
+- **CI:** `.github/workflows/ci.yml` checks out `xlotyl` at tag **`v0.1.2`**; bump that ref when cutting coordinated releases.
 - **Staging / rollback:** Deploy a known-good **server** SHA and matching **xlotyl** tag. Roll back by pinning the previous pair and re-running `docker compose ... up -d --build` on the host (image digests optional if you build locally).
 
 ## Services Overview

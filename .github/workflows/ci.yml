@@ -19,7 +19,7 @@ jobs:
         with:
           repository: mhold3n/xlotyl
           path: xlotyl
-          ref: v0.1.1
+          ref: v0.1.2
 
       # Python services
       - uses: actions/setup-python@v5
