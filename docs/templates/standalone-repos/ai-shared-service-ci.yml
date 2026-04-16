@@ -1,0 +1,21 @@
+# mhold3n/ai-shared-service — copy to .github/workflows/ci.yml
+# Set SERVER_REF to a commit SHA or tag on mhold3n/server.
+# Optional: add a second workflow for GHCR — docs/templates/ai-shared-service-ghcr-publish.yml
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  package-ci:
+    uses: mhold3n/server/.github/workflows/reusable-python-package-ci.yml@SERVER_REF
+    secrets: inherit
+    with:
+      python-version: "3.11"
+      extras-name: dev
+      mypy-target: src
+      ruff-paths: .
+      pytest-args: pytest -q

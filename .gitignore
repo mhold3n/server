@@ -248,6 +248,9 @@ docker-compose.local.yml
 !**/config/*.yml
 !**/docker-compose*.yml
 !**/docker-compose*.yaml
+# GitHub Actions and checked-in workflow templates (otherwise ignored by `*.yml` above)
+!.github/workflows/**/*.yml
+!docs/templates/**/*.yml
 # Observability stack configs (normally ignored by *.yml / *.yaml above)
 !infra/observability/**/*.yml
 !infra/observability/**/*.yaml

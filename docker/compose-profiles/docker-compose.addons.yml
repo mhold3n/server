@@ -174,9 +174,11 @@ services:
   # AI Agent Stack (LangChain / Haystack)
   # =============================
 
+  # Prebuilt image from mhold3n/ai-shared-service CI (GHCR). Tag aligns with
+  # [tool.uv.sources] / DOMAIN_PACKAGES_TAG. To build from this monorepo instead,
+  # comment out `image` and use the `build` block below.
   ai-stack:
-    build:
-      context: ./services/ai-shared-service
+    image: ghcr.io/mhold3n/ai-shared-service:${DOMAIN_PACKAGES_TAG:-v0.1.0}
     profiles: [ai]
     environment:
       - OPENAI_BASE_URL=${OPENAI_BASE_URL}
@@ -184,6 +186,21 @@ services:
     ports:
       - "8090:8090"
     restart: unless-stopped
+
+  # ai-stack (build from monorepo clone Dockerfile — alternative to GHCR image above):
+  # ai-stack:
+  #   build:
+  #     context: ../..
+  #     dockerfile: docker/ai-shared-service/Dockerfile
+  #     args:
+  #       AI_SHARED_TAG: ${DOMAIN_PACKAGES_TAG:-v0.1.0}
+  #   profiles: [ai]
+  #   environment:
+  #     - OPENAI_BASE_URL=${OPENAI_BASE_URL}
+  #     - OPENAI_API_KEY=${OPENAI_API_KEY}
+  #   ports:
+  #     - "8090:8090"
+  #   restart: unless-stopped
 
   # =============================
   # Media Management (ARR Suite)

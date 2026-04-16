@@ -1,0 +1,23 @@
+# Example caller: copy to YOUR_PACKAGE_REPO/.github/workflows/ci.yml
+# Replace SERVER_REF with a tag or SHA on mhold3n/server (avoid bare @main in production).
+# Per-repo examples: docs/templates/standalone-repos/<repo>-ci.yml
+#
+# Reusable workflow: https://github.com/mhold3n/server/blob/main/.github/workflows/reusable-python-package-ci.yml
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  package-ci:
+    uses: mhold3n/server/.github/workflows/reusable-python-package-ci.yml@SERVER_REF
+    secrets: inherit
+    with:
+      python-version: "3.11"
+      extras-name: dev
+      mypy-target: src
+      ruff-paths: .
+      pytest-args: pytest -q
