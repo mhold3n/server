@@ -198,7 +198,9 @@ def test_devplane_internal_dispatch_lifecycle_and_publish(
         worktree_path = Path(run["workspace"]["worktree_path"])
         assert worktree_path.exists()
         assert (worktree_path / ".birtha" / "task-packet.json").exists()
-        manifest = (worktree_path / ".birtha" / "task-packet.json").read_text(encoding="utf-8")
+        manifest = (worktree_path / ".birtha" / "task-packet.json").read_text(
+            encoding="utf-8"
+        )
         assert "knowledge_pool_assessment_ref" in manifest
         assert run["backend_run_id"].startswith("backend-")
         assert run["execution_mode"] == "internal"
@@ -227,7 +229,9 @@ def test_devplane_internal_dispatch_lifecycle_and_publish(
         assert publish_resp.status_code == 200
         published = publish_resp.json()
         assert published["state"] == "published"
-        assert published["dossier"]["publish_result"]["branch_name"].startswith("birtha/")
+        assert published["dossier"]["publish_result"]["branch_name"].startswith(
+            "birtha/"
+        )
         assert published["dossier"]["publish_result"]["commit_sha"]
 
         reset_devplane_service_for_tests()
@@ -350,7 +354,9 @@ def test_devplane_blocked_and_escalated_states_round_trip(tmp_path: Path) -> Non
                 "user_intent": "Capture blocked and escalated lifecycle states",
                 "engagement_mode": "engineering_task",
                 "context": {
-                    "acceptance_criteria": ["Expose blocked/escalated through the dossier"],
+                    "acceptance_criteria": [
+                        "Expose blocked/escalated through the dossier"
+                    ],
                     "constraints": ["Use the external callback flow"],
                 },
             },
@@ -358,7 +364,12 @@ def test_devplane_blocked_and_escalated_states_round_trip(tmp_path: Path) -> Non
         if task["state"] == "pending_clarification":
             task = client.post(
                 f"/api/dev/tasks/{task['task_id']}/answer",
-                json=[{"question_id": "objective_scope", "answer": "Track lifecycle states"}],
+                json=[
+                    {
+                        "question_id": "objective_scope",
+                        "answer": "Track lifecycle states",
+                    }
+                ],
             ).json()
 
         run = client.post(

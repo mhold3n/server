@@ -65,7 +65,8 @@ class WorkspaceManager:
             self._run_git(
                 project_path,
                 ["rev-parse", "--show-toplevel"],
-            ).stdout_excerpt or ""
+            ).stdout_excerpt
+            or ""
         ).resolve()
         self._assert_project_is_isolated(top_level)
         self._assert_clean_worktree(top_level)
@@ -156,7 +157,9 @@ class WorkspaceManager:
             active_queue_item = next(
                 (
                     item
-                    for item in (engineering_bundle.get("task_queue", {}) or {}).get("items", [])
+                    for item in (engineering_bundle.get("task_queue", {}) or {}).get(
+                        "items", []
+                    )
                     if item.get("task_packet_ref") == active_task_packet_ref
                 ),
                 None,
@@ -186,31 +189,43 @@ class WorkspaceManager:
                 "clarifications": task.clarifications.model_dump(mode="json"),
                 "problem_brief_ref": engineering_bundle.get("problem_brief_ref"),
                 "problem_brief": engineering_bundle.get("problem_brief"),
-                "engineering_state_ref": engineering_bundle.get("engineering_state_ref"),
+                "engineering_state_ref": engineering_bundle.get(
+                    "engineering_state_ref"
+                ),
                 "engineering_state": engineering_bundle.get("engineering_state"),
                 "knowledge_pool_assessment_ref": engineering_bundle.get(
                     "knowledge_pool_assessment_ref"
                 ),
-                "knowledge_pool_coverage": engineering_bundle.get("knowledge_pool_coverage"),
-                "knowledge_candidate_refs": engineering_bundle.get("knowledge_candidate_refs", []),
+                "knowledge_pool_coverage": engineering_bundle.get(
+                    "knowledge_pool_coverage"
+                ),
+                "knowledge_candidate_refs": engineering_bundle.get(
+                    "knowledge_candidate_refs", []
+                ),
                 "knowledge_role_context_refs": engineering_bundle.get(
                     "knowledge_role_context_refs",
                     [],
                 ),
                 "knowledge_gaps": engineering_bundle.get("knowledge_gaps", []),
-                "knowledge_required": bool(engineering_bundle.get("knowledge_required")),
+                "knowledge_required": bool(
+                    engineering_bundle.get("knowledge_required")
+                ),
                 "response_mode": engineering_bundle.get("response_mode"),
                 "response_control_ref": engineering_bundle.get("response_control_ref"),
                 "selected_knowledge_pool_refs": engineering_bundle.get(
                     "selected_knowledge_pool_refs",
                     [],
                 ),
-                "selected_module_refs": engineering_bundle.get("selected_module_refs", []),
+                "selected_module_refs": engineering_bundle.get(
+                    "selected_module_refs", []
+                ),
                 "selected_technique_refs": engineering_bundle.get(
                     "selected_technique_refs",
                     [],
                 ),
-                "selected_theory_refs": engineering_bundle.get("selected_theory_refs", []),
+                "selected_theory_refs": engineering_bundle.get(
+                    "selected_theory_refs", []
+                ),
                 "task_queue": engineering_bundle.get("task_queue"),
                 "active_task_queue_item": active_queue_item,
                 "task_packet_refs": engineering_bundle.get("task_packet_refs", []),
@@ -371,13 +386,19 @@ class WorkspaceManager:
                     file_path=engineering_state_path,
                     artifact_type="ENGINEERING_STATE",
                     payload=engineering_state,
-                    input_refs=[engineering_bundle.get("problem_brief_ref")] if engineering_bundle.get("problem_brief_ref") else [],
+                    input_refs=(
+                        [engineering_bundle.get("problem_brief_ref")]
+                        if engineering_bundle.get("problem_brief_ref")
+                        else []
+                    ),
                 )
             )
 
         knowledge_pool_assessment = engineering_bundle.get("knowledge_pool_assessment")
         if isinstance(knowledge_pool_assessment, dict):
-            knowledge_pool_assessment_path = packet_dir / "knowledge-pool-assessment.json"
+            knowledge_pool_assessment_path = (
+                packet_dir / "knowledge-pool-assessment.json"
+            )
             knowledge_pool_assessment_path.write_text(
                 json.dumps(knowledge_pool_assessment, indent=2),
                 encoding="utf-8",
@@ -396,7 +417,9 @@ class WorkspaceManager:
                 )
             )
 
-        response_control_assessment = engineering_bundle.get("response_control_assessment")
+        response_control_assessment = engineering_bundle.get(
+            "response_control_assessment"
+        )
         if isinstance(response_control_assessment, dict):
             response_control_path = packet_dir / "response-control-assessment.json"
             response_control_path.write_text(
@@ -413,7 +436,10 @@ class WorkspaceManager:
                         ref
                         for ref in [
                             engineering_bundle.get("problem_brief_ref"),
-                            *(engineering_bundle.get("selected_knowledge_pool_refs") or []),
+                            *(
+                                engineering_bundle.get("selected_knowledge_pool_refs")
+                                or []
+                            ),
                             *(engineering_bundle.get("selected_module_refs") or []),
                             *(engineering_bundle.get("selected_technique_refs") or []),
                             *(engineering_bundle.get("selected_theory_refs") or []),
@@ -423,7 +449,9 @@ class WorkspaceManager:
                 )
             )
 
-        knowledge_role_contexts = engineering_bundle.get("knowledge_role_contexts") or {}
+        knowledge_role_contexts = (
+            engineering_bundle.get("knowledge_role_contexts") or {}
+        )
         if isinstance(knowledge_role_contexts, dict) and knowledge_role_contexts:
             role_context_dir = packet_dir / "knowledge-role-contexts"
             role_context_dir.mkdir(parents=True, exist_ok=True)
@@ -532,7 +560,9 @@ class WorkspaceManager:
         if has_changes:
             commands.append(self._run_git(worktree_path, ["add", "-A"]))
             commit_message = request.commit_message or f"Implement task {branch_name}"
-            commands.append(self._run_git(worktree_path, ["commit", "-m", commit_message]))
+            commands.append(
+                self._run_git(worktree_path, ["commit", "-m", commit_message])
+            )
 
         commit_sha = self._optional_git_output(worktree_path, ["rev-parse", "HEAD"])
         result = PublishResult(
@@ -639,7 +669,9 @@ class WorkspaceManager:
             stderr_excerpt=(process.stderr or "").strip()[:2000] or None,
         )
         if process.returncode != 0:
-            raise WorkspaceError(command.stderr_excerpt or "Git command failed", command)
+            raise WorkspaceError(
+                command.stderr_excerpt or "Git command failed", command
+            )
         return command
 
     def _optional_git_output(self, cwd: Path, args: list[str]) -> str | None:
@@ -664,15 +696,21 @@ class WorkspaceManager:
         )
         if remote_head and "/" in remote_head:
             return remote_head.split("/")[-1]
-        head_name = self._optional_git_output(cwd, ["rev-parse", "--abbrev-ref", "HEAD"])
+        head_name = self._optional_git_output(
+            cwd, ["rev-parse", "--abbrev-ref", "HEAD"]
+        )
         return head_name or "main"
 
     def _resolve_start_ref(self, cwd: Path, project: ProjectRecord) -> str:
-        local_ref = self._optional_git_output(cwd, ["rev-parse", "--verify", project.default_branch])
+        local_ref = self._optional_git_output(
+            cwd, ["rev-parse", "--verify", project.default_branch]
+        )
         if local_ref:
             return project.default_branch
         remote_ref = f"{project.remote_name}/{project.default_branch}"
-        remote_verified = self._optional_git_output(cwd, ["rev-parse", "--verify", remote_ref])
+        remote_verified = self._optional_git_output(
+            cwd, ["rev-parse", "--verify", remote_ref]
+        )
         if remote_verified:
             return remote_ref
         raise WorkspaceError(

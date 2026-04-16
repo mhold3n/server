@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import json
 from typing import Any
+from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch
 
 from src.main import app
 

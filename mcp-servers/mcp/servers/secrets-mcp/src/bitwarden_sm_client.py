@@ -41,7 +41,9 @@ class BitwardenSmClient:
 
     def _require_token(self) -> None:
         if self._cfg.access_token == "":
-            raise RuntimeError("BWS_ACCESS_TOKEN is required for Bitwarden Secrets Manager")
+            raise RuntimeError(
+                "BWS_ACCESS_TOKEN is required for Bitwarden Secrets Manager"
+            )
 
     def _run_bws(self, args: list[str]) -> str:
         self._require_token()
@@ -56,7 +58,9 @@ class BitwardenSmClient:
             timeout=self._cfg.timeout_seconds,
         )
         if proc.returncode != 0:
-            msg = (proc.stderr or proc.stdout or f"bws exited {proc.returncode}").strip()
+            msg = (
+                proc.stderr or proc.stdout or f"bws exited {proc.returncode}"
+            ).strip()
             raise RuntimeError(msg)
         return (proc.stdout or "").strip()
 
@@ -176,4 +180,3 @@ class BitwardenSmClient:
         ref = parse_bws_ref(path)
         self._run_bws(["secret", "delete", ref.secret_id])
         return {"deleted": True, "id": ref.secret_id}
-

@@ -36,10 +36,12 @@ async def test_api_query_strict_engineering_returns_orchestrator_payload() -> No
     inner = data.get("result", data)
     assert isinstance(inner, dict), data
     # Orchestrator returns workflow output; final_response may be empty on blocked paths.
-    assert "final_response" in inner or "verification_outcome" in inner or "referential_state" in inner, (
-        f"unexpected shape: {list(inner.keys())[:20]}"
-    )
+    assert (
+        "final_response" in inner
+        or "verification_outcome" in inner
+        or "referential_state" in inner
+    ), f"unexpected shape: {list(inner.keys())[:20]}"
     if "referential_state" in inner:
-        assert isinstance(inner["referential_state"], dict), (
-            f"referential_state must be a JSON object for OpenClaw bridge continuity; got {type(inner['referential_state'])}"
-        )
+        assert isinstance(
+            inner["referential_state"], dict
+        ), f"referential_state must be a JSON object for OpenClaw bridge continuity; got {type(inner['referential_state'])}"

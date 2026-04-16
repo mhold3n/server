@@ -3,4 +3,3 @@
 from domain_content.whisper import WhisperError, WhisperRunResult, run_whisper_srt
 
 __all__ = ["WhisperError", "WhisperRunResult", "run_whisper_srt"]
-

@@ -17,18 +17,24 @@ def _fixture(relative_path: str) -> dict:
 
 
 def test_validate_wiki_edit_proposal_fixture() -> None:
-    payload = _fixture("xlotyl/services/response-control-framework/schemas/control-plane/v1/fixtures/wiki-edit-proposal/valid-minimal.json")
+    payload = _fixture(
+        "xlotyl/services/response-control-framework/schemas/control-plane/v1/fixtures/wiki-edit-proposal/valid-minimal.json"
+    )
     proposal = validate_wiki_edit_proposal_json(payload)
     assert proposal.unapproved_source is True
     assert proposal.status.value == "PROPOSED"
 
 
 def test_wiki_proposal_validation_route_accepts_valid_payload() -> None:
-    payload = _fixture("xlotyl/services/response-control-framework/schemas/control-plane/v1/fixtures/wiki-edit-proposal/valid-minimal.json")
+    payload = _fixture(
+        "xlotyl/services/response-control-framework/schemas/control-plane/v1/fixtures/wiki-edit-proposal/valid-minimal.json"
+    )
     client = TestClient(app)
     response = client.post("/api/control-plane/wiki/proposals/validate", json=payload)
     assert response.status_code == 200
     body = response.json()
     assert body["ok"] is True
-    assert body["wiki_edit_proposal"]["caution"] == "unapproved source, proceed with caution"
-
+    assert (
+        body["wiki_edit_proposal"]["caution"]
+        == "unapproved source, proceed with caution"
+    )

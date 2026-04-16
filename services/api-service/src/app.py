@@ -2,8 +2,7 @@
 
 import asyncio
 import os
-from collections.abc import Awaitable, Callable
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -224,6 +223,7 @@ else:
 openai_client: AsyncOpenAI | None = None
 mlflow_logger: MLflowLogger | None = None
 provenance_logger: ProvenanceLogger | None = None
+
 
 @asynccontextmanager
 async def lifespan(app_: FastAPI) -> AsyncIterator[None]:

@@ -36,6 +36,7 @@ app = FastAPI(title="Secrets MCP Server", version="0.1.0")
 # Global secrets backend client (Bitwarden Secrets Manager)
 vault_client = BitwardenSmClient()
 
+
 def _require_call_auth(request: Request) -> None:
     """Optionally require an auth token for /call to reduce prompt-injection blast radius.
 
@@ -93,7 +94,7 @@ async def list_tools() -> dict[str, Any]:
         "tools": [
             {
                 "name": "get_secret",
-                    "description": "Retrieve a secret via 1Password Connect (`op://...` refs or `<Vault>/<Item>` + key)",
+                "description": "Retrieve a secret via 1Password Connect (`op://...` refs or `<Vault>/<Item>` + key)",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -108,7 +109,7 @@ async def list_tools() -> dict[str, Any]:
             },
             {
                 "name": "set_secret",
-                    "description": "Store/update a secret via 1Password Connect (requires `op://<Vault>/<Item>/<field>`)",
+                "description": "Store/update a secret via 1Password Connect (requires `op://<Vault>/<Item>/<field>`)",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -120,7 +121,7 @@ async def list_tools() -> dict[str, Any]:
             },
             {
                 "name": "list_secrets",
-                    "description": "List secrets/items in a vault (Connect backend)",
+                "description": "List secrets/items in a vault (Connect backend)",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -131,7 +132,7 @@ async def list_tools() -> dict[str, Any]:
             },
             {
                 "name": "delete_secret",
-                    "description": "Delete an item/secret via 1Password Connect (requires `op://...`)",
+                "description": "Delete an item/secret via 1Password Connect (requires `op://...`)",
                 "inputSchema": {
                     "type": "object",
                     "properties": {

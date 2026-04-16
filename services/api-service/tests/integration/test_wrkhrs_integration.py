@@ -4,6 +4,9 @@ from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from ai_shared_service.conditioning import NonGenerativeConditioning, RequestConditioner
+from ai_shared_service.domain_classifier import DomainClassifier
+from ai_shared_service.gateway_client import WrkHrsGatewayClient
 from fastapi.testclient import TestClient
 
 from src.main import app
@@ -13,9 +16,6 @@ from src.observability.mlflow_logger import (
     RunSpec,
 )
 from src.policies.evidence import EvidencePolicy
-from ai_shared_service.conditioning import NonGenerativeConditioning, RequestConditioner
-from ai_shared_service.domain_classifier import DomainClassifier
-from ai_shared_service.gateway_client import WrkHrsGatewayClient
 
 
 class TestWrkHrsIntegration:

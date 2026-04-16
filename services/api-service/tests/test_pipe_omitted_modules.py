@@ -442,9 +442,8 @@ async def test_wrkhrs_gateway_client_pipe(monkeypatch: pytest.MonkeyPatch) -> No
 
 @pytest.mark.asyncio
 async def test_wrkhrs_gateway_client_errors_pipe() -> None:
-    from httpx import HTTPError
-
     from ai_shared_service.gateway_client import WrkHrsGatewayClient
+    from httpx import HTTPError
 
     c = WrkHrsGatewayClient(base_url="http://x")
     with pytest.raises(RuntimeError):

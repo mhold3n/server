@@ -6,6 +6,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from domain_engineering.core import intake_engineering_request
+
 from .models import (
     ArtifactRecord,
     ClarificationAnswer,
@@ -82,7 +83,9 @@ class DevPlaneService:
         """Register an external project checkout."""
         repo_path = Path(request.canonical_repo_path).expanduser().resolve()
         if not repo_path.exists():
-            raise DevPlaneError(f"Project path does not exist: {repo_path}", status_code=404)
+            raise DevPlaneError(
+                f"Project path does not exist: {repo_path}", status_code=404
+            )
         try:
             inspection = self.workspace_manager.inspect_project(
                 repo_path,
@@ -100,7 +103,9 @@ class DevPlaneService:
             ),
             None,
         )
-        project_id = existing.project_id if existing else f"proj_{slugify(request.name)}"
+        project_id = (
+            existing.project_id if existing else f"proj_{slugify(request.name)}"
+        )
         workspace_root = self.devplane_root / project_id
         github = inspection.github.model_copy(
             update={
@@ -152,7 +157,9 @@ class DevPlaneService:
             engagement_mode,
             default=EngagementMode.STRICT_ENGINEERING,
         )
-        normalized_source = self._normalize_engagement_mode_source(engagement_mode_source)
+        normalized_source = self._normalize_engagement_mode_source(
+            engagement_mode_source
+        )
         normalized_minimum_mode = self._normalize_engagement_mode(
             minimum_engagement_mode,
             default=normalized_mode,
@@ -304,7 +311,9 @@ class DevPlaneService:
             for payload in self._typed_payloads(task.dossier, "ROLE_CONTEXT_BUNDLE")
             if isinstance(payload.get("role"), str)
         }
-        latest_engineering_state = self._latest_typed_payload(task.dossier, "ENGINEERING_STATE")
+        latest_engineering_state = self._latest_typed_payload(
+            task.dossier, "ENGINEERING_STATE"
+        )
         latest_task_queue = self._latest_typed_payload(task.dossier, "TASK_QUEUE")
         latest_task_packets = self._typed_payloads(task.dossier, "TASK_PACKET")
         if session is None and not any(
@@ -320,14 +329,13 @@ class DevPlaneService:
         ):
             return None
         return {
-            "problem_brief": (session.problem_brief if session else None) or latest_problem_brief,
+            "problem_brief": (session.problem_brief if session else None)
+            or latest_problem_brief,
             "knowledge_pool_assessment": (
                 session.knowledge_pool_assessment if session else None
             )
             or latest_knowledge_assessment,
-            "response_control_ref": (
-                session.response_control_ref if session else None
-            )
+            "response_control_ref": (session.response_control_ref if session else None)
             or task.response_control_ref
             or task.dossier.response_control_ref
             or (
@@ -337,9 +345,7 @@ class DevPlaneService:
                 and latest_response_control.get("response_control_assessment_id")
                 else None
             ),
-            "response_mode": (
-                session.response_mode if session else None
-            )
+            "response_mode": (session.response_mode if session else None)
             or task.response_mode
             or task.dossier.response_mode
             or (
@@ -467,9 +473,7 @@ class DevPlaneService:
                 for payload in latest_role_contexts.values()
                 if payload.get("role_context_bundle_id")
             ],
-            "knowledge_gaps": (
-                list(session.knowledge_gaps) if session else []
-            )
+            "knowledge_gaps": (list(session.knowledge_gaps) if session else [])
             or list(task.knowledge_gaps)
             or list(task.dossier.knowledge_gaps)
             or (
@@ -477,45 +481,59 @@ class DevPlaneService:
                 if latest_knowledge_assessment
                 else []
             ),
-            "knowledge_required": (
-                session.knowledge_required if session else False
-            )
+            "knowledge_required": (session.knowledge_required if session else False)
             or task.knowledge_required
             or task.dossier.knowledge_required
             or bool(
-                latest_knowledge_assessment and latest_knowledge_assessment.get("required_for_mode")
+                latest_knowledge_assessment
+                and latest_knowledge_assessment.get("required_for_mode")
             ),
-            "engineering_state": (
-                session.engineering_state if session else None
-            ) or latest_engineering_state,
-            "task_queue": (session.task_queue if session else None) or latest_task_queue,
-            "task_packets": (session.task_packets if session else []) or latest_task_packets,
+            "engineering_state": (session.engineering_state if session else None)
+            or latest_engineering_state,
+            "task_queue": (session.task_queue if session else None)
+            or latest_task_queue,
+            "task_packets": (session.task_packets if session else [])
+            or latest_task_packets,
             "active_task_packet": session.active_task_packet if session else None,
-            "active_task_packet_ref": session.active_task_packet_ref if session else None,
-            "active_selected_executor": session.active_selected_executor if session else None,
-            "clarification_questions": session.clarification_questions if session else [],
+            "active_task_packet_ref": (
+                session.active_task_packet_ref if session else None
+            ),
+            "active_selected_executor": (
+                session.active_selected_executor if session else None
+            ),
+            "clarification_questions": (
+                session.clarification_questions if session else []
+            ),
             "required_gates": session.required_gates if session else [],
             "verification_outcome": session.verification_outcome if session else None,
             "verification_report": session.verification_report if session else None,
-            "verification_report_ref": session.verification_report_ref if session else None,
+            "verification_report_ref": (
+                session.verification_report_ref if session else None
+            ),
             "escalation_packet": session.escalation_packet if session else None,
             "escalation_packet_ref": session.escalation_packet_ref if session else None,
             "status": session.status if session else None,
             "engagement_mode": task.engagement_mode.value,
             "engagement_mode_source": (
-                task.engagement_mode_source.value if task.engagement_mode_source else None
+                task.engagement_mode_source.value
+                if task.engagement_mode_source
+                else None
             ),
             "engagement_mode_confidence": task.engagement_mode_confidence,
             "engagement_mode_reasons": list(task.engagement_mode_reasons),
             "minimum_engagement_mode": (
-                task.minimum_engagement_mode.value if task.minimum_engagement_mode else None
+                task.minimum_engagement_mode.value
+                if task.minimum_engagement_mode
+                else None
             ),
             "pending_mode_change": (
                 task.pending_mode_change.model_dump(mode="json")
                 if task.pending_mode_change is not None
                 else None
             ),
-            "lifecycle_reason": session.lifecycle_reason if session else task.lifecycle_reason,
+            "lifecycle_reason": (
+                session.lifecycle_reason if session else task.lifecycle_reason
+            ),
             "lifecycle_detail": dict(
                 session.lifecycle_detail if session else task.lifecycle_detail
             ),
@@ -541,7 +559,8 @@ class DevPlaneService:
             (
                 packet
                 for packet in packets
-                if isinstance(packet, dict) and packet.get("task_packet_id") == active_packet_id
+                if isinstance(packet, dict)
+                and packet.get("task_packet_id") == active_packet_id
             ),
             None,
         )
@@ -595,8 +614,12 @@ class DevPlaneService:
             session.engineering_state = workflow_result.get("engineering_state")  # type: ignore[assignment]
         if workflow_result.get("task_queue") is not None:
             session.task_queue = workflow_result.get("task_queue")  # type: ignore[assignment]
-        session.task_packets = [packet for packet in packets if isinstance(packet, dict)]
-        session.problem_brief_ref = ref_state.get("problem_brief_ref") or session.problem_brief_ref
+        session.task_packets = [
+            packet for packet in packets if isinstance(packet, dict)
+        ]
+        session.problem_brief_ref = (
+            ref_state.get("problem_brief_ref") or session.problem_brief_ref
+        )
         if workflow_result.get("response_mode") is not None:
             session.response_mode = str(workflow_result.get("response_mode"))
         session.response_control_ref = (
@@ -612,9 +635,13 @@ class DevPlaneService:
         ):
             refs = workflow_result.get(field_name)
             if isinstance(refs, list):
-                setattr(session, field_name, [str(ref) for ref in refs if str(ref).strip()])
+                setattr(
+                    session, field_name, [str(ref) for ref in refs if str(ref).strip()]
+                )
         if workflow_result.get("wiki_overlay_context") is not None:
-            session.wiki_overlay_context = str(workflow_result.get("wiki_overlay_context"))
+            session.wiki_overlay_context = str(
+                workflow_result.get("wiki_overlay_context")
+            )
         wiki_edit_proposal_refs = workflow_result.get("wiki_edit_proposal_refs")
         if isinstance(wiki_edit_proposal_refs, list):
             session.wiki_edit_proposal_refs = [
@@ -635,7 +662,9 @@ class DevPlaneService:
                 f"{session.knowledge_pool_assessment['knowledge_pool_assessment_id']}"
             )
         if workflow_result.get("knowledge_pool_coverage") is not None:
-            session.knowledge_pool_coverage = str(workflow_result.get("knowledge_pool_coverage"))
+            session.knowledge_pool_coverage = str(
+                workflow_result.get("knowledge_pool_coverage")
+            )
         knowledge_candidate_refs = workflow_result.get("knowledge_candidate_refs")
         if isinstance(knowledge_candidate_refs, list):
             session.knowledge_candidate_refs = [
@@ -644,7 +673,9 @@ class DevPlaneService:
         elif isinstance(session.knowledge_pool_assessment, dict):
             session.knowledge_candidate_refs = [
                 str(ref)
-                for ref in session.knowledge_pool_assessment.get("candidate_pack_refs", [])
+                for ref in session.knowledge_pool_assessment.get(
+                    "candidate_pack_refs", []
+                )
                 if str(ref).strip()
             ]
         knowledge_role_context_refs = workflow_result.get("knowledge_role_context_refs")
@@ -655,7 +686,9 @@ class DevPlaneService:
         elif isinstance(workflow_result.get("knowledge_role_contexts"), dict):
             session.knowledge_role_context_refs = [
                 f"artifact://role_context_bundle/{payload['role_context_bundle_id']}"
-                for payload in workflow_result.get("knowledge_role_contexts", {}).values()
+                for payload in workflow_result.get(
+                    "knowledge_role_contexts", {}
+                ).values()
                 if isinstance(payload, dict) and payload.get("role_context_bundle_id")
             ]
         knowledge_gaps = workflow_result.get("knowledge_gaps")
@@ -719,12 +752,18 @@ class DevPlaneService:
         if workflow_result.get("lifecycle_reason") is not None:
             session.lifecycle_reason = str(workflow_result.get("lifecycle_reason"))
         if isinstance(workflow_result.get("lifecycle_detail"), dict):
-            session.lifecycle_detail = dict(workflow_result.get("lifecycle_detail") or {})
+            session.lifecycle_detail = dict(
+                workflow_result.get("lifecycle_detail") or {}
+            )
         verification_outcome = str(session.verification_outcome or "").upper()
         if session.clarification_questions:
             session.status = "clarification_required"
-            session.lifecycle_reason = session.lifecycle_reason or "clarification_required"
-        elif session.required_gates and not ref_state.get("ready_for_task_decomposition"):
+            session.lifecycle_reason = (
+                session.lifecycle_reason or "clarification_required"
+            )
+        elif session.required_gates and not ref_state.get(
+            "ready_for_task_decomposition"
+        ):
             session.status = "blocked"
             session.lifecycle_reason = session.lifecycle_reason or "governance_gate"
         elif verification_outcome == "PASS":
@@ -733,13 +772,17 @@ class DevPlaneService:
             session.lifecycle_detail = {}
         elif verification_outcome == "ESCALATE":
             session.status = "escalated"
-            session.lifecycle_reason = session.lifecycle_reason or "awaiting_strategic_review"
+            session.lifecycle_reason = (
+                session.lifecycle_reason or "awaiting_strategic_review"
+            )
         elif verification_outcome == "BLOCKED":
             session.status = "blocked"
             session.lifecycle_reason = session.lifecycle_reason or "governance_gate"
         elif verification_outcome in {"REWORK", "FAILED"}:
             session.status = "blocked"
-            session.lifecycle_reason = session.lifecycle_reason or "verification_rework_required"
+            session.lifecycle_reason = (
+                session.lifecycle_reason or "verification_rework_required"
+            )
         elif session.active_task_packet_ref:
             session.status = "executing"
         else:
@@ -758,7 +801,8 @@ class DevPlaneService:
         task.clarifications.answers = [
             answer
             for answer in task.clarifications.answers
-            if answer.question_id not in {q.question_id for q in task.clarifications.questions}
+            if answer.question_id
+            not in {q.question_id for q in task.clarifications.questions}
         ]
         if session.status == "clarification_required":
             task.state = TaskState.PENDING_CLARIFICATION
@@ -975,7 +1019,8 @@ class DevPlaneService:
             user_input=task.request.user_intent,
             context={
                 "target_paths": [
-                    patch.file_path for patch in (task.patch_plan.patches if task.patch_plan else [])
+                    patch.file_path
+                    for patch in (task.patch_plan.patches if task.patch_plan else [])
                 ],
             },
             task_plan=task.plan.model_dump(mode="json") if task.plan else None,
@@ -989,12 +1034,16 @@ class DevPlaneService:
                 else task.engagement_mode.value
             ),
             engagement_mode_source=(
-                task.engagement_mode_source.value if task.engagement_mode_source else None
+                task.engagement_mode_source.value
+                if task.engagement_mode_source
+                else None
             ),
             engagement_mode_confidence=task.engagement_mode_confidence,
             engagement_mode_reasons=task.engagement_mode_reasons,
             minimum_engagement_mode=(
-                task.minimum_engagement_mode.value if task.minimum_engagement_mode else None
+                task.minimum_engagement_mode.value
+                if task.minimum_engagement_mode
+                else None
             ),
             pending_mode_change=(
                 task.pending_mode_change.model_dump(mode="json")
@@ -1033,9 +1082,13 @@ class DevPlaneService:
             pending_mode_change=task.pending_mode_change,
             lifecycle_reason=task.lifecycle_reason,
             lifecycle_detail=dict(task.lifecycle_detail),
-            knowledge_pool_assessment_ref=engineering_bundle.get("knowledge_pool_assessment_ref"),
+            knowledge_pool_assessment_ref=engineering_bundle.get(
+                "knowledge_pool_assessment_ref"
+            ),
             knowledge_pool_coverage=engineering_bundle.get("knowledge_pool_coverage"),
-            knowledge_candidate_refs=list(engineering_bundle.get("knowledge_candidate_refs") or []),
+            knowledge_candidate_refs=list(
+                engineering_bundle.get("knowledge_candidate_refs") or []
+            ),
             knowledge_role_context_refs=list(
                 engineering_bundle.get("knowledge_role_context_refs") or []
             ),
@@ -1046,11 +1099,15 @@ class DevPlaneService:
             selected_knowledge_pool_refs=list(
                 engineering_bundle.get("selected_knowledge_pool_refs") or []
             ),
-            selected_module_refs=list(engineering_bundle.get("selected_module_refs") or []),
+            selected_module_refs=list(
+                engineering_bundle.get("selected_module_refs") or []
+            ),
             selected_technique_refs=list(
                 engineering_bundle.get("selected_technique_refs") or []
             ),
-            selected_theory_refs=list(engineering_bundle.get("selected_theory_refs") or []),
+            selected_theory_refs=list(
+                engineering_bundle.get("selected_theory_refs") or []
+            ),
             workspace=workspace,
             execution_mode=request.execution_mode,
             agent_session_id=request.agent_session_id,
@@ -1062,8 +1119,12 @@ class DevPlaneService:
                     message="Workspace provisioned and engineering-governed task packet written",
                     details={
                         "workspace_path": workspace.worktree_path,
-                        "problem_brief_ref": engineering_bundle.get("problem_brief_ref"),
-                        "engineering_state_ref": engineering_bundle.get("engineering_state_ref"),
+                        "problem_brief_ref": engineering_bundle.get(
+                            "problem_brief_ref"
+                        ),
+                        "engineering_state_ref": engineering_bundle.get(
+                            "engineering_state_ref"
+                        ),
                     },
                 )
             ],
@@ -1097,11 +1158,17 @@ class DevPlaneService:
             dossier=task.dossier,
             run=run,
             session=task.dossier.engineering_session,
-            knowledge_pool_assessment=engineering_bundle.get("knowledge_pool_assessment"),
-            knowledge_pool_assessment_ref=engineering_bundle.get("knowledge_pool_assessment_ref"),
+            knowledge_pool_assessment=engineering_bundle.get(
+                "knowledge_pool_assessment"
+            ),
+            knowledge_pool_assessment_ref=engineering_bundle.get(
+                "knowledge_pool_assessment_ref"
+            ),
             knowledge_pool_coverage=engineering_bundle.get("knowledge_pool_coverage"),
             knowledge_candidate_refs=engineering_bundle.get("knowledge_candidate_refs"),
-            knowledge_role_context_refs=engineering_bundle.get("knowledge_role_context_refs"),
+            knowledge_role_context_refs=engineering_bundle.get(
+                "knowledge_role_context_refs"
+            ),
             knowledge_gaps=engineering_bundle.get("knowledge_gaps"),
             knowledge_required=engineering_bundle.get("knowledge_required"),
         )
@@ -1112,7 +1179,9 @@ class DevPlaneService:
             session=task.dossier.engineering_session,
             response_mode=engineering_bundle.get("response_mode"),
             response_control_ref=engineering_bundle.get("response_control_ref"),
-            selected_knowledge_pool_refs=engineering_bundle.get("selected_knowledge_pool_refs"),
+            selected_knowledge_pool_refs=engineering_bundle.get(
+                "selected_knowledge_pool_refs"
+            ),
             selected_module_refs=engineering_bundle.get("selected_module_refs"),
             selected_technique_refs=engineering_bundle.get("selected_technique_refs"),
             selected_theory_refs=engineering_bundle.get("selected_theory_refs"),
@@ -1177,7 +1246,13 @@ class DevPlaneService:
                     artifacts=artifacts or [],
                 ),
             )
-        if phase is not None or summary or files_changed or verification_results or artifacts:
+        if (
+            phase is not None
+            or summary
+            or files_changed
+            or verification_results
+            or artifacts
+        ):
             return self.append_run_event(
                 run_id,
                 RunEventRequest(
@@ -1202,15 +1277,21 @@ class DevPlaneService:
         if request.phase is not None:
             run.phase = request.phase
         elif request.status is not None:
-            run.phase = self._phase_for_nonterminal_state(request.status, default=run.phase)
-        if request.engagement_mode is not None or request.minimum_engagement_mode is not None:
+            run.phase = self._phase_for_nonterminal_state(
+                request.status, default=run.phase
+            )
+        if (
+            request.engagement_mode is not None
+            or request.minimum_engagement_mode is not None
+        ):
             self._apply_mode_metadata(
                 task=task,
                 dossier=task.dossier,
                 run=run,
                 session=task.dossier.engineering_session,
                 engagement_mode=request.engagement_mode or run.engagement_mode,
-                engagement_mode_source=request.engagement_mode_source or run.engagement_mode_source,
+                engagement_mode_source=request.engagement_mode_source
+                or run.engagement_mode_source,
                 engagement_mode_confidence=(
                     request.engagement_mode_confidence
                     if request.engagement_mode_confidence is not None
@@ -1314,9 +1395,15 @@ class DevPlaneService:
             task.dossier.final_outcome = request.summary
         if run.workspace is not None and not request.files_changed:
             request = request.model_copy(
-                update={"files_changed": self.workspace_manager.detect_file_changes(run.workspace)}
+                update={
+                    "files_changed": self.workspace_manager.detect_file_changes(
+                        run.workspace
+                    )
+                }
             )
-        run.files_changed = self._merge_file_changes(run.files_changed, request.files_changed)
+        run.files_changed = self._merge_file_changes(
+            run.files_changed, request.files_changed
+        )
         run.verification_results.extend(request.verification_results)
         run.artifacts.extend(request.artifacts)
         run.updated_at = utc_now()
@@ -1614,10 +1701,15 @@ class DevPlaneService:
         if session is not None:
             targets.append(session)
         for target in targets:
-            if hasattr(target, "knowledge_pool_assessment") and knowledge_pool_assessment is not None:
+            if (
+                hasattr(target, "knowledge_pool_assessment")
+                and knowledge_pool_assessment is not None
+            ):
                 target.knowledge_pool_assessment = dict(knowledge_pool_assessment)
             if knowledge_pool_assessment_ref is not None:
-                target.knowledge_pool_assessment_ref = str(knowledge_pool_assessment_ref)
+                target.knowledge_pool_assessment_ref = str(
+                    knowledge_pool_assessment_ref
+                )
             if knowledge_pool_coverage is not None:
                 target.knowledge_pool_coverage = str(knowledge_pool_coverage)
             target.knowledge_candidate_refs = list(candidate_refs)
@@ -1645,12 +1737,16 @@ class DevPlaneService:
             selected_knowledge_pool_refs,
             task.selected_knowledge_pool_refs,
         )
-        module_refs = self._coalesce_string_list(selected_module_refs, task.selected_module_refs)
+        module_refs = self._coalesce_string_list(
+            selected_module_refs, task.selected_module_refs
+        )
         technique_refs = self._coalesce_string_list(
             selected_technique_refs,
             task.selected_technique_refs,
         )
-        theory_refs = self._coalesce_string_list(selected_theory_refs, task.selected_theory_refs)
+        theory_refs = self._coalesce_string_list(
+            selected_theory_refs, task.selected_theory_refs
+        )
         proposal_refs = self._coalesce_string_list(
             wiki_edit_proposal_refs,
             task.wiki_edit_proposal_refs,
@@ -1678,7 +1774,9 @@ class DevPlaneService:
         current: list[FileChangeRecord],
         incoming: list[FileChangeRecord],
     ) -> list[FileChangeRecord]:
-        merged: dict[str, FileChangeRecord] = {record.path: record for record in current}
+        merged: dict[str, FileChangeRecord] = {
+            record.path: record for record in current
+        }
         for record in incoming:
             merged[record.path] = record
         return list(merged.values())
@@ -1708,7 +1806,9 @@ class DevPlaneService:
         self.store.save_project(project)
         return project
 
-    def _typed_payloads(self, dossier: TaskDossier, artifact_type: str) -> list[dict[str, object]]:
+    def _typed_payloads(
+        self, dossier: TaskDossier, artifact_type: str
+    ) -> list[dict[str, object]]:
         payloads: list[dict[str, object]] = []
         for artifact in dossier.typed_artifacts:
             if not isinstance(artifact, dict):

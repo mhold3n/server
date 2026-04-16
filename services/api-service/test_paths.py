@@ -13,14 +13,23 @@ def server_repo_root() -> Path:
 def xlotyl_root() -> Path | None:
     """Return ``server/xlotyl`` when present, else ``None``."""
     candidate = server_repo_root() / "xlotyl"
-    if candidate.is_dir() and (candidate / "services" / "response-control-framework").is_dir():
+    if (
+        candidate.is_dir()
+        and (candidate / "services" / "response-control-framework").is_dir()
+    ):
         return candidate.resolve()
     return None
 
 
 def openclaw_stream_event_schema_path() -> Path:
     """Locate ``stream-event.schema.json`` (under server or xlotyl)."""
-    rel = Path("schemas") / "openclaw-bridge" / "v1" / "events" / "stream-event.schema.json"
+    rel = (
+        Path("schemas")
+        / "openclaw-bridge"
+        / "v1"
+        / "events"
+        / "stream-event.schema.json"
+    )
     for base in (server_repo_root(), xlotyl_root()):
         if base is None:
             continue

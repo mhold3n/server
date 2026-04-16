@@ -38,12 +38,10 @@ def parse_op_ref(op_ref: str) -> OpRef:
     parts = [p for p in rest.split("/") if p]
     if len(parts) < 2 or len(parts) > 3:
         raise ValueError(
-            "op_ref must look like op://<vault>/<item>[/<field>] "
-            f"(got: {op_ref!r})"
+            "op_ref must look like op://<vault>/<item>[/<field>] " f"(got: {op_ref!r})"
         )
 
     vault = parts[0]
     item = parts[1]
     field = parts[2] if len(parts) == 3 else None
     return OpRef(vault=vault, item=item, field=field)
-

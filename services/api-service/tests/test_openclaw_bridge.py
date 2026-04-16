@@ -41,7 +41,11 @@ def test_validate_openclaw_bridge_ok() -> None:
 
 
 def test_validate_openclaw_bridge_rejects_wrong_proto() -> None:
-    ctx = {"openclaw_bridge": _minimal_bridge(bridge={"proto": "wrong", "version": "1.0.0"})}
+    ctx = {
+        "openclaw_bridge": _minimal_bridge(
+            bridge={"proto": "wrong", "version": "1.0.0"}
+        )
+    }
     with pytest.raises(OpenClawBridgeValidationError) as ei:
         validate_openclaw_bridge_in_context(ctx)
     assert ei.value.code == "openclaw_bridge_schema"
@@ -76,7 +80,10 @@ def test_idempotency_payload_hash_stable() -> None:
 
 
 def test_resolve_idempotency_lookup_conflict() -> None:
-    assert resolve_idempotency_lookup({"payload_hash": "a", "response": {}}, "b") == "conflict"
+    assert (
+        resolve_idempotency_lookup({"payload_hash": "a", "response": {}}, "b")
+        == "conflict"
+    )
 
 
 def test_resolve_idempotency_lookup_hit() -> None:
@@ -110,7 +117,9 @@ def test_ai_query_openclaw_bridge_idempotency_hit(fake_redis: _FakeRedis) -> Non
         QueryRequest(prompt="same", context={"openclaw_bridge": bridge})
     )
     key = f"birtha:openclaw-bridge:v1:idempotency:{bridge['idempotency_key']}"
-    fake_redis.store[key] = json.dumps({"payload_hash": payload_hash, "response": cached})
+    fake_redis.store[key] = json.dumps(
+        {"payload_hash": payload_hash, "response": cached}
+    )
 
     execute = AsyncMock(return_value={"result": {"final_response": "fresh"}})
     inner = MagicMock()

@@ -30,8 +30,7 @@ class DevPlaneStore:
 
     def _init_db(self) -> None:
         with self._lock, self._connect() as conn:
-            conn.executescript(
-                """
+            conn.executescript("""
                 CREATE TABLE IF NOT EXISTS projects (
                     id TEXT PRIMARY KEY,
                     updated_at TEXT NOT NULL,
@@ -47,8 +46,7 @@ class DevPlaneStore:
                     updated_at TEXT NOT NULL,
                     payload TEXT NOT NULL
                 );
-                """
-            )
+                """)
             conn.commit()
 
     def _upsert_model(self, table: str, record_id: str, model: BaseModel) -> None:
@@ -70,7 +68,9 @@ class DevPlaneStore:
             )
             conn.commit()
 
-    def _get_model(self, table: str, record_id: str, model_type: type[ModelT]) -> ModelT | None:
+    def _get_model(
+        self, table: str, record_id: str, model_type: type[ModelT]
+    ) -> ModelT | None:
         with self._lock, self._connect() as conn:
             row = conn.execute(
                 f"SELECT payload FROM {table} WHERE id = ?",

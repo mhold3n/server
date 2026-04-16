@@ -12,8 +12,12 @@ from martymedia.whisper import WhisperError, run_whisper_srt
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="martymedia-whisper")
     parser.add_argument("--input", required=True, help="Input media file path")
-    parser.add_argument("--output-dir", required=True, help="Directory to write caption outputs")
-    parser.add_argument("--language", required=True, choices=["en", "es"], help="Language code")
+    parser.add_argument(
+        "--output-dir", required=True, help="Directory to write caption outputs"
+    )
+    parser.add_argument(
+        "--language", required=True, choices=["en", "es"], help="Language code"
+    )
     parser.add_argument("--model", default=None, help="Optional whisper model override")
     args = parser.parse_args(argv)
 
@@ -43,4 +47,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -106,7 +106,9 @@ class DevPlaneExecutionClient:
     ) -> BackendRunSnapshot:
         """Create and dispatch an internal execution run."""
         if run.workspace is None:
-            raise ExecutionBackendError("Run has no provisioned workspace", status_code=409)
+            raise ExecutionBackendError(
+                "Run has no provisioned workspace", status_code=409
+            )
         payload = BackendRunCreateRequest(
             control_run_id=run.run_id,
             task_id=run.task_id,

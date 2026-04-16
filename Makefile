@@ -243,8 +243,8 @@ test-combined: test-api test-router
 test: test-combined
 
 lint:
-	@bash -lc '$(ENV_BOOTSTRAP) && uv run ruff check services mcp-servers/mcp/servers --force-exclude'
-	@bash -lc '$(ENV_BOOTSTRAP) && uv run black --check services mcp-servers/mcp/servers'
+	@bash -lc '$(ENV_BOOTSTRAP) && source $(ROOT)/scripts/ci_python_lint_paths.sh && uv run ruff check $$CI_PYTHON_LINT_PATHS --force-exclude'
+	@bash -lc '$(ENV_BOOTSTRAP) && source $(ROOT)/scripts/ci_python_lint_paths.sh && uv run black --check $$CI_PYTHON_LINT_PATHS'
 
 type:
 	@bash -lc '$(ENV_BOOTSTRAP) && cd services/api-service && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/services-api uv run --package agent-orchestrator-api mypy --strict src'
@@ -255,8 +255,8 @@ type:
 	@bash -lc '$(ENV_BOOTSTRAP) && cd mcp-servers/mcp/servers/vector-db-mcp && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/mcp-vector-db uv run --package vector-db-mcp-server mypy --strict src'
 
 fix:
-	@bash -lc '$(ENV_BOOTSTRAP) && uv run ruff check --fix services mcp-servers/mcp/servers --force-exclude'
-	@bash -lc '$(ENV_BOOTSTRAP) && uv run black services mcp-servers/mcp/servers'
+	@bash -lc '$(ENV_BOOTSTRAP) && source $(ROOT)/scripts/ci_python_lint_paths.sh && uv run ruff check --fix $$CI_PYTHON_LINT_PATHS --force-exclude'
+	@bash -lc '$(ENV_BOOTSTRAP) && source $(ROOT)/scripts/ci_python_lint_paths.sh && uv run black $$CI_PYTHON_LINT_PATHS'
 
 # CI simulation
 ci: lint type test-combined

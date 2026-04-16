@@ -10,6 +10,11 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 import pytest
+from domain_engineering.core import (
+    build_task_queue,
+    derive_engineering_state,
+    reset_engineering_sessions_for_tests,
+)
 from fastapi.testclient import TestClient
 from response_control_framework.contracts import (
     ArtifactStatus,
@@ -37,11 +42,6 @@ from response_control_framework.validation import (
     validate_typed_artifact_json,
     validate_verification_report_json,
 )
-from domain_engineering.core import (
-    build_task_queue,
-    derive_engineering_state,
-    reset_engineering_sessions_for_tests,
-)
 
 from src.devplane.models import ArtifactRecord, CostLedgerEntry
 
@@ -61,7 +61,9 @@ def _minimal_task_packet_dict() -> dict:
         "title": "t",
         "objective": "o",
         "input_artifact_refs": ["artifact://requirements_set/x"],
-        "required_outputs": [{"artifact_type": "CODE_PATCH", "schema_version": "1.0.0"}],
+        "required_outputs": [
+            {"artifact_type": "CODE_PATCH", "schema_version": "1.0.0"}
+        ],
         "acceptance_criteria": ["c1"],
         "budget_policy": {"allow_escalation": False},
         "routing_metadata": {
@@ -110,10 +112,18 @@ def test_task_packet_validation_type_requires_requirements() -> None:
 def test_task_packet_accepts_response_control_refs_when_required() -> None:
     raw = _minimal_task_packet_dict()
     raw["response_control_ref"] = "artifact://response-control-assessment/rca-1"
-    raw["selected_knowledge_pool_refs"] = ["artifact://knowledge-pool/computational_engineering"]
-    raw["selected_module_refs"] = ["artifact://module-card/engineering_orchestration_stack"]
-    raw["selected_technique_refs"] = ["artifact://technique-card/artifact_first_task_graph_execution"]
-    raw["selected_theory_refs"] = ["artifact://theory-card/computational_engineering_numerical_methods"]
+    raw["selected_knowledge_pool_refs"] = [
+        "artifact://knowledge-pool/computational_engineering"
+    ]
+    raw["selected_module_refs"] = [
+        "artifact://module-card/engineering_orchestration_stack"
+    ]
+    raw["selected_technique_refs"] = [
+        "artifact://technique-card/artifact_first_task_graph_execution"
+    ]
+    raw["selected_theory_refs"] = [
+        "artifact://theory-card/computational_engineering_numerical_methods"
+    ]
     packet = validate_task_packet_json(raw)
     assert packet.response_control_ref == "artifact://response-control-assessment/rca-1"
     assert packet.knowledge_context is None
@@ -129,8 +139,16 @@ def test_response_control_explicit_mode_dissonance_does_not_reroute() -> None:
     ).model_dump(mode="json")
     assert payload["mode_selection"]["selected_mode"] == "content"
     assert payload["mode_selection"]["user_override"] is True
-    assert payload["mode_selection"]["mode_dissonance"]["suggested_mode"] == "engineering"
-    assert payload["assembly_order"] == ["mode", "knowledge_pool", "module", "technique", "theory"]
+    assert (
+        payload["mode_selection"]["mode_dissonance"]["suggested_mode"] == "engineering"
+    )
+    assert payload["assembly_order"] == [
+        "mode",
+        "knowledge_pool",
+        "module",
+        "technique",
+        "theory",
+    ]
 
 
 def test_response_control_does_not_match_short_module_keywords_inside_words() -> None:
@@ -305,9 +323,7 @@ def test_phase2_knowledge_pack_alias_payload_round_trip() -> None:
         "xlotyl/services/domain-engineering/src/domain_engineering/data/coding-tools/substrate/knowledge-packs.json"
     )
     payload = next(
-        item["payload"]
-        for item in records
-        if item["payload"]["tool_id"] == "onemkl"
+        item["payload"] for item in records if item["payload"]["tool_id"] == "onemkl"
     )
     pack = KnowledgePackPayload.model_validate(payload)
     assert pack.alias_names == ["PARDISO"]
@@ -322,7 +338,9 @@ def test_cost_ledger_entry_model() -> None:
 
 def test_schema_registry_loads() -> None:
     store = get_schema_store()
-    assert "https://birtha.local/schemas/control-plane/v1/task-packet.schema.json" in store
+    assert (
+        "https://birtha.local/schemas/control-plane/v1/task-packet.schema.json" in store
+    )
 
 
 def test_problem_brief_rejects_missing_engineering_fields() -> None:
@@ -352,17 +370,21 @@ def test_engineering_state_derivation_is_idempotent_and_permutation_invariant() 
     permuted["constraints"] = list(reversed(permuted["constraints"]))
     permuted["inputs"] = list(reversed(permuted["inputs"]))
     permuted["deliverables"] = list(reversed(permuted["deliverables"]))
-    state_a = derive_engineering_state(validate_problem_brief_json(data)).model_dump(mode="json")
-    state_b = derive_engineering_state(validate_problem_brief_json(permuted)).model_dump(mode="json")
+    state_a = derive_engineering_state(validate_problem_brief_json(data)).model_dump(
+        mode="json"
+    )
+    state_b = derive_engineering_state(
+        validate_problem_brief_json(permuted)
+    ).model_dump(mode="json")
     assert sorted(item["id"] for item in state_a["constraints"]) == sorted(
         item["id"] for item in state_b["constraints"]
     )
     assert sorted(item["issue_id"] for item in state_a["open_issues"]) == sorted(
         item["issue_id"] for item in state_b["open_issues"]
     )
-    assert sorted(item["criterion_id"] for item in state_a["verification_intent"]) == sorted(
-        item["criterion_id"] for item in state_b["verification_intent"]
-    )
+    assert sorted(
+        item["criterion_id"] for item in state_a["verification_intent"]
+    ) == sorted(item["criterion_id"] for item in state_b["verification_intent"])
     assert isinstance(state_a["knowledge_pool_assessment_ref"], str)
     assert isinstance(state_a["response_control_ref"], str)
     assert state_a["selected_knowledge_pool_refs"]
@@ -381,7 +403,9 @@ def test_engineering_state_derivation_is_idempotent_and_permutation_invariant() 
 
 def test_task_queue_generation_requires_ready_engineering_state() -> None:
     problem_brief = validate_problem_brief_json(
-        _load_fixture("xlotyl/services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
+        _load_fixture(
+            "xlotyl/services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
+        )
     )
     state = derive_engineering_state(problem_brief).model_copy(
         update={"ready_for_task_decomposition": False}
@@ -392,7 +416,9 @@ def test_task_queue_generation_requires_ready_engineering_state() -> None:
 
 def test_task_queue_generation_blocks_low_required_knowledge_coverage() -> None:
     problem_brief = validate_problem_brief_json(
-        _load_fixture("xlotyl/services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
+        _load_fixture(
+            "xlotyl/services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
+        )
     )
     state = derive_engineering_state(problem_brief)
     weak_assessment = validate_knowledge_pool_assessment_json(
@@ -451,12 +477,9 @@ def test_control_plane_engineering_intake_route_builds_governing_artifacts(
                 "delegation_hints": [],
                 "work_items": [],
                 "verification_blocks": [],
-                "planned_branch": "birtha/example"
+                "planned_branch": "birtha/example",
             },
-            "project_context": {
-                "project_id": "proj_x",
-                "project_name": "Example Repo"
-            }
+            "project_context": {"project_id": "proj_x", "project_name": "Example Repo"},
         },
     )
     assert response.status_code == 200
@@ -479,7 +502,9 @@ def test_control_plane_build_task_queue_route_blocks_when_state_not_ready(
     test_client: TestClient,
 ) -> None:
     problem_brief = validate_problem_brief_json(
-        _load_fixture("xlotyl/services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
+        _load_fixture(
+            "xlotyl/services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
+        )
     )
     engineering_state = derive_engineering_state(problem_brief).model_dump(mode="json")
     engineering_state["ready_for_task_decomposition"] = False
@@ -498,7 +523,9 @@ def test_control_plane_build_escalation_route_returns_typed_packet(
 ) -> None:
     engineering_state = derive_engineering_state(
         validate_problem_brief_json(
-            _load_fixture("xlotyl/services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
+            _load_fixture(
+                "xlotyl/services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
+            )
         )
     ).model_dump(mode="json")
     response = test_client.post(
@@ -523,7 +550,11 @@ def test_control_plane_build_escalation_route_returns_typed_packet(
     )
     assert response.status_code == 200
     body = response.json()
-    assert body["escalation_packet"]["reason"] in {"AMBIGUITY", "CONFLICT", "HIGH_IMPACT_REVIEW"}
+    assert body["escalation_packet"]["reason"] in {
+        "AMBIGUITY",
+        "CONFLICT",
+        "HIGH_IMPACT_REVIEW",
+    }
 
 
 def test_validate_typed_artifact_envelope() -> None:
@@ -534,7 +565,10 @@ def test_validate_typed_artifact_envelope() -> None:
         "schema_version": "1.0.0",
         "status": "ACTIVE",
         "validation_state": "VALID",
-        "producer": {"component": "verification_node", "executor": "deterministic_validator"},
+        "producer": {
+            "component": "verification_node",
+            "executor": "deterministic_validator",
+        },
         "input_artifact_refs": [],
         "supersedes": [],
         "payload": {"summary": "ok"},
@@ -544,7 +578,9 @@ def test_validate_typed_artifact_envelope() -> None:
     validate_typed_artifact_json(raw)
 
 
-def test_append_cost_ledger_and_run_event(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_append_cost_ledger_and_run_event(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Cost ledger persists on dossier and run via append_run_event / append_cost_ledger."""
     from src.devplane.models import (
         ProjectCreateRequest,
@@ -560,7 +596,13 @@ def test_append_cost_ledger_and_run_event(tmp_path: Path, monkeypatch: pytest.Mo
     env = dict(os.environ)
     env["GIT_CONFIG_GLOBAL"] = os.devnull
     env["GIT_CONFIG_SYSTEM"] = os.devnull
-    subprocess.run(["git", "init", "-b", "main"], cwd=repo, check=True, capture_output=True, env=env)
+    subprocess.run(
+        ["git", "init", "-b", "main"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        env=env,
+    )
     subprocess.run(
         ["git", "config", "user.email", "t@t.com"],
         cwd=repo,
@@ -575,8 +617,12 @@ def test_append_cost_ledger_and_run_event(tmp_path: Path, monkeypatch: pytest.Mo
         capture_output=True,
         env=env,
     )
-    subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, env=env)
-    subprocess.run(["git", "commit", "-m", "i"], cwd=repo, check=True, capture_output=True, env=env)
+    subprocess.run(
+        ["git", "add", "."], cwd=repo, check=True, capture_output=True, env=env
+    )
+    subprocess.run(
+        ["git", "commit", "-m", "i"], cwd=repo, check=True, capture_output=True, env=env
+    )
 
     root = tmp_path / "devplane"
     root.mkdir()
@@ -632,6 +678,4 @@ def test_append_cost_ledger_and_run_event(tmp_path: Path, monkeypatch: pytest.Mo
         ),
     )
     dossier = svc.get_task(task.task_id).dossier
-    assert any(
-        row.get("artifact_id") == typed_id for row in dossier.typed_artifacts
-    )
+    assert any(row.get("artifact_id") == typed_id for row in dossier.typed_artifacts)

@@ -8,12 +8,11 @@ from typing import Any
 import structlog
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from httpx import AsyncClient, HTTPError
+from httpx import AsyncClient
 from pydantic import BaseModel, Field
 from redis.asyncio import Redis
 
 from .config import settings
-from .context_compaction import compact_tool_result_for_llm
 from .mcp_client import MCPClient
 
 # Configure structured logging

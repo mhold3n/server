@@ -21,13 +21,17 @@ logger = structlog.get_logger(__name__)
 
 DEFAULT_MAX_INLINE_ATTACHMENT_BYTES = 65_536
 
-_ENVELOPE_SCHEMA_PATH = "schemas/openclaw-bridge/v1/openclaw-bridge-envelope.schema.json"
+_ENVELOPE_SCHEMA_PATH = (
+    "schemas/openclaw-bridge/v1/openclaw-bridge-envelope.schema.json"
+)
 
 
 class OpenClawBridgeValidationError(Exception):
     """Raised when ``context.openclaw_bridge`` fails schema or attachment policy."""
 
-    def __init__(self, code: str, message: str, details: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self, code: str, message: str, details: dict[str, Any] | None = None
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
@@ -40,7 +44,11 @@ def _find_envelope_schema_path() -> Path:
     cwd = Path.cwd().resolve()
     for start in (cwd, *cwd.parents, here.parent, *here.parents):
         for prefix in ("xlotyl/schemas", "schemas"):
-            candidate = start / prefix / "openclaw-bridge/v1/openclaw-bridge-envelope.schema.json"
+            candidate = (
+                start
+                / prefix
+                / "openclaw-bridge/v1/openclaw-bridge-envelope.schema.json"
+            )
             if candidate.is_file():
                 return candidate
         candidate = start / _ENVELOPE_SCHEMA_PATH
@@ -123,7 +131,10 @@ def validate_openclaw_bridge_in_context(context: dict[str, Any]) -> dict[str, An
         raise OpenClawBridgeValidationError(
             "openclaw_bridge_schema",
             "openclaw_bridge failed JSON Schema validation",
-            {"json_schema_path": str(_find_envelope_schema_path()), "errors": [exc.message]},
+            {
+                "json_schema_path": str(_find_envelope_schema_path()),
+                "errors": [exc.message],
+            },
         ) from exc
 
     max_inline = _max_inline_bytes(bridge)

@@ -11,7 +11,11 @@ from typing import Any
 from fastapi import HTTPException
 from pydantic import BaseModel
 
-from .validate import OpenClawBridgeValidationError, apply_bridge_continuity_to_context, validate_openclaw_bridge_in_context
+from .validate import (
+    OpenClawBridgeValidationError,
+    apply_bridge_continuity_to_context,
+    validate_openclaw_bridge_in_context,
+)
 
 
 def validate_and_merge_openclaw_bridge(req: BaseModel) -> tuple[BaseModel, str | None]:

@@ -27,7 +27,9 @@ def test_automation_path_must_be_under_devplane_root(client: TestClient) -> None
     assert res.status_code == 400
 
 
-def test_automation_allows_devplane_root_paths(client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_automation_allows_devplane_root_paths(
+    client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     # Point devplane_root to a temp directory and ensure paths under it pass validation.
     monkeypatch.setattr(settings, "devplane_root", str(tmp_path))
     source = tmp_path / "example.txt"
@@ -123,7 +125,9 @@ def test_larrak_doctor_writes_artifact_when_workspace_provided(
     assert Path(body["artifact"]["path"]).exists()
 
 
-def test_larrak_build_writes_artifact(client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_larrak_build_writes_artifact(
+    client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr(settings, "devplane_root", str(tmp_path))
     ws = tmp_path / "ws"
     ws.mkdir()
@@ -146,7 +150,9 @@ def test_larrak_build_writes_artifact(client: TestClient, tmp_path: Path, monkey
     assert artifact_path.exists()
 
 
-def test_automation_timeout_returns_504(client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_automation_timeout_returns_504(
+    client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr(settings, "devplane_root", str(tmp_path))
     ws = tmp_path / "ws"
     ws.mkdir()
@@ -207,11 +213,12 @@ def test_automation_run_test_files_writes_artifact_and_summary_path(
     assert Path(res.json()["artifact"]["path"]).exists()
 
 
-def test_automation_helpers_clip_and_root_branch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_automation_helpers_clip_and_root_branch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     import src.routes.automation as automation_mod
 
     monkeypatch.setattr(settings, "devplane_root", str(tmp_path))
     root = tmp_path.resolve()
     assert automation_mod._ensure_under_devplane_root(str(root)) == str(root)
     assert automation_mod._clip("x" * 10, 5).endswith("...(truncated)")
-

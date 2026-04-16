@@ -7,10 +7,10 @@ mapping, never a scalar or array at the top level of ``result``.
 from __future__ import annotations
 
 from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from src.main import app
 
@@ -25,12 +25,21 @@ def _assert_referential_state_object_if_present(payload: dict[str, Any]) -> None
 
 def test_contract_samples_referential_state_must_be_dict_when_key_present() -> None:
     """Sanity: contract helper rejects invalid shapes (documents expected API behavior)."""
-    _assert_referential_state_object_if_present({"result": {"referential_state": {}, "final_response": "ok"}})
     _assert_referential_state_object_if_present(
-        {"result": {"referential_state": {"engineering_session_id": "s1"}, "final_response": "ok"}}
+        {"result": {"referential_state": {}, "final_response": "ok"}}
+    )
+    _assert_referential_state_object_if_present(
+        {
+            "result": {
+                "referential_state": {"engineering_session_id": "s1"},
+                "final_response": "ok",
+            }
+        }
     )
     with pytest.raises(AssertionError):
-        _assert_referential_state_object_if_present({"result": {"referential_state": "not-a-dict"}})
+        _assert_referential_state_object_if_present(
+            {"result": {"referential_state": "not-a-dict"}}
+        )
 
 
 def test_ai_query_response_when_pipeline_returns_referential_state_dict() -> None:

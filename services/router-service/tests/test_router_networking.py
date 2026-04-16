@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
@@ -9,7 +9,6 @@ from src.router import app
 def test_health_includes_mcp_and_api(monkeypatch):
     client = TestClient(app)
     # Mock Redis ping ok
-    import src.router as router_mod
 
     fake_redis = AsyncMock()
     fake_redis.ping.return_value = True

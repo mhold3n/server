@@ -2,24 +2,17 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime, timezone
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 import structlog
+from domain_engineering.core import evaluate_engagement_mode
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
 
 from ..config import get_worker_settings, settings
-from domain_engineering.core import evaluate_engagement_mode
-from ..orchestrator_client import OrchestratorClient
-from .devplane import get_service
-from ..workflows import (
-    build_tool_args_for_card,
-    get_task_card,
-    list_task_cards,
-)
 from ..openclaw_bridge import (
     extract_post_completion_events,
     idempotency_payload_hash,
@@ -28,7 +21,17 @@ from ..openclaw_bridge import (
     save_idempotency_record,
     validate_and_merge_openclaw_bridge,
 )
-from ..openclaw_bridge.stream_adapter import build_cancel_ack_dict, iter_query_stream_events
+from ..openclaw_bridge.stream_adapter import (
+    build_cancel_ack_dict,
+    iter_query_stream_events,
+)
+from ..orchestrator_client import OrchestratorClient
+from ..workflows import (
+    build_tool_args_for_card,
+    get_task_card,
+    list_task_cards,
+)
+from .devplane import get_service
 
 router = APIRouter(prefix="/api/ai", tags=["AI"])
 logger = structlog.get_logger(__name__)
@@ -163,24 +166,23 @@ class QueryRequest(BaseModel):
     )
 
 
-
-
 async def execute_ai_query_pipeline(req: QueryRequest) -> dict[str, Any]:
     # Normalise into a messages-style payload for the orchestrator.
     if req.messages:
         messages = list(req.messages)
     else:
         messages = [{"role": "user", "content": req.prompt or ""}]
-    
+
     # Prepend system message if provided.
     if req.system:
         messages = [{"role": "system", "content": req.system}] + messages
-    
+
     required_tool_results: list[dict[str, Any]] = []
     if req.tools:
         try:
             required_tool_results = await _run_required_tools(
-                prompt=req.prompt or (req.messages[-1]["content"] if req.messages else ""),
+                prompt=req.prompt
+                or (req.messages[-1]["content"] if req.messages else ""),
                 tools=req.tools,
                 tool_args=req.tool_args,
             )
@@ -189,7 +191,7 @@ async def execute_ai_query_pipeline(req: QueryRequest) -> dict[str, Any]:
                 status_code=502,
                 detail=f"Required tool execution failed: {exc}",
             ) from exc
-    
+
     input_data: dict[str, Any] = {
         "messages": messages,
         "model": req.model,
@@ -243,7 +245,9 @@ async def execute_ai_query_pipeline(req: QueryRequest) -> dict[str, Any]:
     selected_mode = str(mode_decision["engagement_mode"])
     input_data["engagement_mode"] = selected_mode
     input_data["engagement_mode_source"] = mode_decision["engagement_mode_source"]
-    input_data["engagement_mode_confidence"] = mode_decision["engagement_mode_confidence"]
+    input_data["engagement_mode_confidence"] = mode_decision[
+        "engagement_mode_confidence"
+    ]
     input_data["engagement_mode_reasons"] = mode_decision["engagement_mode_reasons"]
     input_data["minimum_engagement_mode"] = mode_decision["minimum_engagement_mode"]
     input_data["pending_mode_change"] = mode_decision.get("pending_mode_change")
@@ -254,19 +258,29 @@ async def execute_ai_query_pipeline(req: QueryRequest) -> dict[str, Any]:
         [],
     )
     input_data["selected_module_refs"] = mode_decision.get("selected_module_refs", [])
-    input_data["selected_technique_refs"] = mode_decision.get("selected_technique_refs", [])
+    input_data["selected_technique_refs"] = mode_decision.get(
+        "selected_technique_refs", []
+    )
     input_data["selected_theory_refs"] = mode_decision.get("selected_theory_refs", [])
     input_data["knowledge_pool_assessment_ref"] = mode_decision.get(
         "knowledge_pool_assessment_ref"
     )
     input_data["knowledge_pool_coverage"] = mode_decision.get("knowledge_pool_coverage")
-    input_data["knowledge_candidate_refs"] = mode_decision.get("knowledge_candidate_refs", [])
+    input_data["knowledge_candidate_refs"] = mode_decision.get(
+        "knowledge_candidate_refs", []
+    )
     input_data["knowledge_required"] = mode_decision.get("knowledge_required")
     workflow_config["engagement_mode"] = selected_mode
     workflow_config["engagement_mode_source"] = mode_decision["engagement_mode_source"]
-    workflow_config["engagement_mode_confidence"] = mode_decision["engagement_mode_confidence"]
-    workflow_config["engagement_mode_reasons"] = mode_decision["engagement_mode_reasons"]
-    workflow_config["minimum_engagement_mode"] = mode_decision["minimum_engagement_mode"]
+    workflow_config["engagement_mode_confidence"] = mode_decision[
+        "engagement_mode_confidence"
+    ]
+    workflow_config["engagement_mode_reasons"] = mode_decision[
+        "engagement_mode_reasons"
+    ]
+    workflow_config["minimum_engagement_mode"] = mode_decision[
+        "minimum_engagement_mode"
+    ]
     workflow_config["response_mode"] = mode_decision.get("response_mode")
     workflow_config["response_control_ref"] = mode_decision.get("response_control_ref")
     if mode_decision.get("pending_mode_change") is not None:
@@ -308,7 +322,7 @@ async def execute_ai_query_pipeline(req: QueryRequest) -> dict[str, Any]:
     elif selected_mode == "napkin_math":
         workflow_config["analytical_mode"] = True
         workflow_config["non_mutating_only"] = True
-    
+
     async with OrchestratorClient() as client:
         try:
             result = await client.execute_workflow(
@@ -321,8 +335,12 @@ async def execute_ai_query_pipeline(req: QueryRequest) -> dict[str, Any]:
                 status_code=502,
                 detail=f"Orchestrator workflow '{workflow_name}' failed: {exc}",
             ) from exc
-    
-    if selected_mode in {"engineering_task", "strict_engineering"} and engineering_task_id and engineering_run_id:
+
+    if (
+        selected_mode in {"engineering_task", "strict_engineering"}
+        and engineering_task_id
+        and engineering_run_id
+    ):
         result_payload = result.get("result", {}) if isinstance(result, dict) else {}
         if isinstance(result_payload, dict):
             result_payload.setdefault(
@@ -341,7 +359,9 @@ async def execute_ai_query_pipeline(req: QueryRequest) -> dict[str, Any]:
                 "knowledge_required",
                 mode_decision.get("knowledge_required"),
             )
-            result_payload.setdefault("response_mode", mode_decision.get("response_mode"))
+            result_payload.setdefault(
+                "response_mode", mode_decision.get("response_mode")
+            )
             result_payload.setdefault(
                 "response_control_ref",
                 mode_decision.get("response_control_ref"),
@@ -377,9 +397,13 @@ async def execute_ai_query_pipeline(req: QueryRequest) -> dict[str, Any]:
             if isinstance(referential_state, dict):
                 referential_state.setdefault("task_id", engineering_task_id)
                 referential_state.setdefault("run_id", engineering_run_id)
-                referential_state.setdefault("engineering_session_id", engineering_task_id)
+                referential_state.setdefault(
+                    "engineering_session_id", engineering_task_id
+                )
                 if session is not None:
-                    referential_state.setdefault("problem_brief_ref", session.problem_brief_ref)
+                    referential_state.setdefault(
+                        "problem_brief_ref", session.problem_brief_ref
+                    )
                     referential_state.setdefault(
                         "engineering_state_ref",
                         session.engineering_state_ref,
@@ -433,7 +457,9 @@ async def execute_ai_query_pipeline(req: QueryRequest) -> dict[str, Any]:
                 "pending_mode_change",
                 mode_decision.get("pending_mode_change"),
             )
-            result_payload.setdefault("response_mode", mode_decision.get("response_mode"))
+            result_payload.setdefault(
+                "response_mode", mode_decision.get("response_mode")
+            )
             result_payload.setdefault(
                 "response_control_ref",
                 mode_decision.get("response_control_ref"),
@@ -518,7 +544,9 @@ async def execute_ai_query_pipeline(req: QueryRequest) -> dict[str, Any]:
                 "pending_mode_change",
                 mode_decision.get("pending_mode_change"),
             )
-            result_payload.setdefault("response_mode", mode_decision.get("response_mode"))
+            result_payload.setdefault(
+                "response_mode", mode_decision.get("response_mode")
+            )
             result_payload.setdefault(
                 "response_control_ref",
                 mode_decision.get("response_control_ref"),
@@ -639,7 +667,9 @@ async def ai_query_stream(req: QueryRequest, request: Request) -> StreamingRespo
     if not req.prompt and not req.messages:
         raise HTTPException(status_code=400, detail="Provide 'prompt' or 'messages'")
 
-    last_event_id = request.headers.get("Last-Event-ID") or request.headers.get("Last-Event-Id")
+    last_event_id = request.headers.get("Last-Event-ID") or request.headers.get(
+        "Last-Event-Id"
+    )
     event_cursor = request.query_params.get("event_cursor")
 
     async def event_gen() -> AsyncIterator[str]:
@@ -776,7 +806,9 @@ async def run_workflow(req: WorkflowRunRequest) -> dict[str, Any]:
     workflow_config["model_routing"] = {
         "provider_preference": req.provider,
         "model": req.model or DEFAULT_LLM_MODEL,
-        "temperature": req.temperature if req.temperature is not None else card.temperature,
+        "temperature": (
+            req.temperature if req.temperature is not None else card.temperature
+        ),
         "max_tokens": req.max_tokens if req.max_tokens is not None else card.max_tokens,
     }
     if card.required_tools:
@@ -795,9 +827,13 @@ async def run_workflow(req: WorkflowRunRequest) -> dict[str, Any]:
                 detail=f"Orchestrator workflow '{workflow_name}' failed: {exc}",
             ) from exc
 
-    if isinstance(result, dict) and "result" in result and isinstance(
-        result["result"],
-        dict,
+    if (
+        isinstance(result, dict)
+        and "result" in result
+        and isinstance(
+            result["result"],
+            dict,
+        )
     ):
         result["result"]["task_card_id"] = name
     return result

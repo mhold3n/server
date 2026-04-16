@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import AsyncIterator, Awaitable, Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import HTTPException
@@ -19,7 +19,7 @@ PostCompletionFn = Callable[[dict[str, Any]], list[dict[str, Any]]]
 
 
 def stream_event_ts() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def format_sse_data_line(event_id: int, body: dict[str, Any]) -> str:
@@ -70,8 +70,16 @@ async def iter_query_stream_events(
 ) -> AsyncIterator[str]:
     """Yield SSE chunks for one query/stream request (MVP single-shot execute)."""
     eid = 0
-    lid = last_event_id.strip() if isinstance(last_event_id, str) and last_event_id.strip() else ""
-    cur = event_cursor.strip() if isinstance(event_cursor, str) and event_cursor.strip() else ""
+    lid = (
+        last_event_id.strip()
+        if isinstance(last_event_id, str) and last_event_id.strip()
+        else ""
+    )
+    cur = (
+        event_cursor.strip()
+        if isinstance(event_cursor, str) and event_cursor.strip()
+        else ""
+    )
     if lid or cur:
         eid += 1
         resume_payload: dict[str, Any] = {}

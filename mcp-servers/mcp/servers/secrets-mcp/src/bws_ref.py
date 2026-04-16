@@ -37,4 +37,3 @@ def parse_bws_ref(ref: str) -> BwsRef:
         raise ValueError("bws ref project/secret IDs must be non-empty")
 
     return BwsRef(project_id=project_id, secret_id=secret_id)
-

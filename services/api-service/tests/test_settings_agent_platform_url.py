@@ -12,9 +12,13 @@ import pytest
 from src.config import Settings
 
 
-def test_agent_platform_url_from_orchestrator_alias(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_agent_platform_url_from_orchestrator_alias(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.delenv("AGENT_PLATFORM_URL", raising=False)
-    monkeypatch.setenv("ORCHESTRATOR_AGENT_PLATFORM_URL", "http://wrkhrs-agent-platform:8000")
+    monkeypatch.setenv(
+        "ORCHESTRATOR_AGENT_PLATFORM_URL", "http://wrkhrs-agent-platform:8000"
+    )
     cfg = Settings()
     assert cfg.agent_platform_url == "http://wrkhrs-agent-platform:8000"
 

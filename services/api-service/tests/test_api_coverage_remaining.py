@@ -9,6 +9,8 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import httpx
 import pytest
 import respx
+from ai_shared_service.conditioning import NonGenerativeConditioning, RequestConditioner
+from ai_shared_service.gateway_client import WrkHrsGatewayClient
 
 from src.clients import docker as docker_client_mod
 from src.observability import mlflow_logger as mlflow_logger_mod
@@ -29,8 +31,6 @@ from src.observability.tracing import (
     get_trace_propagator,
     get_tracing_context,
 )
-from ai_shared_service.conditioning import NonGenerativeConditioning, RequestConditioner
-from ai_shared_service.gateway_client import WrkHrsGatewayClient
 
 
 def test_docker_unavailable_no_sdk(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -216,8 +216,9 @@ def test_provenance_logger_log_request_provenance(
     ctx.__enter__.return_value = None
     ctx.__exit__.return_value = None
     mock_mlflow.start_run.return_value = ctx
-    with patch("src.observability.provenance.mlflow", mock_mlflow), patch(
-        "src.observability.provenance.MlflowClient"
+    with (
+        patch("src.observability.provenance.mlflow", mock_mlflow),
+        patch("src.observability.provenance.MlflowClient"),
     ):
         base = MLflowLogger()
         base.experiment_id = "e1"
@@ -274,8 +275,9 @@ def test_provenance_logger_log_feedback(monkeypatch: pytest.MonkeyPatch) -> None
     ctx.__enter__.return_value = None
     ctx.__exit__.return_value = None
     mock_mlflow.start_run.return_value = ctx
-    with patch("src.observability.provenance.mlflow", mock_mlflow), patch(
-        "src.observability.provenance.MlflowClient"
+    with (
+        patch("src.observability.provenance.mlflow", mock_mlflow),
+        patch("src.observability.provenance.MlflowClient"),
     ):
         base = MLflowLogger()
         pl = ProvenanceLogger(base)

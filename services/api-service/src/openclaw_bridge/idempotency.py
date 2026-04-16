@@ -45,7 +45,9 @@ def idempotency_payload_hash(req: Any) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-async def load_idempotency_record(redis: Any, idempotency_key: str) -> dict[str, Any] | None:
+async def load_idempotency_record(
+    redis: Any, idempotency_key: str
+) -> dict[str, Any] | None:
     raw = await redis.get(redis_idempotency_key(idempotency_key))
     if raw is None:
         return None

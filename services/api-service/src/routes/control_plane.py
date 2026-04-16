@@ -9,18 +9,17 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
-
-from response_control_framework.contracts import WikiEditProposalStatus
 from domain_engineering.core import (
     build_escalation_packet,
     build_task_queue,
     derive_engineering_state,
     intake_engineering_request,
 )
-from response_control_framework.errors import ContractValidationError
 from domain_engineering.structure_bridge import classify_user_input
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
+from response_control_framework.contracts import WikiEditProposalStatus
+from response_control_framework.errors import ContractValidationError
 from response_control_framework.validation import (
     validate_engineering_state_json,
     validate_problem_brief_json,
@@ -33,6 +32,7 @@ from response_control_framework.wiki_proposals import (
     proposal_path,
     update_proposal_status,
 )
+
 from ..devplane.models import ArtifactRecord, RunEventRequest
 from .devplane import get_service
 
@@ -110,7 +110,10 @@ def _audit_wiki_status_change(
         schema_version=str(proposal.get("schema_version", "1.0.0")),
         artifact_status="ACTIVE",
         validation_state="VALID",
-        producer={"component": "control_plane.wiki_proposals", "executor": "deterministic_validator"},
+        producer={
+            "component": "control_plane.wiki_proposals",
+            "executor": "deterministic_validator",
+        },
         input_artifact_refs=list(proposal.get("provenance_refs", [])),
         payload=proposal,
         created_at=datetime.now(UTC),
@@ -190,7 +193,9 @@ async def engineering_intake(req: EngineeringIntakeRequest) -> dict[str, Any]:
 
 
 @router.post("/engineering/derive-state")
-async def engineering_derive_state(req: DeriveEngineeringStateRequest) -> dict[str, Any]:
+async def engineering_derive_state(
+    req: DeriveEngineeringStateRequest,
+) -> dict[str, Any]:
     """Derive a deterministic engineering_state from a valid problem_brief."""
     try:
         problem_brief = validate_problem_brief_json(req.problem_brief)
@@ -199,7 +204,10 @@ async def engineering_derive_state(req: DeriveEngineeringStateRequest) -> dict[s
         raise HTTPException(status_code=422, detail=e.to_envelope()) from e
     except ValueError as e:
         raise HTTPException(status_code=422, detail={"message": str(e)}) from e
-    return {"ok": True, "engineering_state": state.model_dump(mode="json", exclude_none=True)}
+    return {
+        "ok": True,
+        "engineering_state": state.model_dump(mode="json", exclude_none=True),
+    }
 
 
 @router.post("/engineering/build-task-queue")
@@ -239,7 +247,10 @@ async def engineering_build_escalation(req: BuildEscalationRequest) -> dict[str,
         raise HTTPException(status_code=422, detail=e.to_envelope()) from e
     except ValueError as e:
         raise HTTPException(status_code=422, detail={"message": str(e)}) from e
-    return {"ok": True, "escalation_packet": escalation.model_dump(mode="json", exclude_none=True)}
+    return {
+        "ok": True,
+        "escalation_packet": escalation.model_dump(mode="json", exclude_none=True),
+    }
 
 
 @router.get("/wiki/proposals")
@@ -250,8 +261,13 @@ async def list_wiki_proposals(status: str | None = None) -> dict[str, Any]:
         try:
             status_enum = WikiEditProposalStatus(status.upper())
         except ValueError as exc:
-            raise HTTPException(status_code=422, detail={"message": f"Invalid status: {status}"}) from exc
-    proposals = [proposal.model_dump(mode="json") for proposal in list_proposals(status=status_enum)]
+            raise HTTPException(
+                status_code=422, detail={"message": f"Invalid status: {status}"}
+            ) from exc
+    proposals = [
+        proposal.model_dump(mode="json")
+        for proposal in list_proposals(status=status_enum)
+    ]
     return {"ok": True, "proposals": proposals}
 
 
@@ -328,7 +344,9 @@ async def get_wiki_proposal(proposal_id: str) -> dict[str, Any]:
     """Fetch a specific queued wiki proposal by id."""
     path = proposal_path(proposal_id)
     if not path.exists():
-        raise HTTPException(status_code=404, detail={"message": f"Unknown proposal: {proposal_id}"})
+        raise HTTPException(
+            status_code=404, detail={"message": f"Unknown proposal: {proposal_id}"}
+        )
     try:
         proposal = load_proposal_file(path)
     except ValueError as exc:

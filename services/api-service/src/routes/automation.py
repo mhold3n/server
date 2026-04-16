@@ -32,7 +32,9 @@ def _ensure_under_devplane_root(path: str) -> str:
     if not str(target).startswith(str(root) + str(Path("/"))):
         # cross-platform-ish prefix check: use Path separator normalization
         if not str(target).startswith(str(root) + "/"):
-            raise HTTPException(status_code=400, detail="path must be under devplane_root")
+            raise HTTPException(
+                status_code=400, detail="path must be under devplane_root"
+            )
     return str(target)
 
 
@@ -42,8 +44,7 @@ def _run_command(cmd: list[str], *, timeout_s: float = 3600.0) -> dict[str, Any]
             cmd,
             check=False,
             text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             timeout=timeout_s,
         )
     except subprocess.TimeoutExpired as exc:
@@ -54,7 +55,11 @@ def _run_command(cmd: list[str], *, timeout_s: float = 3600.0) -> dict[str, Any]
     except OSError as exc:
         raise HTTPException(
             status_code=502,
-            detail={"error": "failed to execute command", "command": cmd, "stderr": str(exc)},
+            detail={
+                "error": "failed to execute command",
+                "command": cmd,
+                "stderr": str(exc),
+            },
         ) from exc
 
     return {
@@ -98,10 +103,18 @@ def _attach_artifact_to_run(*, run_id: str | None, artifact: ArtifactRecord) -> 
 
 
 class MartyMediaCaptionsRequest(BaseModel):
-    input_path: str = Field(..., description="Media file path (must be under devplane_root)")
-    output_dir: str = Field(..., description="Output directory (must be under devplane_root)")
-    workspace_root: str = Field(..., description="Workspace root (must be under devplane_root)")
-    run_id: str | None = Field(default=None, description="Optional devplane run id to attach artifacts to")
+    input_path: str = Field(
+        ..., description="Media file path (must be under devplane_root)"
+    )
+    output_dir: str = Field(
+        ..., description="Output directory (must be under devplane_root)"
+    )
+    workspace_root: str = Field(
+        ..., description="Workspace root (must be under devplane_root)"
+    )
+    run_id: str | None = Field(
+        default=None, description="Optional devplane run id to attach artifacts to"
+    )
     language: str = Field(..., pattern="^(en|es)$")
     model: str | None = None
 
@@ -139,13 +152,22 @@ async def martymedia_captions(req: MartyMediaCaptionsRequest) -> dict[str, Any]:
         payload={"ok": True, "result": parsed, **result},
     )
     _attach_artifact_to_run(run_id=req.run_id, artifact=artifact)
-    return {"ok": True, "result": parsed, "artifact": artifact.model_dump(mode="json"), **result}
+    return {
+        "ok": True,
+        "result": parsed,
+        "artifact": artifact.model_dump(mode="json"),
+        **result,
+    }
 
 
 class LarrakDoctorRequest(BaseModel):
     skip_services: bool = False
-    workspace_root: str | None = Field(default=None, description="Optional workspace root for artifacts")
-    run_id: str | None = Field(default=None, description="Optional devplane run id to attach artifacts to")
+    workspace_root: str | None = Field(
+        default=None, description="Optional workspace root for artifacts"
+    )
+    run_id: str | None = Field(
+        default=None, description="Optional devplane run id to attach artifacts to"
+    )
 
 
 @router.post("/larrak/doctor")
@@ -169,11 +191,17 @@ async def larrak_doctor(req: LarrakDoctorRequest) -> dict[str, Any]:
 
 
 class LarrakIngestRequest(BaseModel):
-    source_path: str = Field(..., description="Source file path (must be under devplane_root)")
+    source_path: str = Field(
+        ..., description="Source file path (must be under devplane_root)"
+    )
     source_type: str | None = Field(default=None, description="pdf|md|txt (optional)")
     marker_extra_args: list[str] = Field(default_factory=list)
-    workspace_root: str = Field(..., description="Workspace root (must be under devplane_root)")
-    run_id: str | None = Field(default=None, description="Optional devplane run id to attach artifacts to")
+    workspace_root: str = Field(
+        ..., description="Workspace root (must be under devplane_root)"
+    )
+    run_id: str | None = Field(
+        default=None, description="Optional devplane run id to attach artifacts to"
+    )
 
 
 @router.post("/larrak/ingest")
@@ -201,14 +229,25 @@ async def larrak_ingest(req: LarrakIngestRequest) -> dict[str, Any]:
 class LarrakBuildRequest(BaseModel):
     source_id: str
     enhance: bool = True
-    workspace_root: str = Field(..., description="Workspace root (must be under devplane_root)")
-    run_id: str | None = Field(default=None, description="Optional devplane run id to attach artifacts to")
+    workspace_root: str = Field(
+        ..., description="Workspace root (must be under devplane_root)"
+    )
+    run_id: str | None = Field(
+        default=None, description="Optional devplane run id to attach artifacts to"
+    )
 
 
 @router.post("/larrak/build")
 async def larrak_build(req: LarrakBuildRequest) -> dict[str, Any]:
     workspace_root = _ensure_under_devplane_root(req.workspace_root)
-    cmd = ["larrak-audio", "build", "--source-id", req.source_id, "--enhance", "on" if req.enhance else "off"]
+    cmd = [
+        "larrak-audio",
+        "build",
+        "--source-id",
+        req.source_id,
+        "--enhance",
+        "on" if req.enhance else "off",
+    ]
     result = _run_command(cmd, timeout_s=6 * 60 * 60)
     ok = result["returncode"] == 0
     if not ok:
@@ -223,21 +262,38 @@ async def larrak_build(req: LarrakBuildRequest) -> dict[str, Any]:
 
 
 class LarrakRunTestFilesRequest(BaseModel):
-    input_dir: str = Field(..., description="Directory path (must be under devplane_root)")
+    input_dir: str = Field(
+        ..., description="Directory path (must be under devplane_root)"
+    )
     glob: str = "*.pdf"
     recursive: bool = False
     enhance: bool = True
     marker_extra_args: list[str] = Field(default_factory=list)
-    summary_path: str | None = Field(default=None, description="Optional path (must be under devplane_root)")
-    workspace_root: str = Field(..., description="Workspace root (must be under devplane_root)")
-    run_id: str | None = Field(default=None, description="Optional devplane run id to attach artifacts to")
+    summary_path: str | None = Field(
+        default=None, description="Optional path (must be under devplane_root)"
+    )
+    workspace_root: str = Field(
+        ..., description="Workspace root (must be under devplane_root)"
+    )
+    run_id: str | None = Field(
+        default=None, description="Optional devplane run id to attach artifacts to"
+    )
 
 
 @router.post("/larrak/run-test-files")
 async def larrak_run_test_files(req: LarrakRunTestFilesRequest) -> dict[str, Any]:
     input_dir = _ensure_under_devplane_root(req.input_dir)
     workspace_root = _ensure_under_devplane_root(req.workspace_root)
-    cmd = ["larrak-audio", "run-test-files", "--input-dir", input_dir, "--glob", req.glob, "--enhance", "on" if req.enhance else "off"]
+    cmd = [
+        "larrak-audio",
+        "run-test-files",
+        "--input-dir",
+        input_dir,
+        "--glob",
+        req.glob,
+        "--enhance",
+        "on" if req.enhance else "off",
+    ]
     if req.recursive:
         cmd.append("--recursive")
     for arg in req.marker_extra_args:
@@ -255,4 +311,3 @@ async def larrak_run_test_files(req: LarrakRunTestFilesRequest) -> dict[str, Any
     )
     _attach_artifact_to_run(run_id=req.run_id, artifact=artifact)
     return {"ok": True, "artifact": artifact.model_dump(mode="json"), **result}
-

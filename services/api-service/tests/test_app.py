@@ -218,12 +218,16 @@ class TestChatCompletions:
                 Choice(
                     index=0,
                     finish_reason="stop",
-                    message=ChatCompletionMessage(role="assistant", content="Output [1]."),
+                    message=ChatCompletionMessage(
+                        role="assistant", content="Output [1]."
+                    ),
                 )
             ],
         )
 
-        src.app.openai_client.chat.completions.create = AsyncMock(return_value=completion)
+        src.app.openai_client.chat.completions.create = AsyncMock(
+            return_value=completion
+        )
 
         verdict = PolicyVerdict(
             overall_passed=True,
@@ -258,12 +262,22 @@ class TestChatCompletions:
             log_metric=lambda *args, **kwargs: None,
         )
 
-        with patch("src.app.get_request_context", return_value={"trace_id": "t", "run_id": "r", "policy_set": "default"}):
+        with patch(
+            "src.app.get_request_context",
+            return_value={"trace_id": "t", "run_id": "r", "policy_set": "default"},
+        ):
             with patch.object(src.app, "mlflow_logger", object()):
-                with patch("src.app.policy_enforcer.validate", new=AsyncMock(return_value=verdict)):
-                    with patch("src.app.trace.get_current_span", return_value=fake_span):
+                with patch(
+                    "src.app.policy_enforcer.validate",
+                    new=AsyncMock(return_value=verdict),
+                ):
+                    with patch(
+                        "src.app.trace.get_current_span", return_value=fake_span
+                    ):
                         with patch.dict("sys.modules", {"mlflow": fake_mlflow}):
-                            resp = test_client.post("/v1/chat/completions", json=sample_chat_request)
+                            resp = test_client.post(
+                                "/v1/chat/completions", json=sample_chat_request
+                            )
 
         assert resp.status_code == 200
         assert resp.headers.get("x-policy-verdict") in ("True", "true")
@@ -289,11 +303,15 @@ class TestChatCompletions:
                 Choice(
                     index=0,
                     finish_reason="stop",
-                    message=ChatCompletionMessage(role="assistant", content="No citations here."),
+                    message=ChatCompletionMessage(
+                        role="assistant", content="No citations here."
+                    ),
                 )
             ],
         )
-        src.app.openai_client.chat.completions.create = AsyncMock(return_value=completion)
+        src.app.openai_client.chat.completions.create = AsyncMock(
+            return_value=completion
+        )
 
         verdict = PolicyVerdict(
             overall_passed=False,
@@ -312,10 +330,16 @@ class TestChatCompletions:
             metadata={},
         )
 
-        with patch("src.app.get_request_context", return_value={"policy_set": "default"}):
-            with patch("src.app.policy_enforcer.validate", new=AsyncMock(return_value=verdict)):
+        with patch(
+            "src.app.get_request_context", return_value={"policy_set": "default"}
+        ):
+            with patch(
+                "src.app.policy_enforcer.validate", new=AsyncMock(return_value=verdict)
+            ):
                 with patch.dict("os.environ", {"POLICY_ENFORCEMENT_MODE": "block"}):
-                    resp = test_client.post("/v1/chat/completions", json=sample_chat_request)
+                    resp = test_client.post(
+                        "/v1/chat/completions", json=sample_chat_request
+                    )
 
         assert resp.status_code == 422
         body = resp.json()

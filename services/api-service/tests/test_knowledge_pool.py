@@ -43,13 +43,19 @@ def _read_json(path: Path) -> list[dict] | dict:
 
 
 def _write_json(path: Path, payload: list[dict] | dict) -> None:
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def _excluded_names_from_markdown(path: Path) -> set[str]:
     names: set[str] = set()
     for line in path.read_text(encoding="utf-8").splitlines():
-        if not line.startswith("|") or line.startswith("| ---") or "reason excluded" in line:
+        if (
+            not line.startswith("|")
+            or line.startswith("| ---")
+            or "reason excluded" in line
+        ):
             continue
         parts = [part.strip() for part in line.strip().split("|")]
         if len(parts) >= 3 and parts[1] and parts[1].lower() != "name":
@@ -75,7 +81,9 @@ def test_seed_catalog_matches_phase3_inventory_and_synthetic_packs() -> None:
         "artifact://knowledge-pack/nlp_time_chem_family",
         "artifact://knowledge-pack/geometry_native_family",
     }
-    assert {artifact.payload.role for artifact in catalog.role_context_bundles.values()} == {
+    assert {
+        artifact.payload.role for artifact in catalog.role_context_bundles.values()
+    } == {
         "general",
         "coder",
         "reviewer",
@@ -106,7 +114,9 @@ def test_minutes_inventory_entries_have_runtime_or_exclusion_row() -> None:
             "blocked_smoke",
             "blocked_external",
         }
-        assert entry["phase3_primary_runtime_ref"].startswith("artifact://environment-spec/")
+        assert entry["phase3_primary_runtime_ref"].startswith(
+            "artifact://environment-spec/"
+        )
         assert entry["phase3_smoke_case_ref"].startswith("package-smoke://")
         assert isinstance(entry["phase3_parent_completion_refs"], list)
         assert isinstance(entry["promotion_ready"], bool)
@@ -130,7 +140,11 @@ def test_minutes_inventory_entries_have_runtime_or_exclusion_row() -> None:
 
 def test_excluded_inventory_entries_have_recovery_metadata() -> None:
     inventory = load_minutes_inventory()
-    excluded_entries = [entry for entry in inventory["entries"] if entry["implementation_status"] == "excluded"]
+    excluded_entries = [
+        entry
+        for entry in inventory["entries"]
+        if entry["implementation_status"] == "excluded"
+    ]
     assert excluded_entries
     for entry in excluded_entries:
         assert entry["module_ref"] == f"minutes-module://{entry['slug']}"
@@ -196,11 +210,21 @@ def test_excluded_inventory_entries_have_recovery_metadata() -> None:
 def test_recovery_plan_metadata_covers_all_install_and_kb_categories() -> None:
     inventory = load_minutes_inventory()
     recovery_plan = inventory["recovery_plan"]
-    install_categories = {item["id"] for item in recovery_plan["install_method_categories"]}
+    install_categories = {
+        item["id"] for item in recovery_plan["install_method_categories"]
+    }
     kb_categories = {item["id"] for item in recovery_plan["kb_build_method_categories"]}
-    excluded_entries = [entry for entry in inventory["entries"] if entry["implementation_status"] == "excluded"]
-    assert {entry["install_method_category"] for entry in excluded_entries} <= install_categories
-    assert {entry["kb_build_method_category"] for entry in excluded_entries} <= kb_categories
+    excluded_entries = [
+        entry
+        for entry in inventory["entries"]
+        if entry["implementation_status"] == "excluded"
+    ]
+    assert {
+        entry["install_method_category"] for entry in excluded_entries
+    } <= install_categories
+    assert {
+        entry["kb_build_method_category"] for entry in excluded_entries
+    } <= kb_categories
 
 
 def test_host_companion_dependency_metadata_matches_plan() -> None:
@@ -216,7 +240,10 @@ def test_host_companion_dependency_metadata_matches_plan() -> None:
 def test_cli_phase1_metadata_distinguishes_ready_and_manual_modules() -> None:
     inventory = load_minutes_inventory()
     by_slug = {entry["slug"]: entry for entry in inventory["entries"]}
-    assert by_slug["picogk_shapekernel"]["install_method_category"] == "I2_containerized_native_backend_family"
+    assert (
+        by_slug["picogk_shapekernel"]["install_method_category"]
+        == "I2_containerized_native_backend_family"
+    )
     assert by_slug["picogk_shapekernel"]["cli_install_channel"] == "dotnet_nuget"
     assert by_slug["picogk_shapekernel"]["manual_acquisition_required"] is False
     assert by_slug["picogk_shapekernel"]["phase_target"] == "completed"
@@ -224,18 +251,27 @@ def test_cli_phase1_metadata_distinguishes_ready_and_manual_modules() -> None:
     assert by_slug["picogk_shapekernel"]["phase2_link_status"] == "recommendable"
     assert by_slug["picogk_shapekernel"]["phase3_completion_status"] == "promoted"
     assert by_slug["picogk_shapekernel"]["promotion_ready"] is True
-    assert by_slug["picogk_shapekernel"]["environment_refs"] == ["artifact://environment-spec/eng_dotnet_sdk"]
+    assert by_slug["picogk_shapekernel"]["environment_refs"] == [
+        "artifact://environment-spec/eng_dotnet_sdk"
+    ]
     assert by_slug["compas"]["phase_state"] == "linked"
     assert by_slug["compas"]["acquisition_status"] == "verified_in_knowledge_runtime"
     assert by_slug["compas"]["phase2_link_status"] == "recommendable"
     assert by_slug["compas"]["phase3_completion_status"] == "promoted"
-    assert "artifact://environment-spec/eng_geometry_uv" in by_slug["compas"]["environment_refs"]
+    assert (
+        "artifact://environment-spec/eng_geometry_uv"
+        in by_slug["compas"]["environment_refs"]
+    )
     assert by_slug["rhino_common"]["phase_state"] == "linked"
     assert by_slug["rhino_common"]["cli_install_channel"] == "host_app_cli"
     assert by_slug["rhino_common"]["phase2_link_status"] == "recommendable"
     assert by_slug["rhino_common"]["phase3_completion_status"] == "promoted"
-    assert by_slug["rhino_common"]["environment_refs"] == ["artifact://environment-spec/eng_rhino_host"]
-    assert by_slug["ipopt"]["environment_refs"] == ["artifact://environment-spec/eng_ipopt_onemkl_docker"]
+    assert by_slug["rhino_common"]["environment_refs"] == [
+        "artifact://environment-spec/eng_rhino_host"
+    ]
+    assert by_slug["ipopt"]["environment_refs"] == [
+        "artifact://environment-spec/eng_ipopt_onemkl_docker"
+    ]
     assert by_slug["ipopt"]["phase2_link_status"] == "recommendable"
     assert by_slug["ipopt"]["phase3_completion_status"] == "promoted"
     assert by_slug["ipopt"]["phase_target"] == "completed"
@@ -244,8 +280,12 @@ def test_cli_phase1_metadata_distinguishes_ready_and_manual_modules() -> None:
     assert by_slug["pardiso"]["cli_install_channel"] == "docker_build_with_onemkl"
     assert by_slug["pardiso"]["phase2_link_status"] == "recommendable"
     assert by_slug["pardiso"]["phase3_completion_status"] == "promoted"
-    assert by_slug["pardiso"]["knowledge_pack_ref"] == "artifact://knowledge-pack/onemkl"
-    assert by_slug["pardiso"]["alias_resolution_kind"] == "substituted_by_canonical_pack"
+    assert (
+        by_slug["pardiso"]["knowledge_pack_ref"] == "artifact://knowledge-pack/onemkl"
+    )
+    assert (
+        by_slug["pardiso"]["alias_resolution_kind"] == "substituted_by_canonical_pack"
+    )
     assert by_slug["ompython"]["phase_state"] == "linked"
     assert by_slug["ompython"]["acquisition_status"] == "verified_in_knowledge_runtime"
     assert by_slug["ompython"]["phase2_link_status"] == "recommendable"
@@ -265,7 +305,10 @@ def test_excluded_markdown_is_grouped_by_install_and_kb_method() -> None:
     assert "## By Knowledge Build Method" in content
     assert "### I6 deferred_external_manual -> K6 acquisition_deferred_pack" in content
     assert "### K6 acquisition_deferred_pack" in content
-    assert "### I1 containerized_native_solver_platform -> K1 executable_solver_platform_pack" not in content
+    assert (
+        "### I1 containerized_native_solver_platform -> K1 executable_solver_platform_pack"
+        not in content
+    )
     assert "| PicoGK / ShapeKernel |" not in content
     assert "| PARDISO |" not in content
     assert "| RhinoCommon |" not in content
@@ -338,11 +381,18 @@ def test_compile_role_context_preserves_sources_across_roles() -> None:
         task_class="thermochemistry_screening",
         project_constraints={"languages": ["python", "c++"]},
     )
-    assert general.source_artifact_refs == coder.source_artifact_refs == reviewer.source_artifact_refs
+    assert (
+        general.source_artifact_refs
+        == coder.source_artifact_refs
+        == reviewer.source_artifact_refs
+    )
     assert general.source_hashes == coder.source_hashes == reviewer.source_hashes
     assert general.included_sections != coder.included_sections
     assert reviewer.included_sections != general.included_sections
-    assert "environment ref artifact://environment-spec/eng_thermochem_uv" in general.compiled_summary
+    assert (
+        "environment ref artifact://environment-spec/eng_thermochem_uv"
+        in general.compiled_summary
+    )
 
 
 def test_phase2_alias_rows_resolve_to_canonical_pack() -> None:
@@ -364,7 +414,9 @@ def test_lookup_knowledge_packs_supports_aliases_but_keeps_runtime_gates() -> No
     assert first.matched_terms == ("pardiso",)
 
 
-def test_top_level_compiled_context_summaries_exclude_runtime_gated_phase2_packs() -> None:
+def test_top_level_compiled_context_summaries_exclude_runtime_gated_phase2_packs() -> (
+    None
+):
     payload = _read_json(KNOWLEDGE_ROOT / "compiled" / "general-context.json")
     assert isinstance(payload, dict)
     summary = payload["payload"]["compiled_summary"]
@@ -378,7 +430,10 @@ def test_top_level_compiled_context_summaries_exclude_runtime_gated_phase2_packs
 
 def test_phase2_compiled_contexts_include_aliases_and_runtime_gates() -> None:
     payload = _read_json(
-        KNOWLEDGE_ROOT / "compiled" / "phase2" / "install_phase1_batch1f_onemkl_family_general.json"
+        KNOWLEDGE_ROOT
+        / "compiled"
+        / "phase2"
+        / "install_phase1_batch1f_onemkl_family_general.json"
     )
     assert isinstance(payload, dict)
     summary = payload["payload"]["compiled_summary"]
@@ -392,7 +447,9 @@ def test_phase2_generated_batch_context_files_exist() -> None:
     phase2_root = KNOWLEDGE_ROOT / "compiled" / "phase2"
     assert (phase2_root / "family_k2_backend_families_general.json").exists()
     assert (phase2_root / "install_phase1_batch1f_onemkl_family_general.json").exists()
-    assert (phase2_root / "kb_phase2_batch_k6_deferred_acquisition_reviewer.json").exists()
+    assert (
+        phase2_root / "kb_phase2_batch_k6_deferred_acquisition_reviewer.json"
+    ).exists()
 
 
 def test_phase3_completion_ledger_covers_every_recovery_module() -> None:
@@ -403,7 +460,8 @@ def test_phase3_completion_ledger_covers_every_recovery_module() -> None:
     assert {entry["module_slug"] for entry in entries} == {
         entry["slug"]
         for entry in load_minutes_inventory()["entries"]
-        if entry["slug"] in {
+        if entry["slug"]
+        in {
             "openfoam",
             "calculix",
             "code_saturne",
@@ -490,7 +548,9 @@ def test_phase3_completion_ledger_covers_every_recovery_module() -> None:
     assert by_slug["pyphs"]["status"] == "promoted"
     assert by_slug["femm"]["status"] == "blocked_external"
     assert by_slug["pardiso"]["completion_kind"] == "alias"
-    assert by_slug["pyoptsparse"]["parent_package_refs"] == ["artifact://knowledge-pack/ipopt"]
+    assert by_slug["pyoptsparse"]["parent_package_refs"] == [
+        "artifact://knowledge-pack/ipopt"
+    ]
     assert by_slug["openmodelica"]["child_package_refs"] == sorted(
         [
             "artifact://knowledge-pack/modelica_standard_library",
@@ -550,7 +610,9 @@ def test_phase3_generated_context_files_exist() -> None:
 
 
 def test_phase3_package_contexts_include_gate_reasons() -> None:
-    payload = _read_json(KNOWLEDGE_ROOT / "compiled" / "phase3" / "package_pardiso_general.json")
+    payload = _read_json(
+        KNOWLEDGE_ROOT / "compiled" / "phase3" / "package_pardiso_general.json"
+    )
     assert isinstance(payload, dict)
     summary = payload["payload"]["compiled_summary"]
     assert "Intel oneMKL" in summary
@@ -559,7 +621,9 @@ def test_phase3_package_contexts_include_gate_reasons() -> None:
 
 
 def test_phase3_parent_contexts_include_parent_and_child_packages() -> None:
-    payload = _read_json(KNOWLEDGE_ROOT / "compiled" / "phase3" / "parent_ipopt_general.json")
+    payload = _read_json(
+        KNOWLEDGE_ROOT / "compiled" / "phase3" / "parent_ipopt_general.json"
+    )
     assert isinstance(payload, dict)
     summary = payload["payload"]["compiled_summary"]
     assert "IPOPT" in summary
@@ -615,7 +679,9 @@ def test_cross_link_validation_flags_missing_evidence(tmp_path: Path) -> None:
     assert isinstance(payload, list)
     payload = [item for item in payload if item["payload"]["tool_id"] != "cantera"]
     _write_json(path, payload)
-    with pytest.raises(ValueError, match="missing ref artifact://evidence-bundle/cantera_runtime"):
+    with pytest.raises(
+        ValueError, match="missing ref artifact://evidence-bundle/cantera_runtime"
+    ):
         load_knowledge_pool(root=root)
 
 
@@ -639,9 +705,13 @@ def test_cross_link_validation_flags_missing_environment_ref(tmp_path: Path) -> 
     assert isinstance(payload, list)
     for item in payload:
         if item["payload"]["tool_id"] == "cantera":
-            item["payload"]["environment_refs"] = ["artifact://environment-spec/missing_env"]
+            item["payload"]["environment_refs"] = [
+                "artifact://environment-spec/missing_env"
+            ]
     _write_json(path, payload)
-    with pytest.raises(ValueError, match="missing ref artifact://environment-spec/missing_env"):
+    with pytest.raises(
+        ValueError, match="missing ref artifact://environment-spec/missing_env"
+    ):
         load_knowledge_pool(root=root)
 
 
@@ -652,9 +722,14 @@ def test_cross_link_validation_flags_missing_healthcheck_ref(tmp_path: Path) -> 
     assert isinstance(payload, list)
     for item in payload:
         if item["payload"]["tool_id"] == "cantera":
-            item["payload"]["healthcheck_refs"] = ["artifact://verification-report/missing_runtime_report"]
+            item["payload"]["healthcheck_refs"] = [
+                "artifact://verification-report/missing_runtime_report"
+            ]
     _write_json(path, payload)
-    with pytest.raises(ValueError, match="missing ref artifact://verification-report/missing_runtime_report"):
+    with pytest.raises(
+        ValueError,
+        match="missing ref artifact://verification-report/missing_runtime_report",
+    ):
         load_knowledge_pool(root=root)
 
 
@@ -664,7 +739,9 @@ def test_resolve_stack_excludes_tool_outside_declared_not_for_boundary() -> None
         problem_spec={"task": "full 3d cfd field solve", "physics": ["field solve"]},
         project_constraints={"languages": ["python"]},
     )
-    assert "artifact://knowledge-pack/cantera" not in {item.knowledge_pack_ref for item in results}
+    assert "artifact://knowledge-pack/cantera" not in {
+        item.knowledge_pack_ref for item in results
+    }
 
 
 def test_candidate_pack_set_flags_incompatible_integration_pairing() -> None:
@@ -686,7 +763,12 @@ def test_adapter_input_validation_flags_unit_policy_violations(tmp_path: Path) -
     for item in payload:
         if item["payload"]["tool_id"] == "cantera":
             item["payload"]["typed_inputs"] = [
-                {"name": "temperature", "type": "number", "required": True, "unit": "K"},
+                {
+                    "name": "temperature",
+                    "type": "number",
+                    "required": True,
+                    "unit": "K",
+                },
             ]
     _write_json(path, payload)
     catalog = load_knowledge_pool(root=root)
@@ -722,7 +804,10 @@ def test_conflicting_decision_logs_can_be_detected(tmp_path: Path) -> None:
             "artifact_id": "00000000-0000-4000-8000-00000000c001",
             "artifact_type": "DECISION_LOG",
             "created_at": "2026-04-08T00:00:00Z",
-            "input_artifact_refs": ["artifact://knowledge-pack/cantera", "artifact://knowledge-pack/coolprop"],
+            "input_artifact_refs": [
+                "artifact://knowledge-pack/cantera",
+                "artifact://knowledge-pack/coolprop",
+            ],
             "payload": {
                 "decision_id": "thermochem_cantera_coolprop_tespy_override",
                 "schema_version": "1.0.0",
@@ -745,7 +830,9 @@ def test_conflicting_decision_logs_can_be_detected(tmp_path: Path) -> None:
     _write_json(path, payload)
     catalog = load_knowledge_pool(root=root)
     errors = catalog.validate_decision_consistency()
-    assert any("thermochem_cantera_coolprop_tespy_override" in error for error in errors)
+    assert any(
+        "thermochem_cantera_coolprop_tespy_override" in error for error in errors
+    )
 
 
 def test_verify_runtime_returns_pass_report(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -754,10 +841,14 @@ def test_verify_runtime_returns_pass_report(monkeypatch: pytest.MonkeyPatch) -> 
     def _fake_run(*args: object, **kwargs: object) -> SimpleNamespace:
         return SimpleNamespace(returncode=0, stdout="OK:runtime", stderr="")
 
-    monkeypatch.setattr("response_control_framework.knowledge_pool.subprocess.run", _fake_run)
+    monkeypatch.setattr(
+        "response_control_framework.knowledge_pool.subprocess.run", _fake_run
+    )
     report = catalog.verify_runtime("artifact://environment-spec/eng_structures_uv")
     assert report.outcome.value == "PASS"
-    assert report.validated_artifact_refs == ["artifact://environment-spec/eng_structures_uv"]
+    assert report.validated_artifact_refs == [
+        "artifact://environment-spec/eng_structures_uv"
+    ]
 
 
 def test_docker_environments_have_default_container_gui_sessions() -> None:
@@ -797,16 +888,22 @@ def test_resolve_gui_session_allows_planned_sessions_when_requested() -> None:
         "artifact://gui-session-spec/eng_paraview_gui"
     ):
         with pytest.raises(ValueError, match="No GUI session matched"):
-            catalog.resolve_gui_session("artifact://environment-spec/eng_paraview_docker")
+            catalog.resolve_gui_session(
+                "artifact://environment-spec/eng_paraview_docker"
+            )
 
 
-def test_verify_gui_session_returns_pass_report(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_verify_gui_session_returns_pass_report(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     catalog = load_knowledge_pool()
 
     def _fake_run(*args: object, **kwargs: object) -> SimpleNamespace:
         return SimpleNamespace(returncode=0, stdout="OK:gui", stderr="")
 
-    monkeypatch.setattr("response_control_framework.knowledge_pool.subprocess.run", _fake_run)
+    monkeypatch.setattr(
+        "response_control_framework.knowledge_pool.subprocess.run", _fake_run
+    )
     report = catalog.verify_gui_session("artifact://gui-session-spec/eng_paraview_gui")
     assert report.outcome.value == "PASS"
     assert report.validated_artifact_refs == [

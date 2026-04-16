@@ -57,7 +57,9 @@ def get_service() -> DevPlaneService:
     # so parents only goes up to /app (parents[2]). Older code assumed a deeper
     # monorepo path and crashed with IndexError, yielding 500s on /api/ai/query.
     resolved = Path(__file__).resolve()
-    control_plane_root = resolved.parents[4] if len(resolved.parents) > 4 else resolved.parents[2]
+    control_plane_root = (
+        resolved.parents[4] if len(resolved.parents) > 4 else resolved.parents[2]
+    )
     desired = (
         str(Path(settings.devplane_db_path).expanduser().resolve()),
         str(Path(settings.devplane_root).expanduser().resolve()),

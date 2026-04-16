@@ -5,7 +5,10 @@ For agents: this package implements Phase 1 shell handshake logic for
 orchestration schemas live under ``schemas/control-plane/v1``.
 """
 
-from .bridge_request import extract_post_completion_events, validate_and_merge_openclaw_bridge
+from .bridge_request import (
+    extract_post_completion_events,
+    validate_and_merge_openclaw_bridge,
+)
 from .idempotency import (
     idempotency_material,
     idempotency_payload_hash,

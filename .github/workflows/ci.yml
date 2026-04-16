@@ -56,8 +56,9 @@ jobs:
       # Run linting and type checking
       - name: Run linting
         run: |
-          ruff check services/api-service services/router-service services/worker-service services/media-service mcp-servers/mcp/servers/
-          black --check services/api-service services/router-service services/worker-service services/media-service mcp-servers/mcp/servers/
+          source scripts/ci_python_lint_paths.sh
+          ruff check $CI_PYTHON_LINT_PATHS
+          black --check $CI_PYTHON_LINT_PATHS
 
       - name: Run type checking
         run: |

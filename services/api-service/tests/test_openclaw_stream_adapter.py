@@ -45,7 +45,10 @@ async def test_iter_query_stream_events_mvp_order_and_schema(
         return {
             "workflow_id": "wf_test",
             "result": {
-                "referential_state": {"engineering_session_id": "eng1", "run_id": "run1"},
+                "referential_state": {
+                    "engineering_session_id": "eng1",
+                    "run_id": "run1",
+                },
                 "final_response": "ok",
             },
         }

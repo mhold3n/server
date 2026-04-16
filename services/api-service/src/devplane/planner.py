@@ -123,11 +123,15 @@ class TaskPlanner:
         constraints: list[str] = []
         raw_constraints = request.context.get("constraints")
         if isinstance(raw_constraints, list):
-            constraints.extend(str(item).strip() for item in raw_constraints if str(item).strip())
+            constraints.extend(
+                str(item).strip() for item in raw_constraints if str(item).strip()
+            )
         elif isinstance(raw_constraints, str) and raw_constraints.strip():
             constraints.append(raw_constraints.strip())
         if request.repo_ref_hint:
-            constraints.append(f"Prefer working relative to ref hint: {request.repo_ref_hint}")
+            constraints.append(
+                f"Prefer working relative to ref hint: {request.repo_ref_hint}"
+            )
         if "constraints" in answer_map:
             constraints.append(answer_map["constraints"])
 

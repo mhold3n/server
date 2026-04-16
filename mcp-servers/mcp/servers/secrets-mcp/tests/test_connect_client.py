@@ -17,7 +17,13 @@ def _install_test_stubs() -> None:
 
     # ---- httpx stub ----
     class FakeResponse:
-        def __init__(self, *, status_code: int, payload: object | None = None, content: bytes = b"") -> None:
+        def __init__(
+            self,
+            *,
+            status_code: int,
+            payload: object | None = None,
+            content: bytes = b"",
+        ) -> None:
             self.status_code = status_code
             self._payload = payload
             self.content = content
@@ -52,7 +58,11 @@ def _install_test_stubs() -> None:
                     payload=[{"name": "Personal", "id": "vault-uuid"}],
                 )
 
-            if url.endswith("/v1/vaults/vault-uuid/items") and params and "filter" in params:
+            if (
+                url.endswith("/v1/vaults/vault-uuid/items")
+                and params
+                and "filter" in params
+            ):
                 return FakeResponse(
                     status_code=200,
                     payload=[{"title": "notion", "id": "item-uuid"}],
@@ -63,7 +73,11 @@ def _install_test_stubs() -> None:
                     status_code=200,
                     payload={
                         "fields": [
-                            {"id": "field-uuid", "label": "apiKey", "value": "secret-value"}
+                            {
+                                "id": "field-uuid",
+                                "label": "apiKey",
+                                "value": "secret-value",
+                            }
                         ]
                     },
                 )
@@ -134,4 +148,3 @@ class TestConnectClientOpRefResolution(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

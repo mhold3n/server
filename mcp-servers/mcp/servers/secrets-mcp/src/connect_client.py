@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 import structlog
@@ -45,10 +45,14 @@ class ConnectClient:
         token = os.getenv("OP_CONNECT_TOKEN", "").strip()
 
         self._cfg = ConnectConfig(base_url=base_url, token=token)
-        self._client = httpx.AsyncClient(timeout=float(os.getenv("OP_HTTP_TIMEOUT_SECONDS", "10")))
+        self._client = httpx.AsyncClient(
+            timeout=float(os.getenv("OP_HTTP_TIMEOUT_SECONDS", "10"))
+        )
 
         self._vault_cache: dict[str, str] = {}  # vault name -> vault UUID
-        self._item_cache: dict[tuple[str, str], str] = {}  # (vault UUID, item title) -> item UUID
+        self._item_cache: dict[tuple[str, str], str] = (
+            {}
+        )  # (vault UUID, item title) -> item UUID
 
         # Field label -> field UUID for a specific item UUID.
         self._field_cache: dict[tuple[str, str], dict[str, str]] = {}
@@ -58,10 +62,17 @@ class ConnectClient:
 
     def _auth_headers(self) -> dict[str, str]:
         if not self._cfg.token:
-            raise RuntimeError("OP_CONNECT_TOKEN is required for 1Password Connect access")
-        return {"Authorization": f"Bearer {self._cfg.token}", "Content-Type": "application/json"}
+            raise RuntimeError(
+                "OP_CONNECT_TOKEN is required for 1Password Connect access"
+            )
+        return {
+            "Authorization": f"Bearer {self._cfg.token}",
+            "Content-Type": "application/json",
+        }
 
-    async def _get_json(self, path: str, *, params: dict[str, str] | None = None) -> Any:
+    async def _get_json(
+        self, path: str, *, params: dict[str, str] | None = None
+    ) -> Any:
         url = f"{self._cfg.base_url}{path}"
         res = await self._client.get(url, headers=self._auth_headers(), params=params)
         if res.status_code == 401:
@@ -144,7 +155,9 @@ class ConnectClient:
 
         raise KeyError(f"Connect item not found: vault={vault_uuid} item={item_title}")
 
-    async def _get_item_fields_index(self, vault_uuid: str, item_uuid: str) -> dict[str, str]:
+    async def _get_item_fields_index(
+        self, vault_uuid: str, item_uuid: str
+    ) -> dict[str, str]:
         cache_key = (vault_uuid, item_uuid)
         existing = self._field_cache.get(cache_key)
         if existing is not None:
@@ -153,7 +166,9 @@ class ConnectClient:
         item = await self._get_json(f"/v1/vaults/{vault_uuid}/items/{item_uuid}")
         fields = item.get("fields", [])
         if not isinstance(fields, list):
-            raise RuntimeError("Unexpected Connect item details: fields missing/not a list")
+            raise RuntimeError(
+                "Unexpected Connect item details: fields missing/not a list"
+            )
 
         idx: dict[str, str] = {}
         for f in fields:
@@ -182,11 +197,15 @@ class ConnectClient:
         self._field_cache[cache_key] = idx
         return idx
 
-    async def _get_field_value(self, vault_uuid: str, item_uuid: str, field_label: str) -> str:
+    async def _get_field_value(
+        self, vault_uuid: str, item_uuid: str, field_label: str
+    ) -> str:
         item = await self._get_json(f"/v1/vaults/{vault_uuid}/items/{item_uuid}")
         fields = item.get("fields", [])
         if not isinstance(fields, list):
-            raise RuntimeError("Unexpected Connect item details: fields missing/not a list")
+            raise RuntimeError(
+                "Unexpected Connect item details: fields missing/not a list"
+            )
 
         for f in fields:
             if not isinstance(f, dict):
@@ -209,11 +228,15 @@ class ConnectClient:
                 raise ValueError("op:// reference requires a field (or pass key=field)")
         else:
             if key is None:
-                raise ValueError("key must be provided when path is not an op:// reference")
+                raise ValueError(
+                    "key must be provided when path is not an op:// reference"
+                )
             # Interpret `path` as `<vault>/<item>`
             parts = [p for p in path.split("/") if p]
             if len(parts) < 2:
-                raise ValueError("path must be <vault>/<item> when not using op:// refs")
+                raise ValueError(
+                    "path must be <vault>/<item> when not using op:// refs"
+                )
             op_ref = OpRef(vault=parts[0], item="/".join(parts[1:]), field=key)
 
         vault_uuid = await self._get_vault_uuid(op_ref.vault)
@@ -225,7 +248,9 @@ class ConnectClient:
     async def set_secret(self, path: str, data: dict[str, Any]) -> dict[str, Any]:
         # For Connect, we support set_secret only when `path` is a full op:// ref.
         if not path.startswith("op://"):
-            raise ValueError("set_secret requires an op:// path in this Connect backend")
+            raise ValueError(
+                "set_secret requires an op:// path in this Connect backend"
+            )
 
         op_ref = parse_op_ref(path)
         if op_ref.field is None:
@@ -251,14 +276,25 @@ class ConnectClient:
         fields_index = await self._get_item_fields_index(vault_uuid, item_uuid)
         field_uuid = fields_index.get(op_ref.field)
         if not field_uuid:
-            raise KeyError(f"Connect field UUID not found for field label={op_ref.field}")
+            raise KeyError(
+                f"Connect field UUID not found for field label={op_ref.field}"
+            )
 
         updated = await self._patch_json(
             f"/v1/vaults/{vault_uuid}/items/{item_uuid}",
-            {"op": "replace", "path": f"/fields/{field_uuid}/value", "value": secret_value},
+            {
+                "op": "replace",
+                "path": f"/fields/{field_uuid}/value",
+                "value": secret_value,
+            },
         )
 
-        return {"updated": True, "item": op_ref.item, "vault": op_ref.vault, "raw": updated}
+        return {
+            "updated": True,
+            "item": op_ref.item,
+            "vault": op_ref.vault,
+            "raw": updated,
+        }
 
     async def list_secrets(self, path: str) -> dict[str, Any]:
         # For Connect, interpret `path` as either:
@@ -283,7 +319,9 @@ class ConnectClient:
 
     async def delete_secret(self, path: str) -> dict[str, Any]:
         if not path.startswith("op://"):
-            raise ValueError("delete_secret requires an op:// path in this Connect backend")
+            raise ValueError(
+                "delete_secret requires an op:// path in this Connect backend"
+            )
 
         op_ref = parse_op_ref(path)
         vault_uuid = await self._get_vault_uuid(op_ref.vault)
@@ -291,4 +329,3 @@ class ConnectClient:
         item_uuid = await self._get_item_uuid(vault_uuid, op_ref.item)
         await self._delete(f"/v1/vaults/{vault_uuid}/items/{item_uuid}")
         return {"deleted": True, "vault": op_ref.vault, "item": op_ref.item}
-

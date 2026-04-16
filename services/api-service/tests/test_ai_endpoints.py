@@ -1,5 +1,6 @@
-import httpx
 import json
+
+import httpx
 import respx
 from fastapi.testclient import TestClient
 
@@ -132,7 +133,11 @@ def test_ai_query_routes_chemistry_plus_engineering_directly_to_strict_mode():
                     "workflow_id": "wstrict",
                     "workflow_name": "engineering_workflow",
                     "duration": 0.01,
-                    "result": {"final_response": "ok", "required_gates": [], "task_packets": []},
+                    "result": {
+                        "final_response": "ok",
+                        "required_gates": [],
+                        "task_packets": [],
+                    },
                 },
             )
         )
@@ -165,7 +170,11 @@ def test_ai_query_routes_bounded_repo_work_to_engineering_task():
                     "workflow_id": "weng-task",
                     "workflow_name": "engineering_workflow",
                     "duration": 0.01,
-                    "result": {"final_response": "ok", "required_gates": [], "task_packets": []},
+                    "result": {
+                        "final_response": "ok",
+                        "required_gates": [],
+                        "task_packets": [],
+                    },
                 },
             )
         )
@@ -235,7 +244,9 @@ def test_ai_query_routes_open_exploration_to_ideation():
         )
         resp = client.post(
             "/api/ai/query",
-            json={"prompt": "Brainstorm possible approaches for a future engineering UI."},
+            json={
+                "prompt": "Brainstorm possible approaches for a future engineering UI."
+            },
         )
         assert resp.status_code == 200
         payload = json.loads(route.calls[0].request.content.decode("utf-8"))
@@ -254,7 +265,9 @@ def test_ai_query_strict_engineering_creates_visible_devplane_session(tmp_path):
     try:
         task_packet_id = "11111111-1111-4111-8111-111111111111"
         with respx.mock(assert_all_called=True) as mock:
-            route = mock.post(f"{settings.agent_platform_url}/v1/workflows/execute").mock(
+            route = mock.post(
+                f"{settings.agent_platform_url}/v1/workflows/execute"
+            ).mock(
                 return_value=httpx.Response(
                     200,
                     json={
@@ -314,7 +327,9 @@ def test_ai_query_strict_engineering_creates_visible_devplane_session(tmp_path):
             assert payload["input_data"]["run_id"]
             assert payload["input_data"]["knowledge_pool_assessment_ref"]
 
-        session_id = resp.json()["result"]["referential_state"]["engineering_session_id"]
+        session_id = resp.json()["result"]["referential_state"][
+            "engineering_session_id"
+        ]
         result_payload = resp.json()["result"]
         assert result_payload["knowledge_pool_assessment_ref"]
         assert "knowledge_pool_coverage" in result_payload
@@ -324,7 +339,10 @@ def test_ai_query_strict_engineering_creates_visible_devplane_session(tmp_path):
         task = service.get_task(session_id)
         assert task.current_run_id
         assert task.dossier.engineering_session is not None
-        assert task.dossier.engineering_session.problem_brief_ref == "artifact://problem_brief/pb-1"
+        assert (
+            task.dossier.engineering_session.problem_brief_ref
+            == "artifact://problem_brief/pb-1"
+        )
         assert task.dossier.engineering_session.knowledge_pool_assessment_ref
         assert (
             task.dossier.engineering_session.active_task_packet_ref
@@ -333,18 +351,24 @@ def test_ai_query_strict_engineering_creates_visible_devplane_session(tmp_path):
         assert task.dossier.engineering_session.verification_report_ref == (
             "artifact://verification_report/vr-1"
         )
-        assert task.dossier.engineering_session.active_selected_executor == "coding_model"
+        assert (
+            task.dossier.engineering_session.active_selected_executor == "coding_model"
+        )
 
         snapshot = service.load_engineering_session_snapshot(session_id=session_id)
         assert snapshot is not None
-        assert snapshot["verification_report_ref"] == "artifact://verification_report/vr-1"
+        assert (
+            snapshot["verification_report_ref"] == "artifact://verification_report/vr-1"
+        )
         assert snapshot["active_selected_executor"] == "coding_model"
         assert snapshot["knowledge_pool_assessment_ref"]
         assert "knowledge_pool_coverage" in snapshot
 
         reset_devplane_service_for_tests()
         with respx.mock(assert_all_called=True) as mock:
-            route = mock.post(f"{settings.agent_platform_url}/v1/workflows/execute").mock(
+            route = mock.post(
+                f"{settings.agent_platform_url}/v1/workflows/execute"
+            ).mock(
                 return_value=httpx.Response(
                     200,
                     json={
@@ -394,7 +418,9 @@ def test_ai_query_never_auto_deescalates_without_confirmation(tmp_path):
             minimum_engagement_mode="strict_engineering",
         )
         with respx.mock(assert_all_called=True) as mock:
-            route = mock.post(f"{settings.agent_platform_url}/v1/workflows/execute").mock(
+            route = mock.post(
+                f"{settings.agent_platform_url}/v1/workflows/execute"
+            ).mock(
                 return_value=httpx.Response(
                     200,
                     json={
@@ -423,7 +449,10 @@ def test_ai_query_never_auto_deescalates_without_confirmation(tmp_path):
             payload = json.loads(route.calls[0].request.content.decode("utf-8"))
             assert payload["workflow_name"] == "engineering_workflow"
             assert payload["workflow_config"]["engagement_mode"] == "strict_engineering"
-            assert payload["workflow_config"]["pending_mode_change"]["proposed_mode"] == "ideation"
+            assert (
+                payload["workflow_config"]["pending_mode_change"]["proposed_mode"]
+                == "ideation"
+            )
             body = resp.json()
             assert body["result"]["pending_mode_change"]["proposed_mode"] == "ideation"
             assert "confirm explicitly" in body["result"]["final_response"]
