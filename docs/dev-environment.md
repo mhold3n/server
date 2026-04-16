@@ -9,6 +9,10 @@ Cloning additional “legacy” projects **inside** this repository root increas
 - **Same machine:** clone other projects under a sibling directory, e.g. `~/work/server` and `~/work/some-other-repo`, not inside `server/`.
 - **This repo only:** run CI parity with [`scripts/run_ci_local.sh`](../scripts/run_ci_local.sh) from the repository root.
 
+### GitHub Actions: private submodules
+
+[`actions/checkout`](https://github.com/actions/checkout) defaults to `secrets.GITHUB_TOKEN`, which only has access to the **server** repository. If a submodule such as [`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl) is **private**, create a repository secret **`SUBMODULE_CLONE_TOKEN`**: a PAT (classic `repo` scope, or fine-grained read access to each submodule repository). [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) passes it as the checkout `token` so `submodules: recursive` can clone every URL in [`.gitmodules`](../.gitmodules).
+
 ## Workspace bootstrap
 
 - **Standalone package tags:** the root [`pyproject.toml`](../pyproject.toml) pins `response-control-framework`, `ai-shared-service`, and each `domain-*` package with **`git` + `tag`**. For CI and local scripts, override the tag with **`DOMAIN_PACKAGES_TAG`** if needed; otherwise tooling reads the tag from TOML. After bumping a tag, run **`uv lock`** (and **`make vendor-rcf-schemas`** when `response-control-framework` schemas changed).
