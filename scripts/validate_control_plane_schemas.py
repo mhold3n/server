@@ -22,7 +22,28 @@ except ImportError:
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_DIR = REPO_ROOT / "schemas" / "control-plane" / "v1"
+
+
+def _control_plane_v1_dir(repo: Path) -> Path:
+    """Control-plane schemas ship under xlotyl ``response-control-framework`` (not root ``schemas/``)."""
+    candidates = (
+        repo
+        / "xlotyl"
+        / "services"
+        / "response-control-framework"
+        / "schemas"
+        / "control-plane"
+        / "v1",
+        repo / "services" / "response-control-framework" / "schemas" / "control-plane" / "v1",
+        repo / "schemas" / "control-plane" / "v1",
+    )
+    for p in candidates:
+        if (p / "registry.json").is_file():
+            return p
+    return candidates[0]
+
+
+SCHEMA_DIR = _control_plane_v1_dir(REPO_ROOT)
 REGISTRY_PATH = SCHEMA_DIR / "registry.json"
 
 

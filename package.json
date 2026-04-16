@@ -6,9 +6,9 @@
     "node": ">=18.0.0"
   },
   "workspaces": [
-    "services/agent-platform-service/open-multi-agent",
-    "services/agent-platform-service/server",
-    "services/topology-viewer"
+    "xlotyl/services/agent-platform-service/open-multi-agent",
+    "xlotyl/services/agent-platform-service/server",
+    "xlotyl/services/topology-viewer"
   ],
   "scripts": {
     "deps:external": "bash scripts/sync_external_repos.sh",

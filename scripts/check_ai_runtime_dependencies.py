@@ -22,15 +22,15 @@ PINNED_IMAGES = {
 
 IMAGE_POLICY_FILES = [
     ROOT / ".env.example",
-    ROOT / "services" / "ai-gateway-service" / "env.example",
+    ROOT / "xlotyl" / "services" / "ai-gateway-service" / "env.example",
     ROOT / "docker" / "compose-profiles" / "docker-compose.worker.yml",
     ROOT / "worker" / "vllm" / "docker-compose.vllm.yml",
-    ROOT / "services" / "ai-gateway-service" / "compose" / "docker-compose.base.yml",
-    ROOT / "services" / "ai-gateway-service" / "compose" / "docker-compose.prod.yml",
+    ROOT / "xlotyl" / "services" / "ai-gateway-service" / "compose" / "docker-compose.base.yml",
+    ROOT / "xlotyl" / "services" / "ai-gateway-service" / "compose" / "docker-compose.prod.yml",
 ]
 
 HF_RUNTIME_REQUIREMENTS = {
-    "services/model-runtime/pyproject.toml": ["torch", "transformers", "accelerate"],
+    "xlotyl/services/model-runtime/pyproject.toml": ["torch", "transformers", "accelerate"],
     "uv.lock": ["name = \"torch\"", "name = \"transformers\"", "name = \"accelerate\""],
 }
 

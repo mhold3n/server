@@ -45,16 +45,16 @@ uv run python "$ROOT/scripts/validate_control_plane_schemas.py"
 echo "==> validate_model_runtime_schemas.py"
 uv run python "$ROOT/scripts/validate_model_runtime_schemas.py"
 
-echo "==> pytest services/engineering-core/tests"
+echo "==> pytest xlotyl/services/engineering-core/tests"
 (
-  cd "$ROOT/services/engineering-core"
+  cd "$ROOT/xlotyl/services/engineering-core"
   PYTEST_ADDOPTS="-o cache_dir=$CACHE_ROOT/pytest/engineering-core ${PYTEST_ADDOPTS:-}" \
     uv run pytest tests -q
 )
 
-echo "==> pytest services/model-runtime/tests"
+echo "==> pytest xlotyl/services/model-runtime/tests"
 (
-  cd "$ROOT/services/model-runtime"
+  cd "$ROOT/xlotyl/services/model-runtime"
   PYTEST_ADDOPTS="-o cache_dir=$CACHE_ROOT/pytest/model-runtime ${PYTEST_ADDOPTS:-}" \
     uv run pytest tests -q
 )

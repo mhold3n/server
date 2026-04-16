@@ -156,7 +156,7 @@ services use **`http://model-runtime:8000`** (no host port in the URL).
 #### 4a. One-time weights (host cache)
 
 From the repo root (bash), use the shared cache env then download the three
-role checkpoints used by [`services/model-runtime/config/models.yaml`](../services/model-runtime/config/models.yaml):
+role checkpoints used by [`xlotyl/services/model-runtime/config/models.yaml`](../xlotyl/services/model-runtime/config/models.yaml):
 
 ```bash
 source scripts/workspace_env.sh
@@ -217,7 +217,7 @@ loaded successfully; **503** usually means missing weights, OOM, or wrong
 Transformers path—check `docker compose ... logs model-runtime`.
 
 For offline loading, set `local_model_path` per role in
-`services/model-runtime/config/models.yaml`; model-runtime then uses
+`xlotyl/services/model-runtime/config/models.yaml`; model-runtime then uses
 `local_files_only=True`. You can also set **`HF_LOCAL_FILES_ONLY=1`** when all
 roles resolve from disk.
 
@@ -225,11 +225,11 @@ roles resolve from disk.
 
 Use this as a single pass/fail list before claiming “model-runtime HF is ready”:
 
-1. **Weights**: Role IDs in [`services/model-runtime/config/models.yaml`](../services/model-runtime/config/models.yaml) are cached under your `HF_HOME` (see §4a) or `local_model_path` is set for offline load.
+1. **Weights**: Role IDs in [`xlotyl/services/model-runtime/config/models.yaml`](../xlotyl/services/model-runtime/config/models.yaml) are cached under your `HF_HOME` (see §4a) or `local_model_path` is set for offline load.
 2. **`MOCK_INFER=0`** on the `model-runtime` container after recreate.
 3. **`/health`**: `status` is `ok`, `mock_infer` is false, `roles.*.model_id` populated; when not mocking, `generators_loaded` lists loaded roles after first infer or startup (see service implementation).
 4. **`POST /infer/multimodal`**: HTTP 200, non-empty `text` or `structured_output` (not the tiny mock-only shapes from `MOCK_INFER=1`).
-5. **Optional pytest** (offline general-role torch): set `RUN_MODEL_SMOKE=1` and `MODEL_RUNTIME_GENERAL_LOCAL_PATH` (or `MODEL_RUNTIME_LOCAL_PATH_GENERAL`) per [`services/model-runtime/tests/test_smoke_placeholder.py`](../services/model-runtime/tests/test_smoke_placeholder.py).
+5. **Optional pytest** (offline general-role torch): set `RUN_MODEL_SMOKE=1` and `MODEL_RUNTIME_GENERAL_LOCAL_PATH` (or `MODEL_RUNTIME_LOCAL_PATH_GENERAL`) per [`xlotyl/services/model-runtime/tests/test_smoke_placeholder.py`](../xlotyl/services/model-runtime/tests/test_smoke_placeholder.py).
 6. **Script**: from repo root, `make smoke-model-runtime-hf` (or `bash dev/scripts/smoke_model_runtime_hf.sh`) hits `/health` and `/infer/multimodal` against `MODEL_RUNTIME_BASE_URL`.
 
 ### 5. Hosted Hugging Face route

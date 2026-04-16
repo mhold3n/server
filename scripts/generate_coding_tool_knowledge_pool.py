@@ -390,11 +390,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["gmsh", "cadquery", "occt", "meshio", "compas"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "requirements_txt",
-        "manifest_path": "knowledge/coding-tools/runtime/uv/eng-geometry.requirements.txt",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/uv/eng-geometry.requirements.txt",
         "runtime_locator": ".cache/knowledge-envs/eng-geometry",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_uv",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_uv --imports cadquery gmsh OCP meshio compas",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-geometry.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-geometry.sh",
         "requirements": ["cadquery", "gmsh", "meshio", "compas"],
         "verification_enabled": True,
         "notes": ["Companion local geometry runtime for scripted CAD, meshing, translation, and geometry-side Python frameworks."],
@@ -406,11 +406,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["gmsh", "cadquery", "occt", "meshio", "compas"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "dockerfile",
-        "manifest_path": "knowledge/coding-tools/runtime/docker/eng-geometry.Dockerfile",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/docker/eng-geometry.Dockerfile",
         "runtime_locator": "birtha/knowledge-eng-geometry:1.0.0",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_docker",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_geometry_docker",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-geometry-container.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-geometry-container.sh",
         "requirements": [],
         "verification_enabled": False,
         "notes": ["Canonical Docker manifest for geometry modules; not verified in this workspace."],
@@ -422,11 +422,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["cantera", "coolprop", "tespy"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "requirements_txt",
-        "manifest_path": "knowledge/coding-tools/runtime/uv/eng-thermochem.requirements.txt",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/uv/eng-thermochem.requirements.txt",
         "runtime_locator": ".cache/knowledge-envs/eng-thermochem",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_thermochem_uv",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_thermochem_uv --imports cantera CoolProp tespy",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-thermochem.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-thermochem.sh",
         "requirements": ["cantera", "coolprop", "tespy"],
         "verification_enabled": True,
         "notes": ["Companion local thermochemistry runtime for combustion and property tools."],
@@ -438,11 +438,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["cantera", "coolprop", "tespy"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "dockerfile",
-        "manifest_path": "knowledge/coding-tools/runtime/docker/eng-thermochem.Dockerfile",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/docker/eng-thermochem.Dockerfile",
         "runtime_locator": "birtha/knowledge-eng-thermochem:1.0.0",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_thermochem_docker",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_thermochem_docker",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-thermochem-container.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-thermochem-container.sh",
         "requirements": [],
         "verification_enabled": False,
         "notes": ["Canonical Docker manifest for thermochemistry modules; not verified in this workspace."],
@@ -471,11 +471,11 @@ RUNTIME_PROFILES: list[dict] = [
         ],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "requirements_txt",
-        "manifest_path": "knowledge/coding-tools/runtime/uv/eng-mdo.requirements.txt",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/uv/eng-mdo.requirements.txt",
         "runtime_locator": ".cache/knowledge-envs/eng-mdo",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_uv --imports casadi pymoo ortools pyomo.environ openturns smt SALib openmdao.api cvxpy jmetal enoppy dymos mphys optas nevergrad botorch",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-mdo.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-mdo.sh",
         "requirements": [
             "casadi",
             "pymoo",
@@ -526,11 +526,11 @@ RUNTIME_PROFILES: list[dict] = [
         ],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "dockerfile",
-        "manifest_path": "knowledge/coding-tools/runtime/docker/eng-mdo.Dockerfile",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/docker/eng-mdo.Dockerfile",
         "runtime_locator": "birtha/knowledge-eng-mdo:1.0.0",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_docker",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_mdo_docker",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-mdo-container.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-mdo-container.sh",
         "requirements": [],
         "verification_enabled": False,
         "notes": ["Canonical Docker manifest for MDO modules; not verified in this workspace."],
@@ -542,11 +542,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["fipy", "simpeg", "openpnm"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "requirements_txt",
-        "manifest_path": "knowledge/coding-tools/runtime/uv/eng-structures.requirements.txt",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/uv/eng-structures.requirements.txt",
         "runtime_locator": ".cache/knowledge-envs/eng-structures",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_structures_uv",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_structures_uv --imports fipy simpeg openpnm",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-structures.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-structures.sh",
         "requirements": ["fipy", "simpeg", "openpnm"],
         "verification_enabled": True,
         "verification_reasons": [
@@ -562,11 +562,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["fipy", "simpeg", "openpnm"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "dockerfile",
-        "manifest_path": "knowledge/coding-tools/runtime/docker/eng-structures.Dockerfile",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/docker/eng-structures.Dockerfile",
         "runtime_locator": "birtha/knowledge-eng-structures:1.0.0",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_structures_docker",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_structures_docker",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-structures-container.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-structures-container.sh",
         "requirements": [],
         "verification_enabled": False,
         "notes": ["Canonical Docker manifest for lightweight structures runtime; not verified in this workspace."],
@@ -578,11 +578,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["pyspice", "fmpy", "idaes", "ompython", "simpy", "pyphs"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "requirements_txt",
-        "manifest_path": "knowledge/coding-tools/runtime/uv/eng-system.requirements.txt",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/uv/eng-system.requirements.txt",
         "runtime_locator": ".cache/knowledge-envs/eng-system",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_uv --imports PySpice fmpy idaes OMPython simpy pyphs",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-system.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-system.sh",
         "requirements": [
             "PySpice",
             "fmpy",
@@ -612,11 +612,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["pyspice", "fmpy", "idaes", "ompython", "simpy", "pyfmi"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "dockerfile",
-        "manifest_path": "knowledge/coding-tools/runtime/docker/eng-system.Dockerfile",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/docker/eng-system.Dockerfile",
         "runtime_locator": "birtha/knowledge-eng-system:1.0.0",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_docker",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_system_docker",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-system-container.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-system-container.sh",
         "requirements": [],
         "verification_enabled": False,
         "notes": ["Canonical Docker manifest for system modules; not verified in this workspace."],
@@ -628,11 +628,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["pint", "unyt", "xarray", "h5py", "zarr", "dask", "parsl", "pybind11", "nanobind", "mpi4py", "ray", "vtk"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "requirements_txt",
-        "manifest_path": "knowledge/coding-tools/runtime/uv/eng-backbone.requirements.txt",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/uv/eng-backbone.requirements.txt",
         "runtime_locator": ".cache/knowledge-envs/eng-backbone",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_backbone_uv",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_backbone_uv --imports pint unyt xarray h5py zarr dask parsl pybind11 nanobind mpi4py ray vtk",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-backbone.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-backbone.sh",
         "requirements": ["pint", "unyt", "xarray", "h5py", "zarr", "dask", "parsl", "pybind11", "nanobind", "mpi4py", "ray", "vtk"],
         "verification_enabled": True,
         "verification_reasons": [
@@ -648,11 +648,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["pint", "unyt", "xarray", "h5py", "zarr", "dask", "parsl", "pybind11", "nanobind", "mpi4py", "ray", "vtk", "precice"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "dockerfile",
-        "manifest_path": "knowledge/coding-tools/runtime/docker/eng-backbone.Dockerfile",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/docker/eng-backbone.Dockerfile",
         "runtime_locator": "birtha/knowledge-eng-backbone:1.0.0",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_backbone_docker",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_backbone_docker",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-backbone-container.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-backbone-container.sh",
         "requirements": [],
         "verification_enabled": False,
         "notes": ["Canonical Docker manifest for backbone modules; not verified in this workspace."],
@@ -664,11 +664,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["unitsnet", "mathnet_numerics", "picogk"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "csproj",
-        "manifest_path": "knowledge/coding-tools/runtime/dotnet/eng-dotnet/KnowledgeDotnetRuntime.csproj",
-        "runtime_locator": "knowledge/coding-tools/runtime/dotnet/eng-dotnet/bin/Release/net9.0",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/dotnet/eng-dotnet/KnowledgeDotnetRuntime.csproj",
+        "runtime_locator": "xlotyl/knowledge/coding-tools/runtime/dotnet/eng-dotnet/bin/Release/net9.0",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_dotnet_sdk",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_dotnet_sdk --dotnet-probe",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-dotnet.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-dotnet.sh",
         "requirements": [],
         "verification_enabled": True,
         "verification_reasons": [
@@ -685,11 +685,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["ipopt", "coinhsl", "onemkl", "ma57", "ma77", "ma86", "ma97"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "dockerfile",
-        "manifest_path": "knowledge/coding-tools/runtime/docker/eng-ipopt-onemkl.Dockerfile",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/docker/eng-ipopt-onemkl.Dockerfile",
         "runtime_locator": "birtha/knowledge-eng-ipopt-onemkl:1.0.0",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_ipopt_onemkl_docker --container-command bash -lc 'pkg-config --exists ipopt && test -d /opt/vendor/coinhsl-src && test -f /opt/intel/oneapi/mkl/latest/lib/libmkl_rt.so && echo OK:ipopt,hsl,onemkl'",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-ipopt-onemkl-container.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-ipopt-onemkl-container.sh",
         "requirements": [],
         "verification_enabled": False,
         "dockerfile_lines": [
@@ -717,11 +717,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["rhino8", "rhinocode", "yak", "rhino_common"],
         "supported_host_platforms": ["darwin-arm64"],
         "manifest_format": "other",
-        "manifest_path": "knowledge/coding-tools/runtime/host/eng-rhino.manifest.txt",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/host/eng-rhino.manifest.txt",
         "runtime_locator": "/Applications/Rhino 8.app",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_rhino_host",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_rhino_host",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-rhino.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-rhino.sh",
         "requirements": [],
         "verification_enabled": True,
         "verification_reasons": [
@@ -742,11 +742,11 @@ RUNTIME_PROFILES: list[dict] = [
         "module_ids": ["wine64", "cabextract", "unzip"],
         "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
         "manifest_format": "dockerfile",
-        "manifest_path": "knowledge/coding-tools/runtime/docker/eng-wine.Dockerfile",
+        "manifest_path": "xlotyl/knowledge/coding-tools/runtime/docker/eng-wine.Dockerfile",
         "runtime_locator": "birtha/knowledge-eng-wine:1.0.0",
         "bootstrap_command": "python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_wine_docker",
         "healthcheck_command": "python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/eng_wine_docker --container-command wine64 --version",
-        "launcher_ref": "knowledge/coding-tools/runtime/launchers/eng-wine-container.sh",
+        "launcher_ref": "xlotyl/knowledge/coding-tools/runtime/launchers/eng-wine-container.sh",
         "requirements": [],
         "verification_enabled": True,
         "verification_reasons": [
@@ -1957,9 +1957,9 @@ def env_refs_for_module(module: dict) -> list[str]:
 
 def launcher_ref_for_module(module: dict) -> str:
     if module["runtime_profile"] == "eng_dotnet":
-        return "knowledge/coding-tools/runtime/launchers/eng-dotnet.sh"
+        return "xlotyl/knowledge/coding-tools/runtime/launchers/eng-dotnet.sh"
     profile_name = module["runtime_profile"].replace("_", "-")
-    return f"knowledge/coding-tools/runtime/launchers/{profile_name}.sh"
+    return f"xlotyl/knowledge/coding-tools/runtime/launchers/{profile_name}.sh"
 
 
 def integration_refs_for_module(module: dict, decision_refs_by_slug: dict[str, list[str]]) -> list[str]:
@@ -2066,7 +2066,7 @@ def render_excluded_ledger(excluded_entries: list[dict]) -> str:
     lines = [
         "# KNOWLEGE MINUTES EXCLUDED",
         "",
-        "Generated from `knowledge/coding-tools/substrate/minutes-inventory.json` and filtered to non-promoted recovery packages.",
+        "Generated from `xlotyl/knowledge/coding-tools/substrate/minutes-inventory.json` and filtered to non-promoted recovery packages.",
         "",
         "Phase state values: `planned`, `installing`, `installed`, `kb_linking`, `linked`, `deferred`.",
         "Phase 3 completion values: `queued`, `smoke_verified`, `blocked_runtime`, `blocked_smoke`, `blocked_external`, `promoted`.",
@@ -2552,9 +2552,9 @@ def _gui_base_dockerfile() -> str:
         [
             "FROM ubuntu:22.04",
             "ENV DEBIAN_FRONTEND=noninteractive",
-            "COPY knowledge/coding-tools/runtime/docker/gui/install-gui-stack.sh /usr/local/bin/install-gui-stack",
-            "COPY knowledge/coding-tools/runtime/docker/gui/entrypoint.sh /usr/local/bin/knowledge-gui-entrypoint",
-            "COPY knowledge/coding-tools/runtime/docker/gui/healthcheck.sh /usr/local/bin/knowledge-gui-healthcheck",
+            "COPY xlotyl/knowledge/coding-tools/runtime/docker/gui/install-gui-stack.sh /usr/local/bin/install-gui-stack",
+            "COPY xlotyl/knowledge/coding-tools/runtime/docker/gui/entrypoint.sh /usr/local/bin/knowledge-gui-entrypoint",
+            "COPY xlotyl/knowledge/coding-tools/runtime/docker/gui/healthcheck.sh /usr/local/bin/knowledge-gui-healthcheck",
             "RUN chmod +x /usr/local/bin/install-gui-stack /usr/local/bin/knowledge-gui-entrypoint /usr/local/bin/knowledge-gui-healthcheck \\",
             "    && /usr/local/bin/install-gui-stack",
             "ENV DISPLAY=:99",
@@ -2655,9 +2655,9 @@ def _gui_dockerfile_for_profile(profile: dict) -> str:
             f"FROM {profile['runtime_locator']}",
             "ENV DEBIAN_FRONTEND=noninteractive",
             "USER root",
-            "COPY knowledge/coding-tools/runtime/docker/gui/install-gui-stack.sh /usr/local/bin/install-gui-stack",
-            "COPY knowledge/coding-tools/runtime/docker/gui/entrypoint.sh /usr/local/bin/knowledge-gui-entrypoint",
-            "COPY knowledge/coding-tools/runtime/docker/gui/healthcheck.sh /usr/local/bin/knowledge-gui-healthcheck",
+            "COPY xlotyl/knowledge/coding-tools/runtime/docker/gui/install-gui-stack.sh /usr/local/bin/install-gui-stack",
+            "COPY xlotyl/knowledge/coding-tools/runtime/docker/gui/entrypoint.sh /usr/local/bin/knowledge-gui-entrypoint",
+            "COPY xlotyl/knowledge/coding-tools/runtime/docker/gui/healthcheck.sh /usr/local/bin/knowledge-gui-healthcheck",
             "RUN chmod +x /usr/local/bin/install-gui-stack /usr/local/bin/knowledge-gui-entrypoint /usr/local/bin/knowledge-gui-healthcheck \\",
             "    && /usr/local/bin/install-gui-stack",
             "ENV DISPLAY=:99",
@@ -2884,7 +2884,7 @@ def build_runtime_manifests() -> None:
             "set -euo pipefail",
             'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"',
             'export DOTNET_ROLL_FORWARD="${DOTNET_ROLL_FORWARD:-Major}"',
-            'exec dotnet run --project "$ROOT/knowledge/coding-tools/runtime/dotnet/eng-dotnet/KnowledgeDotnetRuntime.csproj" -c Release -- "$@"',
+            'exec dotnet run --project "$ROOT/xlotyl/knowledge/coding-tools/runtime/dotnet/eng-dotnet/KnowledgeDotnetRuntime.csproj" -c Release -- "$@"',
             "",
         ]
     )
@@ -3943,11 +3943,11 @@ def _phase2_additional_runtime_profiles() -> list[dict]:
             "module_ids": module_ids,
             "supported_host_platforms": ["darwin-arm64", "linux-amd64"],
             "manifest_format": "dockerfile",
-            "manifest_path": f"knowledge/coding-tools/runtime/docker/{env_id}.Dockerfile",
+            "manifest_path": f"xlotyl/knowledge/coding-tools/runtime/docker/{env_id}.Dockerfile",
             "runtime_locator": f"birtha/knowledge-{runtime_profile}:1.0.0",
             "bootstrap_command": f"python scripts/bootstrap_knowledge_runtime.py --environment-ref artifact://environment-spec/{env_id}",
             "healthcheck_command": f"python scripts/verify_knowledge_runtime.py --environment-ref artifact://environment-spec/{env_id}",
-            "launcher_ref": f"knowledge/coding-tools/runtime/launchers/{env_id.replace('_docker', '')}-container.sh",
+            "launcher_ref": f"xlotyl/knowledge/coding-tools/runtime/launchers/{env_id.replace('_docker', '')}-container.sh",
             "requirements": [],
             "verification_enabled": False,
             "runtime_gate_reason": note,
@@ -4066,11 +4066,11 @@ def _gui_env_id(profile: dict) -> str:
 
 
 def _gui_manifest_path(profile: dict) -> str:
-    return f"knowledge/coding-tools/runtime/docker/gui/{_gui_env_id(profile)}.Dockerfile"
+    return f"xlotyl/knowledge/coding-tools/runtime/docker/gui/{_gui_env_id(profile)}.Dockerfile"
 
 
 def _gui_launcher_ref(profile: dict) -> str:
-    return f"knowledge/coding-tools/runtime/launchers/gui/{_gui_env_id(profile)}.sh"
+    return f"xlotyl/knowledge/coding-tools/runtime/launchers/gui/{_gui_env_id(profile)}.sh"
 
 
 def _gui_image_for_profile(profile: dict) -> str:
@@ -4667,8 +4667,8 @@ def _inventory_acquisition_status(
 
 def _phase3_manual_artifact_path(module: dict) -> str | None:
     return {
-        "femm": "knowledge/coding-tools/runtime/manual/femm/femm-installer.exe",
-        "pyleecan": "knowledge/coding-tools/runtime/manual/pyleecan/swat-em-source",
+        "femm": "xlotyl/knowledge/coding-tools/runtime/manual/femm/femm-installer.exe",
+        "pyleecan": "xlotyl/knowledge/coding-tools/runtime/manual/pyleecan/swat-em-source",
         "ma87": "HSL/ma87",
     }.get(module["slug"])
 
@@ -5421,7 +5421,7 @@ def build_runtime_manifests() -> None:
             "set -euo pipefail",
             'ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"',
             'export DOTNET_ROLL_FORWARD="${DOTNET_ROLL_FORWARD:-Major}"',
-            'exec dotnet run --project "$ROOT/knowledge/coding-tools/runtime/dotnet/eng-dotnet/KnowledgeDotnetRuntime.csproj" -c Release -- "$@"',
+            'exec dotnet run --project "$ROOT/xlotyl/knowledge/coding-tools/runtime/dotnet/eng-dotnet/KnowledgeDotnetRuntime.csproj" -c Release -- "$@"',
             "",
         ]
     )

@@ -10,7 +10,8 @@
 
 ### Active vs archived code
 
-- **This repo** — Active platform and orchestration code: Birtha API, router, WrkHrs services, agent-platform, DevPlane, MCP servers, observability, and deployment glue.
+- **This repo** — Active platform code: Birtha API, router, queue, worker client, media (`martymedia`), MCP servers, observability, networking/media compose profiles, and deployment glue.
+- **`xlotyl/`** — WrkHrs AI stack (gateway, agent-platform, domains, `model-runtime`, orchestration wiki, response-control, MCP registry config). Use a **symlink** to a sibling clone (`../xlotyl`) for local dev, or check out [`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl) into `./xlotyl` (CI uses tag `v0.1.1`). Compose build contexts and API bind mounts read from `./xlotyl/...`.
 - **Legacy archive** — The historical MBMH training/runtime tree and the retired `engineering_physics_v1` harness were moved out of this repo into the sibling legacy archive at `../server-local-archive/2026-04-08/server/`.
 
 ### External GitHub repos

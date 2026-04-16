@@ -85,12 +85,12 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "ai-shared-service", editable = "services/ai-shared-service" },
+    { name = "ai-shared-service", editable = "xlotyl/services/ai-shared-service" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.0.0" },
     { name = "docker", specifier = ">=6.1.0" },
-    { name = "domain-content", editable = "services/domain-content" },
-    { name = "domain-engineering", editable = "services/domain-engineering" },
-    { name = "domain-research", editable = "services/domain-research" },
+    { name = "domain-content", editable = "xlotyl/services/domain-content" },
+    { name = "domain-engineering", editable = "xlotyl/services/domain-engineering" },
+    { name = "domain-research", editable = "xlotyl/services/domain-research" },
     { name = "fastapi", specifier = ">=0.104.0" },
     { name = "httpx", specifier = ">=0.25.0" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.25.0" },
@@ -113,7 +113,7 @@ requires-dist = [
     { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.12.0" },
     { name = "pyyaml", marker = "extra == 'dev'", specifier = ">=6.0" },
     { name = "redis", specifier = ">=5.0.0" },
-    { name = "response-control-framework", editable = "services/response-control-framework" },
+    { name = "response-control-framework", editable = "xlotyl/services/response-control-framework" },
     { name = "respx", marker = "extra == 'dev'", specifier = ">=0.20.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
     { name = "structlog", specifier = ">=23.2.0" },
@@ -232,7 +232,7 @@ provides-extras = ["dev"]
 [[package]]
 name = "ai-shared-service"
 version = "0.1.0"
-source = { editable = "services/ai-shared-service" }
+source = { editable = "xlotyl/services/ai-shared-service" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
@@ -722,7 +722,7 @@ wheels = [
 [[package]]
 name = "domain-content"
 version = "0.1.0"
-source = { editable = "services/domain-content" }
+source = { editable = "xlotyl/services/domain-content" }
 dependencies = [
     { name = "ai-shared-service" },
     { name = "pydantic" },
@@ -736,17 +736,17 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "ai-shared-service", editable = "services/ai-shared-service" },
+    { name = "ai-shared-service", editable = "xlotyl/services/ai-shared-service" },
     { name = "pydantic", specifier = ">=2.7.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.0" },
-    { name = "response-control-framework", editable = "services/response-control-framework" },
+    { name = "response-control-framework", editable = "xlotyl/services/response-control-framework" },
 ]
 provides-extras = ["dev"]
 
 [[package]]
 name = "domain-engineering"
 version = "0.1.0"
-source = { editable = "services/domain-engineering" }
+source = { editable = "xlotyl/services/domain-engineering" }
 dependencies = [
     { name = "ai-shared-service" },
     { name = "pydantic" },
@@ -755,15 +755,15 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "ai-shared-service", editable = "services/ai-shared-service" },
+    { name = "ai-shared-service", editable = "xlotyl/services/ai-shared-service" },
     { name = "pydantic", specifier = ">=2.7.0" },
-    { name = "response-control-framework", editable = "services/response-control-framework" },
+    { name = "response-control-framework", editable = "xlotyl/services/response-control-framework" },
 ]
 
 [[package]]
 name = "domain-research"
 version = "0.1.0"
-source = { editable = "services/domain-research" }
+source = { editable = "xlotyl/services/domain-research" }
 dependencies = [
     { name = "ai-shared-service" },
     { name = "pydantic" },
@@ -777,17 +777,17 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "ai-shared-service", editable = "services/ai-shared-service" },
+    { name = "ai-shared-service", editable = "xlotyl/services/ai-shared-service" },
     { name = "pydantic", specifier = ">=2.7.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.0" },
-    { name = "response-control-framework", editable = "services/response-control-framework" },
+    { name = "response-control-framework", editable = "xlotyl/services/response-control-framework" },
 ]
 provides-extras = ["dev"]
 
 [[package]]
 name = "engineering-core"
 version = "0.1.0"
-source = { editable = "services/engineering-core" }
+source = { editable = "xlotyl/services/engineering-core" }
 dependencies = [
     { name = "jsonschema" },
 ]
@@ -1370,7 +1370,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "domain-content", editable = "services/domain-content" },
+    { name = "domain-content", editable = "xlotyl/services/domain-content" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1" },
 ]
@@ -1433,7 +1433,7 @@ wheels = [
 [[package]]
 name = "mcp-registry"
 version = "0.1.0"
-source = { editable = "services/mcp-registry-service" }
+source = { editable = "xlotyl/services/mcp-registry-service" }
 dependencies = [
     { name = "aiofiles" },
     { name = "fastapi" },
@@ -1566,7 +1566,7 @@ wheels = [
 [[package]]
 name = "model-runtime"
 version = "0.1.0"
-source = { editable = "services/model-runtime" }
+source = { editable = "xlotyl/services/model-runtime" }
 dependencies = [
     { name = "fastapi" },
     { name = "jsonschema" },
@@ -2574,7 +2574,7 @@ wheels = [
 [[package]]
 name = "response-control-framework"
 version = "0.1.0"
-source = { editable = "services/response-control-framework" }
+source = { editable = "xlotyl/services/response-control-framework" }
 dependencies = [
     { name = "jsonschema" },
     { name = "pydantic" },
@@ -2747,6 +2747,7 @@ dependencies = [
     { name = "domain-engineering" },
     { name = "domain-research" },
     { name = "engineering-core", extra = ["dev"] },
+    { name = "martymedia", extra = ["dev"] },
     { name = "mcp-registry", extra = ["dev"] },
     { name = "model-runtime", extra = ["dev"] },
     { name = "response-control-framework" },
@@ -2757,14 +2758,15 @@ requires-dist = [
     { name = "agent-orchestrator-api", extras = ["dev"], editable = "services/api-service" },
     { name = "agent-orchestrator-router", extras = ["dev"], editable = "services/router-service" },
     { name = "agent-orchestrator-worker-client", extras = ["dev"], editable = "services/worker-service" },
-    { name = "ai-shared-service", editable = "services/ai-shared-service" },
-    { name = "domain-content", editable = "services/domain-content" },
-    { name = "domain-engineering", editable = "services/domain-engineering" },
-    { name = "domain-research", editable = "services/domain-research" },
-    { name = "engineering-core", extras = ["dev"], editable = "services/engineering-core" },
-    { name = "mcp-registry", extras = ["dev"], editable = "services/mcp-registry-service" },
-    { name = "model-runtime", extras = ["dev"], editable = "services/model-runtime" },
-    { name = "response-control-framework", editable = "services/response-control-framework" },
+    { name = "ai-shared-service", editable = "xlotyl/services/ai-shared-service" },
+    { name = "domain-content", editable = "xlotyl/services/domain-content" },
+    { name = "domain-engineering", editable = "xlotyl/services/domain-engineering" },
+    { name = "domain-research", editable = "xlotyl/services/domain-research" },
+    { name = "engineering-core", extras = ["dev"], editable = "xlotyl/services/engineering-core" },
+    { name = "martymedia", extras = ["dev"], editable = "services/media-service" },
+    { name = "mcp-registry", extras = ["dev"], editable = "xlotyl/services/mcp-registry-service" },
+    { name = "model-runtime", extras = ["dev"], editable = "xlotyl/services/model-runtime" },
+    { name = "response-control-framework", editable = "xlotyl/services/response-control-framework" },
 ]
 
 [[package]]

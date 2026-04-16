@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "server-workspace"
 version = "0.1.0"
-description = "Unified workspace for the server control plane and active platform services"
+description = "Platform server: control plane, networking, media; AI stack lives in xlotyl (./xlotyl)"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
@@ -20,6 +20,7 @@ dependencies = [
     "domain-engineering",
     "domain-research",
     "domain-content",
+    "martymedia[dev]",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -29,6 +30,7 @@ packages = []
 package = false
 default-groups = []
 
+# AI/orchestration packages live under ./xlotyl (symlink ../xlotyl or git submodule).
 [tool.uv.sources]
 agent-orchestrator-api = { workspace = true }
 agent-orchestrator-router = { workspace = true }
@@ -36,25 +38,25 @@ agent-orchestrator-worker-client = { workspace = true }
 mcp-registry = { workspace = true }
 model-runtime = { workspace = true }
 engineering-core = { workspace = true }
+response-control-framework = { workspace = true }
 ai-shared-service = { workspace = true }
 domain-engineering = { workspace = true }
 domain-research = { workspace = true }
 domain-content = { workspace = true }
 martymedia = { workspace = true }
-response-control-framework = { workspace = true }
 
 [tool.uv.workspace]
 members = [
     "services/api-service",
     "services/router-service",
     "services/worker-service",
-    "services/mcp-registry-service",
-    "services/model-runtime",
-    "services/engineering-core",
-    "services/response-control-framework",
-    "services/domain-engineering",
-    "services/domain-research",
-    "services/domain-content",
     "services/media-service",
-    "services/ai-shared-service",
+    "xlotyl/services/mcp-registry-service",
+    "xlotyl/services/model-runtime",
+    "xlotyl/services/engineering-core",
+    "xlotyl/services/response-control-framework",
+    "xlotyl/services/ai-shared-service",
+    "xlotyl/services/domain-engineering",
+    "xlotyl/services/domain-research",
+    "xlotyl/services/domain-content",
 ]

@@ -21,8 +21,39 @@ except ImportError:
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CP_DIR = REPO_ROOT / "schemas" / "control-plane" / "v1"
-MR_DIR = REPO_ROOT / "schemas" / "model-runtime" / "v1"
+
+
+def _control_plane_v1_dir(repo: Path) -> Path:
+    candidates = (
+        repo
+        / "xlotyl"
+        / "services"
+        / "response-control-framework"
+        / "schemas"
+        / "control-plane"
+        / "v1",
+        repo / "services" / "response-control-framework" / "schemas" / "control-plane" / "v1",
+        repo / "schemas" / "control-plane" / "v1",
+    )
+    for p in candidates:
+        if (p / "registry.json").is_file():
+            return p
+    return candidates[0]
+
+
+def _model_runtime_v1_dir(repo: Path) -> Path:
+    candidates = (
+        repo / "xlotyl" / "schemas" / "model-runtime" / "v1",
+        repo / "schemas" / "model-runtime" / "v1",
+    )
+    for p in candidates:
+        if (p / "registry.json").is_file():
+            return p
+    return candidates[0]
+
+
+CP_DIR = _control_plane_v1_dir(REPO_ROOT)
+MR_DIR = _model_runtime_v1_dir(REPO_ROOT)
 CP_REGISTRY = CP_DIR / "registry.json"
 MR_REGISTRY = MR_DIR / "registry.json"
 

@@ -34,8 +34,8 @@ services:
     volumes:
       - ./services/api-service/src:/app/src
       - ./services/api-service/tests:/app/tests
-      - ./schemas:/app/schemas:ro
-      - ./knowledge:/app/knowledge:ro
+      - ./xlotyl/schemas:/app/schemas:ro
+      - ./xlotyl/knowledge:/app/knowledge:ro
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:

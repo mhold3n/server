@@ -5,10 +5,22 @@ from collections.abc import Generator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from domain_engineering.core import reset_engineering_sessions_for_tests
 from fastapi.testclient import TestClient
 from redis.asyncio import Redis
+from response_control_framework.response_control import (
+    reset_response_control_catalog_cache_for_tests,
+)
 
 from src.app import app
+
+
+@pytest.fixture(autouse=True)
+def _reset_control_plane_test_state() -> Generator[None, None, None]:
+    """Ensure catalog and engineering session caches do not leak between tests."""
+    reset_response_control_catalog_cache_for_tests()
+    reset_engineering_sessions_for_tests()
+    yield
 
 
 @pytest.fixture(scope="session")

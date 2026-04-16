@@ -26,7 +26,7 @@ from src.devplane.models import (
     WorkspaceRecord,
 )
 from src.devplane.workspace import WorkspaceManager
-from src.control_plane.engineering import intake_engineering_request
+from domain_engineering.core import intake_engineering_request
 
 
 def _git(cmd: list[str], cwd: Path) -> None:

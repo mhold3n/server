@@ -16,11 +16,23 @@ RUN apt-get update && apt-get install -y \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install from pyproject.toml so runtime deps (e.g. jsonschema) cannot drift from a hand-maintained pip list.
+# Install domain packages from xlotyl, then api (matches root uv workspace).
+WORKDIR /build
+COPY xlotyl/services/response-control-framework ./xlotyl/services/response-control-framework
+COPY xlotyl/services/ai-shared-service ./xlotyl/services/ai-shared-service
+COPY xlotyl/services/domain-engineering ./xlotyl/services/domain-engineering
+COPY xlotyl/services/domain-research ./xlotyl/services/domain-research
+COPY xlotyl/services/domain-content ./xlotyl/services/domain-content
 WORKDIR /build/api
 COPY services/api-service/pyproject.toml services/api-service/README.md ./
 COPY services/api-service/src ./src
-RUN pip install --upgrade pip hatchling && pip install --no-cache-dir .
+RUN pip install --upgrade pip hatchling && \
+    pip install --no-cache-dir ../xlotyl/services/response-control-framework && \
+    pip install --no-cache-dir ../xlotyl/services/ai-shared-service && \
+    pip install --no-cache-dir ../xlotyl/services/domain-engineering && \
+    pip install --no-cache-dir ../xlotyl/services/domain-research && \
+    pip install --no-cache-dir ../xlotyl/services/domain-content && \
+    pip install --no-cache-dir .
 
 FROM python:3.11-slim AS production
 
@@ -46,8 +58,8 @@ WORKDIR /app
 
 # Copy application code plus repo-level contracts used by control-plane routes.
 COPY services/api-service/src/ ./src/
-COPY schemas/ ./schemas/
-COPY knowledge/ ./knowledge/
+COPY xlotyl/schemas/ ./schemas/
+COPY xlotyl/knowledge/ ./knowledge/
 
 # Change ownership to non-root user
 RUN chown -R appuser:appuser /app

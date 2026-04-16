@@ -7,11 +7,8 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-API_ROOT = REPO_ROOT / "services" / "api-service"
-if str(API_ROOT) not in sys.path:
-    sys.path.insert(0, str(API_ROOT))
 
-from src.control_plane.wiki_proposals import list_proposals  # noqa: E402
+from response_control_framework.wiki_proposals import list_proposals  # noqa: E402
 
 
 def main() -> int:

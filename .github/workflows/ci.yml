@@ -14,53 +14,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # AI stack sources (pin tag in production); required for uv workspace + wiki/schemas.
+      - uses: actions/checkout@v4
+        with:
+          repository: mhold3n/xlotyl
+          path: xlotyl
+          ref: v0.1.1
+
       # Python services
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - run: python -m pip install --upgrade pip
-      
-      # Install dependencies for each service
-      - name: Install API dependencies
-        run: |
-          pip install -e services/response-control-framework
-          pip install -e services/ai-shared-service
-          pip install -e services/domain-engineering
-          pip install -e services/domain-research
-          pip install -e services/domain-content
-          cd services/api-service
-          pip install -e .
-          pip install -e ".[dev]"
+      - run: python -m pip install --upgrade pip uv
+
+      - name: Install Python workspace (uv)
+        run: uv sync --python ${{ matrix.python }}
 
       - name: Check wiki sources vs response-control JSON
         run: |
-          python scripts/sync_domain_orchestration_wiki.py
+          uv run python scripts/sync_domain_orchestration_wiki.py
           cd services/api-service
-          PYTHONPATH=src python ../../scripts/wiki_compile_response_control.py --check
+          PYTHONPATH=src uv run python ../../scripts/wiki_compile_response_control.py --check
 
       - name: Validate wiki proposal queue
         run: |
           cd services/api-service
-          PYTHONPATH=src python ../../scripts/check_wiki_proposal_queue.py
-      
-      - name: Install Router dependencies
-        run: |
-          cd services/router-service
-          pip install -e .
-          pip install -e ".[dev]"
-      
-      - name: Install Worker Client dependencies
-        run: |
-          cd services/worker-service
-          pip install -e .
-          pip install -e ".[dev]"
+          PYTHONPATH=src uv run python ../../scripts/check_wiki_proposal_queue.py
 
-      - name: Install Structure dependencies
-        run: |
-          cd services/structure-service
-          pip install -e .
-          pip install -e ".[dev]"
-      
       - name: Install MCP server dependencies
         run: |
           cd mcp-servers/mcp/servers/filesystem-mcp
@@ -73,23 +53,12 @@ jobs:
           pip install -e .
           pip install -e ".[dev]"
 
-      - name: Install WrkHrs dependencies
-        run: |
-          cd services/ai-gateway-service
-          pip install -e .
-          pip install -e ".[dev]"
-
       # Run linting and type checking
       - name: Run linting
         run: |
-          ruff check services/ mcp-servers/mcp/servers/
-          black --check services/ mcp-servers/mcp/servers/
-          (cd services/ai-gateway-service && ruff check \
-            services/gateway/app.py \
-            tests/_module_loader.py \
-            tests/test_gateway.py \
-            scripts/test-llm-backends.py)
-      
+          ruff check services/api-service services/router-service services/worker-service services/media-service mcp-servers/mcp/servers/
+          black --check services/api-service services/router-service services/worker-service services/media-service mcp-servers/mcp/servers/
+
       - name: Run type checking
         run: |
           # One invocation per package: each Hatch layout uses a top-level `src/` package;
@@ -97,7 +66,6 @@ jobs:
           (cd services/api-service && mypy --strict src)
           (cd services/router-service && mypy --strict src)
           (cd services/worker-service && mypy --strict src)
-          (cd services/structure-service && mypy .)
           (cd mcp-servers/mcp/servers/filesystem-mcp && mypy --strict src)
           (cd mcp-servers/mcp/servers/secrets-mcp && mypy --strict src)
           (cd mcp-servers/mcp/servers/vector-db-mcp && mypy --strict src)
@@ -149,20 +117,20 @@ jobs:
           TEMPO_BASE_URL: "http://127.0.0.1:3200"
           MCP_REGISTRY_BASE_URL: "http://127.0.0.1:8001"
         run: |
-          pytest services/domain-engineering/tests/test_governance.py -v
-          pytest services/domain-research/tests -v
-          pytest services/domain-content/tests -v
+          pytest xlotyl/services/domain-engineering/tests/test_governance.py -v
+          pytest xlotyl/services/domain-research/tests -v
+          pytest xlotyl/services/domain-content/tests -v
           run_pytest_cov() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=src --cov-report=xml --cov-fail-under=90); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_cov_any() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=. --cov-report=xml --cov-fail-under=90); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_plain() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_cov services/api-service
           run_pytest_cov services/router-service
           run_pytest_cov services/worker-service
-          run_pytest_cov_any services/structure-service
+          run_pytest_cov_any xlotyl/services/structure-service
           run_pytest_cov mcp-servers/mcp/servers/filesystem-mcp
           run_pytest_cov mcp-servers/mcp/servers/secrets-mcp
           run_pytest_cov mcp-servers/mcp/servers/vector-db-mcp
-          (cd services/ai-gateway-service && PYTHONPATH="$(pwd)" WRKHRS_DISABLE_MODEL_LOAD=1 pytest tests/ -v --cov=services/gateway --cov=services/prompt_middleware --cov=services/rag --cov-report=xml --cov-fail-under=90)
+          (cd xlotyl/services/ai-gateway-service && PYTHONPATH="$(pwd)" WRKHRS_DISABLE_MODEL_LOAD=1 pytest tests/ -v --cov=services/gateway --cov=services/prompt_middleware --cov=services/rag --cov-report=xml --cov-fail-under=90)
 
       - name: Stop live-stack dependencies
         if: always()
@@ -222,11 +190,11 @@ jobs:
           else
             echo "SKIP: mcp-github docker build (expected package*.json)"
           fi
-          docker build -f services/agent-platform-service/Dockerfile -t wrkhrs-agent-platform .
+          docker build -f xlotyl/services/agent-platform-service/Dockerfile -t wrkhrs-agent-platform xlotyl
 
       - name: Model-runtime image build and HTTP health (MOCK_INFER)
         run: |
-          docker build -f services/model-runtime/Dockerfile -t model-runtime:ci .
+          docker build -f xlotyl/services/model-runtime/Dockerfile -t model-runtime:ci xlotyl
           cid="$(docker run -d -p 18765:8000 \
             -e MOCK_INFER=1 \
             -e MODEL_RUNTIME_HOST=0.0.0.0 \
@@ -252,7 +220,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: ./services/api-service/coverage.xml,./services/router-service/coverage.xml,./services/worker-service/coverage.xml,./services/structure-service/coverage.xml,./services/ai-gateway-service/coverage.xml,./mcp-servers/mcp/servers/filesystem-mcp/coverage.xml,./mcp-servers/mcp/servers/secrets-mcp/coverage.xml,./mcp-servers/mcp/servers/vector-db-mcp/coverage.xml
+          files: ./services/api-service/coverage.xml,./services/router-service/coverage.xml,./services/worker-service/coverage.xml,./xlotyl/services/structure-service/coverage.xml,./xlotyl/services/ai-gateway-service/coverage.xml,./mcp-servers/mcp/servers/filesystem-mcp/coverage.xml,./mcp-servers/mcp/servers/secrets-mcp/coverage.xml,./mcp-servers/mcp/servers/vector-db-mcp/coverage.xml
           fail_ci_if_error: false
 
   codeql:

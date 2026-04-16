@@ -2,7 +2,7 @@
 
 ## Single clone (recommended)
 
-Work from one repository checkout: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. The active repo holds the Birtha control plane, the WrkHrs AI stack under [`services/ai-gateway-service/`](../services/ai-gateway-service/), MCP servers under [`mcp-servers/mcp/`](../mcp-servers/mcp/), shared CI, and two managed external GitHub submodules at [`claw-code-main/`](../claw-code-main) and [`openclaw/`](../openclaw). Legacy MBMH training/runtime materials now live in the sibling local archive at `../server-local-archive/2026-04-08/server/`.
+Work from the **[github.com/mhold3n/server](https://github.com/mhold3n/server)** checkout. The Birtha control plane, router, queue, media, and MCP servers live here. **AI stack sources** live in the companion repo **[github.com/mhold3n/xlotyl](https://github.com/mhold3n/xlotyl)** and must appear at **`./xlotyl`** (git clone, submodule, or `ln -s ../xlotyl xlotyl` next to this repo). Compose and the API image expect `xlotyl/services/…`, `xlotyl/knowledge/…`, and `xlotyl/schemas/…`. Managed submodules: [`claw-code-main/`](../claw-code-main), [`openclaw/`](../openclaw). Legacy MBMH materials: `../server-local-archive/2026-04-08/server/`.
 
 Cloning additional “legacy” projects **inside** this repository root increases confusion (two trees, two sets of commands, easy to edit the wrong copy). The only in-tree exceptions are the managed submodules `claw-code-main/` and `openclaw/`. Prefer:
 
@@ -40,10 +40,10 @@ The five libraries pinned in [`pyproject.toml`](../pyproject.toml) (`response-co
 
 Routing-related **modes**, **knowledge pools** (disciplines), **modules**, **techniques**, and **theory** cards are authored as a **single** markdown wiki under [`knowledge/wiki/`](../knowledge/wiki/). Human-editable sources live in [`knowledge/wiki/orchestration/`](../knowledge/wiki/orchestration/) (see [`SCHEMA.md`](../knowledge/wiki/SCHEMA.md)). Project-facing prose that must **not** affect AI routing belongs under [`knowledge/wiki/projects/`](../knowledge/wiki/projects/).
 
-- **Domain wiki merge**: research/content orchestration markdown is authored under `services/domain-research/wiki/orchestration/` and `services/domain-content/wiki/orchestration/`. `make wiki-compile` / `make wiki-check` run `scripts/sync_domain_orchestration_wiki.py` first so those shards are copied into `knowledge/wiki/orchestration/` before compilation.
+- **Domain wiki merge**: research/content orchestration markdown is authored under `xlotyl/services/domain-research/wiki/orchestration/` and `xlotyl/services/domain-content/wiki/orchestration/`. `make wiki-compile` / `make wiki-check` run `scripts/sync_domain_orchestration_wiki.py` first so those shards are copied into `xlotyl/knowledge/wiki/orchestration/` before compilation.
 - **Compile** (regenerate JSON): `make wiki-compile` from the repository root. With [`uv`](https://docs.astral.sh/uv/) on your PATH, this uses `uv run` so Pydantic and `services/api-service` contracts resolve. Without `uv`, install the API package in a local environment and use the same target (the Makefile falls back to `cd services/api-service && PYTHONPATH=src python3 ...`).
-- **Drift check** (CI parity): `make wiki-check` — fails if [`knowledge/response-control/*.json`](../knowledge/response-control/) is out of sync with the wiki sources.
-- **Proposal queue check**: `make wiki-proposals-check` — validates unapproved wiki proposal files in [`knowledge/wiki/_proposals/`](../knowledge/wiki/_proposals/).
+- **Drift check** (CI parity): `make wiki-check` — fails if [`xlotyl/knowledge/response-control/*.json`](../xlotyl/knowledge/response-control/) is out of sync with the wiki sources.
+- **Proposal queue check**: `make wiki-proposals-check` — validates unapproved wiki proposal files in [`xlotyl/knowledge/wiki/_proposals/`](../xlotyl/knowledge/wiki/_proposals/).
 - **Promote approved proposals**: `make wiki-promote` — applies `APPROVED` proposals to canonical wiki and recompiles response-control catalogs.
 - **Bootstrap** (rare): `uv run python scripts/wiki_compile_response_control.py --migrate-from-json` recreates orchestration markdown from the current JSON catalogs.
 
@@ -102,7 +102,7 @@ After pulling these changes, **named volumes** from earlier compose definitions 
    Adjust the **left** volume name and the **right** host path to match [docker-compose.platform.yml](../docker/compose-profiles/docker-compose.platform.yml) and your `COMPOSE_DATA_ROOT`.
 3. Bring the stack up again and verify health; only then remove old volumes if you no longer need them.
 
-The standalone WrkHrs compose under [`services/ai-gateway-service/compose/`](../services/ai-gateway-service/compose/) defaults to **`${COMPOSE_DATA_ROOT:-.docker-data}/ai-gateway/`** for its bind-mounted volumes; override with `QDRANT_DATA_PATH`, `RAG_CACHE_PATH`, etc. if you need custom locations.
+The standalone WrkHrs compose under [`xlotyl/services/ai-gateway-service/compose/`](../xlotyl/services/ai-gateway-service/compose/) defaults to **`${COMPOSE_DATA_ROOT:-.docker-data}/ai-gateway/`** for its bind-mounted volumes; override with `QDRANT_DATA_PATH`, `RAG_CACHE_PATH`, etc. if you need custom locations.
 
 ### Copying large trees to a removable drive (reliable, headless)
 
@@ -151,15 +151,15 @@ Use one Docker network profile so hostnames below resolve (for example root [`do
 | Variable | Service consuming it | Purpose |
 |----------|------------------------|---------|
 | `AGENT_PLATFORM_URL` or `ORCHESTRATOR_AGENT_PLATFORM_URL` | **`api`** ([`Settings.agent_platform_url`](../services/api-service/src/config.py)) | Base URL for `POST /v1/workflows/execute` and DevPlane `POST /v1/devplane/runs`. **`AGENT_PLATFORM_URL` wins** if both are set. |
-| `ORCHESTRATOR_API_URL` or `DEVPLANE_PUBLIC_BASE_URL` | **`wrkhrs-agent-platform`** ([`engineering-graph.ts`](../services/agent-platform-service/server/src/workflow/engineering-graph.ts)) | Control plane `POST /api/control-plane/engineering/*`, dossier `GET /api/dev/tasks/{id}/dossier`, run events `POST /api/dev/runs/{id}/events`. |
+| `ORCHESTRATOR_API_URL` or `DEVPLANE_PUBLIC_BASE_URL` | **`wrkhrs-agent-platform`** ([`engineering-graph.ts`](../xlotyl/services/agent-platform-service/server/src/workflow/engineering-graph.ts)) | Control plane `POST /api/control-plane/engineering/*`, dossier `GET /api/dev/tasks/{id}/dossier`, run events `POST /api/dev/runs/{id}/events`. |
 | `DEVPLANE_PUBLIC_BASE_URL` | **`api`** ([`Settings.devplane_public_base_url`](../services/api-service/src/config.py)) | Callback URLs embedded in DevPlane run create (`/api/dev/runs/.../events`, `/complete`); must be reachable **from** agent-platform (often `http://api:8080` on the compose network). |
 | `MODEL_RUNTIME_URL` | **`wrkhrs-agent-platform`** | Required for strict **`multimodal_model`** (`POST /infer/multimodal` on model-runtime). |
-| `MOCK_INFER` | **`model-runtime`** | `1` = stub `/infer/*` (no torch load); `0` = real HF per [`models.yaml`](../services/model-runtime/config/models.yaml). |
+| `MOCK_INFER` | **`model-runtime`** | `1` = stub `/infer/*` (no torch load); `0` = real HF per [`models.yaml`](../xlotyl/services/model-runtime/config/models.yaml). |
 | `HF_TOKEN` / `HUGGINGFACE_HUB_TOKEN`, `HF_HOME`, cache dirs | **`model-runtime`**, RAG, ASR | Hub auth and shared weight cache; see [Local dev caches](#local-dev-caches-cache_root) above. |
-| `LLM_BACKEND` | **`wrkhrs-agent-platform`** | `mock` (default in compose) skips real Claw/OMA/multimodal inside **DevPlane** `executeBackendRun` ([`runner.ts`](../services/agent-platform-service/server/src/devplane/runner.ts)); use a real backend for executor smoke. |
-| `OMA_DEFAULT_PROVIDER`, `OMA_DEFAULT_MODEL`, `OMA_DEFAULT_API_KEY`, `OMA_DEFAULT_BASE_URL` | **`wrkhrs-agent-platform`** | Merged OMA route for `local_general_model` / `strategic_reviewer` ([`runtime-router.ts`](../services/agent-platform-service/server/src/orchestration/runtime-router.ts)). |
-| `CLAW_CODE_BINARY`, `CLAW_CODE_MODEL`, `CLAW_CODE_TRUSTED_ROOTS`, timeouts | **`wrkhrs-agent-platform`** | `coding_model` → Claw ([`config.ts`](../services/agent-platform-service/server/src/config.ts)). |
+| `LLM_BACKEND` | **`wrkhrs-agent-platform`** | `mock` (default in compose) skips real Claw/OMA/multimodal inside **DevPlane** `executeBackendRun` ([`runner.ts`](../xlotyl/services/agent-platform-service/server/src/devplane/runner.ts)); use a real backend for executor smoke. |
+| `OMA_DEFAULT_PROVIDER`, `OMA_DEFAULT_MODEL`, `OMA_DEFAULT_API_KEY`, `OMA_DEFAULT_BASE_URL` | **`wrkhrs-agent-platform`** | Merged OMA route for `local_general_model` / `strategic_reviewer` ([`runtime-router.ts`](../xlotyl/services/agent-platform-service/server/src/orchestration/runtime-router.ts)). |
+| `CLAW_CODE_BINARY`, `CLAW_CODE_MODEL`, `CLAW_CODE_TRUSTED_ROOTS`, timeouts | **`wrkhrs-agent-platform`** | `coding_model` → Claw ([`config.ts`](../xlotyl/services/agent-platform-service/server/src/config.ts)). |
 
 ## AI stack location
 
-The active WrkHrs-derived gateway stack lives under **`services/ai-gateway-service/`**. Historical links to `WrkHrs/` or `services/wrkhrs/` are obsolete; see [migration-wrkhrs-path.md](migration-wrkhrs-path.md).
+The active WrkHrs-derived gateway stack lives under **`xlotyl/services/ai-gateway-service/`**. Historical links to `WrkHrs/` or `services/wrkhrs/` are obsolete; see [migration-wrkhrs-path.md](migration-wrkhrs-path.md).

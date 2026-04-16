@@ -1,12 +1,10 @@
-# WrkHrs AI Stack Services
-# Integrates WrkHrs microservices with Birtha platform.
-# Durable state: ${COMPOSE_DATA_ROOT:-.docker-data}/ai/* (gateway_state, rag_cache, plugins, mcp_data, logs).
+# WrkHrs AI Stack — build contexts point at ./xlotyl (symlink or submodule to github.com/mhold3n/xlotyl).
+# Canonical copy: xlotyl/docker/compose-profiles/docker-compose.ai.yml
 
 services:
-  # Structure Gateway - Deterministic Scientific Reasoning Engine
   structure-gateway:
     build:
-      context: ./services/structure-service
+      context: ./xlotyl/services/structure-service
     ports:
       - "${STRUCTURE_GATEWAY_PORT:-8090}:8000"
     environment:
@@ -27,10 +25,9 @@ services:
       retries: 10
       start_period: 30s
 
-  # WrkHrs Gateway - OpenAI-compatible API with domain weighting
   wrkhrs-gateway:
     build:
-      context: ./services/ai-gateway-service
+      context: ./xlotyl/services/ai-gateway-service
       dockerfile: docker/gateway/Dockerfile
     ports:
       - "${WRKHRS_GATEWAY_PORT:-8091}:8000"
@@ -57,10 +54,9 @@ services:
       retries: 10
       start_period: 30s
 
-  # TypeScript agent-platform (Open Multi-Agent + LangGraph JS) — default orchestrator
   wrkhrs-agent-platform:
     build:
-      context: .
+      context: ./xlotyl
       dockerfile: services/agent-platform-service/Dockerfile
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -68,15 +64,10 @@ services:
       - "${WRKHRS_AGENT_PLATFORM_PORT:-8087}:8000"
     environment:
       - AGENT_PLATFORM_PORT=8000
-      # Qwen generation routing:
-      # - CPU/local: model-runtime OpenAI shim (default)
-      # - GPU worker: vLLM OpenAI server (enable docker-compose.worker.yml and set
-      #   LLM_RUNNER_URL=http://llm-runner-gen:8000 and OPENAI_BASE_URL=http://llm-runner-gen:8000/v1)
       - LLM_BACKEND=${LLM_BACKEND:-vllm}
       - LLM_RUNNER_URL=${LLM_RUNNER_URL:-http://model-runtime:8000}
       - VLLM_MODEL=${VLLM_MODEL:-Qwen/Qwen3-4B}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-}
-      # open-multi-agent's OpenAI adapter reads baseURL/apiKey from env (not from per-request baseURL).
       - OPENAI_BASE_URL=${OPENAI_BASE_URL:-http://model-runtime:8000/v1}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-local-openai}
       - HF_TOKEN=${HF_TOKEN:-}
@@ -115,12 +106,11 @@ services:
       retries: 10
       start_period: 25s
 
-  # Legacy Python orchestrator — opt-in: --profile legacy-python-orchestrator
   wrkhrs-orchestrator:
     profiles:
       - legacy-python-orchestrator
     build:
-      context: ./services/ai-gateway-service
+      context: ./xlotyl/services/ai-gateway-service
       dockerfile: docker/orchestrator/Dockerfile
     ports:
       - "${WRKHRS_ORCH_PORT:-8081}:8000"
@@ -153,10 +143,9 @@ services:
       retries: 10
       start_period: 30s
 
-  # WrkHrs RAG API - Document retrieval with Qdrant
   wrkhrs-rag:
     build:
-      context: ./services/ai-gateway-service
+      context: ./xlotyl/services/ai-gateway-service
       dockerfile: docker/rag/Dockerfile
     ports:
       - "${WRKHRS_RAG_PORT:-8082}:8000"
@@ -173,7 +162,6 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     depends_on:
       qdrant:
-        # RAG startup connects to Qdrant immediately; wait until /ready passes.
         condition: service_healthy
     volumes:
       - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/rag_cache:/cache
@@ -184,13 +172,11 @@ services:
       interval: 15s
       timeout: 10s
       retries: 20
-      # First boot may download HF weights + NLTK; block startup until initialize() finishes.
       start_period: 300s
 
-  # WrkHrs ASR API - Speech recognition with Whisper
   wrkhrs-asr:
     build:
-      context: ./services/ai-gateway-service
+      context: ./xlotyl/services/ai-gateway-service
       dockerfile: docker/asr/Dockerfile
     ports:
       - "${WRKHRS_ASR_PORT:-8084}:8000"
@@ -211,10 +197,9 @@ services:
       retries: 8
       start_period: 60s
 
-  # Python model-runtime - strict /infer/* + /solve/*; mock by default for dev
   model-runtime:
     build:
-      context: .
+      context: ./xlotyl
       dockerfile: services/model-runtime/Dockerfile
     ports:
       - "${MODEL_RUNTIME_PORT:-8765}:8000"
@@ -222,13 +207,9 @@ services:
       - MODEL_RUNTIME_HOST=0.0.0.0
       - MODEL_RUNTIME_PORT=8000
       - MODEL_RUNTIME_CONFIG_PATH=/app/services/model-runtime/config/models.yaml
-      # Keep first-token latency acceptable on CPU.
       - MODEL_RUNTIME_GENERAL_MAX_NEW_TOKENS=${MODEL_RUNTIME_GENERAL_MAX_NEW_TOKENS:-64}
-      # CPU-friendly dtype (avoid bf16/auto surprises on Apple Silicon).
       - MODEL_RUNTIME_TORCH_DTYPE=${MODEL_RUNTIME_TORCH_DTYPE:-float32}
-      # Avoid mkldnn bf16 matmul crashes on CPUs without bf16 support.
       - TORCH_DISABLE_MKLDNN=1
-      # Default to real inference when local weights are present.
       - MOCK_INFER=${MOCK_INFER:-0}
       - HF_HOME=/.cache/models/hf
       - TRANSFORMERS_CACHE=/.cache/models/hf
@@ -237,7 +218,7 @@ services:
       - HUGGINGFACE_HUB_TOKEN=${HUGGINGFACE_HUB_TOKEN:-}
     volumes:
       - ./.cache/models/hf:/.cache/models/hf
-      - ./services/model-runtime/config:/app/services/model-runtime/config:ro
+      - ./xlotyl/services/model-runtime/config:/app/services/model-runtime/config:ro
       - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
@@ -247,10 +228,9 @@ services:
       retries: 10
       start_period: 30s
 
-  # WrkHrs Tool Registry - Pluggy-based tool discovery
   wrkhrs-tool-registry:
     build:
-      context: ./services/ai-gateway-service
+      context: ./xlotyl/services/ai-gateway-service
       dockerfile: docker/tool-registry/Dockerfile
     ports:
       - "${WRKHRS_TOOLS_PORT:-8086}:8000"
@@ -270,10 +250,9 @@ services:
       retries: 10
       start_period: 20s
 
-  # WrkHrs MCP Server - Multi-Context Protocol for domain tools
   wrkhrs-mcp:
     build:
-      context: ./services/ai-gateway-service
+      context: ./xlotyl/services/ai-gateway-service
       dockerfile: docker/mcp/Dockerfile
     ports:
       - "${WRKHRS_MCP_PORT:-8085}:8000"
@@ -294,9 +273,8 @@ services:
       retries: 10
       start_period: 20s
 
-  # MCP Registry - Auto-registration and discovery
   mcp-registry:
-    build: ./services/mcp-registry-service
+    build: ./xlotyl/services/mcp-registry-service
     ports:
       - "${MCP_REGISTRY_PORT:-8001}:8000"
     environment:
@@ -304,7 +282,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
       - MLFLOW_TRACKING_URI=http://mlflow:5000
     volumes:
-      - ./mcp-servers/mcp/config:/mcp/config:ro
+      - ./xlotyl/mcp-servers/mcp/config:/mcp/config:ro
     depends_on:
       - mlflow
       - tempo
@@ -315,8 +293,3 @@ services:
       timeout: 3s
       retries: 10
       start_period: 20s
-
-  # Note: we intentionally do not define a standalone `llm-runner` service here.
-  # For local stacks, the LLM surface is provided by `model-runtime` (mounted HF cache)
-  # via its minimal OpenAI-compatible `/v1/chat/completions`.
-

@@ -1,6 +1,0 @@
-runtime_path=/Applications/Rhino 8.app
-rhinocode_path=/Applications/Rhino 8.app/Contents/Resources/bin/rhinocode
-yak_path=/Applications/Rhino 8.app/Contents/Resources/bin/yak
-scripting_docs=https://www.rhino3d.com/features/developer/scripting/
-gh_python_docs=https://developer.rhino3d.com/guides/scripting/scripting-gh-python/
-gh_csharp_docs=https://developer.rhino3d.com/guides/scripting/scripting-gh-csharp/

@@ -1,3 +1,0 @@
-fipy
-simpeg
-openpnm

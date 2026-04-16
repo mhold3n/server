@@ -35,9 +35,15 @@ class OpenClawBridgeValidationError(Exception):
 
 
 def _find_envelope_schema_path() -> Path:
+    """Resolve schema path for monorepo, ``xlotyl/schemas/``, and Docker ``/app/schemas`` layouts."""
     here = Path(__file__).resolve()
-    for root in [here.parent, *here.parents]:
-        candidate = root / _ENVELOPE_SCHEMA_PATH
+    cwd = Path.cwd().resolve()
+    for start in (cwd, *cwd.parents, here.parent, *here.parents):
+        for prefix in ("xlotyl/schemas", "schemas"):
+            candidate = start / prefix / "openclaw-bridge/v1/openclaw-bridge-envelope.schema.json"
+            if candidate.is_file():
+                return candidate
+        candidate = start / _ENVELOPE_SCHEMA_PATH
         if candidate.is_file():
             return candidate
     raise RuntimeError(f"Could not locate {_ENVELOPE_SCHEMA_PATH} from {here}")

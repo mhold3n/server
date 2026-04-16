@@ -97,8 +97,8 @@ logs:
 docker-validate:
 	@bash -lc '$(ENV_BOOTSTRAP) && python scripts/validate_docker_topology.py'
 
-# Compile orchestration wiki (``knowledge/wiki/orchestration/``) into
-# ``knowledge/response-control/*.json``. Prefer ``uv run`` when available so
+# Compile orchestration wiki (``xlotyl/knowledge/wiki/orchestration/``) into
+# ``xlotyl/knowledge/response-control/*.json``. Prefer ``uv run`` when available so
 # Pydantic/contracts resolve; otherwise requires a venv with api-service installed.
 wiki-compile:
 	@bash -lc 'cd "$(ROOT)" && if command -v uv >/dev/null 2>&1; then uv run python scripts/sync_domain_orchestration_wiki.py && uv run python scripts/wiki_compile_response_control.py; else python3 scripts/sync_domain_orchestration_wiki.py && cd services/api-service && PYTHONPATH=src python3 ../../scripts/wiki_compile_response_control.py; fi'

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Copy orchestration wiki shards from domain packages into ``knowledge/wiki/orchestration``.
 
-Domain packages own research/content cards under ``services/domain-*/wiki/orchestration/{shard}/``.
+Domain packages own research/content cards under ``xlotyl/services/domain-*/wiki/orchestration/{shard}/``.
 The super-project merge tree is the union of those files into the canonical orchestration
 directory before :func:`wiki_compile` runs.
 
@@ -18,22 +18,35 @@ from pathlib import Path
 SHARDS = ("modes", "pools", "modules", "techniques", "theory")
 
 
+def _orchestration_roots(repo_root: Path) -> tuple[Path, list[Path]]:
+    """Return (dest orchestration dir, domain shard source dirs)."""
+    xlotyl = repo_root / "xlotyl"
+    if (xlotyl / "services" / "domain-research").is_dir():
+        base = xlotyl
+    else:
+        base = repo_root
+    domain_roots = [
+        base / "services" / "domain-research" / "wiki" / "orchestration",
+        base / "services" / "domain-content" / "wiki" / "orchestration",
+    ]
+    dest_root = base / "knowledge" / "wiki" / "orchestration"
+    return dest_root, domain_roots
+
+
 def _repo_root() -> Path:
     here = Path(__file__).resolve()
     for path in [here, *here.parents]:
+        if (path / "xlotyl" / "knowledge" / "wiki").is_dir():
+            return path
         if (path / "knowledge" / "wiki").is_dir() and (path / "services").is_dir():
             return path
-    raise RuntimeError("Could not locate repository root")
+    raise RuntimeError("Could not locate repository root (expected xlotyl/knowledge/wiki or knowledge/wiki)")
 
 
 def sync_domain_wiki(*, repo_root: Path | None = None, dry_run: bool = False) -> list[Path]:
     """Copy ``*.md`` from each domain package into ``knowledge/wiki/orchestration``."""
     root = repo_root or _repo_root()
-    domain_roots = [
-        root / "services" / "domain-research" / "wiki" / "orchestration",
-        root / "services" / "domain-content" / "wiki" / "orchestration",
-    ]
-    dest_root = root / "knowledge" / "wiki" / "orchestration"
+    dest_root, domain_roots = _orchestration_roots(root)
     copied: list[Path] = []
     for domain_root in domain_roots:
         if not domain_root.is_dir():
@@ -64,7 +77,7 @@ def main() -> int:
     )
     args = parser.parse_args()
     paths = sync_domain_wiki(dry_run=args.dry_run)
-    print(f"sync_domain_orchestration_wiki: {len(paths)} file(s)", file=sys.stderr)
+    sys.stderr.write(f"sync_domain_orchestration_wiki: {len(paths)} file(s)\n")
     return 0
 
 

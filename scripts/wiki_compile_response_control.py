@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Delegate to ``services/response-control-framework/tools/wiki_compile.py``.
+"""Delegate to the xlotyl copy of ``response-control-framework/tools/wiki_compile.py``.
 
-Editable orchestration sources live under ``knowledge/wiki/orchestration/``; compiled
-JSON is written to ``knowledge/response-control/``. See that module for flags
+Editable orchestration sources live under ``xlotyl/knowledge/wiki/orchestration/``; compiled
+JSON is written to ``xlotyl/knowledge/response-control/``. See that module for flags
 (``--check``, ``--migrate-from-json``).
 """
 
@@ -13,7 +13,9 @@ import sys
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[1]
-_TOOL = _ROOT / "services" / "response-control-framework" / "tools" / "wiki_compile.py"
+_TOOL = _ROOT / "xlotyl" / "services" / "response-control-framework" / "tools" / "wiki_compile.py"
+if not _TOOL.is_file():
+    _TOOL = _ROOT / "services" / "response-control-framework" / "tools" / "wiki_compile.py"
 
 
 def main() -> None:

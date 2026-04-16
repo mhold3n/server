@@ -26,6 +26,10 @@ case $TARGET in
             --exclude='.env' \
             --exclude='*.log' \
             ./ "$SERVER_USER@$SERVER_HOST:~/agent-orchestrator/"
+        # AI stack: copy dereferenced tree (works with ../xlotyl symlink locally).
+        if [[ -d "$PROJECT_ROOT/xlotyl" ]]; then
+            rsync -avzL --delete "$PROJECT_ROOT/xlotyl/" "$SERVER_USER@$SERVER_HOST:~/agent-orchestrator/xlotyl/"
+        fi
         
         # Deploy on server
         echo "🔧 Deploying on server..."

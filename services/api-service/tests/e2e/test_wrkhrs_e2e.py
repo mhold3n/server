@@ -15,9 +15,9 @@ import pytest
 import pytest_asyncio
 
 from src.policies.evidence import EvidencePolicy
-from src.ai_gateway_client.conditioning import NonGenerativeConditioning
-from src.ai_gateway_client.domain_classifier import DomainClassifier
-from src.ai_gateway_client.gateway_client import WrkHrsGatewayClient
+from ai_shared_service.conditioning import NonGenerativeConditioning
+from ai_shared_service.domain_classifier import DomainClassifier
+from ai_shared_service.gateway_client import WrkHrsGatewayClient
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("RUN_LIVE_STACK_TESTS") != "1",

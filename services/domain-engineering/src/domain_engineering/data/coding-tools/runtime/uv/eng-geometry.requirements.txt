@@ -1,4 +1,0 @@
-cadquery
-gmsh
-meshio
-compas
