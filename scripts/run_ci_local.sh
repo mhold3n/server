@@ -128,7 +128,8 @@ pytest_pkg xlotyl/services/worker-service services-worker-client tests/ -v --cov
 # Coverage flags come from xlotyl/services/structure-service/pyproject.toml addopts; do not duplicate here.
 pytest_pkg xlotyl/services/structure-service services-structure tests/ -v
 pytest_pkg mcp-servers/mcp/servers/filesystem-mcp mcp-filesystem tests/ -v --cov=src --cov-report=xml
-pytest_pkg mcp-servers/mcp/servers/secrets-mcp mcp-secrets tests/ -v --cov=src --cov-report=xml
+# Coverage gate and omit list: mcp-servers/mcp/servers/secrets-mcp/pyproject.toml
+pytest_pkg mcp-servers/mcp/servers/secrets-mcp mcp-secrets tests/ -v
 pytest_pkg mcp-servers/mcp/servers/vector-db-mcp mcp-vector-db tests/ -v --cov=src --cov-report=xml
 WRKHRS_DISABLE_MODEL_LOAD=1 pytest_pkg xlotyl/services/ai-gateway-service services-ai-gateway tests/ -v --cov=services/gateway --cov=services/prompt_middleware --cov=services/rag --cov-report=xml --cov-fail-under=90
 

@@ -119,6 +119,8 @@ jobs:
           pytest xlotyl/services/domain-research/tests -v
           pytest xlotyl/services/domain-content/tests -v
           run_pytest_cov() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=src --cov-report=xml --cov-fail-under=90); else echo "Skip pytest: no $d/tests"; fi; }
+          # secrets-mcp: coverage thresholds and omit rules live in that package's pyproject.toml; avoid CLI --cov-fail-under conflicting with the narrow gate.
+          run_pytest_pyproject_only() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_cov_any() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" uv run --extra dev pytest tests/ -v); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_plain() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_cov xlotyl/services/api-service
@@ -126,7 +128,7 @@ jobs:
           run_pytest_cov xlotyl/services/worker-service
           run_pytest_cov_any xlotyl/services/structure-service
           run_pytest_cov mcp-servers/mcp/servers/filesystem-mcp
-          run_pytest_cov mcp-servers/mcp/servers/secrets-mcp
+          run_pytest_pyproject_only mcp-servers/mcp/servers/secrets-mcp
           run_pytest_cov mcp-servers/mcp/servers/vector-db-mcp
           (cd xlotyl/services/ai-gateway-service && PYTHONPATH="$(pwd)" WRKHRS_DISABLE_MODEL_LOAD=1 pytest tests/ -v --cov=services/gateway --cov=services/prompt_middleware --cov=services/rag --cov-report=xml --cov-fail-under=90)
 
