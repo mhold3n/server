@@ -119,13 +119,14 @@ pytest_pkg() {
     return 0
   fi
   mkdir -p "$PYTEST_CACHE_ROOT/$cache_name"
-  (cd "$dir" && PYTHONPATH="$(pwd)" PYTEST_ADDOPTS="-o cache_dir=$PYTEST_CACHE_ROOT/$cache_name ${PYTEST_ADDOPTS:-}" uv run pytest "$@")
+  (cd "$dir" && PYTHONPATH="$(pwd)" PYTEST_ADDOPTS="-o cache_dir=$PYTEST_CACHE_ROOT/$cache_name ${PYTEST_ADDOPTS:-}" uv run --extra dev pytest "$@")
 }
 
 pytest_pkg xlotyl/services/api-service services-api tests/ -v --cov=src --cov-report=xml
 pytest_pkg xlotyl/services/router-service services-router tests/ -v --cov=src --cov-report=xml
 pytest_pkg xlotyl/services/worker-service services-worker-client tests/ -v --cov=src --cov-report=xml
-pytest_pkg xlotyl/services/structure-service services-structure tests/ -v --cov=. --cov-report=xml
+# Coverage flags come from xlotyl/services/structure-service/pyproject.toml addopts; do not duplicate here.
+pytest_pkg xlotyl/services/structure-service services-structure tests/ -v
 pytest_pkg mcp-servers/mcp/servers/filesystem-mcp mcp-filesystem tests/ -v --cov=src --cov-report=xml
 pytest_pkg mcp-servers/mcp/servers/secrets-mcp mcp-secrets tests/ -v --cov=src --cov-report=xml
 pytest_pkg mcp-servers/mcp/servers/vector-db-mcp mcp-vector-db tests/ -v --cov=src --cov-report=xml
