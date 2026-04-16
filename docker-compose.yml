@@ -18,7 +18,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ./xlotyl
       dockerfile: services/api-service/Dockerfile
     environment:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://mock-openai:8000/v1}
@@ -32,8 +32,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./services/api-service/src:/app/src
-      - ./services/api-service/tests:/app/tests
+      - ./xlotyl/services/api-service/src:/app/src
+      - ./xlotyl/services/api-service/tests:/app/tests
       - ./xlotyl/schemas:/app/schemas:ro
       - ./xlotyl/knowledge:/app/knowledge:ro
     ports:
@@ -52,14 +52,14 @@ services:
 
   router:
     build:
-      context: ./services/router-service
+      context: ./xlotyl/services/router-service
     environment:
       API_URL: http://api:8080
       REDIS_URL: redis://queue:6379
       MCP_SERVERS_CONFIG: /app/config/mcp_servers.yaml
     volumes:
-      - ./services/router-service/src:/app/src
-      - ./services/router-service/config:/app/config:ro
+      - ./xlotyl/services/router-service/src:/app/src
+      - ./xlotyl/services/router-service/config:/app/config:ro
     ports:
       - "${ROUTER_PORT:-8000}:8000"
     depends_on:

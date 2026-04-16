@@ -4,9 +4,9 @@
 
 ## Endpoints reviewed
 
-- **Birtha api-service** calls the orchestrator via [`OrchestratorClient.execute_workflow`](../../services/api-service/src/orchestrator_client.py) — synchronous HTTP to agent-platform `POST /v1/workflows/execute` (see client implementation in the same module).
+- **Birtha api-service** calls the orchestrator via [`OrchestratorClient.execute_workflow`](../../xlotyl/services/api-service/src/orchestrator_client.py) — synchronous HTTP to agent-platform `POST /v1/workflows/execute` (see client implementation in the same module).
 - **Cancel:** `POST /v1/workflows/:id/cancel` (proxied by Birtha `POST /api/ai/workflows/{workflow_id}/cancel`).
-- **Agent-platform server tree:** [`server/src/`](../../services/agent-platform-service/server/src/) — orchestration entrypoints under `orchestration/` (e.g. `engine.ts`, `runtime-router.ts`). There is **no** first-class `text/event-stream` body on the execute path in this repository snapshot.
+- **Agent-platform server tree:** [`server/src/`](../../xlotyl/services/agent-platform-service/server/src/) — orchestration entrypoints under `orchestration/` (e.g. `engine.ts`, `runtime-router.ts`). There is **no** first-class `text/event-stream` body on the execute path in this repository snapshot.
 
 ## Decision
 

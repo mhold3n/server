@@ -101,16 +101,16 @@ docker-validate:
 # ``xlotyl/knowledge/response-control/*.json``. Prefer ``uv run`` when available so
 # Pydantic/contracts resolve; otherwise requires a venv with api-service installed.
 wiki-compile:
-	@bash -lc 'cd "$(ROOT)" && if command -v uv >/dev/null 2>&1; then uv run python scripts/sync_domain_orchestration_wiki.py && uv run python scripts/wiki_compile_response_control.py; else python3 scripts/sync_domain_orchestration_wiki.py && cd services/api-service && PYTHONPATH=src python3 ../../scripts/wiki_compile_response_control.py; fi'
+	@$(MAKE) -C "$(ROOT)/xlotyl" wiki-compile
 
 wiki-check:
-	@bash -lc 'cd "$(ROOT)" && if command -v uv >/dev/null 2>&1; then uv run python scripts/sync_domain_orchestration_wiki.py && uv run python scripts/wiki_compile_response_control.py --check; else python3 scripts/sync_domain_orchestration_wiki.py && cd services/api-service && PYTHONPATH=src python3 ../../scripts/wiki_compile_response_control.py --check; fi'
+	@$(MAKE) -C "$(ROOT)/xlotyl" wiki-check
 
 wiki-proposals-check:
-	@bash -lc 'cd "$(ROOT)" && if command -v uv >/dev/null 2>&1; then uv run python scripts/check_wiki_proposal_queue.py; else cd services/api-service && PYTHONPATH=src python3 ../../scripts/check_wiki_proposal_queue.py; fi'
+	@$(MAKE) -C "$(ROOT)/xlotyl" wiki-proposals-check
 
 wiki-promote:
-	@bash -lc 'cd "$(ROOT)" && if command -v uv >/dev/null 2>&1; then uv run python scripts/promote_wiki_proposals.py; else cd services/api-service && PYTHONPATH=src python3 ../../scripts/promote_wiki_proposals.py; fi'
+	@$(MAKE) -C "$(ROOT)/xlotyl" wiki-promote
 
 core-up:
 	$(DOCKER_COMPOSE) $(CORE_COMPOSE) up -d
@@ -221,7 +221,7 @@ seed-corpora:
 
 # Run evaluation
 eval:
-	@bash -lc '$(ENV_BOOTSTRAP) && cd services/api-service && PYTEST_ADDOPTS="-o cache_dir=$(ROOT)/.cache/pytest/services-api $$PYTEST_ADDOPTS" uv run --package agent-orchestrator-api pytest tests/eval/ -v --tb=short'
+	@bash -lc 'cd "$(ROOT)/xlotyl" && uv sync --python 3.11 && cd services/api-service && PYTEST_ADDOPTS="-o cache_dir=$(ROOT)/.cache/pytest/services-api $$PYTEST_ADDOPTS" uv run --package agent-orchestrator-api pytest tests/eval/ -v --tb=short'
 
 # MLflow UI
 mlflow-ui:
@@ -230,33 +230,33 @@ mlflow-ui:
 
 # Testing
 test-api:
-	@bash -lc '$(ENV_BOOTSTRAP) && cd services/api-service && PYTEST_ADDOPTS="-o cache_dir=$(ROOT)/.cache/pytest/services-api $$PYTEST_ADDOPTS" uv run --package agent-orchestrator-api pytest -q tests --maxfail=1 --cov=src --cov-report= --cov-append=no'
+	@$(MAKE) -C "$(ROOT)/xlotyl" test-api
 
 test-router:
-	@bash -lc '$(ENV_BOOTSTRAP) && cd services/router-service && PYTEST_ADDOPTS="-o cache_dir=$(ROOT)/.cache/pytest/services-router $$PYTEST_ADDOPTS" uv run --package agent-orchestrator-router pytest -q tests --maxfail=1 --cov=src --cov-report= --cov-append'
+	@$(MAKE) -C "$(ROOT)/xlotyl" test-router
 
-test-combined: test-api test-router
-	@bash -lc '$(ENV_BOOTSTRAP) && uv run python -m coverage combine || true'
-	@bash -lc '$(ENV_BOOTSTRAP) && uv run python -m coverage report --fail-under=80'
-	@bash -lc '$(ENV_BOOTSTRAP) && uv run python -m coverage xml'
+test-worker:
+	@$(MAKE) -C "$(ROOT)/xlotyl" test-worker
+
+test-combined: test-api test-router test-worker
 
 test: test-combined
 
 lint:
-	@bash -lc '$(ENV_BOOTSTRAP) && source $(ROOT)/scripts/ci_python_lint_paths.sh && uv run ruff check $$CI_PYTHON_LINT_PATHS --force-exclude'
-	@bash -lc '$(ENV_BOOTSTRAP) && source $(ROOT)/scripts/ci_python_lint_paths.sh && uv run black --check $$CI_PYTHON_LINT_PATHS'
+	@$(MAKE) -C "$(ROOT)/xlotyl" lint
+	@bash -lc '$(ENV_BOOTSTRAP) && uv run ruff check mcp-servers/mcp/servers/ --force-exclude'
+	@bash -lc '$(ENV_BOOTSTRAP) && uv run black --check mcp-servers/mcp/servers/'
 
 type:
-	@bash -lc '$(ENV_BOOTSTRAP) && cd services/api-service && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/services-api uv run --package agent-orchestrator-api mypy --strict src'
-	@bash -lc '$(ENV_BOOTSTRAP) && cd services/router-service && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/services-router uv run --package agent-orchestrator-router mypy --strict src'
-	@bash -lc '$(ENV_BOOTSTRAP) && cd services/worker-service && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/services-worker-client uv run --package agent-orchestrator-worker-client mypy --strict src'
+	@$(MAKE) -C "$(ROOT)/xlotyl" type
 	@bash -lc '$(ENV_BOOTSTRAP) && cd mcp-servers/mcp/servers/filesystem-mcp && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/mcp-filesystem uv run --package filesystem-mcp-server mypy --strict src'
 	@bash -lc '$(ENV_BOOTSTRAP) && cd mcp-servers/mcp/servers/secrets-mcp && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/mcp-secrets uv run --package secrets-mcp-server mypy --strict src'
 	@bash -lc '$(ENV_BOOTSTRAP) && cd mcp-servers/mcp/servers/vector-db-mcp && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/mcp-vector-db uv run --package vector-db-mcp-server mypy --strict src'
 
 fix:
-	@bash -lc '$(ENV_BOOTSTRAP) && source $(ROOT)/scripts/ci_python_lint_paths.sh && uv run ruff check --fix $$CI_PYTHON_LINT_PATHS --force-exclude'
-	@bash -lc '$(ENV_BOOTSTRAP) && source $(ROOT)/scripts/ci_python_lint_paths.sh && uv run black $$CI_PYTHON_LINT_PATHS'
+	@bash -lc 'cd "$(ROOT)/xlotyl" && uv sync --python 3.11 >/dev/null && uv run ruff check --fix services/api-service services/router-service services/worker-service services/model-runtime services/engineering-core services/mcp-registry-service services/response-control-framework services/domain-engineering services/domain-research services/domain-content services/ai-shared-service services/structure-service services/media-service --force-exclude && uv run black services/api-service services/router-service services/worker-service services/model-runtime services/engineering-core services/mcp-registry-service services/response-control-framework services/domain-engineering services/domain-research services/domain-content services/ai-shared-service services/structure-service services/media-service'
+	@bash -lc '$(ENV_BOOTSTRAP) && uv run ruff check --fix mcp-servers/mcp/servers/ --force-exclude'
+	@bash -lc '$(ENV_BOOTSTRAP) && uv run black mcp-servers/mcp/servers/'
 
 # CI simulation
 ci: lint type test-combined

@@ -22,19 +22,21 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: python -m pip install --upgrade pip uv
 
-      - name: Install Python workspace (uv)
-        run: uv sync --python ${{ matrix.python }}
+      - name: Install Python workspaces (uv)
+        run: |
+          uv sync --python ${{ matrix.python }}
+          cd xlotyl && uv sync --python ${{ matrix.python }}
 
       - name: Check wiki sources vs response-control JSON
         run: |
+          cd xlotyl
           uv run python scripts/sync_domain_orchestration_wiki.py
-          cd services/api-service
-          PYTHONPATH=src uv run python ../../scripts/wiki_compile_response_control.py --check
+          uv run python scripts/wiki_compile_response_control.py --check
 
       - name: Validate wiki proposal queue
         run: |
-          cd services/api-service
-          PYTHONPATH=src uv run python ../../scripts/check_wiki_proposal_queue.py
+          cd xlotyl
+          uv run python scripts/check_wiki_proposal_queue.py
 
       - name: Install MCP server dependencies
         run: |
@@ -59,9 +61,9 @@ jobs:
         run: |
           # One invocation per package: each Hatch layout uses a top-level `src/` package;
           # passing multiple `*/src` paths in one command triggers "Duplicate module named src".
-          (cd services/api-service && mypy --strict src)
-          (cd services/router-service && mypy --strict src)
-          (cd services/worker-service && mypy --strict src)
+          (cd xlotyl/services/api-service && mypy --strict src)
+          (cd xlotyl/services/router-service && mypy --strict src)
+          (cd xlotyl/services/worker-service && mypy --strict src)
           (cd mcp-servers/mcp/servers/filesystem-mcp && mypy --strict src)
           (cd mcp-servers/mcp/servers/secrets-mcp && mypy --strict src)
           (cd mcp-servers/mcp/servers/vector-db-mcp && mypy --strict src)
@@ -119,9 +121,9 @@ jobs:
           run_pytest_cov() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=src --cov-report=xml --cov-fail-under=90); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_cov_any() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=. --cov-report=xml --cov-fail-under=90); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_plain() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v); else echo "Skip pytest: no $d/tests"; fi; }
-          run_pytest_cov services/api-service
-          run_pytest_cov services/router-service
-          run_pytest_cov services/worker-service
+          run_pytest_cov xlotyl/services/api-service
+          run_pytest_cov xlotyl/services/router-service
+          run_pytest_cov xlotyl/services/worker-service
           run_pytest_cov_any xlotyl/services/structure-service
           run_pytest_cov mcp-servers/mcp/servers/filesystem-mcp
           run_pytest_cov mcp-servers/mcp/servers/secrets-mcp
@@ -155,17 +157,18 @@ jobs:
 
       - name: Agent platform (TypeScript orchestrator)
         run: |
+          cd xlotyl
           npm ci
-          npm run build -w @server/open-multi-agent
-          npm run build -w @server/agent-platform-server
-          LLM_BACKEND=mock npm run test -w @server/agent-platform-server
+          npm run build -w @xlotyl/open-multi-agent
+          npm run build -w @xlotyl/agent-platform-server
+          LLM_BACKEND=mock npm run test -w @xlotyl/agent-platform-server
 
       # Build Docker images
       - name: Build Docker images
         run: |
-          docker build -f services/api-service/Dockerfile -t agent-orchestrator-api .
-          docker build -t agent-orchestrator-router ./services/router-service
-          docker build -t agent-orchestrator-worker-client ./services/worker-service
+          docker build -f xlotyl/services/api-service/Dockerfile -t agent-orchestrator-api ./xlotyl
+          docker build -t agent-orchestrator-router ./xlotyl/services/router-service
+          docker build -t agent-orchestrator-worker-client ./xlotyl/services/worker-service
           if [[ -f "mcp-servers/mcp/servers/filesystem-mcp/Dockerfile" ]]; then
             docker build -t mcp-filesystem ./mcp-servers/mcp/servers/filesystem-mcp
           else
@@ -216,7 +219,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: ./services/api-service/coverage.xml,./services/router-service/coverage.xml,./services/worker-service/coverage.xml,./xlotyl/services/structure-service/coverage.xml,./xlotyl/services/ai-gateway-service/coverage.xml,./mcp-servers/mcp/servers/filesystem-mcp/coverage.xml,./mcp-servers/mcp/servers/secrets-mcp/coverage.xml,./mcp-servers/mcp/servers/vector-db-mcp/coverage.xml
+          files: ./xlotyl/services/api-service/coverage.xml,./xlotyl/services/router-service/coverage.xml,./xlotyl/services/worker-service/coverage.xml,./xlotyl/services/structure-service/coverage.xml,./xlotyl/services/ai-gateway-service/coverage.xml,./mcp-servers/mcp/servers/filesystem-mcp/coverage.xml,./mcp-servers/mcp/servers/secrets-mcp/coverage.xml,./mcp-servers/mcp/servers/vector-db-mcp/coverage.xml
           fail_ci_if_error: false
 
   codeql:
@@ -228,6 +231,8 @@ jobs:
       actions: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: github/codeql-action/init@v3
         with:
           languages: python, javascript

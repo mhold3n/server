@@ -27,7 +27,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ./xlotyl
       dockerfile: services/api-service/Dockerfile
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-test}

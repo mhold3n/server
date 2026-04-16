@@ -22,12 +22,12 @@ They are not ad hoc local mirrors:
 
 ## What is active in this repo
 
-The active execution stack in this repository is:
+The active execution stack is owned by the **`xlotyl`** submodule in this monorepo (paths below are relative to the **server** repo root):
 
-1. `services/api-service`
-2. `services/agent-platform-service/server`
-3. `services/model-runtime`
-4. `schemas/control-plane/v1`
+1. `xlotyl/services/api-service`
+2. `xlotyl/services/agent-platform-service/server`
+3. `xlotyl/services/model-runtime`
+4. **`xlotyl/schemas/`** (e.g. `openclaw-bridge/`, `model-runtime/`) and typed contracts in **`xlotyl/services/api-service`** / domain packages — the governed engineering surface is implemented in code + these schema trees, not under a separate `schemas/control-plane/v1` path in this snapshot.
 
 Those services implement the live orchestration and engineering pipeline.
 
@@ -57,7 +57,7 @@ That means OpenClaw can sit in front of the active platform as a client/operator
 
 ### OpenClaw HTTPS bridge (Phase 1)
 
-The supported shell ingress is **`POST /api/ai/query`** on `services/api-service` with a versioned envelope under **`context.openclaw_bridge`**. JSON Schemas live in **`schemas/openclaw-bridge/v1/`** (envelope, attachment rules, idempotency contract). The bundled OpenClaw extension **`openclaw/extensions/birtha-bridge`** implements this path as a **plugin-only** tool (`birtha_query`) so OpenClaw core stays unchanged in Phase 1.
+The supported shell ingress is **`POST /api/ai/query`** on **`xlotyl/services/api-service`** with a versioned envelope under **`context.openclaw_bridge`**. JSON Schemas live in **`xlotyl/schemas/openclaw-bridge/v1/`** (envelope, attachment rules, idempotency contract). The bundled OpenClaw extension **`openclaw/extensions/birtha-bridge`** implements this path as a **plugin-only** tool (`birtha_query`) so OpenClaw core stays unchanged in Phase 1.
 
 **Phase 2–3 additions (same extension):** shell-local **session mirror** + operator HTTP/CLI (`CONTINUITY.md` in the extension), **`birtha_query_stream`** for typed SSE (`schemas/openclaw-bridge/v1/events/`), and the runbook **`docs/runbooks/openclaw-birtha-bridge.md`** for transport vocabulary and agent-platform limits.
 
@@ -117,7 +117,7 @@ The active engineering pipeline is packet-driven:
    - `task_packet`
 3. DevPlane refuses launch until the problem brief is valid and the engineering state is ready for task decomposition.
 4. DevPlane provisions an isolated git worktree and writes `.birtha/task-packet.json` plus the typed engineering artifacts.
-5. Internal execution dispatches to `services/agent-platform-service/server` through `/v1/devplane/runs`.
+5. Internal execution dispatches to **`xlotyl/services/agent-platform-service/server`** through `/v1/devplane/runs`.
 6. The agent-platform runner reads the active task packet and routes by `routing_metadata.selected_executor`.
 7. Deterministic verification runs before the task can become `ready_to_publish`.
 
@@ -147,7 +147,7 @@ The clean mental model is:
 
 - `openclaw/`: external operator/client surface
 - `claw-code-main/`: external coding-agent/reference surface
-- `services/api-service` + `services/agent-platform-service/server`: authoritative orchestration and DevPlane runtime
-- `schemas/control-plane/v1`: authoritative engineering contract surface
+- **`xlotyl/services/api-service`** + **`xlotyl/services/agent-platform-service/server`**: authoritative orchestration and DevPlane runtime
+- **`xlotyl/schemas/`** + API/domain **Pydantic** models: authoritative contract surfaces for bridge and runtime payloads (under the `xlotyl` submodule)
 
 So if OpenClaw or Claw Code are used, they should consume the same governed worktree and `.birtha/task-packet.json` artifacts and report back through DevPlane. They are adjacent to the engineering pipeline, not replacements for it.

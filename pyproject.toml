@@ -5,22 +5,13 @@ build-backend = "hatchling.build"
 [project]
 name = "server-workspace"
 version = "0.1.0"
-description = "Platform server: control plane, networking, media; AI stack lives in xlotyl (./xlotyl)"
+description = "Infrastructure platform: networking, deployment, observability; AI product is the xlotyl submodule"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-    "agent-orchestrator-api[dev]",
-    "agent-orchestrator-router[dev]",
-    "agent-orchestrator-worker-client[dev]",
-    "mcp-registry[dev]",
-    "model-runtime[dev]",
-    "engineering-core[dev]",
-    "response-control-framework",
-    "ai-shared-service",
-    "domain-engineering",
-    "domain-research",
-    "domain-content",
-    "martymedia[dev]",
+    "filesystem-mcp-server[dev]",
+    "secrets-mcp-server[dev]",
+    "vector-db-mcp-server[dev]",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -30,33 +21,15 @@ packages = []
 package = false
 default-groups = []
 
-# AI/orchestration packages live under ./xlotyl (symlink ../xlotyl or git submodule).
+# Host-side MCP servers remain in this repo; AI Python stack is under `xlotyl/`.
 [tool.uv.sources]
-agent-orchestrator-api = { workspace = true }
-agent-orchestrator-router = { workspace = true }
-agent-orchestrator-worker-client = { workspace = true }
-mcp-registry = { workspace = true }
-model-runtime = { workspace = true }
-engineering-core = { workspace = true }
-response-control-framework = { workspace = true }
-ai-shared-service = { workspace = true }
-domain-engineering = { workspace = true }
-domain-research = { workspace = true }
-domain-content = { workspace = true }
-martymedia = { workspace = true }
+filesystem-mcp-server = { workspace = true }
+secrets-mcp-server = { workspace = true }
+vector-db-mcp-server = { workspace = true }
 
 [tool.uv.workspace]
 members = [
-    "services/api-service",
-    "services/router-service",
-    "services/worker-service",
-    "services/media-service",
-    "xlotyl/services/mcp-registry-service",
-    "xlotyl/services/model-runtime",
-    "xlotyl/services/engineering-core",
-    "xlotyl/services/response-control-framework",
-    "xlotyl/services/ai-shared-service",
-    "xlotyl/services/domain-engineering",
-    "xlotyl/services/domain-research",
-    "xlotyl/services/domain-content",
+    "mcp-servers/mcp/servers/filesystem-mcp",
+    "mcp-servers/mcp/servers/secrets-mcp",
+    "mcp-servers/mcp/servers/vector-db-mcp",
 ]

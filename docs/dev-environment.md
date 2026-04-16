@@ -2,7 +2,7 @@
 
 ## Single clone (recommended)
 
-Work from the **[github.com/mhold3n/server](https://github.com/mhold3n/server)** checkout. The Birtha control plane, router, queue, media, and MCP servers live here. **AI stack sources** live in **`./xlotyl`**, tracked as a **Git submodule** ([`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl)) alongside [`claw-code-main/`](../claw-code-main), [`openclaw/`](../openclaw), and [`void/`](../void). After cloning this repo, run **`npm run deps:external`** (or `git submodule update --init --recursive`) so `xlotyl/` is populated. Compose and the API image expect `xlotyl/services/…`, `xlotyl/knowledge/…`, and `xlotyl/schemas/…`. Legacy MBMH materials: `../server-local-archive/2026-04-08/server/`.
+Work from the **[github.com/mhold3n/server](https://github.com/mhold3n/server)** checkout. **Infra**, compose, host **MCP** servers, and deployment glue live here. The **Birtha control plane, router, worker, media, and AI domain packages** live under **`./xlotyl`**, tracked as a **Git submodule** ([`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl)) alongside [`claw-code-main/`](../claw-code-main), [`openclaw/`](../openclaw), and [`void/`](../void). After cloning this repo, run **`npm run deps:external`** (or `git submodule update --init --recursive`) so `xlotyl/` is populated. Compose and the API image expect `xlotyl/services/…`, `xlotyl/knowledge/…`, and `xlotyl/schemas/…`. Legacy MBMH materials: `../server-local-archive/2026-04-08/server/`.
 
 Cloning additional “legacy” projects **inside** this repository root increases confusion (two trees, two sets of commands, easy to edit the wrong copy). The only in-tree exceptions are the managed submodules `claw-code-main/`, `openclaw/`, `void/`, and `xlotyl/`. Prefer:
 
@@ -14,7 +14,7 @@ Cloning additional “legacy” projects **inside** this repository root increas
 - **Standalone package tags:** the root [`pyproject.toml`](../pyproject.toml) pins `response-control-framework`, `ai-shared-service`, and each `domain-*` package with **`git` + `tag`**. For CI and local scripts, override the tag with **`DOMAIN_PACKAGES_TAG`** if needed; otherwise tooling reads the tag from TOML. After bumping a tag, run **`uv lock`** (and **`make vendor-rcf-schemas`** when `response-control-framework` schemas changed).
 - External GitHub submodules: `npm run deps:external`
 - Main Python workspace: `uv sync --python 3.11`
-- Main Node workspace: `npm install`
+- Agent-platform / topology Node workspaces: `(cd xlotyl && npm ci)` (root [`package.json`](../package.json) is infra-only)
 - Focused tool envs: `scripts/bootstrap_tool_env.sh marker-pdf|whisper-asr|qwen-runtime|larrak-audio`
 - Full AI Docker dev stack: `make up`
 - Docker topology validation: `make docker-validate`
@@ -38,18 +38,18 @@ The five libraries pinned in [`pyproject.toml`](../pyproject.toml) (`response-co
 
 ## Orchestration wiki (response-control catalogs)
 
-Routing-related **modes**, **knowledge pools** (disciplines), **modules**, **techniques**, and **theory** cards are authored as a **single** markdown wiki under [`knowledge/wiki/`](../knowledge/wiki/). Human-editable sources live in [`knowledge/wiki/orchestration/`](../knowledge/wiki/orchestration/) (see [`SCHEMA.md`](../knowledge/wiki/SCHEMA.md)). Project-facing prose that must **not** affect AI routing belongs under [`knowledge/wiki/projects/`](../knowledge/wiki/projects/).
+Routing-related **modes**, **knowledge pools** (disciplines), **modules**, **techniques**, and **theory** cards are authored as a **single** markdown wiki under [`xlotyl/knowledge/wiki/`](../xlotyl/knowledge/wiki/). Human-editable sources live in [`xlotyl/knowledge/wiki/orchestration/`](../xlotyl/knowledge/wiki/orchestration/) (see [`SCHEMA.md`](../xlotyl/knowledge/wiki/SCHEMA.md)). Project-facing prose that must **not** affect AI routing belongs under [`xlotyl/knowledge/wiki/projects/`](../xlotyl/knowledge/wiki/projects/).
 
 - **Domain wiki merge**: research/content orchestration markdown is authored under `xlotyl/services/domain-research/wiki/orchestration/` and `xlotyl/services/domain-content/wiki/orchestration/`. `make wiki-compile` / `make wiki-check` run `scripts/sync_domain_orchestration_wiki.py` first so those shards are copied into `xlotyl/knowledge/wiki/orchestration/` before compilation.
-- **Compile** (regenerate JSON): `make wiki-compile` from the repository root. With [`uv`](https://docs.astral.sh/uv/) on your PATH, this uses `uv run` so Pydantic and `services/api-service` contracts resolve. Without `uv`, install the API package in a local environment and use the same target (the Makefile falls back to `cd services/api-service && PYTHONPATH=src python3 ...`).
+- **Compile** (regenerate JSON): `make wiki-compile` from the repository root. With [`uv`](https://docs.astral.sh/uv/) on your PATH, this uses `uv run` under **`xlotyl/`** so Pydantic and **`xlotyl/services/api-service`** contracts resolve. Without `uv`, install the API package in a local environment and use the same target (the Makefile falls back to `cd xlotyl/services/api-service && PYTHONPATH=src python3 ...`).
 - **Drift check** (CI parity): `make wiki-check` — fails if [`xlotyl/knowledge/response-control/*.json`](../xlotyl/knowledge/response-control/) is out of sync with the wiki sources.
 - **Proposal queue check**: `make wiki-proposals-check` — validates unapproved wiki proposal files in [`xlotyl/knowledge/wiki/_proposals/`](../xlotyl/knowledge/wiki/_proposals/).
 - **Promote approved proposals**: `make wiki-promote` — applies `APPROVED` proposals to canonical wiki and recompiles response-control catalogs.
-- **Bootstrap** (rare): `uv run python scripts/wiki_compile_response_control.py --migrate-from-json` recreates orchestration markdown from the current JSON catalogs.
+- **Bootstrap** (rare): from `xlotyl/`, `uv run python scripts/wiki_compile_response_control.py --migrate-from-json` recreates orchestration markdown from the current JSON catalogs.
 
 See [wiki-editorial-governance.md](runbooks/wiki-editorial-governance.md) for the head-editor workflow (`PROPOSED -> APPROVED -> PROMOTED/REJECTED`) and API control endpoints.
 
-After editing orchestration pages, run **`make wiki-compile`** and commit **both** the wiki sources and the updated `knowledge/response-control/*.json` files. Avoid hand-editing the JSON long-term; treat it as a build artifact of the wiki.
+After editing orchestration pages, run **`make wiki-compile`** and commit **both** the wiki sources and the updated **`xlotyl/knowledge/response-control/*.json`** files. Avoid hand-editing the JSON long-term; treat it as a build artifact of the wiki.
 
 ## Local dev caches (`CACHE_ROOT`)
 
@@ -126,7 +126,7 @@ If you keep an old mirror inside the ignored path for personal reference, treat 
 
 ## One-shot fullstack e2e (Docker + OpenClaw + checks)
 
-From the repo root, **`make fullstack-e2e`** runs [`dev/scripts/fullstack_e2e_bootstrap.sh`](../dev/scripts/fullstack_e2e_bootstrap.sh): the same compose stack as **`make up`**, ordered **HTTP health waits** (Birtha API, agent-platform, router; optional wrkhrs-gateway with `E2E_WAIT_GATEWAY=1`), a **fast `POST /api/ai/query`** smoke, an optional **strict-engineering** live smoke (`E2E_STRICT_ENGINEERING_SMOKE=1`), optional **SSE** read (`E2E_SSE_SMOKE=1`), a **curated host pytest** subset under `services/api-service` (default on; disable with `E2E_PYTEST=0`), **`pnpm install`** (and **`pnpm build`** if `dist/` is missing) in **`openclaw/`**, then **`pnpm ui:build`** when **`openclaw/dist/control-ui/`** is missing (so OpenClaw **Control** `/chat` has assets; the gateway’s own auto-build often lacks `pnpm` on PATH), then an optional **managed OpenClaw gateway** (`node openclaw.mjs gateway run --port …`, default on via `E2E_MANAGED_OPENCLAW_GATEWAY=1`). **`make fullstack-e2e-down`** stops the managed gateway PID and, only if `E2E_TEARDOWN_DOCKER=1`, runs **`docker compose down`** with the same `-f` files so your default dev stack is not torn down by mistake.
+From the repo root, **`make fullstack-e2e`** runs [`dev/scripts/fullstack_e2e_bootstrap.sh`](../dev/scripts/fullstack_e2e_bootstrap.sh): the same compose stack as **`make up`**, ordered **HTTP health waits** (Birtha API, agent-platform, router; optional wrkhrs-gateway with `E2E_WAIT_GATEWAY=1`), a **fast `POST /api/ai/query`** smoke, an optional **strict-engineering** live smoke (`E2E_STRICT_ENGINEERING_SMOKE=1`), optional **SSE** read (`E2E_SSE_SMOKE=1`), a **curated host pytest** subset under **`xlotyl/services/api-service`** (default on; disable with `E2E_PYTEST=0`), **`pnpm install`** (and **`pnpm build`** if `dist/` is missing) in **`openclaw/`**, then **`pnpm ui:build`** when **`openclaw/dist/control-ui/`** is missing (so OpenClaw **Control** `/chat` has assets; the gateway’s own auto-build often lacks `pnpm` on PATH), then an optional **managed OpenClaw gateway** (`node openclaw.mjs gateway run --port …`, default on via `E2E_MANAGED_OPENCLAW_GATEWAY=1`). **`make fullstack-e2e-down`** stops the managed gateway PID and, only if `E2E_TEARDOWN_DOCKER=1`, runs **`docker compose down`** with the same `-f` files so your default dev stack is not torn down by mistake.
 
 **Ports (host defaults):** Birtha `API_PORT` (8080), agent-platform `WRKHRS_AGENT_PLATFORM_PORT` (8087), router `ROUTER_PORT` (8000), wrkhrs-gateway `WRKHRS_GATEWAY_PORT` (8091). OpenClaw gateway listen port: `OPENCLAW_GATEWAY_PORT` (default 18789).
 
@@ -150,9 +150,9 @@ Use one Docker network profile so hostnames below resolve (for example root [`do
 
 | Variable | Service consuming it | Purpose |
 |----------|------------------------|---------|
-| `AGENT_PLATFORM_URL` or `ORCHESTRATOR_AGENT_PLATFORM_URL` | **`api`** ([`Settings.agent_platform_url`](../services/api-service/src/config.py)) | Base URL for `POST /v1/workflows/execute` and DevPlane `POST /v1/devplane/runs`. **`AGENT_PLATFORM_URL` wins** if both are set. |
+| `AGENT_PLATFORM_URL` or `ORCHESTRATOR_AGENT_PLATFORM_URL` | **`api`** ([`Settings.agent_platform_url`](../xlotyl/services/api-service/src/config.py)) | Base URL for `POST /v1/workflows/execute` and DevPlane `POST /v1/devplane/runs`. **`AGENT_PLATFORM_URL` wins** if both are set. |
 | `ORCHESTRATOR_API_URL` or `DEVPLANE_PUBLIC_BASE_URL` | **`wrkhrs-agent-platform`** ([`engineering-graph.ts`](../xlotyl/services/agent-platform-service/server/src/workflow/engineering-graph.ts)) | Control plane `POST /api/control-plane/engineering/*`, dossier `GET /api/dev/tasks/{id}/dossier`, run events `POST /api/dev/runs/{id}/events`. |
-| `DEVPLANE_PUBLIC_BASE_URL` | **`api`** ([`Settings.devplane_public_base_url`](../services/api-service/src/config.py)) | Callback URLs embedded in DevPlane run create (`/api/dev/runs/.../events`, `/complete`); must be reachable **from** agent-platform (often `http://api:8080` on the compose network). |
+| `DEVPLANE_PUBLIC_BASE_URL` | **`api`** ([`Settings.devplane_public_base_url`](../xlotyl/services/api-service/src/config.py)) | Callback URLs embedded in DevPlane run create (`/api/dev/runs/.../events`, `/complete`); must be reachable **from** agent-platform (often `http://api:8080` on the compose network). |
 | `MODEL_RUNTIME_URL` | **`wrkhrs-agent-platform`** | Required for strict **`multimodal_model`** (`POST /infer/multimodal` on model-runtime). |
 | `MOCK_INFER` | **`model-runtime`** | `1` = stub `/infer/*` (no torch load); `0` = real HF per [`models.yaml`](../xlotyl/services/model-runtime/config/models.yaml). |
 | `HF_TOKEN` / `HUGGINGFACE_HUB_TOKEN`, `HF_HOME`, cache dirs | **`model-runtime`**, RAG, ASR | Hub auth and shared weight cache; see [Local dev caches](#local-dev-caches-cache_root) above. |

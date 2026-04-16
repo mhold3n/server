@@ -18,7 +18,7 @@ Any future MCP surface would terminate **inside or adjacent to the same trust zo
 
 ### 3. Coupling
 
-**OpenClaw core** must not gain Birtha-specific planner or transport logic. Bridge behavior stays in **`openclaw/extensions/birtha-bridge`** and Birtha **`services/api-service`**. MCP-primary work, when allowed by the precondition checklist, should be implemented as **thin protocol adapters** reusing the same JSON contracts—not forked semantics.
+**OpenClaw core** must not gain Birtha-specific planner or transport logic. Bridge behavior stays in **`openclaw/extensions/birtha-bridge`** and Birtha **`xlotyl/services/api-service`**. MCP-primary work, when allowed by the precondition checklist, should be implemented as **thin protocol adapters** reusing the same JSON contracts—not forked semantics.
 
 ## Outcome
 

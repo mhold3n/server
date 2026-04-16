@@ -11,7 +11,7 @@ The active profile is controlled by:
 ORCH_PROFILE=gpu   # or apple
 ```
 
-and resolved in `services/api-service/src/config.py:get_worker_settings()`. The router always calls the API's `/v1/chat/completions`; only the worker URL + default model change.
+and resolved in `xlotyl/services/api-service/src/config.py:get_worker_settings()`. The router always calls the API's `/v1/chat/completions`; only the worker URL + default model change.
 
 ### GPU profile (`gpu`)
 

@@ -48,7 +48,7 @@ case "$TOOL_NAME" in
   whisper-asr)
     ensure_env
     install_into_env openai-whisper
-    install_into_env -e "$ROOT/services/ai-gateway-service[asr]" -e "$ROOT/services/media-service"
+    install_into_env -e "$ROOT/xlotyl/services/ai-gateway-service[asr]" -e "$ROOT/xlotyl/services/media-service"
     ;;
   qwen-runtime)
     ensure_env

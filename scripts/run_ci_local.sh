@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-WRKHRS_ROOT="$ROOT/services/ai-gateway-service"
+WRKHRS_ROOT="$ROOT/xlotyl/services/ai-gateway-service"
 WRKHRS_GATEWAY_APP="$WRKHRS_ROOT/services/gateway/app.py"
 WRKHRS_GATEWAY_TEST="$WRKHRS_ROOT/tests/test_gateway.py"
 WRKHRS_MODULE_LOADER_TEST="$WRKHRS_ROOT/tests/_module_loader.py"
@@ -30,27 +30,27 @@ fi
 uv sync --python "$PYTHON"
 
 echo "==> Wiki compile drift check (orchestration markdown vs response-control JSON)"
-uv run python scripts/sync_domain_orchestration_wiki.py
-uv run python scripts/wiki_compile_response_control.py --check
+(cd xlotyl && uv sync --python "$PYTHON" && uv run python scripts/sync_domain_orchestration_wiki.py && uv run python scripts/wiki_compile_response_control.py --check)
 echo "==> Wiki proposal queue validation"
-uv run python scripts/check_wiki_proposal_queue.py
+(cd xlotyl && uv run python scripts/check_wiki_proposal_queue.py)
 
-echo "==> Lint (ruff + black)"
-uv run ruff check services/ mcp-servers/mcp/servers/
-uv run black --check services/ mcp-servers/mcp/servers/
+echo "==> Lint (ruff + black: xlotyl + MCP)"
+(cd xlotyl && uv sync --python "$PYTHON" && uv run ruff check services/api-service services/router-service services/worker-service services/model-runtime services/engineering-core services/mcp-registry-service services/response-control-framework services/domain-engineering services/domain-research services/domain-content services/ai-shared-service services/structure-service services/media-service && uv run black --check services/api-service services/router-service services/worker-service services/model-runtime services/engineering-core services/mcp-registry-service services/response-control-framework services/domain-engineering services/domain-research services/domain-content services/ai-shared-service services/structure-service services/media-service)
+uv run ruff check mcp-servers/mcp/servers/
+uv run black --check mcp-servers/mcp/servers/
 # WrkHrs uses its own package root. These paths are relative to services/ai-gateway-service/,
 # not the repo-level services/ tree.
-(cd services/ai-gateway-service && uv run --package ai-gateway-service ruff check \
+(cd xlotyl/services/ai-gateway-service && uv run --package ai-gateway-service ruff check \
   services/gateway/app.py \
   tests/_module_loader.py \
   tests/test_gateway.py \
   scripts/test-llm-backends.py)
 
 echo "==> Mypy (per package)"
-(cd services/api-service && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-api" uv run --package agent-orchestrator-api mypy --strict src)
-(cd services/router-service && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-router" uv run --package agent-orchestrator-router mypy --strict src)
-(cd services/worker-service && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-worker-client" uv run --package agent-orchestrator-worker-client mypy --strict src)
-(cd services/structure-service && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-structure" uv run --package structure mypy --strict . || true)
+(cd xlotyl/services/api-service && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-api" uv run --package agent-orchestrator-api mypy --strict src)
+(cd xlotyl/services/router-service && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-router" uv run --package agent-orchestrator-router mypy --strict src)
+(cd xlotyl/services/worker-service && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-worker-client" uv run --package agent-orchestrator-worker-client mypy --strict src)
+(cd xlotyl/services/structure-service && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-structure" uv run --package structure mypy --strict . || true)
 (cd mcp-servers/mcp/servers/filesystem-mcp && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/mcp-filesystem" uv run --package filesystem-mcp-server mypy --strict src)
 (cd mcp-servers/mcp/servers/secrets-mcp && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/mcp-secrets" uv run --package secrets-mcp-server mypy --strict src)
 (cd mcp-servers/mcp/servers/vector-db-mcp && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/mcp-vector-db" uv run --package vector-db-mcp-server mypy --strict src)
@@ -115,14 +115,14 @@ pytest_pkg() {
   (cd "$dir" && PYTHONPATH="$(pwd)" PYTEST_ADDOPTS="-o cache_dir=$PYTEST_CACHE_ROOT/$cache_name ${PYTEST_ADDOPTS:-}" uv run pytest "$@")
 }
 
-pytest_pkg services/api-service services-api tests/ -v --cov=src --cov-report=xml
-pytest_pkg services/router-service services-router tests/ -v --cov=src --cov-report=xml
-pytest_pkg services/worker-service services-worker-client tests/ -v --cov=src --cov-report=xml
-pytest_pkg services/structure-service services-structure tests/ -v --cov=. --cov-report=xml
+pytest_pkg xlotyl/services/api-service services-api tests/ -v --cov=src --cov-report=xml
+pytest_pkg xlotyl/services/router-service services-router tests/ -v --cov=src --cov-report=xml
+pytest_pkg xlotyl/services/worker-service services-worker-client tests/ -v --cov=src --cov-report=xml
+pytest_pkg xlotyl/services/structure-service services-structure tests/ -v --cov=. --cov-report=xml
 pytest_pkg mcp-servers/mcp/servers/filesystem-mcp mcp-filesystem tests/ -v --cov=src --cov-report=xml
 pytest_pkg mcp-servers/mcp/servers/secrets-mcp mcp-secrets tests/ -v --cov=src --cov-report=xml
 pytest_pkg mcp-servers/mcp/servers/vector-db-mcp mcp-vector-db tests/ -v --cov=src --cov-report=xml
-WRKHRS_DISABLE_MODEL_LOAD=1 pytest_pkg services/ai-gateway-service services-ai-gateway tests/ -v --cov=services/gateway --cov=services/prompt_middleware --cov=services/rag --cov-report=xml --cov-fail-under=90
+WRKHRS_DISABLE_MODEL_LOAD=1 pytest_pkg xlotyl/services/ai-gateway-service services-ai-gateway tests/ -v --cov=services/gateway --cov=services/prompt_middleware --cov=services/rag --cov-report=xml --cov-fail-under=90
 
 echo "==> Node (github-mcp)"
 if [[ -d "mcp-servers/mcp/servers/github-mcp" ]] && compgen -G "mcp-servers/mcp/servers/github-mcp/package*.json" > /dev/null; then
@@ -137,9 +137,9 @@ fi
 
 echo "==> Docker builds"
 if command -v docker >/dev/null 2>&1; then
-  docker build -f services/api-service/Dockerfile -t agent-orchestrator-api .
-  docker build -t agent-orchestrator-router ./services/router-service
-  docker build -t agent-orchestrator-worker-client ./services/worker-service
+  docker build -f xlotyl/services/api-service/Dockerfile -t agent-orchestrator-api ./xlotyl
+  docker build -t agent-orchestrator-router ./xlotyl/services/router-service
+  docker build -t agent-orchestrator-worker-client ./xlotyl/services/worker-service
   if [[ -f "mcp-servers/mcp/servers/filesystem-mcp/Dockerfile" ]]; then
     docker build -t mcp-filesystem ./mcp-servers/mcp/servers/filesystem-mcp
   else

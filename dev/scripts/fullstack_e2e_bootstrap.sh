@@ -249,7 +249,7 @@ fi
 
 # --- Pytest subset (host) ---
 if [[ "${E2E_PYTEST:-1}" == "1" ]]; then
-  log "Phase: curated pytest (services/api-service)"
+  log "Phase: curated pytest (xlotyl/services/api-service)"
   PY_TESTS=(
     tests/test_openclaw_bridge.py
     tests/test_openclaw_stream_adapter.py
@@ -257,7 +257,7 @@ if [[ "${E2E_PYTEST:-1}" == "1" ]]; then
     tests/test_workflow_cancel_ack.py
   )
   (
-    cd "$ROOT/services/api-service"
+    cd "$ROOT/xlotyl/services/api-service"
     if command -v uv >/dev/null 2>&1; then
       uv run python -m pytest "${PY_TESTS[@]}" -q
     else

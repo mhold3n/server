@@ -11,16 +11,14 @@ pre-commit install
 # Install development dependencies
 echo "Installing development dependencies..."
 
-# API service
-cd /workspace/services/api-service
+# AI control-plane services (xlotyl submodule)
+cd /workspace/xlotyl/services/api-service
 pip install -e ".[dev]"
 
-# Router service
-cd /workspace/services/router-service
+cd /workspace/xlotyl/services/router-service
 pip install -e ".[dev]"
 
-# Worker client
-cd /workspace/services/worker-service
+cd /workspace/xlotyl/services/worker-service
 pip install -e ".[dev]"
 
 # MCP servers
