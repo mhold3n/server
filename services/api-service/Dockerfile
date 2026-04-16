@@ -1,66 +1,57 @@
+# Build from repository root (see docker-compose.yml: context: .).
+# Workspace deps (ai-shared-service, domain-*, response-control-framework, …) are
+# local packages; pip install on api-service alone cannot resolve them — use uv sync.
 FROM python:3.11-slim AS builder
 
-# Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    UV_LINK_MODE=copy \
+    UV_NO_EDITABLE=1
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    ca-certificates \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Create and activate virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
 
-# Install from pyproject.toml so runtime deps (e.g. jsonschema) cannot drift from a hand-maintained pip list.
-WORKDIR /build/api
-COPY services/api-service/pyproject.toml services/api-service/README.md ./
-COPY services/api-service/src ./src
-RUN pip install --upgrade pip hatchling && pip install --no-cache-dir .
+WORKDIR /build
+COPY pyproject.toml uv.lock README.md ./
+COPY services ./services
+COPY schemas ./schemas
+COPY knowledge ./knowledge
+
+RUN uv sync --frozen --python 3.11 --package agent-orchestrator-api --no-dev --no-editable
 
 FROM python:3.11-slim AS production
 
-# Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PATH="/opt/venv/bin:$PATH"
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Copy virtual environment from builder stage
-COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /build/.venv /opt/venv
 
-# Create non-root user
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-# Create app directory
 WORKDIR /app
-
-# Copy application code plus repo-level contracts used by control-plane routes.
 COPY services/api-service/src/ ./src/
 COPY schemas/ ./schemas/
 COPY knowledge/ ./knowledge/
 
-# Change ownership to non-root user
 RUN chown -R appuser:appuser /app
-
-# Switch to non-root user
 USER appuser
 
-# Expose port
 EXPOSE 8080
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Run the application
-CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8080"]
+# Use python -m uvicorn: entrypoint scripts in copied .venv can break across stages.
+CMD ["python", "-m", "uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8080"]
