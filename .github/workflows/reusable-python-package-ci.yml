@@ -34,6 +34,10 @@ on:
         description: Job timeout (GitHub Actions); raise for slow test suites
         type: number
         default: 360
+      run-mypy:
+        description: Set false to skip mypy (e.g. legacy packages not yet passing typecheck)
+        type: boolean
+        default: true
 
 jobs:
   lint-typecheck-test:
@@ -63,6 +67,7 @@ jobs:
         run: ruff check ${{ inputs.ruff-paths }}
 
       - name: Mypy
+        if: ${{ inputs.run-mypy }}
         run: mypy ${{ inputs.mypy-extra-args }} ${{ inputs.mypy-target }}
 
       - name: Pytest
