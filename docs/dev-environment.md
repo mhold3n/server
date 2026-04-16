@@ -23,9 +23,14 @@ Cloning additional “legacy” projects **inside** this repository root increas
 
 Routing-related **modes**, **knowledge pools** (disciplines), **modules**, **techniques**, and **theory** cards are authored as a **single** markdown wiki under [`knowledge/wiki/`](../knowledge/wiki/). Human-editable sources live in [`knowledge/wiki/orchestration/`](../knowledge/wiki/orchestration/) (see [`SCHEMA.md`](../knowledge/wiki/SCHEMA.md)). Project-facing prose that must **not** affect AI routing belongs under [`knowledge/wiki/projects/`](../knowledge/wiki/projects/).
 
+- **Domain wiki merge**: research/content orchestration markdown is authored under `services/domain-research/wiki/orchestration/` and `services/domain-content/wiki/orchestration/`. `make wiki-compile` / `make wiki-check` run `scripts/sync_domain_orchestration_wiki.py` first so those shards are copied into `knowledge/wiki/orchestration/` before compilation.
 - **Compile** (regenerate JSON): `make wiki-compile` from the repository root. With [`uv`](https://docs.astral.sh/uv/) on your PATH, this uses `uv run` so Pydantic and `services/api-service` contracts resolve. Without `uv`, install the API package in a local environment and use the same target (the Makefile falls back to `cd services/api-service && PYTHONPATH=src python3 ...`).
 - **Drift check** (CI parity): `make wiki-check` — fails if [`knowledge/response-control/*.json`](../knowledge/response-control/) is out of sync with the wiki sources.
+- **Proposal queue check**: `make wiki-proposals-check` — validates unapproved wiki proposal files in [`knowledge/wiki/_proposals/`](../knowledge/wiki/_proposals/).
+- **Promote approved proposals**: `make wiki-promote` — applies `APPROVED` proposals to canonical wiki and recompiles response-control catalogs.
 - **Bootstrap** (rare): `uv run python scripts/wiki_compile_response_control.py --migrate-from-json` recreates orchestration markdown from the current JSON catalogs.
+
+See [wiki-editorial-governance.md](runbooks/wiki-editorial-governance.md) for the head-editor workflow (`PROPOSED -> APPROVED -> PROMOTED/REJECTED`) and API control endpoints.
 
 After editing orchestration pages, run **`make wiki-compile`** and commit **both** the wiki sources and the updated `knowledge/response-control/*.json` files. Avoid hand-editing the JSON long-term; treat it as a build artifact of the wiki.
 

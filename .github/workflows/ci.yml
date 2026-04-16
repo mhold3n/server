@@ -23,14 +23,25 @@ jobs:
       # Install dependencies for each service
       - name: Install API dependencies
         run: |
+          pip install -e services/response-control-framework
+          pip install -e services/ai-shared-service
+          pip install -e services/domain-engineering
+          pip install -e services/domain-research
+          pip install -e services/domain-content
           cd services/api-service
           pip install -e .
           pip install -e ".[dev]"
 
       - name: Check wiki sources vs response-control JSON
         run: |
+          python scripts/sync_domain_orchestration_wiki.py
           cd services/api-service
           PYTHONPATH=src python ../../scripts/wiki_compile_response_control.py --check
+
+      - name: Validate wiki proposal queue
+        run: |
+          cd services/api-service
+          PYTHONPATH=src python ../../scripts/check_wiki_proposal_queue.py
       
       - name: Install Router dependencies
         run: |
@@ -138,6 +149,9 @@ jobs:
           TEMPO_BASE_URL: "http://127.0.0.1:3200"
           MCP_REGISTRY_BASE_URL: "http://127.0.0.1:8001"
         run: |
+          pytest services/domain-engineering/tests/test_governance.py -v
+          pytest services/domain-research/tests -v
+          pytest services/domain-content/tests -v
           run_pytest_cov() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=src --cov-report=xml --cov-fail-under=90); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_cov_any() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=. --cov-report=xml --cov-fail-under=90); else echo "Skip pytest: no $d/tests"; fi; }
           run_pytest_plain() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v); else echo "Skip pytest: no $d/tests"; fi; }

@@ -101,10 +101,16 @@ docker-validate:
 # ``knowledge/response-control/*.json``. Prefer ``uv run`` when available so
 # Pydantic/contracts resolve; otherwise requires a venv with api-service installed.
 wiki-compile:
-	@bash -lc 'cd "$(ROOT)" && if command -v uv >/dev/null 2>&1; then uv run python scripts/wiki_compile_response_control.py; else cd services/api-service && PYTHONPATH=src python3 ../../scripts/wiki_compile_response_control.py; fi'
+	@bash -lc 'cd "$(ROOT)" && if command -v uv >/dev/null 2>&1; then uv run python scripts/sync_domain_orchestration_wiki.py && uv run python scripts/wiki_compile_response_control.py; else python3 scripts/sync_domain_orchestration_wiki.py && cd services/api-service && PYTHONPATH=src python3 ../../scripts/wiki_compile_response_control.py; fi'
 
 wiki-check:
-	@bash -lc 'cd "$(ROOT)" && if command -v uv >/dev/null 2>&1; then uv run python scripts/wiki_compile_response_control.py --check; else cd services/api-service && PYTHONPATH=src python3 ../../scripts/wiki_compile_response_control.py --check; fi'
+	@bash -lc 'cd "$(ROOT)" && if command -v uv >/dev/null 2>&1; then uv run python scripts/sync_domain_orchestration_wiki.py && uv run python scripts/wiki_compile_response_control.py --check; else python3 scripts/sync_domain_orchestration_wiki.py && cd services/api-service && PYTHONPATH=src python3 ../../scripts/wiki_compile_response_control.py --check; fi'
+
+wiki-proposals-check:
+	@bash -lc 'cd "$(ROOT)" && if command -v uv >/dev/null 2>&1; then uv run python scripts/check_wiki_proposal_queue.py; else cd services/api-service && PYTHONPATH=src python3 ../../scripts/check_wiki_proposal_queue.py; fi'
+
+wiki-promote:
+	@bash -lc 'cd "$(ROOT)" && if command -v uv >/dev/null 2>&1; then uv run python scripts/promote_wiki_proposals.py; else cd services/api-service && PYTHONPATH=src python3 ../../scripts/promote_wiki_proposals.py; fi'
 
 core-up:
 	$(DOCKER_COMPOSE) $(CORE_COMPOSE) up -d

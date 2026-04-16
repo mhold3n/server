@@ -15,11 +15,11 @@ dependencies = [
     "mcp-registry[dev]",
     "model-runtime[dev]",
     "engineering-core[dev]",
-    "ai-stack",
-    "structure[dev]",
-    "ai-gateway-service[dev]",
-    "larrak-audio[dev]",
-    "martymedia[dev]",
+    "response-control-framework",
+    "ai-shared-service",
+    "domain-engineering",
+    "domain-research",
+    "domain-content",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -36,11 +36,12 @@ agent-orchestrator-worker-client = { workspace = true }
 mcp-registry = { workspace = true }
 model-runtime = { workspace = true }
 engineering-core = { workspace = true }
-ai-stack = { workspace = true }
-structure = { workspace = true }
-ai-gateway-service = { workspace = true }
-larrak-audio = { workspace = true }
+ai-shared-service = { workspace = true }
+domain-engineering = { workspace = true }
+domain-research = { workspace = true }
+domain-content = { workspace = true }
 martymedia = { workspace = true }
+response-control-framework = { workspace = true }
 
 [tool.uv.workspace]
 members = [
@@ -50,9 +51,10 @@ members = [
     "services/mcp-registry-service",
     "services/model-runtime",
     "services/engineering-core",
-    "services/ai-shared-service",
-    "services/structure-service",
-    "services/ai-gateway-service",
-    "services/audio-service",
+    "services/response-control-framework",
+    "services/domain-engineering",
+    "services/domain-research",
+    "services/domain-content",
     "services/media-service",
+    "services/ai-shared-service",
 ]

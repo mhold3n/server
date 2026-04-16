@@ -1,3 +1,0 @@
-cantera
-coolprop
-tespy
