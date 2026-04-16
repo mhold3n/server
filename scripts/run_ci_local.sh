@@ -67,6 +67,15 @@ if ! docker info >/dev/null 2>&1; then
   exit 1
 fi
 
+# Host-published ports for CI compose (must be set before `docker compose up` substitutes ${VAR} in the file).
+WAIT_HOST="${WAIT_HOST:-127.0.0.1}"
+API_PORT="${API_PORT:-8080}"
+# Default avoids macOS AirPlay Receiver binding :5000; GitHub Actions Linux runners use 5000 via workflow env if needed.
+MLFLOW_PORT="${MLFLOW_PORT:-15000}"
+TEMPO_PORT="${TEMPO_PORT:-3200}"
+MCP_REGISTRY_PORT="${MCP_REGISTRY_PORT:-8001}"
+export WAIT_HOST API_PORT MLFLOW_PORT TEMPO_PORT MCP_REGISTRY_PORT
+
 docker compose --project-directory "$ROOT" -f "$CI_COMPOSE" down -v >/dev/null 2>&1 || true
 docker compose --project-directory "$ROOT" -f "$CI_COMPOSE" up -d --build
 trap 'docker compose --project-directory "$ROOT" -f "$CI_COMPOSE" down -v' EXIT
@@ -87,12 +96,6 @@ wait_http() {
   docker compose --project-directory "$ROOT" -f "$CI_COMPOSE" logs --no-color --tail=80 tempo || true
   return 1
 }
-
-WAIT_HOST="${WAIT_HOST:-127.0.0.1}"
-API_PORT="${API_PORT:-8080}"
-MLFLOW_PORT="${MLFLOW_PORT:-5000}"
-TEMPO_PORT="${TEMPO_PORT:-3200}"
-MCP_REGISTRY_PORT="${MCP_REGISTRY_PORT:-8001}"
 
 wait_http api "http://${WAIT_HOST}:${API_PORT}/health" 90
 wait_http mlflow "http://${WAIT_HOST}:${MLFLOW_PORT}/health" 90
