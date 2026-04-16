@@ -131,7 +131,8 @@ pytest_pkg mcp-servers/mcp/servers/filesystem-mcp mcp-filesystem tests/ -v --cov
 # Coverage gate and omit list: mcp-servers/mcp/servers/secrets-mcp/pyproject.toml
 pytest_pkg mcp-servers/mcp/servers/secrets-mcp mcp-secrets tests/ -v
 pytest_pkg mcp-servers/mcp/servers/vector-db-mcp mcp-vector-db tests/ -v --cov=src --cov-report=xml
-WRKHRS_DISABLE_MODEL_LOAD=1 pytest_pkg xlotyl/services/ai-gateway-service services-ai-gateway tests/ -v --cov=services/gateway --cov=services/prompt_middleware --cov=services/rag --cov-report=xml --cov-fail-under=90
+# Coverage packages and fail-under: xlotyl/services/ai-gateway-service/pytest.ini
+WRKHRS_DISABLE_MODEL_LOAD=1 pytest_pkg xlotyl/services/ai-gateway-service services-ai-gateway tests/ -v
 
 echo "==> Node (github-mcp)"
 if [[ -d "mcp-servers/mcp/servers/github-mcp" ]] && compgen -G "mcp-servers/mcp/servers/github-mcp/package*.json" > /dev/null; then
