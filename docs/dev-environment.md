@@ -11,7 +11,7 @@ Cloning additional “legacy” projects **inside** this repository root increas
 
 ### GitHub Actions: private submodules
 
-[`actions/checkout`](https://github.com/actions/checkout) defaults to `secrets.GITHUB_TOKEN`, which only has access to the **server** repository. If a submodule such as [`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl) is **private**, create a repository secret **`SUBMODULE_CLONE_TOKEN`**: a PAT (classic `repo` scope, or fine-grained read access to each submodule repository). [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) passes it as the checkout `token` so `submodules: recursive` can clone every URL in [`.gitmodules`](../.gitmodules).
+[`actions/checkout`](https://github.com/actions/checkout) uses `secrets.SUBMODULE_CLONE_TOKEN` when set; otherwise it falls back to `github.token`, which only has access to the **server** repository. If a submodule such as [`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl) is **private**, create a repository secret **`SUBMODULE_CLONE_TOKEN`**: a PAT (classic `repo` scope, or fine-grained read access to each submodule repository). [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) passes that token so `submodules: recursive` can clone every URL in [`.gitmodules`](../.gitmodules).
 
 ## Workspace bootstrap
 

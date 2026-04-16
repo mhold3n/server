@@ -15,8 +15,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-          # Default GITHUB_TOKEN cannot fetch private submodule repos; set secret in repo settings.
-          token: ${{ secrets.SUBMODULE_CLONE_TOKEN }}
+          # For private submodules, set SUBMODULE_CLONE_TOKEN (classic PAT with `repo`, or fine-grained read on each submodule repo).
+          token: ${{ secrets.SUBMODULE_CLONE_TOKEN || github.token }}
 
       # Python services
       - uses: actions/setup-python@v5
@@ -237,7 +237,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-          token: ${{ secrets.SUBMODULE_CLONE_TOKEN }}
+          token: ${{ secrets.SUBMODULE_CLONE_TOKEN || github.token }}
       - uses: github/codeql-action/init@v3
         with:
           languages: python, javascript
