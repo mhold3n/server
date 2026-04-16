@@ -33,6 +33,11 @@ dependencies = [
     "opentelemetry-instrumentation-fastapi>=0.45b0",
     "opentelemetry-instrumentation-httpx>=0.45b0",
     "opentelemetry-instrumentation-requests>=0.45b0",
+    "response-control-framework",
+    "domain-engineering",
+    "domain-research",
+    "domain-content",
+    "ai-shared-service",
 ]
 
 [project.optional-dependencies]

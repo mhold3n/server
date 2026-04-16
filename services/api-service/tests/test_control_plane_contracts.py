@@ -12,7 +12,7 @@ from uuid import UUID, uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from src.control_plane.contracts import (
+from response_control_framework.contracts import (
     ArtifactStatus,
     KnowledgePackPayload,
     TaskPacketStatus,
@@ -24,12 +24,12 @@ from src.control_plane.engineering import (
     intake_engineering_request,
     reset_engineering_sessions_for_tests,
 )
-from src.control_plane.errors import ContractValidationError
-from src.control_plane.lifecycle import (
+from response_control_framework.errors import ContractValidationError
+from response_control_framework.lifecycle import (
     assert_artifact_transition,
     assert_task_packet_transition,
 )
-from src.control_plane.validation import (
+from response_control_framework.validation import (
     get_schema_store,
     validate_environment_spec_json,
     validate_engineering_state_json,
@@ -43,7 +43,7 @@ from src.control_plane.validation import (
     validate_typed_artifact_json,
     validate_verification_report_json,
 )
-from src.control_plane.response_control import evaluate_response_control
+from response_control_framework.response_control import evaluate_response_control
 from src.devplane.models import ArtifactRecord, CostLedgerEntry
 
 
@@ -231,14 +231,14 @@ def test_structure_classify_route(test_client: TestClient) -> None:
 
 def test_golden_fixture_file_matches_schema() -> None:
     data = _load_fixture(
-        "schemas/control-plane/v1/fixtures/task-packet/valid-minimal.json"
+        "services/response-control-framework/schemas/control-plane/v1/fixtures/task-packet/valid-minimal.json"
     )
     validate_task_packet_json(data)
 
 
 def test_golden_problem_brief_round_trip() -> None:
     data = _load_fixture(
-        "schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
+        "services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
     )
     pb = validate_problem_brief_json(data)
     assert pb.problem_statement.need
@@ -247,14 +247,14 @@ def test_golden_problem_brief_round_trip() -> None:
 
 def test_golden_task_queue_round_trip() -> None:
     data = _load_fixture(
-        "schemas/control-plane/v1/fixtures/task-queue/valid-minimal.json"
+        "services/response-control-framework/schemas/control-plane/v1/fixtures/task-queue/valid-minimal.json"
     )
     validate_task_queue_json(data)
 
 
 def test_golden_engineering_state_round_trip() -> None:
     data = _load_fixture(
-        "schemas/control-plane/v1/fixtures/engineering-state/valid-minimal.json"
+        "services/response-control-framework/schemas/control-plane/v1/fixtures/engineering-state/valid-minimal.json"
     )
     state = validate_engineering_state_json(data)
     assert state.ready_for_task_decomposition is True
@@ -262,7 +262,7 @@ def test_golden_engineering_state_round_trip() -> None:
 
 def test_golden_knowledge_pool_assessment_round_trip() -> None:
     data = _load_fixture(
-        "schemas/control-plane/v1/fixtures/knowledge-pool-assessment/valid-minimal.json"
+        "services/response-control-framework/schemas/control-plane/v1/fixtures/knowledge-pool-assessment/valid-minimal.json"
     )
     assessment = validate_knowledge_pool_assessment_json(data)
     assert assessment.coverage_class.value == "strong"
@@ -270,14 +270,14 @@ def test_golden_knowledge_pool_assessment_round_trip() -> None:
 
 def test_golden_routing_policy_round_trip() -> None:
     data = _load_fixture(
-        "schemas/control-plane/v1/fixtures/routing-policy/valid-minimal.json"
+        "services/response-control-framework/schemas/control-plane/v1/fixtures/routing-policy/valid-minimal.json"
     )
     validate_routing_policy_json(data)
 
 
 def test_golden_environment_spec_round_trip() -> None:
     data = _load_fixture(
-        "schemas/control-plane/v1/fixtures/environment-spec/valid-minimal.json"
+        "services/response-control-framework/schemas/control-plane/v1/fixtures/environment-spec/valid-minimal.json"
     )
     spec = validate_environment_spec_json(data)
     assert spec.environment_spec_id == "eng_mdo_uv"
@@ -285,7 +285,7 @@ def test_golden_environment_spec_round_trip() -> None:
 
 def test_golden_gui_session_spec_round_trip() -> None:
     data = _load_fixture(
-        "schemas/control-plane/v1/fixtures/gui-session-spec/valid-minimal.json"
+        "services/response-control-framework/schemas/control-plane/v1/fixtures/gui-session-spec/valid-minimal.json"
     )
     spec = validate_gui_session_spec_json(data)
     assert spec.display_protocol == "novnc_web"
@@ -295,14 +295,14 @@ def test_golden_gui_session_spec_round_trip() -> None:
 
 def test_golden_verification_report_round_trip() -> None:
     data = _load_fixture(
-        "schemas/control-plane/v1/fixtures/verification-report/valid-minimal.json"
+        "services/response-control-framework/schemas/control-plane/v1/fixtures/verification-report/valid-minimal.json"
     )
     report = validate_verification_report_json(data)
     assert report.outcome.value == "PASS"
 
 
 def test_phase2_knowledge_pack_alias_payload_round_trip() -> None:
-    records = _load_fixture("knowledge/coding-tools/substrate/knowledge-packs.json")
+    records = _load_fixture("services/domain-engineering/knowledge-packs/substrate/knowledge-packs.json")
     payload = next(
         item["payload"]
         for item in records
@@ -326,7 +326,7 @@ def test_schema_registry_loads() -> None:
 
 def test_problem_brief_rejects_missing_engineering_fields() -> None:
     data = _load_fixture(
-        "schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
+        "services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
     )
     del data["success_criteria"]
     with pytest.raises(ContractValidationError):
@@ -335,7 +335,7 @@ def test_problem_brief_rejects_missing_engineering_fields() -> None:
 
 def test_engineering_state_derivation_is_idempotent_and_permutation_invariant() -> None:
     data = _load_fixture(
-        "schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
+        "services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
     )
     pb = validate_problem_brief_json(data)
     derived_a = derive_engineering_state(pb).model_dump(mode="json")
@@ -346,7 +346,7 @@ def test_engineering_state_derivation_is_idempotent_and_permutation_invariant() 
     assert derived_a == derived_b
 
     permuted = _load_fixture(
-        "schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
+        "services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json"
     )
     permuted["constraints"] = list(reversed(permuted["constraints"]))
     permuted["inputs"] = list(reversed(permuted["inputs"]))
@@ -380,7 +380,7 @@ def test_engineering_state_derivation_is_idempotent_and_permutation_invariant() 
 
 def test_task_queue_generation_requires_ready_engineering_state() -> None:
     problem_brief = validate_problem_brief_json(
-        _load_fixture("schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
+        _load_fixture("services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
     )
     state = derive_engineering_state(problem_brief).model_copy(
         update={"ready_for_task_decomposition": False}
@@ -391,7 +391,7 @@ def test_task_queue_generation_requires_ready_engineering_state() -> None:
 
 def test_task_queue_generation_blocks_low_required_knowledge_coverage() -> None:
     problem_brief = validate_problem_brief_json(
-        _load_fixture("schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
+        _load_fixture("services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
     )
     state = derive_engineering_state(problem_brief)
     weak_assessment = validate_knowledge_pool_assessment_json(
@@ -478,7 +478,7 @@ def test_control_plane_build_task_queue_route_blocks_when_state_not_ready(
     test_client: TestClient,
 ) -> None:
     problem_brief = validate_problem_brief_json(
-        _load_fixture("schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
+        _load_fixture("services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
     )
     engineering_state = derive_engineering_state(problem_brief).model_dump(mode="json")
     engineering_state["ready_for_task_decomposition"] = False
@@ -497,7 +497,7 @@ def test_control_plane_build_escalation_route_returns_typed_packet(
 ) -> None:
     engineering_state = derive_engineering_state(
         validate_problem_brief_json(
-            _load_fixture("schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
+            _load_fixture("services/response-control-framework/schemas/control-plane/v1/fixtures/problem-brief/valid-minimal.json")
         )
     ).model_dump(mode="json")
     response = test_client.post(

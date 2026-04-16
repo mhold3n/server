@@ -1,5 +1,8 @@
 ---
 {
+  "default_for_modes": [
+    "engineering"
+  ],
   "domain": "engineering",
   "keywords": [
     "mechanical",

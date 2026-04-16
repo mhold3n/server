@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import uuid4
 
-from ..control_plane.engineering import intake_engineering_request
+from domain_engineering.core import intake_engineering_request
 from .models import (
     ArtifactRecord,
     ClarificationAnswer,
@@ -417,6 +417,14 @@ class DevPlaneService:
                 if latest_response_control
                 else []
             ),
+            "wiki_overlay_context": (session.wiki_overlay_context if session else None)
+            or task.wiki_overlay_context
+            or task.dossier.wiki_overlay_context,
+            "wiki_edit_proposal_refs": (
+                list(session.wiki_edit_proposal_refs) if session else []
+            )
+            or list(task.wiki_edit_proposal_refs)
+            or list(task.dossier.wiki_edit_proposal_refs),
             "knowledge_pool_assessment_ref": (
                 session.knowledge_pool_assessment_ref if session else None
             )
@@ -605,6 +613,13 @@ class DevPlaneService:
             refs = workflow_result.get(field_name)
             if isinstance(refs, list):
                 setattr(session, field_name, [str(ref) for ref in refs if str(ref).strip()])
+        if workflow_result.get("wiki_overlay_context") is not None:
+            session.wiki_overlay_context = str(workflow_result.get("wiki_overlay_context"))
+        wiki_edit_proposal_refs = workflow_result.get("wiki_edit_proposal_refs")
+        if isinstance(wiki_edit_proposal_refs, list):
+            session.wiki_edit_proposal_refs = [
+                str(ref) for ref in wiki_edit_proposal_refs if str(ref).strip()
+            ]
         session.knowledge_pool_assessment_ref = (
             ref_state.get("knowledge_pool_assessment_ref")
             or workflow_result.get("knowledge_pool_assessment_ref")
@@ -784,6 +799,8 @@ class DevPlaneService:
             selected_module_refs=session.selected_module_refs,
             selected_technique_refs=session.selected_technique_refs,
             selected_theory_refs=session.selected_theory_refs,
+            wiki_overlay_context=session.wiki_overlay_context,
+            wiki_edit_proposal_refs=session.wiki_edit_proposal_refs,
         )
         self._apply_knowledge_metadata(
             task=task,
@@ -1099,6 +1116,8 @@ class DevPlaneService:
             selected_module_refs=engineering_bundle.get("selected_module_refs"),
             selected_technique_refs=engineering_bundle.get("selected_technique_refs"),
             selected_theory_refs=engineering_bundle.get("selected_theory_refs"),
+            wiki_overlay_context=engineering_bundle.get("wiki_overlay_context"),
+            wiki_edit_proposal_refs=engineering_bundle.get("wiki_edit_proposal_refs"),
         )
         self.store.save_run(run)
         self.store.save_task(task)
@@ -1619,6 +1638,8 @@ class DevPlaneService:
         selected_module_refs: list[str] | None = None,
         selected_technique_refs: list[str] | None = None,
         selected_theory_refs: list[str] | None = None,
+        wiki_overlay_context: str | None = None,
+        wiki_edit_proposal_refs: list[str] | None = None,
     ) -> None:
         pool_refs = self._coalesce_string_list(
             selected_knowledge_pool_refs,
@@ -1630,6 +1651,10 @@ class DevPlaneService:
             task.selected_technique_refs,
         )
         theory_refs = self._coalesce_string_list(selected_theory_refs, task.selected_theory_refs)
+        proposal_refs = self._coalesce_string_list(
+            wiki_edit_proposal_refs,
+            task.wiki_edit_proposal_refs,
+        )
         targets: list[object] = [task, dossier]
         if run is not None:
             targets.append(run)
@@ -1644,6 +1669,9 @@ class DevPlaneService:
             target.selected_module_refs = list(module_refs)
             target.selected_technique_refs = list(technique_refs)
             target.selected_theory_refs = list(theory_refs)
+            if wiki_overlay_context is not None:
+                target.wiki_overlay_context = wiki_overlay_context
+            target.wiki_edit_proposal_refs = list(proposal_refs)
 
     def _merge_file_changes(
         self,

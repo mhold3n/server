@@ -1,5 +1,8 @@
 [
   {
+    "default_for_modes": [
+      "engineering"
+    ],
     "domain": "engineering",
     "keywords": [
       "chemistry",
@@ -26,6 +29,9 @@
     ]
   },
   {
+    "default_for_modes": [
+      "engineering"
+    ],
     "domain": "engineering",
     "keywords": [
       "solver",
@@ -55,6 +61,9 @@
     ]
   },
   {
+    "default_for_modes": [
+      "engineering"
+    ],
     "domain": "engineering",
     "keywords": [
       "manufacturing",
@@ -80,6 +89,9 @@
     ]
   },
   {
+    "default_for_modes": [
+      "engineering"
+    ],
     "domain": "engineering",
     "keywords": [
       "mechanical",
@@ -113,6 +125,7 @@
     ]
   },
   {
+    "default_for_modes": [],
     "domain": "research",
     "keywords": [
       "corroboration",
@@ -146,6 +159,9 @@
     ]
   },
   {
+    "default_for_modes": [
+      "engineering"
+    ],
     "domain": "engineering",
     "keywords": [
       "standard",
@@ -174,6 +190,7 @@
     ]
   },
   {
+    "default_for_modes": [],
     "domain": "content",
     "keywords": [
       "video editing",

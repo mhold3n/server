@@ -1,5 +1,6 @@
 [
   {
+    "default_pool_keys": [],
     "keywords": [
       "business",
       "strategy",
@@ -23,6 +24,7 @@
     "summary": "Strategy, operations, economics, and market framing."
   },
   {
+    "default_pool_keys": [],
     "keywords": [
       "chat",
       "talk",
@@ -44,6 +46,7 @@
     "summary": "General conversation and lightweight assistance."
   },
   {
+    "default_pool_keys": [],
     "keywords": [
       "content",
       "video",
@@ -77,6 +80,7 @@
     "summary": "Creation and editorial production across media formats, with video editing seeded as the first formal content pool."
   },
   {
+    "default_pool_keys": [],
     "keywords": [
       "define",
       "definition",
@@ -98,6 +102,7 @@
     "summary": "Concise definition and disambiguation."
   },
   {
+    "default_pool_keys": [],
     "keywords": [
       "engineering",
       "implement",
@@ -130,6 +135,7 @@
     "summary": "Artifact-governed technical work with explicit state, scoped task packets, verification, and publish readiness."
   },
   {
+    "default_pool_keys": [],
     "keywords": [
       "brainstorm",
       "ideas",
@@ -152,6 +158,7 @@
     "summary": "Exploratory option generation and tradeoff surfacing."
   },
   {
+    "default_pool_keys": [],
     "keywords": [
       "marketing",
       "campaign",
@@ -175,6 +182,7 @@
     "summary": "Campaign, positioning, messaging, and conversion work."
   },
   {
+    "default_pool_keys": [],
     "keywords": [
       "estimate",
       "calculate",
@@ -197,6 +205,7 @@
     "summary": "Fast approximate quantitative reasoning with stated assumptions and sanity checks."
   },
   {
+    "default_pool_keys": [],
     "keywords": [
       "query",
       "question",
@@ -218,6 +227,7 @@
     "summary": "Direct factual or operational answering."
   },
   {
+    "default_pool_keys": [],
     "keywords": [
       "research",
       "sources",

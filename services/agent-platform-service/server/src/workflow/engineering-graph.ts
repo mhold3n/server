@@ -95,6 +95,15 @@ export const EngineeringWorkflowAnnotation = Annotation.Root({
     default: () => [],
   }),
   knowledge_required: Annotation<boolean | undefined>(),
+  wiki_overlay_context: Annotation<string | undefined>(),
+  wiki_edit_proposals: Annotation<Record<string, unknown>[]>({
+    reducer: (_left, right) => right,
+    default: () => [],
+  }),
+  wiki_edit_proposal_refs: Annotation<string[]>({
+    reducer: (_left, right) => right,
+    default: () => [],
+  }),
   engineering_state: Annotation<Record<string, unknown> | undefined>(),
   engineering_state_ref: Annotation<string | undefined>(),
   clarification_questions: Annotation<string[]>({
@@ -231,6 +240,8 @@ function typedArtifact(
               ? payload.verification_report_id
               : typeof payload.escalation_packet_id === "string"
                 ? payload.escalation_packet_id
+                : typeof payload.wiki_edit_proposal_id === "string"
+                  ? payload.wiki_edit_proposal_id
                 : randomUUID()
   return {
     artifact_id: artifactId,
@@ -323,6 +334,10 @@ function packetPrompt(
   const toolResults = state.required_tool_results && state.required_tool_results.length > 0
     ? `Required tool results:\n${JSON.stringify(state.required_tool_results, null, 2)}`
     : ""
+  const wikiOverlayContext =
+    typeof packet.wiki_overlay_context === "string"
+      ? packet.wiki_overlay_context
+      : state.wiki_overlay_context
   return [
     `Objective: ${String(packet.objective ?? latestUserContent(state.messages))}`,
     packet.context_summary ? `Context summary:\n${String(packet.context_summary)}` : "",
@@ -344,6 +359,7 @@ function packetPrompt(
     selectedTheoryRefs.length > 0
       ? `Selected theory basis:\n- ${selectedTheoryRefs.join("\n- ")}`
       : "",
+    wikiOverlayContext ? `Wiki context overlay:\n${wikiOverlayContext}` : "",
     toolResults,
     "Use only the task packet, response-control refs, and artifact refs as governing context.",
   ]
@@ -524,6 +540,14 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
       intake.escalation_packet && typeof intake.escalation_packet === "object"
         ? (intake.escalation_packet as Record<string, unknown>)
         : undefined
+    const wikiOverlayContext =
+      typeof intake.wiki_overlay_context === "string" ? intake.wiki_overlay_context : undefined
+    const wikiEditProposals = Array.isArray(intake.wiki_edit_proposals)
+      ? (intake.wiki_edit_proposals as Record<string, unknown>[])
+      : []
+    const wikiEditProposalRefs = Array.isArray(intake.wiki_edit_proposal_refs)
+      ? (intake.wiki_edit_proposal_refs as string[])
+      : []
 
     const artifacts: Array<Record<string, unknown>> = []
     if (knowledgePoolAssessment) {
@@ -622,6 +646,19 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         ),
       )
     }
+    for (const proposal of wikiEditProposals) {
+      artifacts.push(
+        typedArtifact(
+          "WIKI_EDIT_PROPOSAL",
+          proposal,
+          Array.isArray(proposal.provenance_refs)
+            ? (proposal.provenance_refs as string[])
+            : [],
+          "agent_platform.engineering_graph.intake",
+          "local_general_model",
+        ),
+      )
+    }
     if (artifacts.length > 0) {
       await persistRunEvent(cfg, state, {
         message: "engineering_workflow:intake",
@@ -658,6 +695,9 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         knowledge_role_context_refs: knowledgeRoleContextRefs,
         knowledge_gaps: knowledgeGaps,
         knowledge_required: knowledgeRequired,
+        wiki_overlay_context: wikiOverlayContext,
+        wiki_edit_proposals: wikiEditProposals,
+        wiki_edit_proposal_refs: wikiEditProposalRefs,
         lifecycle_reason: "clarification_required",
         lifecycle_detail: { clarification_questions: clarificationQuestions.length },
         problem_brief: problemBrief,
@@ -702,6 +742,9 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         knowledge_role_context_refs: knowledgeRoleContextRefs,
         knowledge_gaps: knowledgeGaps,
         knowledge_required: knowledgeRequired,
+        wiki_overlay_context: wikiOverlayContext,
+        wiki_edit_proposals: wikiEditProposals,
+        wiki_edit_proposal_refs: wikiEditProposalRefs,
         lifecycle_reason: "governance_gate",
         lifecycle_detail: { required_gates: requiredGates.length },
         problem_brief: problemBrief,
@@ -749,6 +792,9 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         knowledge_role_context_refs: knowledgeRoleContextRefs,
         knowledge_gaps: knowledgeGaps,
         knowledge_required: knowledgeRequired,
+        wiki_overlay_context: wikiOverlayContext,
+        wiki_edit_proposals: wikiEditProposals,
+        wiki_edit_proposal_refs: wikiEditProposalRefs,
         lifecycle_reason: "awaiting_strategic_review",
         lifecycle_detail: { knowledge_gaps: knowledgeGaps.length },
         problem_brief: problemBrief,
@@ -789,6 +835,9 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
         knowledge_role_context_refs: knowledgeRoleContextRefs,
         knowledge_gaps: knowledgeGaps,
         knowledge_required: knowledgeRequired,
+        wiki_overlay_context: wikiOverlayContext,
+        wiki_edit_proposals: wikiEditProposals,
+        wiki_edit_proposal_refs: wikiEditProposalRefs,
         lifecycle_reason: "executor_unavailable",
         lifecycle_detail: { reason: "active_task_packet_missing" },
         problem_brief: problemBrief,
@@ -829,6 +878,9 @@ function buildEngineeringIntake(cfg: PlatformConfig) {
       knowledge_role_context_refs: knowledgeRoleContextRefs,
       knowledge_gaps: knowledgeGaps,
       knowledge_required: knowledgeRequired,
+      wiki_overlay_context: wikiOverlayContext,
+      wiki_edit_proposals: wikiEditProposals,
+      wiki_edit_proposal_refs: wikiEditProposalRefs,
       problem_brief: problemBrief,
       problem_brief_ref: intake.problem_brief_ref as string | undefined,
       engineering_state: engineeringState,

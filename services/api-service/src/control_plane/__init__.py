@@ -1,31 +1,4 @@
 """
-Control-plane contracts: JSON Schema-backed task packets, typed artifacts, and validation.
-
-For agents: authoritative shapes live under repo `schemas/control-plane/v1/`; this package
-provides Pydantic mirrors, lifecycle helpers, and runtime validation for API write paths.
+Remaining API service control plane files (engineering, structure_bridge).
+Contracts and framework have been outsourced to response_control_framework.
 """
-
-from .contracts import TaskPacket
-from .errors import ContractValidationError
-from .knowledge_pool import (
-    compile_role_context,
-    load_knowledge_pool,
-    load_minutes_inventory,
-    resolve_runtime,
-    resolve_stack,
-    verify_runtime,
-)
-from .response_control import evaluate_response_control, load_response_control_catalog
-
-__all__ = [
-    "ContractValidationError",
-    "TaskPacket",
-    "load_knowledge_pool",
-    "load_minutes_inventory",
-    "resolve_stack",
-    "resolve_runtime",
-    "verify_runtime",
-    "compile_role_context",
-    "evaluate_response_control",
-    "load_response_control_catalog",
-]

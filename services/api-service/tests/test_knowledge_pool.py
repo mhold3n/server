@@ -9,8 +9,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.control_plane import engineering as engineering_module
-from src.control_plane.knowledge_pool import (
+from domain_engineering import core as engineering_module
+from response_control_framework.knowledge_pool import (
     load_knowledge_pool,
     load_minutes_inventory,
     lookup_knowledge_packs,
@@ -19,16 +19,16 @@ from src.control_plane.knowledge_pool import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-KNOWLEDGE_ROOT = REPO_ROOT / "knowledge" / "coding-tools"
+KNOWLEDGE_ROOT = REPO_ROOT / "services" / "domain-engineering" / "src" / "domain_engineering" / "data" / "coding-tools"
 EXCLUDED_PATH = REPO_ROOT / "KNOWLEGE MINUTES EXCLUDED.md"
 ACQUISITION_DOSSIERS_JSON_PATH = (
-    REPO_ROOT / "knowledge" / "coding-tools" / "substrate" / "deferred-acquisition-dossiers.json"
+    KNOWLEDGE_ROOT / "substrate" / "deferred-acquisition-dossiers.json"
 )
 PACKAGE_COMPLETION_LEDGER_PATH = (
-    REPO_ROOT / "knowledge" / "coding-tools" / "substrate" / "package-completion-ledger.json"
+    KNOWLEDGE_ROOT / "substrate" / "package-completion-ledger.json"
 )
 PACKAGE_PROMOTION_HISTORY_PATH = (
-    REPO_ROOT / "knowledge" / "coding-tools" / "substrate" / "package-promotion-history.json"
+    KNOWLEDGE_ROOT / "substrate" / "package-promotion-history.json"
 )
 
 
@@ -754,7 +754,7 @@ def test_verify_runtime_returns_pass_report(monkeypatch: pytest.MonkeyPatch) -> 
     def _fake_run(*args: object, **kwargs: object) -> SimpleNamespace:
         return SimpleNamespace(returncode=0, stdout="OK:runtime", stderr="")
 
-    monkeypatch.setattr("src.control_plane.knowledge_pool.subprocess.run", _fake_run)
+    monkeypatch.setattr("response_control_framework.knowledge_pool.subprocess.run", _fake_run)
     report = catalog.verify_runtime("artifact://environment-spec/eng_structures_uv")
     assert report.outcome.value == "PASS"
     assert report.validated_artifact_refs == ["artifact://environment-spec/eng_structures_uv"]
@@ -806,7 +806,7 @@ def test_verify_gui_session_returns_pass_report(monkeypatch: pytest.MonkeyPatch)
     def _fake_run(*args: object, **kwargs: object) -> SimpleNamespace:
         return SimpleNamespace(returncode=0, stdout="OK:gui", stderr="")
 
-    monkeypatch.setattr("src.control_plane.knowledge_pool.subprocess.run", _fake_run)
+    monkeypatch.setattr("response_control_framework.knowledge_pool.subprocess.run", _fake_run)
     report = catalog.verify_gui_session("artifact://gui-session-spec/eng_paraview_gui")
     assert report.outcome.value == "PASS"
     assert report.validated_artifact_refs == [

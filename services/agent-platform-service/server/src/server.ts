@@ -411,6 +411,10 @@ export function buildServer() {
             engagement_mode: (result as { engagement_mode?: unknown }).engagement_mode,
             minimum_engagement_mode:
               (result as { minimum_engagement_mode?: unknown }).minimum_engagement_mode,
+            wiki_overlay_context:
+              (result as { wiki_overlay_context?: unknown }).wiki_overlay_context,
+            wiki_edit_proposal_refs:
+              (result as { wiki_edit_proposal_refs?: unknown }).wiki_edit_proposal_refs,
           },
           problem_brief: (result as { problem_brief?: unknown }).problem_brief,
           engineering_state: (result as { engineering_state?: unknown }).engineering_state,
@@ -424,6 +428,12 @@ export function buildServer() {
           verification_outcome: result.verification_outcome,
           verification_report: result.verification_report,
           escalation_packet: (result as { escalation_packet?: unknown }).escalation_packet,
+          wiki_overlay_context:
+            (result as { wiki_overlay_context?: unknown }).wiki_overlay_context,
+          wiki_edit_proposals:
+            (result as { wiki_edit_proposals?: unknown }).wiki_edit_proposals,
+          wiki_edit_proposal_refs:
+            (result as { wiki_edit_proposal_refs?: unknown }).wiki_edit_proposal_refs,
           engagement_mode: (result as { engagement_mode?: unknown }).engagement_mode,
           engagement_mode_source:
             (result as { engagement_mode_source?: unknown }).engagement_mode_source,

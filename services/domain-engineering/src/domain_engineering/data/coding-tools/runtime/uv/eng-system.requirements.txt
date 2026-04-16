@@ -1,0 +1,13 @@
+PySpice
+fmpy
+idaes-pse
+ompython
+simpy
+numpy
+scipy
+sympy
+networkx
+progressbar2
+matplotlib
+h5py
+pyphs

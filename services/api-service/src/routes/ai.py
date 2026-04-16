@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
 
 from ..config import get_worker_settings, settings
-from ..control_plane.engineering import evaluate_engagement_mode
+from domain_engineering.core import evaluate_engagement_mode
 from ..orchestrator_client import OrchestratorClient
 from .devplane import get_service
 from ..workflows import (

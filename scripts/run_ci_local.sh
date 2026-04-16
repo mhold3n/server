@@ -30,7 +30,10 @@ fi
 uv sync --python "$PYTHON"
 
 echo "==> Wiki compile drift check (orchestration markdown vs response-control JSON)"
+uv run python scripts/sync_domain_orchestration_wiki.py
 uv run python scripts/wiki_compile_response_control.py --check
+echo "==> Wiki proposal queue validation"
+uv run python scripts/check_wiki_proposal_queue.py
 
 echo "==> Lint (ruff + black)"
 uv run ruff check services/ mcp-servers/mcp/servers/

@@ -8,6 +8,7 @@ This tree is the **single** long-lived knowledge surface for humans and tooling.
 |------|------|
 | `knowledge/wiki/orchestration/{modes,pools,modules,techniques,theory}/` | **Routing cards.** Each `*.md` file’s JSON front matter is compiled into [`knowledge/response-control/`](../response-control/) JSON arrays consumed by `evaluate_response_control` in the API service. |
 | `knowledge/wiki/projects/` | **Non-routing** project narrative (clients, delivery, specs). The compiler **never** reads this directory. |
+| `knowledge/wiki/_proposals/` | **Unapproved edit queue**. Proposal files are not canonical truth until approved and promoted. |
 | `knowledge/wiki/index.md` | Human-oriented map of the wiki (optional machine lint later). |
 | `knowledge/wiki/log.md` | Chronological notes and decisions about wiki structure (optional). |
 
@@ -34,3 +35,13 @@ This tree is the **single** long-lived knowledge surface for humans and tooling.
 4. CI runs `make wiki-check` to forbid drift between sources and JSON.
 
 Do **not** hand-edit `knowledge/response-control/*.json` on an ongoing basis; treat those files as **build artifacts** of this wiki.
+
+## Proposal queue contract
+
+Unapproved proposals live in `knowledge/wiki/_proposals/*.md` with JSON front matter validated by `wiki-edit-proposal.schema.json`. They must include:
+
+- `unapproved_source: true`
+- `caution: "unapproved source, proceed with caution"`
+- lifecycle `status` in `PROPOSED | APPROVED | REJECTED | PROMOTED`
+
+Promotions are editor-governed; proposal files do not directly replace canonical wiki content.

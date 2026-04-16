@@ -410,6 +410,8 @@ class EngineeringSessionRecord(BaseModel):
     selected_module_refs: list[str] = Field(default_factory=list)
     selected_technique_refs: list[str] = Field(default_factory=list)
     selected_theory_refs: list[str] = Field(default_factory=list)
+    wiki_overlay_context: str | None = None
+    wiki_edit_proposal_refs: list[str] = Field(default_factory=list)
     engineering_state: dict[str, Any] | None = None
     engineering_state_ref: str | None = None
     task_queue: dict[str, Any] | None = None
@@ -453,6 +455,8 @@ class TaskDossier(BaseModel):
     selected_module_refs: list[str] = Field(default_factory=list)
     selected_technique_refs: list[str] = Field(default_factory=list)
     selected_theory_refs: list[str] = Field(default_factory=list)
+    wiki_overlay_context: str | None = None
+    wiki_edit_proposal_refs: list[str] = Field(default_factory=list)
     reasoning_tier: str | None = Field(
         default=None,
         description=(
@@ -525,6 +529,8 @@ class TaskRecord(BaseModel):
     selected_module_refs: list[str] = Field(default_factory=list)
     selected_technique_refs: list[str] = Field(default_factory=list)
     selected_theory_refs: list[str] = Field(default_factory=list)
+    wiki_overlay_context: str | None = None
+    wiki_edit_proposal_refs: list[str] = Field(default_factory=list)
     request: TaskRequestRecord
     clarifications: TaskClarification = Field(default_factory=TaskClarification)
     plan: TaskPlan | None = None
@@ -562,6 +568,8 @@ class RunRecord(BaseModel):
     selected_module_refs: list[str] = Field(default_factory=list)
     selected_technique_refs: list[str] = Field(default_factory=list)
     selected_theory_refs: list[str] = Field(default_factory=list)
+    wiki_overlay_context: str | None = None
+    wiki_edit_proposal_refs: list[str] = Field(default_factory=list)
     workspace: WorkspaceRecord | None = None
     execution_mode: ExecutionMode = ExecutionMode.INTERNAL
     execution_backend: str | None = None
