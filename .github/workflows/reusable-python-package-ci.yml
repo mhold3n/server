@@ -1,0 +1,63 @@
+# Reusable CI for standalone Python packages (response-control-framework, ai-shared-service,
+# domain-*). Call from each package repo with workflow_call — see docs/dev-environment.md.
+name: Reusable Python package CI
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: Python version for setup-python
+        type: string
+        default: "3.11"
+      extras-name:
+        description: >-
+          Extra group for `pip install -e ".[<extras>]"` (e.g. dev). Empty = no extras, `pip install -e .`
+        type: string
+        default: dev
+      mypy-target:
+        description: Path or package arg passed to `mypy --strict`
+        type: string
+        default: src
+      ruff-paths:
+        description: Paths passed to `ruff check`
+        type: string
+        default: .
+      pytest-args:
+        description: Full pytest command (quoted as one shell line)
+        type: string
+        default: pytest -q
+      job-timeout-minutes:
+        description: Job timeout (GitHub Actions); raise for slow test suites
+        type: number
+        default: 360
+
+jobs:
+  lint-typecheck-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.job-timeout-minutes }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install package
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          extra="${{ inputs.extras-name }}"
+          if [ -n "$extra" ]; then
+            pip install -e ".[$extra]"
+          else
+            pip install -e .
+          fi
+
+      - name: Ruff
+        run: ruff check ${{ inputs.ruff-paths }}
+
+      - name: Mypy
+        run: mypy --strict ${{ inputs.mypy-target }}
+
+      - name: Pytest
+        run: ${{ inputs.pytest-args }}

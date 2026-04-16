@@ -11,6 +11,7 @@ Cloning additional “legacy” projects **inside** this repository root increas
 
 ## Workspace bootstrap
 
+- **Standalone package tags:** the root [`pyproject.toml`](../pyproject.toml) pins `response-control-framework`, `ai-shared-service`, and each `domain-*` package with **`git` + `tag`**. For CI and local scripts, override the tag with **`DOMAIN_PACKAGES_TAG`** if needed; otherwise tooling reads the tag from TOML. After bumping a tag, run **`uv lock`** (and **`make vendor-rcf-schemas`** when `response-control-framework` schemas changed).
 - External GitHub submodules: `npm run deps:external`
 - Main Python workspace: `uv sync --python 3.11`
 - Main Node workspace: `npm install`
@@ -18,6 +19,22 @@ Cloning additional “legacy” projects **inside** this repository root increas
 - Full AI Docker dev stack: `make up`
 - Docker topology validation: `make docker-validate`
 - Shared local caches and model state live under `./.cache/` (see below).
+
+## Standalone package repos (shared CI)
+
+The five libraries pinned in [`pyproject.toml`](../pyproject.toml) (`response-control-framework`, `ai-shared-service`, `domain-engineering`, `domain-research`, `domain-content`) each live in their own GitHub repo. **CI is centralized** in this repo:
+
+- **Reusable workflow:** [`.github/workflows/reusable-python-package-ci.yml`](../.github/workflows/reusable-python-package-ci.yml) (`workflow_call`) runs `pip install -e ".[<extras>]"`, `ruff`, `mypy --strict`, and `pytest` with caller-supplied paths.
+
+**Callers** in each package repo use a thin `.github/workflows/ci.yml` that invokes:
+
+`uses: mhold3n/server/.github/workflows/reusable-python-package-ci.yml@<ref>`
+
+**Pinning `ref`:** Prefer a **commit SHA** or a **tag on `mhold3n/server`** (e.g. `@v2026.04.15`) instead of bare `@main`, so changes on server `main` do not silently break standalone repos. After updating the reusable workflow API (inputs), tag server and bump the `@ref` in each caller.
+
+**Permissions:** For a **public** `mhold3n/server`, `contents: read` on the caller is enough. Cross-repo reusable workflows require the caller repo to be allowed to use workflows from server (default for public repos). **Private** server or private callers may need org settings and/or `GITHUB_TOKEN` scopes documented by GitHub.
+
+**Copy-ready caller snippets** live under [`docs/templates/standalone-repos/`](../docs/templates/standalone-repos/) (one YAML per package). Step-by-step apply and PRs: [apply-standalone-ci-callers.md](runbooks/apply-standalone-ci-callers.md). **Branch protection** and **release/tag workflow** with the super-project: [standalone-branch-protection.md](runbooks/standalone-branch-protection.md), [releases-standalone-packages.md](releases-standalone-packages.md) (root of `docs/`).
 
 ## Orchestration wiki (response-control catalogs)
 
