@@ -50,7 +50,7 @@ echo "==> Mypy (per package)"
 (cd xlotyl/services/api-service && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-api" uv run --package agent-orchestrator-api mypy --strict src)
 (cd xlotyl/services/router-service && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-router" uv run --package agent-orchestrator-router mypy --strict src)
 (cd xlotyl/services/worker-service && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-worker-client" uv run --package agent-orchestrator-worker-client mypy --strict src)
-(cd xlotyl/services/structure-service && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-structure" uv run --package structure mypy --strict . || true)
+(cd xlotyl/services/structure-service && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/services-structure" uv run --package structure mypy --strict .)
 (cd mcp-servers/mcp/servers/filesystem-mcp && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/mcp-filesystem" uv run --package filesystem-mcp-server mypy --strict src)
 (cd mcp-servers/mcp/servers/secrets-mcp && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/mcp-secrets" uv run --package secrets-mcp-server mypy --strict src)
 (cd mcp-servers/mcp/servers/vector-db-mcp && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/mcp-vector-db" uv run --package vector-db-mcp-server mypy --strict src)
@@ -60,6 +60,10 @@ echo "==> Mypy (per package)"
 echo "==> Pytest (per package; live stack is required)"
 if ! command -v docker >/dev/null 2>&1; then
   echo "ERROR: docker is required for this CI suite (live-stack tests are required)." >&2
+  exit 1
+fi
+if ! docker info >/dev/null 2>&1; then
+  echo "ERROR: Docker CLI is present but the daemon is not reachable (start Docker Desktop / dockerd)." >&2
   exit 1
 fi
 
