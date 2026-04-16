@@ -15,9 +15,13 @@ on:
         type: string
         default: dev
       mypy-target:
-        description: Path or package arg passed to `mypy --strict`
+        description: Arguments after optional flags (paths, packages, or config) passed to mypy
         type: string
         default: src
+      mypy-extra-args:
+        description: Flags before the target (default `--strict`; empty to run plain mypy)
+        type: string
+        default: "--strict"
       ruff-paths:
         description: Paths passed to `ruff check`
         type: string
@@ -59,7 +63,7 @@ jobs:
         run: ruff check ${{ inputs.ruff-paths }}
 
       - name: Mypy
-        run: mypy --strict ${{ inputs.mypy-target }}
+        run: mypy ${{ inputs.mypy-extra-args }} ${{ inputs.mypy-target }}
 
       - name: Pytest
         run: ${{ inputs.pytest-args }}
