@@ -1,5 +1,7 @@
 # MCP Servers Architecture
 
+**Ownership:** Canonical MCP **definitions** and the agent-facing **catalog** are owned by **[xlotyl](https://github.com/mhold3n/xlotyl)** (`mcp-servers/mcp/config/mcp_servers.yaml`). This directory contains **implementation sources** that the **server** superproject **tracks** for build, CI, and deployment on primary hardware — a **mirrored layout** until implementations optionally move entirely into xlotyl.
+
 This directory contains the Model Context Protocol (MCP) servers for the agent-orchestrator system. The architecture follows a hybrid approach with both global infrastructure-level servers and per-repository servers.
 
 ## Hybrid Architecture Overview
@@ -80,7 +82,7 @@ These servers are designed to be integrated into individual project repositories
 ## Configuration
 
 ### Global Server Configuration
-Global MCP servers are configured in `config/mcp_servers.yaml`:
+The **authoritative** catalog is in the **xlotyl** repo: **`xlotyl/mcp-servers/mcp/config/mcp_servers.yaml`** (submodule path in the superproject). The snippet below is illustrative only:
 
 ```yaml
 servers:
@@ -116,11 +118,11 @@ QDRANT_URL=http://qdrant:6333
 ## Development
 
 ### Adding New Global MCP Servers
-1. Create a new directory under `mcp/servers/`
-2. Implement the MCP server following the existing patterns
-3. Add to `compose/docker-compose.server.yml`
-4. Update `config/mcp_servers.yaml`
-5. Add tests and documentation
+1. Create a new directory under `mcp/servers/` (tracked in this superproject until sources migrate to xlotyl).
+2. Implement the MCP server following the existing patterns.
+3. Add to `docker/compose-profiles/docker-compose.server.yml` (or the appropriate profile).
+4. Register the server in **`xlotyl/mcp-servers/mcp/config/mcp_servers.yaml`** (xlotyl-owned catalog).
+5. Add tests and documentation.
 
 ### Creating Per-Repository MCP Servers
 1. Use `example-repo-mcp/` as a template

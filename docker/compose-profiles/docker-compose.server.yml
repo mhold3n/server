@@ -70,7 +70,9 @@ services:
       - net.ipv4.conf.all.src_valid_mark=1
     restart: unless-stopped
 
-  # Global MCP Servers
+  # Global MCP Servers — implementation images tracked in mhold3n/server (mcp-servers/mcp/servers/*).
+  # MCP product ownership and authoritative catalog: xlotyl (xlotyl/mcp-servers/mcp/config/mcp_servers.yaml).
+  # This profile records deployment on primary server hardware for homelab use.
   mcp-github:
     build:
       context: ./mcp-servers/mcp/servers/github-mcp

@@ -250,6 +250,7 @@ services:
       retries: 10
       start_period: 20s
 
+  # Product MCP (xlotyl-owned image): WrkHrs MCP — built from xlotyl ai-gateway-service; tracked/deployed via this compose.
   wrkhrs-mcp:
     build:
       context: ./xlotyl/services/ai-gateway-service
@@ -273,6 +274,7 @@ services:
       retries: 10
       start_period: 20s
 
+  # MCP registry: loads xlotyl-owned catalog (read-only mount). Server superproject tracks deployment on primary hardware.
   mcp-registry:
     build: ./xlotyl/services/mcp-registry-service
     ports:

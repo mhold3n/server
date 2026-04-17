@@ -18,7 +18,7 @@ Legend: **owner** = repo that should maintain the code; **action** = intended mi
 | `server/services/worker-service` (removed) | xlotyl | delete from server | Same |
 | `server/services/media-service` (removed) | xlotyl | delete from server | Same |
 | `docker-compose.yml`, `docker/compose-profiles/*.yml` | server | rewrite | Compose stays in server; **build contexts** point at `./xlotyl/...` for AI images |
-| `mcp-servers/` | server | leave (for now) | Host-adjacent MCP; Phase 6 may move agent-only servers into xlotyl |
+| `mcp-servers/` (implementations in superproject) | xlotyl owns MCP product; server **tracks** paths, compose, CI | leave (tracked mirror) | Canonical catalog/registry in **xlotyl** (`mcp-servers/mcp/config/`); this tree tracks **build/deploy** on primary hardware; optional future move of sources fully into xlotyl |
 | `pyproject.toml` (server root) | server | pruned | Workspace limited to host MCP Python packages; no AI monorepo members |
 | `package.json` (server root) | server | pruned | `@server/infra-workspace` only; no xlotyl Node workspaces |
 | `.github/workflows/ci.yml` | server | rewrite | CI runs Python/Node checks under `xlotyl/` where AI code lives |

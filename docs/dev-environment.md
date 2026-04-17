@@ -9,6 +9,8 @@ Cloning additional “legacy” projects **inside** this repository root increas
 - **Same machine:** clone other projects under a sibling directory, e.g. `~/work/server` and `~/work/some-other-repo`, not inside `server/`.
 - **This repo only:** run CI parity with [`scripts/run_ci_local.sh`](../scripts/run_ci_local.sh) from the repository root.
 
+How **on-premises backups** relate to **GitHub**: [`infrastructure-and-git.md`](infrastructure-and-git.md).
+
 ### GitHub Actions: private submodules
 
 [`actions/checkout`](https://github.com/actions/checkout) uses `secrets.SUBMODULE_CLONE_TOKEN` when set; otherwise it falls back to `github.token`, which only has access to the **server** repository. If a submodule such as [`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl) is **private**, create a repository secret **`SUBMODULE_CLONE_TOKEN`**: a PAT (classic `repo` scope, or fine-grained read access to each submodule repository). [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) passes that token so `submodules: recursive` can clone every URL in [`.gitmodules`](../.gitmodules).

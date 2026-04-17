@@ -13,6 +13,12 @@
 - **This repo** — **Infrastructure and deployment**: compose profiles, CI, MCP host packages, observability base, networking/media infra, scripts that pin or update submodules, and glue that **starts** the AI product from `./xlotyl`.
 - **Legacy archive** — The historical MBMH training/runtime tree and the retired `engineering_physics_v1` harness were moved out of this repo into the sibling legacy archive at `../server-local-archive/2026-04-08/server/`.
 
+### Role of this repo and GitHub
+
+This repository is the **primary web-based tracker** for **infrastructure layout**, **compose**, **CI**, and **submodule pins** so changes are reviewable and reproducible. It does **not** replace on-machine operational truth.
+
+**GitHub** is **tertiary** relative to **local RAID** (primary server) and **backups on secondary machines**: use **git** for history, **diffs**, and collaboration; use **RAID and secondary copies** for durability and recovery. See [`docs/infrastructure-and-git.md`](docs/infrastructure-and-git.md).
+
 ### External GitHub repos
 
 - **`claw-code-main/`** — Git submodule tracking our fork [`mhold3n/claw-code`](https://github.com/mhold3n/claw-code) on `main` (upstream: [`ultraworkers/claw-code`](https://github.com/ultraworkers/claw-code)).
@@ -131,7 +137,7 @@ open http://localhost:5000
 * **API and Router** run from **`xlotyl`** service images; the server repo wires compose, ports, and env — it does not own that application source at the repo root.
 * **WrkHrs / gateway** stacks run from **`xlotyl/services/ai-gateway-service`** build contexts.
 * Internal services call the **worker** via OpenAI-compatible endpoints for LLM inference.
-* MCP servers are configured in `mcp-servers/mcp/config/mcp_servers.yaml`.
+* **MCP catalog** (xlotyl-owned): `xlotyl/mcp-servers/mcp/config/mcp_servers.yaml` (with submodule initialized). **Implementations** under `mcp-servers/` here are **tracked** for build/CI on primary hardware — see [`mcp-servers/README.md`](mcp-servers/README.md).
 * MLflow provides experiment tracking and model registry for all AI operations.
 
 ## WrkHrs AI Stack Integration (sources in `xlotyl/`)
