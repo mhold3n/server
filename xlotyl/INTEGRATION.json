@@ -1,0 +1,13 @@
+{
+  "remote": "https://github.com/XLOTYL/xlotyl.git",
+  "commit": "35c70ed6fcf65af87957f6b56441475b75282b8a",
+  "ref": "main",
+  "tag": null,
+  "components": [
+    "tool-model-lane",
+    "schemas/openclaw-bridge/v1/tool-model",
+    "services/api-service/src/birtha_tool_model",
+    "openclaw/extensions/birtha-bridge (submodule XLOTYL/openclaw)"
+  ],
+  "notes": "Pin updated when tool-model lane or bridge contracts change in xlotyl; openclaw submodule pointer is part of the xlotyl commit."
+}

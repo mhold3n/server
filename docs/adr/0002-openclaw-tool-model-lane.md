@@ -61,15 +61,15 @@ Introduce a dedicated **tool-model lane** on the Xlotyl side, reachable over **H
 
 Implementation phases, JSON shapes, endpoint names, and acceptance criteria: [`../drafts/openclaw-tool-model-lane-implementation-brief.md`](../drafts/openclaw-tool-model-lane-implementation-brief.md).
 
-### Reference implementation (this repo)
+### Reference implementation (canonical: xlotyl product repo)
 
-Vendored for contracts and a mergeable handler (mirror into the **xlotyl** product repo as needed):
+Source of truth: **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)**. This **server** repo records the pinned revision in [`xlotyl/INTEGRATION.json`](../xlotyl/INTEGRATION.json).
 
-- JSON Schemas: [`../../xlotyl/schemas/openclaw-bridge/v1/tool-model/`](../../xlotyl/schemas/openclaw-bridge/v1/tool-model/)
-- Tool registry: [`../../xlotyl/schemas/openclaw-bridge/v1/registry.v1.json`](../../xlotyl/schemas/openclaw-bridge/v1/registry.v1.json)
-- Python router + handler: [`../../xlotyl/services/api-service/birtha_tool_model/`](../../xlotyl/services/api-service/birtha_tool_model/)
-- Merge checklist: [`../../xlotyl/services/api-service/birtha_tool_model/VALIDATION.md`](../../xlotyl/services/api-service/birtha_tool_model/VALIDATION.md)
-- OpenClaw client helper: [`../../openclaw/extensions/birtha-bridge/`](../../openclaw/extensions/birtha-bridge/)
+- JSON Schemas: [tool-model](https://github.com/XLOTYL/xlotyl/tree/main/schemas/openclaw-bridge/v1/tool-model)
+- Tool registry: [registry.v1.json](https://github.com/XLOTYL/xlotyl/blob/main/schemas/openclaw-bridge/v1/registry.v1.json)
+- Python handler + route (`POST /api/ai/tool-query`): [services/api-service/src/birtha_tool_model](https://github.com/XLOTYL/xlotyl/tree/main/services/api-service/src/birtha_tool_model)
+- Merge checklist: [VALIDATION.md](https://github.com/XLOTYL/xlotyl/blob/main/services/api-service/src/birtha_tool_model/VALIDATION.md)
+- OpenClaw client: [openclaw/extensions/birtha-bridge](https://github.com/XLOTYL/openclaw/tree/main/extensions/birtha-bridge) (xlotyl’s `openclaw` submodule)
 
 ## Related
 

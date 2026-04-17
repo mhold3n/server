@@ -29,8 +29,8 @@
 - **OpenClaw tool:** `birtha_tool_query`
 - **Purpose:** Scoped, non-authoritative model calls for OpenClaw tools (taxonomy class **B**). Not for final user answers or governed mutations.
 - **Idempotency:** Recommended: same pattern as JSON query (`openclaw_bridge.idempotency_key` + Redis) with a **dedicated key namespace**; stricter max body size than `/api/ai/query`.
-- **Schemas:** `xlotyl/schemas/openclaw-bridge/v1/tool-model/` (request, response union, provenance).
-- **Registry:** `xlotyl/schemas/openclaw-bridge/v1/birtha_bridge_tools.v1.json` — only class **B** tools may hit this route; class **C** must use governed ingress.
+- **Schemas (canonical in [xlotyl](https://github.com/XLOTYL/xlotyl)):** `schemas/openclaw-bridge/v1/tool-model/` (request, response union, provenance). Pin: [`xlotyl/INTEGRATION.json`](../xlotyl/INTEGRATION.json) in this repo.
+- **Registry:** `birtha_bridge_tools.v1.json` + `registry.v1.json` — only class **B** tools may hit this route; class **C** must use governed ingress.
 
 ## Agent-platform discovery (Phase 3)
 
@@ -67,5 +67,5 @@ On success the body is the agent-platform JSON. Typed `cancel.ack` SSE events ar
 - `schemas/openclaw-bridge/v1/events/README.md` — envelope, ordering rules, “no raw logs”.
 - `docs/adr/0002-openclaw-tool-model-lane.md` — tool-model lane authority and contracts.
 - `docs/runbooks/openclaw-birtha-bridge-agent-platform-streaming.md` — agent-platform streaming discovery + MVP decision.
-- `openclaw/extensions/birtha-bridge/CONTINUITY.md` — mirror vs authority.
+- [openclaw `extensions/birtha-bridge/CONTINUITY.md`](https://github.com/XLOTYL/openclaw/blob/main/extensions/birtha-bridge/CONTINUITY.md) — mirror vs authority (xlotyl `openclaw` submodule).
 - `docs/external-orchestration-interfaces.md` — repo topology + Phase 4 MCP decision gate.

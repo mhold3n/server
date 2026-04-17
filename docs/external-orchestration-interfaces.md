@@ -51,7 +51,7 @@ Three logical lanes keep authority unambiguous:
 
 Class **C** tools (governed product capabilities) must **not** use the tool-model lane as a shortcut; they trigger the governed path (e.g. existing `POST /api/ai/query` / workflows), with OpenClaw acting only as the trigger surface.
 
-Contracts: JSON Schemas under **`xlotyl/schemas/openclaw-bridge/v1/tool-model/`**; registry format: **`birtha_bridge_tools.v1.json`**, example data **`registry.v1.json`**. ADR: [`docs/adr/0002-openclaw-tool-model-lane.md`](adr/0002-openclaw-tool-model-lane.md).
+Contracts live in the **[xlotyl](https://github.com/XLOTYL/xlotyl)** repository: **`schemas/openclaw-bridge/v1/tool-model/`**, registry format **`birtha_bridge_tools.v1.json`**, example data **`registry.v1.json`**. This server repo pins the integrated revision in [`xlotyl/INTEGRATION.json`](xlotyl/INTEGRATION.json). ADR: [`docs/adr/0002-openclaw-tool-model-lane.md`](adr/0002-openclaw-tool-model-lane.md).
 
 ### OpenClaw HTTPS bridge (Phase 1)
 
