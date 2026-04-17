@@ -45,6 +45,15 @@ The supported shell ingress is **`POST /api/ai/query`** on **`xlotyl/services/ap
 
 **Phase 2–3 additions (same extension):** shell-local **session mirror** + operator HTTP/CLI (`CONTINUITY.md` in the extension), **`birtha_query_stream`** for typed SSE (`schemas/openclaw-bridge/v1/events/`), and the runbook **`docs/runbooks/openclaw-birtha-bridge.md`** for transport vocabulary and agent-platform limits.
 
+### Tool-model lane (ADR-0002 — HTTPS-first)
+
+AI-assisted **OpenClaw shell tools** (summarize, classify, extract, propose search terms) must **not** reuse the generic user **`birtha_query`** path when the intent is a **scoped, tool-local** model call. That blurs audit and risks treating tool output as governed truth.
+
+The **tool-model lane** is a separate ingress and contract: **pre-authoritative**, schema-bounded, **no mutation rights**, **`requires_validation = true`**, exposed as a plugin tool such as **`birtha_tool_query`** alongside **`birtha_query`**. OpenClaw remains the shell; Xlotyl remains the authority for governed execution and final validation.
+
+- **Decision record:** [`docs/adr/0002-openclaw-tool-model-lane.md`](adr/0002-openclaw-tool-model-lane.md)
+- **Implementation brief (schemas, phases, acceptance):** [`docs/drafts/openclaw-tool-model-lane-implementation-brief.md`](drafts/openclaw-tool-model-lane-implementation-brief.md)
+
 ### MCP as the primary OpenClaw transport (Phase 4 — deferred)
 
 Cross-exposing Birtha MCP servers to OpenClaw as the **canonical** shell↔control-plane transport is **explicitly Phase 4**. Ship and harden the HTTPS + `openclaw-bridge/v1` path first; keep MCP usage focused on **internal** orchestration and tool execution inside Birtha until that milestone.

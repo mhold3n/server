@@ -23,6 +23,13 @@
 - **Events today:** `run.started` → `run.completed` or `run.failed` → optional `pending_mode_change` tail from the final JSON snapshot.
 - **Mid-run** clarification / tool / graph events require **agent-platform** to expose incremental lifecycle or a workflow stream; until then, consumers must not assume fine-grained progress.
 
+### Tool-model lane (planned — ADR-0002)
+
+- **Route:** TBD in xlotyl `api-service` (e.g. `POST /api/ai/tool-query` — see brief).
+- **OpenClaw tool (planned):** `birtha_tool_query` — **class B** AI-assisted shell tools only; responses are **non-authoritative** and must carry `lane: tool_model`, `authoritative: false`, `requires_validation: true`.
+- **Do not** route ordinary user chat turns here; use `birtha_query` / stream for shell→governed ingress.
+- **Docs:** [`docs/adr/0002-openclaw-tool-model-lane.md`](../adr/0002-openclaw-tool-model-lane.md), [`docs/drafts/openclaw-tool-model-lane-implementation-brief.md`](../drafts/openclaw-tool-model-lane-implementation-brief.md).
+
 ## Agent-platform discovery (Phase 3)
 
 The TypeScript runner (`services/agent-platform-service/server`) exposes synchronous workflow execution:
@@ -59,3 +66,5 @@ On success the body is the agent-platform JSON. Typed `cancel.ack` SSE events ar
 - `docs/runbooks/openclaw-birtha-bridge-agent-platform-streaming.md` — agent-platform streaming discovery + MVP decision.
 - `openclaw/extensions/birtha-bridge/CONTINUITY.md` — mirror vs authority.
 - `docs/external-orchestration-interfaces.md` — repo topology + Phase 4 MCP decision gate.
+- `docs/adr/0002-openclaw-tool-model-lane.md` — tool-model lane vs governed `birtha_query`.
+- `docs/drafts/openclaw-tool-model-lane-implementation-brief.md` — endpoint options, schemas, phases.
