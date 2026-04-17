@@ -14,7 +14,6 @@ from datetime import datetime
 from .logging import StructuredLogger, AuditRecord
 from models.task_spec import TaskSpec, TaskRequest
 from models.gate_decision import GateDecision, Decision
-from models.clarify import ClarifyRequest  # noqa: F401 - available for future use
 from validator.loader import load_registry, load_schema, load_policy
 from validator.gates import run_gates, get_blocking_decisions
 from router.classifier import classify_task
@@ -23,10 +22,8 @@ from models.session import Session
 from runtime.orchestrator import Orchestrator
 from router.workflow_builder import build_workflow_from_request
 
-# from telemetry.tracer import get_tracer
 from telemetry.otel.setup import setup_telemetry
 
-# Initialize Telemetry
 tracer, meter = setup_telemetry("gateway", "0.3.0")
 
 app = FastAPI(
@@ -36,9 +33,6 @@ app = FastAPI(
 )
 
 logger = StructuredLogger("gateway")
-
-
-# --- Request/Response Models ---
 
 
 class TaskRequestInput(BaseModel):
@@ -79,9 +73,6 @@ class KernelRequestInput(BaseModel):
     args: dict[str, Any] = Field(default_factory=dict)
 
 
-# --- Routes ---
-
-
 @app.post("/task", response_model=TaskResponse)
 async def submit_task(input: TaskRequestInput) -> TaskResponse:
     """
@@ -119,15 +110,12 @@ async def submit_task(input: TaskRequestInput) -> TaskResponse:
         span.set_attribute("domain_hint", str(input.domain_hint))
 
     try:
-        # 1. Classify into validated TaskSpec
         spec: TaskSpec = classify_task(request)
         logger.log_event(request_id, "classified", spec.model_dump())
 
-        # 2. Run validation gates
         gate_results: list[GateDecision] = run_gates(spec)
         blocking = get_blocking_decisions(gate_results)
 
-        # Check for blocking decisions
         if blocking:
             first_block = blocking[0]
 
@@ -186,7 +174,6 @@ async def submit_task(input: TaskRequestInput) -> TaskResponse:
                 message=f"Blocked by {first_block.gate_id}: {first_block.reasons}",
             )
 
-        # 3. All gates passed - dispatch to kernel (placeholder)
         result = {
             "gates_passed": True,
             "selected_kernels": spec.selected_kernels,
@@ -259,7 +246,6 @@ async def get_policy(policy_id: str):
     return policy
 
 
-# Global runtime state
 orchestrator = Orchestrator()
 sessions: dict[str, Session] = {}
 active_workflows: dict[str, Workflow] = {}
@@ -274,7 +260,6 @@ async def submit_workflow(input: TaskRequestInput) -> Workflow:
     """
     request_id = str(uuid.uuid4())
 
-    # 1. Create Request
     request = TaskRequest(
         request_id=request_id,
         user_input=input.user_input,
@@ -287,20 +272,14 @@ async def submit_workflow(input: TaskRequestInput) -> Workflow:
     with tracer.start_as_current_span("gateway.submit_workflow") as span:
         span.set_attribute("request_id", request_id)
 
-    # 2. Build Workflow
     workflow = build_workflow_from_request(request)
 
-    # 3. Create/Get Session
-    # For now, create a new session for each workflow request
-    # In future, we'd extract session_id from headers/auth
     session_id = f"sess_{uuid.uuid4().hex[:8]}"
     session = Session(session_id=session_id)
     sessions[session_id] = session
 
-    # Store workflow for resumption
     active_workflows[workflow.workflow_id] = workflow
 
-    # 4. Execute Workflow
     try:
         updated_workflow = await orchestrator.run_workflow(workflow, session)
 
@@ -309,10 +288,7 @@ async def submit_workflow(input: TaskRequestInput) -> Workflow:
 
     except Exception as e:
         logger.log_error(request_id, str(e))
-        # Return workflow in failed state if possible, else raise
-        workflow.status = (
-            "failed"  # Should be WorkflowStatus.FAILED but utilizing string for simplicity/safety
-        )
+        workflow.status = "failed"
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -366,43 +342,25 @@ async def answer_clarification(session_id: str, answers: list[ClarificationAnswe
 
     session = sessions[session_id]
 
-    # 1. Update Session Context
-    # Map answers to context variables? Or just store them?
-    # For now, store in a special 'user_answers' dict in context
     for ans in answers:
         session.context[f"answer_{ans.question_id}"] = ans.answer
-        # Also log to history
         session.add_history(
             "user_clarification", {"question": ans.question_id, "answer": ans.answer}
         )
 
-    # 2. Resume Workflow
     if not session.active_workflow_id:
         raise HTTPException(status_code=400, detail="No active workflow in this session")
-
-    # In a real app we'd load workflow from DB. Here we don't have global workflow storage
-    # except explicitly returned, but `orchestrator.run_workflow` takes a workflow object.
-    # We need to retrieve the workflow object.
-    # LIMITATION: In this in-memory prototype, we don't have a lookup for Workflow objects by ID
-    # outside of the `result`... wait.
-    # The `sessions` dict stores `Session`, but `Workflow` state is lost if not persisted.
-    #
-    # For this prototype, I will rely on the client re-submitting OR (better) I'll add a
-    # `workflows` in-memory store to `main.py` to support this pattern.
 
     workflow = active_workflows.get(session.active_workflow_id)
     if not workflow:
         raise HTTPException(status_code=404, detail="Active workflow not found (memory reset?)")
 
-    # Update workflow context too
     workflow.context.update(session.context)
 
-    # Reset blocked steps to PENDING or ACTIVE to retry
     for step in workflow.steps:
-        if step.status == "blocked":  # WorkflowStatus.BLOCKED
-            step.status = "pending"  # WorkflowStatus.PENDING
+        if step.status == "blocked":
+            step.status = "pending"
 
-    # Re-run
     try:
         updated_workflow = await orchestrator.run_workflow(workflow, session)
         return updated_workflow
