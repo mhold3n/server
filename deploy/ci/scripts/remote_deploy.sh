@@ -26,22 +26,16 @@ case $TARGET in
             --exclude='.env' \
             --exclude='*.log' \
             ./ "$SERVER_USER@$SERVER_HOST:~/agent-orchestrator/"
-        # AI stack: copy dereferenced tree (works with ../xlotyl symlink locally).
-        if [[ -d "$PROJECT_ROOT/xlotyl" ]]; then
-            rsync -avzL --delete "$PROJECT_ROOT/xlotyl/" "$SERVER_USER@$SERVER_HOST:~/agent-orchestrator/xlotyl/"
-        fi
-        
         # Deploy on server
         echo "🔧 Deploying on server..."
         ssh "$SERVER_USER@$SERVER_HOST" << 'EOF'
             cd ~/agent-orchestrator
             cp .env.example .env || true
             
-            # Pull latest images
-            docker compose --project-directory "$HOME/agent-orchestrator" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml -f docker/compose-profiles/docker-compose.ai.yml -f docker/compose-profiles/docker-compose.server.yml pull
-            
-            # Deploy with health checks
-            docker compose --project-directory "$HOME/agent-orchestrator" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml -f docker/compose-profiles/docker-compose.ai.yml -f docker/compose-profiles/docker-compose.server.yml up -d --build
+            # Pull AI stack images (ghcr.io/xlotyl/*) + platform; pin versions in config/xlotyl-images.env
+            docker compose --project-directory "$HOME/agent-orchestrator" --env-file "$HOME/agent-orchestrator/config/xlotyl-images.env" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml -f docker/compose-profiles/docker-compose.ai.yml -f docker/compose-profiles/docker-compose.server.yml pull
+
+            docker compose --project-directory "$HOME/agent-orchestrator" --env-file "$HOME/agent-orchestrator/config/xlotyl-images.env" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml -f docker/compose-profiles/docker-compose.ai.yml -f docker/compose-profiles/docker-compose.server.yml up -d
             
             # Wait for services to be healthy
             ./deploy/ci/scripts/wait_for_healthy.sh api 8080 60

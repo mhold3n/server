@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "server-workspace"
 version = "0.1.0"
-description = "Infrastructure platform: networking, deployment, observability; AI product is the xlotyl submodule"
+description = "Infrastructure platform: networking, deployment, observability; AI stack is consumed as OCI images (ghcr.io/xlotyl/*)"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
@@ -21,7 +21,7 @@ packages = []
 package = false
 default-groups = []
 
-# Host-side MCP servers remain in this repo; AI Python stack is under `xlotyl/`.
+# Host-side MCP servers remain in this repo; AI implementation lives in https://github.com/XLOTYL/xlotyl
 [tool.uv.sources]
 filesystem-mcp-server = { workspace = true }
 secrets-mcp-server = { workspace = true }

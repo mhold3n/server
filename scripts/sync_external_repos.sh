@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Keep the GitHub-backed external repos pinned to their configured upstream
-# branches in .gitmodules.
-git submodule sync --recursive -- claw-code-main openclaw void xlotyl
-git submodule update --init --remote --recursive claw-code-main openclaw void xlotyl
-git submodule status -- claw-code-main openclaw void xlotyl
+# This repository no longer vendors AI product sources as submodules.
+# Clone https://github.com/XLOTYL/xlotyl beside this repo (default: ../xlotyl) for AI development.
+echo "No git submodules to sync for infra. For the AI stack, clone XLOTYL/xlotyl and run:"
+echo "  cd ../xlotyl && git submodule update --init --recursive"

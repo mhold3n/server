@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+XLOTYL_ROOT="${XLOTYL_ROOT:-$ROOT/../xlotyl}"
 LEGACY_ARCHIVE_ROOT="${LEGACY_ARCHIVE_ROOT:-$ROOT/../server-local-archive/2026-04-08/server}"
 # shellcheck source=/dev/null
 source "$ROOT/scripts/workspace_env.sh"
@@ -48,7 +49,7 @@ case "$TOOL_NAME" in
   whisper-asr)
     ensure_env
     install_into_env openai-whisper
-    install_into_env -e "$ROOT/xlotyl/services/ai-gateway-service[asr]" -e "$ROOT/xlotyl/services/media-service"
+    install_into_env -e "$XLOTYL_ROOT/services/ai-gateway-service[asr]" -e "$XLOTYL_ROOT/services/media-service"
     ;;
   qwen-runtime)
     ensure_env

@@ -1,10 +1,9 @@
-# WrkHrs AI Stack — build contexts point at ./xlotyl (Git submodule: github.com/mhold3n/xlotyl).
-# Canonical copy: xlotyl/docker/compose-profiles/docker-compose.ai.yml
+# WrkHrs AI Stack — images from ghcr.io/xlotyl/* (version in config/xlotyl-images.env).
+# Source compose and Dockerfiles: https://github.com/XLOTYL/xlotyl
 
 services:
   structure-gateway:
-    build:
-      context: ./xlotyl/services/structure-service
+    image: ghcr.io/xlotyl/structure-service:${XLOTYL_VERSION}
     ports:
       - "${STRUCTURE_GATEWAY_PORT:-8090}:8000"
     environment:
@@ -19,16 +18,14 @@ services:
       - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/docs" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
       interval: 10s
       timeout: 3s
       retries: 10
       start_period: 30s
 
   wrkhrs-gateway:
-    build:
-      context: ./xlotyl/services/ai-gateway-service
-      dockerfile: docker/gateway/Dockerfile
+    image: ghcr.io/xlotyl/wrkhrs-gateway:${XLOTYL_VERSION}
     ports:
       - "${WRKHRS_GATEWAY_PORT:-8091}:8000"
     environment:
@@ -48,16 +45,14 @@ services:
       - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 3s
       retries: 10
       start_period: 30s
 
   wrkhrs-agent-platform:
-    build:
-      context: ./xlotyl
-      dockerfile: services/agent-platform-service/Dockerfile
+    image: ghcr.io/xlotyl/agent-platform:${XLOTYL_VERSION}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -109,9 +104,7 @@ services:
   wrkhrs-orchestrator:
     profiles:
       - legacy-python-orchestrator
-    build:
-      context: ./xlotyl/services/ai-gateway-service
-      dockerfile: docker/orchestrator/Dockerfile
+    image: ghcr.io/xlotyl/wrkhrs-orchestrator:${XLOTYL_VERSION}
     ports:
       - "${WRKHRS_ORCH_PORT:-8081}:8000"
     environment:
@@ -137,16 +130,14 @@ services:
       - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 3s
       retries: 10
       start_period: 30s
 
   wrkhrs-rag:
-    build:
-      context: ./xlotyl/services/ai-gateway-service
-      dockerfile: docker/rag/Dockerfile
+    image: ghcr.io/xlotyl/wrkhrs-rag:${XLOTYL_VERSION}
     ports:
       - "${WRKHRS_RAG_PORT:-8082}:8000"
     environment:
@@ -168,16 +159,14 @@ services:
       - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 15s
       timeout: 10s
       retries: 20
       start_period: 300s
 
   wrkhrs-asr:
-    build:
-      context: ./xlotyl/services/ai-gateway-service
-      dockerfile: docker/asr/Dockerfile
+    image: ghcr.io/xlotyl/wrkhrs-asr:${XLOTYL_VERSION}
     ports:
       - "${WRKHRS_ASR_PORT:-8084}:8000"
     environment:
@@ -191,16 +180,14 @@ services:
       - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 15s
       timeout: 5s
       retries: 8
       start_period: 60s
 
   model-runtime:
-    build:
-      context: ./xlotyl
-      dockerfile: services/model-runtime/Dockerfile
+    image: ghcr.io/xlotyl/model-runtime:${XLOTYL_VERSION}
     ports:
       - "${MODEL_RUNTIME_PORT:-8765}:8000"
     environment:
@@ -218,7 +205,6 @@ services:
       - HUGGINGFACE_HUB_TOKEN=${HUGGINGFACE_HUB_TOKEN:-}
     volumes:
       - ./.cache/models/hf:/.cache/models/hf
-      - ./xlotyl/services/model-runtime/config:/app/services/model-runtime/config:ro
       - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
@@ -229,9 +215,7 @@ services:
       start_period: 30s
 
   wrkhrs-tool-registry:
-    build:
-      context: ./xlotyl/services/ai-gateway-service
-      dockerfile: docker/tool-registry/Dockerfile
+    image: ghcr.io/xlotyl/wrkhrs-tool-registry:${XLOTYL_VERSION}
     ports:
       - "${WRKHRS_TOOLS_PORT:-8086}:8000"
     environment:
@@ -244,17 +228,14 @@ services:
       - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 3s
       retries: 10
       start_period: 20s
 
-  # Product MCP (xlotyl-owned image): WrkHrs MCP — built from xlotyl ai-gateway-service; tracked/deployed via this compose.
   wrkhrs-mcp:
-    build:
-      context: ./xlotyl/services/ai-gateway-service
-      dockerfile: docker/mcp/Dockerfile
+    image: ghcr.io/xlotyl/wrkhrs-mcp:${XLOTYL_VERSION}
     ports:
       - "${WRKHRS_MCP_PORT:-8085}:8000"
     environment:
@@ -268,29 +249,26 @@ services:
       - ${COMPOSE_DATA_ROOT:-.docker-data}/ai/logs:/logs
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 3s
       retries: 10
       start_period: 20s
 
-  # MCP registry: loads xlotyl-owned catalog (read-only mount). Server superproject tracks deployment on primary hardware.
   mcp-registry:
-    build: ./xlotyl/services/mcp-registry-service
+    image: ghcr.io/xlotyl/mcp-registry:${XLOTYL_VERSION}
     ports:
       - "${MCP_REGISTRY_PORT:-8001}:8000"
     environment:
       - MCP_CONFIG=/mcp/config/mcp_servers.yaml
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
       - MLFLOW_TRACKING_URI=http://mlflow:5000
-    volumes:
-      - ./xlotyl/mcp-servers/mcp/config:/mcp/config:ro
     depends_on:
       - mlflow
       - tempo
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 3s
       retries: 10

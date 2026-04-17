@@ -31,7 +31,7 @@ compose files in the same change.
 | Area | Packages | Tracking mechanism |
 | --- | --- | --- |
 | RAG local embeddings | `sentence-transformers`, `torch`, `transformers` transitive stack | root `pyproject.toml` and `uv.lock` |
-| Model runtime HF mode | `transformers`, `torch`, `accelerate` via `services/model-runtime[hf]` | `services/model-runtime/pyproject.toml` and `uv.lock` |
+| Model runtime HF mode | `transformers`, `torch`, `accelerate` (xlotyl package) | Tracked in [XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl) `services/model-runtime` and its `uv.lock`; not in this repo |
 | HF Hub downloads | `huggingface-hub` transitive package | `uv.lock` |
 | Reranking integration | HTTP client only in this phase | existing package lock for `httpx` |
 

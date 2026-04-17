@@ -1,4 +1,5 @@
 # Persistent Compose data lives under COMPOSE_DATA_ROOT (default .docker-data/); see docs/dev-environment.md.
+# AI service images: config/xlotyl-images.env (ghcr.io/xlotyl/*).
 name: agent-orchestrator
 
 services:
@@ -17,9 +18,7 @@ services:
       start_period: 5s
 
   api:
-    build:
-      context: ./xlotyl
-      dockerfile: services/api-service/Dockerfile
+    image: ghcr.io/xlotyl/api-service:${XLOTYL_VERSION}
     environment:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://mock-openai:8000/v1}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-local-dev-token}
@@ -31,11 +30,6 @@ services:
       ORCHESTRATOR_AGENT_PLATFORM_URL: ${ORCHESTRATOR_AGENT_PLATFORM_URL:-http://wrkhrs-agent-platform:8000}
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    volumes:
-      - ./xlotyl/services/api-service/src:/app/src
-      - ./xlotyl/services/api-service/tests:/app/tests
-      - ./xlotyl/schemas:/app/schemas:ro
-      - ./xlotyl/knowledge:/app/knowledge:ro
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:
@@ -51,15 +45,11 @@ services:
       retries: 3
 
   router:
-    build:
-      context: ./xlotyl/services/router-service
+    image: ghcr.io/xlotyl/router-service:${XLOTYL_VERSION}
     environment:
       API_URL: http://api:8080
       REDIS_URL: redis://queue:6379
       MCP_SERVERS_CONFIG: /app/config/mcp_servers.yaml
-    volumes:
-      - ./xlotyl/services/router-service/src:/app/src
-      - ./xlotyl/services/router-service/config:/app/config:ro
     ports:
       - "${ROUTER_PORT:-8000}:8000"
     depends_on:
@@ -85,4 +75,3 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-

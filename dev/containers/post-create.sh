@@ -11,16 +11,6 @@ pre-commit install
 # Install development dependencies
 echo "Installing development dependencies..."
 
-# AI control-plane services (xlotyl submodule)
-cd /workspace/xlotyl/services/api-service
-pip install -e ".[dev]"
-
-cd /workspace/xlotyl/services/router-service
-pip install -e ".[dev]"
-
-cd /workspace/xlotyl/services/worker-service
-pip install -e ".[dev]"
-
 # MCP servers
 cd /workspace/mcp-servers/mcp/servers/filesystem-mcp
 pip install -e ".[dev]"
@@ -51,13 +41,15 @@ fi
 
 echo "Development environment setup completed!"
 echo ""
+echo "AI control-plane (api-service, router, WrkHrs, OpenClaw): clone https://github.com/XLOTYL/xlotyl"
+echo "beside this repo and run uv sync / npm ci there. Compose uses ghcr.io/xlotyl/* images via config/xlotyl-images.env."
+echo ""
 echo "Next steps:"
 echo "1. Configure your .env file with your settings"
 echo "2. Run 'make up' to start the local development stack"
-echo "3. Run 'make test-chat' to test the chat endpoint"
-echo "4. Check the README.md for more information"
+echo "3. Run 'make test-chat' to verify the API endpoint"
 echo ""
-echo "Available services:"
+echo "Available services (after make up):"
 echo "- API: http://localhost:8080"
 echo "- Router: http://localhost:8000"
 echo "- Grafana: http://localhost:3000"

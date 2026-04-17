@@ -11,6 +11,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 export E2E_REPO_ROOT="$ROOT"
+XLOTYL_ROOT="${XLOTYL_ROOT:-$ROOT/../xlotyl}"
+OPENCLAW_ROOT="${OPENCLAW_ROOT:-$XLOTYL_ROOT/openclaw}"
+export XLOTYL_ROOT OPENCLAW_ROOT
 # shellcheck source=dev/scripts/lib/e2e_compose.sh
 source "$ROOT/dev/scripts/lib/e2e_compose.sh"
 # shellcheck source=dev/scripts/lib/e2e_mac_host_ollama.sh
@@ -61,7 +64,7 @@ echo ""
 echo "Logs:  make logs"
 echo ""
 echo "OpenClaw (run on host — requires Node.js v22.12+):"
-echo "  cd \"${ROOT}/openclaw\""
+echo "  cd \"${OPENCLAW_ROOT}\""
 echo "  pnpm install"
 echo "  export BIRTHA_API_BASE_URL=http://127.0.0.1:${API_PORT}"
 echo "  # configure birtha-bridge in OpenClaw; then e.g.:"

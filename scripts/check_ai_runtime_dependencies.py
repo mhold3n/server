@@ -22,17 +22,9 @@ PINNED_IMAGES = {
 
 IMAGE_POLICY_FILES = [
     ROOT / ".env.example",
-    ROOT / "xlotyl" / "services" / "ai-gateway-service" / "env.example",
     ROOT / "docker" / "compose-profiles" / "docker-compose.worker.yml",
     ROOT / "worker" / "vllm" / "docker-compose.vllm.yml",
-    ROOT / "xlotyl" / "services" / "ai-gateway-service" / "compose" / "docker-compose.base.yml",
-    ROOT / "xlotyl" / "services" / "ai-gateway-service" / "compose" / "docker-compose.prod.yml",
 ]
-
-HF_RUNTIME_REQUIREMENTS = {
-    "xlotyl/services/model-runtime/pyproject.toml": ["torch", "transformers", "accelerate"],
-    "uv.lock": ["name = \"torch\"", "name = \"transformers\"", "name = \"accelerate\""],
-}
 
 
 def read(path: Path) -> str:
@@ -72,14 +64,8 @@ def check_images() -> None:
 
 
 def check_package_locks() -> None:
-    for rel, needles in HF_RUNTIME_REQUIREMENTS.items():
-        path = ROOT / rel
-        if not path.exists():
-            fail(f"missing package tracking file: {rel}")
-        text = read(path)
-        for needle in needles:
-            if needle not in text:
-                fail(f"{rel} missing tracked dependency marker: {needle}")
+    if not (ROOT / "uv.lock").exists():
+        fail("missing uv.lock")
     if not (ROOT / "package-lock.json").exists():
         fail("missing package-lock.json for Node workspace dependencies")
 
@@ -87,7 +73,7 @@ def check_package_locks() -> None:
 def check_source_submodules() -> None:
     gitmodules = ROOT / ".gitmodules"
     if not gitmodules.exists():
-        fail("missing .gitmodules for external source inventory")
+        return
     text = read(gitmodules).lower()
     for forbidden in ["huggingface", "ollama"]:
         if forbidden in text:

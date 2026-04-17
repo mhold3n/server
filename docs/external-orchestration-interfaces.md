@@ -1,41 +1,25 @@
 # External orchestration interfaces
 
-This document explains how the managed external repos at the repository root:
+OpenClaw and Claw Code are developed inside the **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)** product repository (as submodules there), not as checkouts in this repo.
 
-- `claw-code-main/`
-- `openclaw/`
+This **server** repository integrates the AI stack at runtime via **HTTP** and **published OCI images** (`ghcr.io/xlotyl/*`, see [`config/xlotyl-images.env`](../config/xlotyl-images.env)), not by vendoring sources.
 
-relate to the active control plane, DevPlane, and engineering-governed execution pipeline.
+## What is active (xlotyl)
 
-## Managed paths
+The active execution stack is implemented in **xlotyl** (clone separately). Conceptual layout:
 
-These paths are intentional and are refreshed from GitHub with:
-
-```bash
-npm run deps:external
-```
-
-They are not ad hoc local mirrors:
-
-- `claw-code-main/` is the tracked checkout of **`mhold3n/claw-code`** (fork of `ultraworkers/claw-code`)
-- `openclaw/` is the tracked checkout of **`mhold3n/openclaw`** (fork of `openclaw/openclaw`)
-
-## What is active in this repo
-
-The active execution stack is owned by the **`xlotyl`** submodule in this monorepo (paths below are relative to the **server** repo root):
-
-1. `xlotyl/services/api-service`
-2. `xlotyl/services/agent-platform-service/server`
-3. `xlotyl/services/model-runtime`
-4. **`xlotyl/schemas/`** (e.g. `openclaw-bridge/`, `model-runtime/`) and typed contracts in **`xlotyl/services/api-service`** / domain packages — the governed engineering surface is implemented in code + these schema trees, not under a separate `schemas/control-plane/v1` path in this snapshot.
+1. `services/api-service`
+2. `services/agent-platform-service/server`
+3. `services/model-runtime`
+4. **`schemas/`** (e.g. `openclaw-bridge/`, `model-runtime/`) and typed contracts in `services/api-service` / domain packages.
 
 Those services implement the live orchestration and engineering pipeline.
 
 ## Where Claw Code fits today
 
-`claw-code-main/` is currently an upstream checkout and reference codebase, not a first-class executor in the active pipeline.
+`claw-code-main/` (vendored under the xlotyl repo) is an upstream checkout and reference codebase, not a first-class executor in the active pipeline unless wired explicitly in agent-platform.
 
-Today there is no direct runtime import or dispatch from the control plane, DevPlane, or agent-platform into `claw-code-main/`.
+Today there is no direct runtime import or dispatch from the control plane, DevPlane, or agent-platform into that tree from **this** repository.
 
 Practical implication:
 

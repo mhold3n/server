@@ -1,58 +1,16 @@
 # External GitHub repos
 
-This workspace keeps several codebases as **Git submodules** (see `.gitmodules`). Most track our **forks’** `main` branches so Birtha can carry local patches without pointing submodule remotes at third-party default repos:
+This **infrastructure** repository does **not** vendor the AI product or OpenClaw as submodules.
 
-- `claw-code-main/` → `https://github.com/mhold3n/claw-code.git` (fork of [`ultraworkers/claw-code`](https://github.com/ultraworkers/claw-code))
-- `openclaw/` → `https://github.com/mhold3n/openclaw.git` (fork of [`openclaw/openclaw`](https://github.com/openclaw/openclaw))
-- `void/` → `https://github.com/mhold3n/void.git`
-- `xlotyl/` → `https://github.com/mhold3n/xlotyl.git` (WrkHrs AI stack: gateway, domains, model-runtime, orchestration wiki; the **super-project commit** pins the exact `xlotyl` revision for CI and releases—`branch = main` in `.gitmodules` is the default remote branch for `git submodule update --remote`, not an implicit “always latest” in CI)
+- **AI stack (api-service, router, WrkHrs, domains, model-runtime, schemas):** [XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl) — developed and released independently; consumed here as **OCI images** (`ghcr.io/xlotyl/*`) pinned in [`config/xlotyl-images.env`](../config/xlotyl-images.env).
+- **OpenClaw, claw-code, void:** tracked as **submodules inside the xlotyl repo**, not in server. After cloning [XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl), run `git submodule update --init --recursive`.
 
-The `branch = main` entries in `.gitmodules` refer to **`main` on each fork**, not the upstream organizations’ remotes.
+Hugging Face and Ollama are not tracked as source submodules in this repo. See [`ai-runtime-dependencies.md`](ai-runtime-dependencies.md) for pinned Ollama/vLLM image digests.
 
-Hugging Face and Ollama are intentionally not tracked as source submodules in
-this phase. The active stack uses their package dependencies, hosted/local APIs,
-and OCI images rather than importing or patching their GitHub source. See
-[`ai-runtime-dependencies.md`](ai-runtime-dependencies.md) for the AI runtime
-dependency inventory, including pinned Ollama/vLLM image digests and lockfile
-tracking.
+## Local development
 
-## Fork and sync (maintainers)
-
-**`openclaw`:** Fork [`openclaw/openclaw`](https://github.com/openclaw/openclaw) → **`mhold3n/openclaw`** (or change `.gitmodules` if your fork URL differs). In the fork, add **`upstream`** → `https://github.com/openclaw/openclaw.git` to pull official releases.
-
-**`claw-code-main`:** Fork [`ultraworkers/claw-code`](https://github.com/ultraworkers/claw-code) → **`mhold3n/claw-code`**. In the fork, add **`upstream`** → `https://github.com/ultraworkers/claw-code.git`.
-
-**Contributors:** After cloning this repo, run `npm run deps:external` (or `git submodule sync --recursive && git submodule update --init --recursive claw-code-main openclaw void xlotyl`) so submodule `origin` URLs match `.gitmodules`.
-
-## Refresh
-
-From the repo root:
-
-```bash
-npm run deps:external
-```
-
-That wrapper calls [`scripts/sync_external_repos.sh`](../scripts/sync_external_repos.sh), which syncs the submodule remotes and updates both checkouts from the **branches named in `.gitmodules`** on **each submodule’s `origin`** (your forks).
-
-## Why submodules instead of raw package-manager GitHub deps?
-
-`openclaw` is consumed in this workspace as a live checkout, but the repo's `main` branch is source-first and does not ship the built package artifacts that downstream plugin installs expect. Tracking the repo as a Git submodule keeps the checkout current without forcing the rest of the workspace onto an unbuilt npm GitHub dependency.
-
-New source submodules should be added only when this workspace directly imports,
-patches, or vendors upstream code. If a Hugging Face or Ollama upstream checkout
-ever becomes necessary, record the repo URL, branch or tag, pinned commit,
-license note, and update command before relying on it in runtime code.
-
-## Inspect the pinned revisions
-
-Use:
-
-```bash
-git submodule status
-```
-
-That shows the exact commit currently pinned for each external repo in this workspace.
+Clone the xlotyl product repo beside this repository (sibling `../xlotyl`) when you need Python/Node sources, OpenClaw, or orchestration wiki tooling. Compose and Makefile targets that delegate to xlotyl use `XLOTYL_ROOT` (default `../xlotyl`).
 
 ## Interaction model
 
-See [`external-orchestration-interfaces.md`](external-orchestration-interfaces.md) for the control-plane and DevPlane interaction model.
+See [`external-orchestration-interfaces.md`](external-orchestration-interfaces.md) for the control-plane and DevPlane interaction model (URLs and contracts only; no AI source paths in this repo).

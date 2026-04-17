@@ -26,9 +26,7 @@ services:
       start_period: 2s
 
   api:
-    build:
-      context: ./xlotyl
-      dockerfile: services/api-service/Dockerfile
+    image: ghcr.io/xlotyl/api-service:${XLOTYL_VERSION}
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-test}
       - OPENAI_BASE_URL=http://mock-openai:8000/v1
@@ -135,15 +133,13 @@ services:
       start_period: 15s
 
   mcp-registry:
-    build: ./xlotyl/services/mcp-registry-service
+    image: ghcr.io/xlotyl/mcp-registry:${XLOTYL_VERSION}
     ports:
       - "${MCP_REGISTRY_PORT:-8001}:8000"
     environment:
       - MCP_CONFIG=/mcp/config/mcp_servers.yaml
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
       - MLFLOW_TRACKING_URI=http://mlflow:5000
-    volumes:
-      - ./xlotyl/mcp-servers/mcp/config:/mcp/config:ro
     # Same rationale as `api.depends_on` above: let the container start,
     # then let CI's explicit HTTP waits determine readiness.
     depends_on:

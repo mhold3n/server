@@ -24,16 +24,14 @@ except ImportError:
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
+def _xlotyl_candidates(repo: Path) -> tuple[Path, ...]:
+    return (repo / "xlotyl", repo.parent / "xlotyl")
+
+
 def _control_plane_v1_dir(repo: Path) -> Path:
-    """Control-plane schemas ship under xlotyl ``response-control-framework`` (not root ``schemas/``)."""
-    candidates = (
-        repo
-        / "xlotyl"
-        / "services"
-        / "response-control-framework"
-        / "schemas"
-        / "control-plane"
-        / "v1",
+    """Control-plane schemas ship in the xlotyl repo under ``response-control-framework``."""
+    suffix = Path("services") / "response-control-framework" / "schemas" / "control-plane" / "v1"
+    candidates = tuple(base / suffix for base in _xlotyl_candidates(repo)) + (
         repo / "services" / "response-control-framework" / "schemas" / "control-plane" / "v1",
         repo / "schemas" / "control-plane" / "v1",
     )

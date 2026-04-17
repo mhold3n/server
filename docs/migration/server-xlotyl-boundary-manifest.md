@@ -1,5 +1,7 @@
 # Server ↔ Xlotyl boundary manifest (server repo)
 
+**Update:** The server repo no longer ships a `xlotyl/` submodule; it pins **`ghcr.io/xlotyl/*`** via [`config/xlotyl-images.env`](../../config/xlotyl-images.env). Historical rows below describe the pre-decoupling layout.
+
 Inventory of paths relevant to separating **infrastructure (`server`)** from the **AI product (`xlotyl`)**.  
 Legend: **owner** = repo that should maintain the code; **action** = intended migration step.
 

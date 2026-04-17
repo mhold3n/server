@@ -23,15 +23,14 @@ except ImportError:
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
+def _xlotyl_candidates(repo: Path) -> tuple[Path, ...]:
+    """Prefer submodule path, then sibling clone (../xlotyl)."""
+    return (repo / "xlotyl", repo.parent / "xlotyl")
+
+
 def _control_plane_v1_dir(repo: Path) -> Path:
-    candidates = (
-        repo
-        / "xlotyl"
-        / "services"
-        / "response-control-framework"
-        / "schemas"
-        / "control-plane"
-        / "v1",
+    suffix = Path("services") / "response-control-framework" / "schemas" / "control-plane" / "v1"
+    candidates = tuple(base / suffix for base in _xlotyl_candidates(repo)) + (
         repo / "services" / "response-control-framework" / "schemas" / "control-plane" / "v1",
         repo / "schemas" / "control-plane" / "v1",
     )
@@ -42,8 +41,8 @@ def _control_plane_v1_dir(repo: Path) -> Path:
 
 
 def _model_runtime_v1_dir(repo: Path) -> Path:
-    candidates = (
-        repo / "xlotyl" / "schemas" / "model-runtime" / "v1",
+    suffix = Path("schemas") / "model-runtime" / "v1"
+    candidates = tuple(base / suffix for base in _xlotyl_candidates(repo)) + (
         repo / "schemas" / "model-runtime" / "v1",
     )
     for p in candidates:

@@ -2,7 +2,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build-test:
@@ -13,32 +13,14 @@ jobs:
         node: ["20"]
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          # For private submodules, set SUBMODULE_CLONE_TOKEN (classic PAT with `repo`, or fine-grained read on each submodule repo).
-          token: ${{ secrets.SUBMODULE_CLONE_TOKEN || github.token }}
 
-      # Python services
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
       - run: python -m pip install --upgrade pip uv
 
       - name: Install Python workspaces (uv)
-        run: |
-          uv sync --python ${{ matrix.python }}
-          cd xlotyl && uv sync --python ${{ matrix.python }}
-
-      - name: Check wiki sources vs response-control JSON
-        run: |
-          cd xlotyl
-          uv run python scripts/sync_domain_orchestration_wiki.py
-          uv run python scripts/wiki_compile_response_control.py --check
-
-      - name: Validate wiki proposal queue
-        run: |
-          cd xlotyl
-          uv run python scripts/check_wiki_proposal_queue.py
+        run: uv sync --python ${{ matrix.python }}
 
       - name: Install MCP server dependencies
         run: |
@@ -52,7 +34,6 @@ jobs:
           pip install -e .
           pip install -e ".[dev]"
 
-      # Run linting and type checking
       - name: Run linting
         run: |
           source scripts/ci_python_lint_paths.sh
@@ -61,23 +42,17 @@ jobs:
 
       - name: Run type checking
         run: |
-          # One invocation per package: each Hatch layout uses a top-level `src/` package;
-          # passing multiple `*/src` paths in one command triggers "Duplicate module named src".
-          (cd xlotyl/services/api-service && mypy --strict src)
-          (cd xlotyl/services/router-service && mypy --strict src)
-          (cd xlotyl/services/worker-service && mypy --strict src)
           (cd mcp-servers/mcp/servers/filesystem-mcp && mypy --strict src)
           (cd mcp-servers/mcp/servers/secrets-mcp && mypy --strict src)
           (cd mcp-servers/mcp/servers/vector-db-mcp && mypy --strict src)
 
       - name: Check AI runtime dependency tracking
         run: python scripts/check_ai_runtime_dependencies.py
-      
-      # Run tests (PYTHONPATH: each wheel uses a top-level `src/` package; multiple editables
-      # would otherwise shadow each other on sys.path). Skip packages with no tests/ directory.
+
       - name: Start live-stack dependencies (required)
         run: |
-          docker compose -f docker/compose-profiles/docker-compose.ci.yml up -d --build
+          docker compose --project-directory "$GITHUB_WORKSPACE" --env-file "$GITHUB_WORKSPACE/config/xlotyl-images.env" -f docker/compose-profiles/docker-compose.ci.yml pull -q api mcp-registry || true
+          docker compose --project-directory "$GITHUB_WORKSPACE" --env-file "$GITHUB_WORKSPACE/config/xlotyl-images.env" -f docker/compose-profiles/docker-compose.ci.yml up -d
 
           wait_http() {
             local name="$1"
@@ -91,12 +66,11 @@ jobs:
               sleep 2
             done
             echo "FAIL: $name never became ready ($url)" >&2
-            docker compose -f docker/compose-profiles/docker-compose.ci.yml ps
-            docker compose -f docker/compose-profiles/docker-compose.ci.yml logs --no-color --tail=80 tempo || true
+            docker compose --project-directory "$GITHUB_WORKSPACE" --env-file "$GITHUB_WORKSPACE/config/xlotyl-images.env" -f docker/compose-profiles/docker-compose.ci.yml ps
+            docker compose --project-directory "$GITHUB_WORKSPACE" --env-file "$GITHUB_WORKSPACE/config/xlotyl-images.env" -f docker/compose-profiles/docker-compose.ci.yml logs --no-color --tail=80 tempo || true
             return 1
           }
 
-          # Use 127.0.0.1 so probes match published ports on Linux runners (avoid IPv6 localhost quirks).
           WAIT_HOST="${WAIT_HOST:-127.0.0.1}"
           API_PORT="${API_PORT:-8080}"
           MLFLOW_PORT="${MLFLOW_PORT:-5000}"
@@ -105,7 +79,6 @@ jobs:
 
           wait_http api "http://${WAIT_HOST}:${API_PORT}/health" 90
           wait_http mlflow "http://${WAIT_HOST}:${MLFLOW_PORT}/health" 90
-          # Tempo returns 503 on /ready until fully up; /ready may take longer under load than other services.
           wait_http tempo "http://${WAIT_HOST}:${TEMPO_PORT}/ready" 120
           wait_http mcp-registry "http://${WAIT_HOST}:${MCP_REGISTRY_PORT}/health" 90
 
@@ -117,29 +90,17 @@ jobs:
           TEMPO_BASE_URL: "http://127.0.0.1:3200"
           MCP_REGISTRY_BASE_URL: "http://127.0.0.1:8001"
         run: |
-          pytest xlotyl/services/domain-engineering/tests/test_governance.py -v
-          pytest xlotyl/services/domain-research/tests -v
-          pytest xlotyl/services/domain-content/tests -v
           run_pytest_cov() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v --cov=src --cov-report=xml --cov-fail-under=90); else echo "Skip pytest: no $d/tests"; fi; }
-          # secrets-mcp: coverage thresholds and omit rules live in that package's pyproject.toml; avoid CLI --cov-fail-under conflicting with the narrow gate.
           run_pytest_pyproject_only() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v); else echo "Skip pytest: no $d/tests"; fi; }
-          run_pytest_cov_any() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" uv run --extra dev pytest tests/ -v); else echo "Skip pytest: no $d/tests"; fi; }
-          run_pytest_plain() { local d="$1"; if [ -d "$d/tests" ]; then (cd "$d" && PYTHONPATH="$(pwd)" pytest tests/ -v); else echo "Skip pytest: no $d/tests"; fi; }
-          run_pytest_cov xlotyl/services/api-service
-          run_pytest_cov xlotyl/services/router-service
-          run_pytest_cov xlotyl/services/worker-service
-          run_pytest_cov_any xlotyl/services/structure-service
           run_pytest_cov mcp-servers/mcp/servers/filesystem-mcp
           run_pytest_pyproject_only mcp-servers/mcp/servers/secrets-mcp
           run_pytest_cov mcp-servers/mcp/servers/vector-db-mcp
-          (cd xlotyl/services/ai-gateway-service && PYTHONPATH="$(pwd)" WRKHRS_DISABLE_MODEL_LOAD=1 pytest tests/ -v)
 
       - name: Stop live-stack dependencies
         if: always()
         run: |
-          docker compose -f docker/compose-profiles/docker-compose.ci.yml down -v
+          docker compose --project-directory "$GITHUB_WORKSPACE" --env-file "$GITHUB_WORKSPACE/config/xlotyl-images.env" -f docker/compose-profiles/docker-compose.ci.yml down -v
 
-      # Node.js for GitHub MCP server
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
@@ -159,20 +120,8 @@ jobs:
           cd mcp-servers/mcp/servers/github-mcp
           npm test
 
-      - name: Agent platform (TypeScript orchestrator)
+      - name: Build Docker images (MCP + infra)
         run: |
-          cd xlotyl
-          npm ci
-          npm run build -w @xlotyl/open-multi-agent
-          npm run build -w @xlotyl/agent-platform-server
-          LLM_BACKEND=mock npm run test -w @xlotyl/agent-platform-server
-
-      # Build Docker images
-      - name: Build Docker images
-        run: |
-          docker build -f xlotyl/services/api-service/Dockerfile -t agent-orchestrator-api ./xlotyl
-          docker build -t agent-orchestrator-router ./xlotyl/services/router-service
-          docker build -t agent-orchestrator-worker-client ./xlotyl/services/worker-service
           if [[ -f "mcp-servers/mcp/servers/filesystem-mcp/Dockerfile" ]]; then
             docker build -t mcp-filesystem ./mcp-servers/mcp/servers/filesystem-mcp
           else
@@ -193,37 +142,11 @@ jobs:
           else
             echo "SKIP: mcp-github docker build (expected package*.json)"
           fi
-          docker build -f xlotyl/services/agent-platform-service/Dockerfile -t wrkhrs-agent-platform xlotyl
 
-      - name: Model-runtime image build and HTTP health (MOCK_INFER)
-        run: |
-          docker build -f xlotyl/services/model-runtime/Dockerfile -t model-runtime:ci xlotyl
-          cid="$(docker run -d -p 18765:8000 \
-            -e MOCK_INFER=1 \
-            -e MODEL_RUNTIME_HOST=0.0.0.0 \
-            -e MODEL_RUNTIME_PORT=8000 \
-            model-runtime:ci)"
-          cleanup() { docker stop "$cid" >/dev/null 2>&1 || true; }
-          trap cleanup EXIT
-          for i in $(seq 1 45); do
-            if curl -fsS "http://127.0.0.1:18765/health" >/dev/null 2>&1; then
-              echo "model-runtime health OK"
-              break
-            fi
-            sleep 1
-            if [[ "$i" -eq 45 ]]; then
-              echo "model-runtime health never became ready" >&2
-              docker logs "$cid" --tail 80 >&2 || true
-              exit 1
-            fi
-          done
-          python3 -c "import json,urllib.request; u=urllib.request.urlopen('http://127.0.0.1:18765/health'); d=json.loads(u.read()); assert d.get('status')=='ok', d; assert str(d.get('mock_infer')).lower() in ('true','1'), d"
-
-      # Upload coverage
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: ./xlotyl/services/api-service/coverage.xml,./xlotyl/services/router-service/coverage.xml,./xlotyl/services/worker-service/coverage.xml,./xlotyl/services/structure-service/coverage.xml,./xlotyl/services/ai-gateway-service/coverage.xml,./mcp-servers/mcp/servers/filesystem-mcp/coverage.xml,./mcp-servers/mcp/servers/secrets-mcp/coverage.xml,./mcp-servers/mcp/servers/vector-db-mcp/coverage.xml
+          files: ./mcp-servers/mcp/servers/filesystem-mcp/coverage.xml,./mcp-servers/mcp/servers/secrets-mcp/coverage.xml,./mcp-servers/mcp/servers/vector-db-mcp/coverage.xml
           fail_ci_if_error: false
 
   codeql:
@@ -235,9 +158,6 @@ jobs:
       actions: read
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          token: ${{ secrets.SUBMODULE_CLONE_TOKEN || github.token }}
       - uses: github/codeql-action/init@v3
         with:
           languages: python, javascript

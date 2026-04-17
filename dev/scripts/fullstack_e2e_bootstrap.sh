@@ -46,6 +46,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 export E2E_REPO_ROOT="$ROOT"
+# OpenClaw and api-service tests live in the xlotyl product repo (sibling clone or set XLOTYL_ROOT).
+XLOTYL_ROOT="${XLOTYL_ROOT:-$ROOT/../xlotyl}"
+OPENCLAW_ROOT="${OPENCLAW_ROOT:-$XLOTYL_ROOT/openclaw}"
+export XLOTYL_ROOT OPENCLAW_ROOT
 
 FORCE_BOOTSTRAP=0
 ACCEPT_CONFIG_MERGE=0
@@ -85,6 +89,13 @@ PID_GATEWAY="$STATE_DIR/openclaw-gateway.pid"
 
 log() { printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*"; }
 die() { log "ERROR: $*"; exit 1; }
+
+if [[ ! -d "$XLOTYL_ROOT" ]]; then
+  die "Xlotyl checkout not found at $XLOTYL_ROOT (clone https://github.com/XLOTYL/xlotyl beside this repo or set XLOTYL_ROOT)."
+fi
+if [[ ! -d "$OPENCLAW_ROOT" ]]; then
+  die "OpenClaw not found at $OPENCLAW_ROOT (in xlotyl: git submodule update --init --recursive)."
+fi
 
 # shellcheck source=dev/scripts/lib/e2e_mac_host_ollama.sh
 source "$ROOT/dev/scripts/lib/e2e_mac_host_ollama.sh"
@@ -257,7 +268,7 @@ if [[ "${E2E_PYTEST:-1}" == "1" ]]; then
     tests/test_workflow_cancel_ack.py
   )
   (
-    cd "$ROOT/xlotyl/services/api-service"
+    cd "$XLOTYL_ROOT/services/api-service"
     if command -v uv >/dev/null 2>&1; then
       uv run python -m pytest "${PY_TESTS[@]}" -q
     else
@@ -272,14 +283,14 @@ log "Exported BIRTHA_API_BASE_URL=${BIRTHA_API_BASE_URL}"
 
 if [[ "${E2E_SKIP_NODE_BOOTSTRAP:-0}" != "1" ]]; then
   log "Phase: OpenClaw pnpm install"
-  if [[ "$FORCE_BOOTSTRAP" -eq 1 ]] || [[ ! -d "$ROOT/openclaw/node_modules" ]]; then
-    (cd "$ROOT/openclaw" && pnpm_run install)
+  if [[ "$FORCE_BOOTSTRAP" -eq 1 ]] || [[ ! -d "$OPENCLAW_ROOT/node_modules" ]]; then
+    (cd "$OPENCLAW_ROOT" && pnpm_run install)
   else
     log "Skipping pnpm install (openclaw/node_modules present; use --force-bootstrap to reinstall)."
   fi
-  if [[ ! -f "$ROOT/openclaw/dist/entry.mjs" && ! -f "$ROOT/openclaw/dist/entry.js" ]]; then
+  if [[ ! -f "$OPENCLAW_ROOT/dist/entry.mjs" && ! -f "$OPENCLAW_ROOT/dist/entry.js" ]]; then
     log "OpenClaw dist missing; running pnpm build (first time can take several minutes)..."
-    (cd "$ROOT/openclaw" && pnpm_run build)
+    (cd "$OPENCLAW_ROOT" && pnpm_run build)
   fi
 fi
 
@@ -306,10 +317,10 @@ fi
 # (openclaw-gateway.log: "Control UI build failed: Missing UI runner"). Prebuild with pnpm_run so /chat loads.
 if [[ "${E2E_SKIP_NODE_BOOTSTRAP:-0}" != "1" ]] && [[ "${E2E_MANAGED_OPENCLAW_GATEWAY:-1}" == "1" ]] &&
   [[ "${E2E_SKIP_OPENCLAW_UI_BUILD:-0}" != "1" ]]; then
-  OPENCLAW_CONTROL_UI_INDEX="$ROOT/openclaw/dist/control-ui/index.html"
+  OPENCLAW_CONTROL_UI_INDEX="$OPENCLAW_ROOT/dist/control-ui/index.html"
   if [[ "$FORCE_BOOTSTRAP" -eq 1 ]] || [[ ! -f "$OPENCLAW_CONTROL_UI_INDEX" ]]; then
     log "Phase: OpenClaw Control UI (pnpm ui:build — required for Control /chat)"
-    (cd "$ROOT/openclaw" && pnpm_run ui:build) || die "openclaw pnpm ui:build failed. Install pnpm (or corepack) so assets exist under openclaw/dist/control-ui/."
+    (cd "$OPENCLAW_ROOT" && pnpm_run ui:build) || die "openclaw pnpm ui:build failed. Install pnpm (or corepack) so assets exist under openclaw/dist/control-ui/."
   else
     log "Skipping OpenClaw ui:build (${OPENCLAW_CONTROL_UI_INDEX} present; use --force-bootstrap to rebuild)."
   fi
@@ -417,7 +428,7 @@ PY
     elif [[ "${E2E_MAC_HOST_OLLAMA_ACTIVE:-0}" == "1" && "${E2E_OPENCLAW_USE_HOME_STATE:-0}" == "1" ]]; then
       log "E2E_OPENCLAW_USE_HOME_STATE=1 — managed gateway uses your default OpenClaw state dir (ensure agent model reaches a working provider for Control /chat)."
     fi
-    cd "$ROOT/openclaw"
+    cd "$OPENCLAW_ROOT"
     "${OPENCLAW_GATEWAY_PREFIX[@]}" nohup node openclaw.mjs gateway run --port "$OPENCLAW_GATEWAY_PORT" >>"$LOG_GATEWAY" 2>&1 &
     echo $! >"$PID_GATEWAY"
     cd "$ROOT"
@@ -447,7 +458,7 @@ PY
             log "  Gateway token (if connecting manually): openclaw-dev"
           else
             log "  Gateway token: (custom — not printed; set E2E_OPENCLAW_GATEWAY_TOKEN in this shell)"
-            log "  Build a login URL: run from repo: env OPENCLAW_STATE_DIR=\"${E2E_OC_STATE_DIR}\" bash -lc 'cd \"${ROOT}/openclaw\" && node openclaw.mjs dashboard --no-open'"
+            log "  Build a login URL: run from repo: env OPENCLAW_STATE_DIR=\"${E2E_OC_STATE_DIR}\" bash -lc 'cd \"${OPENCLAW_ROOT}\" && node openclaw.mjs dashboard --no-open'"
           fi
           log "  WebSocket URL (manual connect form): ws://127.0.0.1:${OPENCLAW_GATEWAY_PORT}"
           log "  Dashboard base: http://127.0.0.1:${OPENCLAW_GATEWAY_PORT}/"
@@ -459,7 +470,7 @@ PY
     fi
   else
     log "E2E_MANAGED_OPENCLAW_GATEWAY=0 — start manually, e.g.:"
-    log "  cd \"${ROOT}/openclaw\" && node openclaw.mjs gateway run --port ${OPENCLAW_GATEWAY_PORT}"
+    log "  cd \"${OPENCLAW_ROOT}\" && node openclaw.mjs gateway run --port ${OPENCLAW_GATEWAY_PORT}"
     if [[ "${E2E_MAC_HOST_OLLAMA_ACTIVE:-0}" == "1" ]]; then
       log "  (Darwin host Ollama: if Control /chat is silent, run the managed-gateway block in dev/scripts/fullstack_e2e_bootstrap.sh or set agents.defaults.model to ollama/\${OLLAMA_MODEL} in your OpenClaw config.)"
     fi

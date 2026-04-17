@@ -1,7 +1,9 @@
 SHELL := /bin/bash
 ROOT := $(CURDIR)
+# Sibling clone of https://github.com/XLOTYL/xlotyl for Makefile targets that run uv/npm in the AI repo.
+XLOTYL_ROOT ?= $(ROOT)/../xlotyl
 # Resolve relative bind mounts and ${COMPOSE_DATA_ROOT:-.docker-data}/... from repo root (Mac/Linux/Windows).
-DOCKER_COMPOSE := docker compose --project-directory $(ROOT)
+DOCKER_COMPOSE := docker compose --project-directory $(ROOT) --env-file $(ROOT)/config/xlotyl-images.env
 ENV_BOOTSTRAP := source $(ROOT)/scripts/workspace_env.sh
 COMPOSE_DIR := docker/compose-profiles
 CORE_COMPOSE := -f docker-compose.yml
@@ -101,16 +103,16 @@ docker-validate:
 # ``xlotyl/knowledge/response-control/*.json``. Prefer ``uv run`` when available so
 # Pydantic/contracts resolve; otherwise requires a venv with api-service installed.
 wiki-compile:
-	@$(MAKE) -C "$(ROOT)/xlotyl" wiki-compile
+	@$(MAKE) -C "$(XLOTYL_ROOT)" wiki-compile
 
 wiki-check:
-	@$(MAKE) -C "$(ROOT)/xlotyl" wiki-check
+	@$(MAKE) -C "$(XLOTYL_ROOT)" wiki-check
 
 wiki-proposals-check:
-	@$(MAKE) -C "$(ROOT)/xlotyl" wiki-proposals-check
+	@$(MAKE) -C "$(XLOTYL_ROOT)" wiki-proposals-check
 
 wiki-promote:
-	@$(MAKE) -C "$(ROOT)/xlotyl" wiki-promote
+	@$(MAKE) -C "$(XLOTYL_ROOT)" wiki-promote
 
 core-up:
 	$(DOCKER_COMPOSE) $(CORE_COMPOSE) up -d
@@ -221,7 +223,7 @@ seed-corpora:
 
 # Run evaluation
 eval:
-	@bash -lc 'cd "$(ROOT)/xlotyl" && uv sync --python 3.11 && cd services/api-service && PYTEST_ADDOPTS="-o cache_dir=$(ROOT)/.cache/pytest/services-api $$PYTEST_ADDOPTS" uv run --package agent-orchestrator-api pytest tests/eval/ -v --tb=short'
+	@bash -lc 'cd "$(XLOTYL_ROOT)" && uv sync --python 3.11 && cd services/api-service && PYTEST_ADDOPTS="-o cache_dir=$(ROOT)/.cache/pytest/services-api $$PYTEST_ADDOPTS" uv run --package agent-orchestrator-api pytest tests/eval/ -v --tb=short'
 
 # MLflow UI
 mlflow-ui:
@@ -230,31 +232,31 @@ mlflow-ui:
 
 # Testing
 test-api:
-	@$(MAKE) -C "$(ROOT)/xlotyl" test-api
+	@$(MAKE) -C "$(XLOTYL_ROOT)" test-api
 
 test-router:
-	@$(MAKE) -C "$(ROOT)/xlotyl" test-router
+	@$(MAKE) -C "$(XLOTYL_ROOT)" test-router
 
 test-worker:
-	@$(MAKE) -C "$(ROOT)/xlotyl" test-worker
+	@$(MAKE) -C "$(XLOTYL_ROOT)" test-worker
 
 test-combined: test-api test-router test-worker
 
 test: test-combined
 
 lint:
-	@$(MAKE) -C "$(ROOT)/xlotyl" lint
+	@$(MAKE) -C "$(XLOTYL_ROOT)" lint
 	@bash -lc '$(ENV_BOOTSTRAP) && uv run ruff check mcp-servers/mcp/servers/ --force-exclude'
 	@bash -lc '$(ENV_BOOTSTRAP) && uv run black --check mcp-servers/mcp/servers/'
 
 type:
-	@$(MAKE) -C "$(ROOT)/xlotyl" type
+	@$(MAKE) -C "$(XLOTYL_ROOT)" type
 	@bash -lc '$(ENV_BOOTSTRAP) && cd mcp-servers/mcp/servers/filesystem-mcp && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/mcp-filesystem uv run --package filesystem-mcp-server mypy --strict src'
 	@bash -lc '$(ENV_BOOTSTRAP) && cd mcp-servers/mcp/servers/secrets-mcp && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/mcp-secrets uv run --package secrets-mcp-server mypy --strict src'
 	@bash -lc '$(ENV_BOOTSTRAP) && cd mcp-servers/mcp/servers/vector-db-mcp && MYPY_CACHE_DIR=$(ROOT)/.cache/mypy/mcp-vector-db uv run --package vector-db-mcp-server mypy --strict src'
 
 fix:
-	@bash -lc 'cd "$(ROOT)/xlotyl" && uv sync --python 3.11 >/dev/null && uv run ruff check --fix services/api-service services/router-service services/worker-service services/model-runtime services/engineering-core services/mcp-registry-service services/response-control-framework services/domain-engineering services/domain-research services/domain-content services/ai-shared-service services/structure-service services/media-service --force-exclude && uv run black services/api-service services/router-service services/worker-service services/model-runtime services/engineering-core services/mcp-registry-service services/response-control-framework services/domain-engineering services/domain-research services/domain-content services/ai-shared-service services/structure-service services/media-service'
+	@bash -lc 'cd "$(XLOTYL_ROOT)" && uv sync --python 3.11 >/dev/null && uv run ruff check --fix services/api-service services/router-service services/worker-service services/model-runtime services/engineering-core services/mcp-registry-service services/response-control-framework services/domain-engineering services/domain-research services/domain-content services/ai-shared-service services/structure-service services/media-service --force-exclude && uv run black services/api-service services/router-service services/worker-service services/model-runtime services/engineering-core services/mcp-registry-service services/response-control-framework services/domain-engineering services/domain-research services/domain-content services/ai-shared-service services/structure-service services/media-service'
 	@bash -lc '$(ENV_BOOTSTRAP) && uv run ruff check --fix mcp-servers/mcp/servers/ --force-exclude'
 	@bash -lc '$(ENV_BOOTSTRAP) && uv run black mcp-servers/mcp/servers/'
 
