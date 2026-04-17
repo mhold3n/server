@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.dev/schemas/openclaw-bridge/v1/birtha_bridge_tools.v1.json",
+  "title": "BirthaBridgeToolRegistryV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "tools"],
+  "properties": {
+    "version": { "const": "1" },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "class", "description"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "class": {
+            "type": "string",
+            "enum": ["A", "B", "C"]
+          },
+          "description": { "type": "string" },
+          "allowed_capabilities": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

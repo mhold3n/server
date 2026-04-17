@@ -61,6 +61,16 @@ Introduce a dedicated **tool-model lane** on the Xlotyl side, reachable over **H
 
 Implementation phases, JSON shapes, endpoint names, and acceptance criteria: [`../drafts/openclaw-tool-model-lane-implementation-brief.md`](../drafts/openclaw-tool-model-lane-implementation-brief.md).
 
+### Reference implementation (this repo)
+
+Vendored for contracts and a mergeable handler (mirror into the **xlotyl** product repo as needed):
+
+- JSON Schemas: [`../../xlotyl/schemas/openclaw-bridge/v1/tool-model/`](../../xlotyl/schemas/openclaw-bridge/v1/tool-model/)
+- Tool registry: [`../../xlotyl/schemas/openclaw-bridge/v1/registry.v1.json`](../../xlotyl/schemas/openclaw-bridge/v1/registry.v1.json)
+- Python router + handler: [`../../xlotyl/services/api-service/birtha_tool_model/`](../../xlotyl/services/api-service/birtha_tool_model/)
+- Merge checklist: [`../../xlotyl/services/api-service/birtha_tool_model/VALIDATION.md`](../../xlotyl/services/api-service/birtha_tool_model/VALIDATION.md)
+- OpenClaw client helper: [`../../openclaw/extensions/birtha-bridge/`](../../openclaw/extensions/birtha-bridge/)
+
 ## Related
 
 - [`../external-orchestration-interfaces.md`](../external-orchestration-interfaces.md) — topology and MCP deferral.

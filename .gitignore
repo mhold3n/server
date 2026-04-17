@@ -270,6 +270,9 @@ docker-compose.local.yml
 !knowledge/response-control/**/*.json
 # Coding-tool knowledge artifacts are repo-native source data for the knowledge pool.
 !knowledge/coding-tools/**/*.json
+# OpenClaw birtha-bridge plugin manifest + vendored xlotyl bridge JSON Schemas
+!xlotyl/**/*.json
+!openclaw/extensions/birtha-bridge/**/*.json
 knowledge/coding-tools/runtime/dotnet/**/bin/
 knowledge/coding-tools/runtime/dotnet/**/obj/
 !services/structure/policies/**/*.yaml

@@ -39,20 +39,25 @@ In the active services, OpenClaw is treated as an external operator surface, not
 
 That means OpenClaw can sit in front of the active platform as a client/operator shell, but the internal governed execution path still belongs to the control plane plus agent-platform.
 
+### Orchestration lanes (shell vs tool-model vs governed)
+
+Three logical lanes keep authority unambiguous:
+
+| Lane | Responsibility | Authority |
+|------|----------------|-----------|
+| **Shell** | OpenClaw: UX, tool discovery, streaming, session mirror, deterministic tools (class A). | Operator-side continuity only; no governed artifact or referential truth. |
+| **Tool-model** | **`POST /api/ai/tool-query`**, OpenClaw tool **`birtha_tool_query`**: scoped model calls for **class B** AI-assisted shell tools; compact payloads; schema-first outputs. | **Non-authoritative.** Every success response includes provenance (`lane=tool_model`, `authoritative=false`, `requires_validation=true`). No task packets, no DevPlane writes, no publish by default. |
+| **Governed execution** | Api-service intake → control plane → DevPlane → agent-platform task packets, validators, publish gates. | Birtha/Xlotyl is source of truth for engineering artifacts and `referential_state`. |
+
+Class **C** tools (governed product capabilities) must **not** use the tool-model lane as a shortcut; they trigger the governed path (e.g. existing `POST /api/ai/query` / workflows), with OpenClaw acting only as the trigger surface.
+
+Contracts: JSON Schemas under **`xlotyl/schemas/openclaw-bridge/v1/tool-model/`**; registry format: **`birtha_bridge_tools.v1.json`**, example data **`registry.v1.json`**. ADR: [`docs/adr/0002-openclaw-tool-model-lane.md`](adr/0002-openclaw-tool-model-lane.md).
+
 ### OpenClaw HTTPS bridge (Phase 1)
 
 The supported shell ingress is **`POST /api/ai/query`** on **`xlotyl/services/api-service`** with a versioned envelope under **`context.openclaw_bridge`**. JSON Schemas live in **`xlotyl/schemas/openclaw-bridge/v1/`** (envelope, attachment rules, idempotency contract). The bundled OpenClaw extension **`openclaw/extensions/birtha-bridge`** implements this path as a **plugin-only** tool (`birtha_query`) so OpenClaw core stays unchanged in Phase 1.
 
 **Phase 2–3 additions (same extension):** shell-local **session mirror** + operator HTTP/CLI (`CONTINUITY.md` in the extension), **`birtha_query_stream`** for typed SSE (`schemas/openclaw-bridge/v1/events/`), and the runbook **`docs/runbooks/openclaw-birtha-bridge.md`** for transport vocabulary and agent-platform limits.
-
-### Tool-model lane (ADR-0002 — HTTPS-first)
-
-AI-assisted **OpenClaw shell tools** (summarize, classify, extract, propose search terms) must **not** reuse the generic user **`birtha_query`** path when the intent is a **scoped, tool-local** model call. That blurs audit and risks treating tool output as governed truth.
-
-The **tool-model lane** is a separate ingress and contract: **pre-authoritative**, schema-bounded, **no mutation rights**, **`requires_validation = true`**, exposed as a plugin tool such as **`birtha_tool_query`** alongside **`birtha_query`**. OpenClaw remains the shell; Xlotyl remains the authority for governed execution and final validation.
-
-- **Decision record:** [`docs/adr/0002-openclaw-tool-model-lane.md`](adr/0002-openclaw-tool-model-lane.md)
-- **Implementation brief (schemas, phases, acceptance):** [`docs/drafts/openclaw-tool-model-lane-implementation-brief.md`](drafts/openclaw-tool-model-lane-implementation-brief.md)
 
 ### MCP as the primary OpenClaw transport (Phase 4 — deferred)
 
@@ -63,6 +68,7 @@ Cross-exposing Birtha MCP servers to OpenClaw as the **canonical** shell↔contr
 | Capability | HTTPS + bridge today | MCP-primary (future) |
 |------------|----------------------|----------------------|
 | Session / continuity | `birtha_query` + shell mirror + `context.openclaw_bridge` | Would require MCP resources or typed tools mirroring the same contracts |
+| AI-assisted shell tools (class B) | `birtha_tool_query` → `POST /api/ai/tool-query` (tool-model lane) | Same contracts via adapter; not assumed |
 | Streaming UX | `POST /api/ai/query/stream` (coarse MVP) | Would need framed notifications or streamable MCP (not assumed) |
 | Cancel | `POST /api/ai/workflows/{id}/cancel` | Would need explicit MCP method(s) with the same authz story |
 | Idempotency | Redis-backed on `/api/ai/query` | Must be re-specified (MCP has no native idempotency key) |

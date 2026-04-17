@@ -12,6 +12,7 @@
 #   E2E_WAIT_GATEWAY=1         — wait on wrkhrs-gateway :8091/health (default off).
 #   E2E_STRICT_ENGINEERING_SMOKE=1 — delegate to dev/scripts/smoke_strict_engineering_multimodal.sh.
 #   E2E_SSE_SMOKE=1            — read first SSE line from POST /api/ai/query/stream.
+#   E2E_TOOL_LANE_SMOKE=1      — POST /api/ai/tool-query (skips if HTTP 404 — route not wired in image yet).
 #   E2E_PYTEST=1               — run curated api-service tests on host (default on).
 #   E2E_MANAGED_OPENCLAW_GATEWAY=1 — start OpenClaw gateway in background if port free (default on).
 #   E2E_OPENCLAW_CONFIG_PATCH=1 — merge birtha-bridge snippet into OPENCLAW_CONFIG_JSON (requires --i-accept-local-config-merge).
@@ -256,6 +257,24 @@ if [[ "${E2E_SSE_SMOKE:-0}" == "1" ]]; then
     -H "Accept: text/event-stream" \
     -d "$SSE_SMOKE_BODY" | head -n 20 || true)"
   printf '%s\n' "$SSE_HEAD" | grep -q '^data:' || die "SSE smoke: no data: line in first 20 lines. Output (truncated): ${SSE_HEAD:0:500}"
+fi
+
+if [[ "${E2E_TOOL_LANE_SMOKE:-0}" == "1" ]]; then
+  log "Phase: tool-model lane smoke (POST /api/ai/tool-query)"
+  TL_BODY='{"tool_name":"summarize_snippet","tool_version":"1.0.0","tool_goal":"e2e tool lane ping","input_payload":{},"openclaw_bridge":{"idempotency_key":"e2e-tool-lane"}}'
+  TL_RESP="$(curl -sS -w "\n%{http_code}" -X POST "${API_BASE}/api/ai/tool-query" \
+    -H "Content-Type: application/json" \
+    -d "$TL_BODY" || true)"
+  TL_CODE="$(printf '%s\n' "$TL_RESP" | tail -n 1)"
+  TL_BODY_OUT="$(printf '%s\n' "$TL_RESP" | sed '$d')"
+  if [[ "$TL_CODE" == "404" ]]; then
+    log "Tool-model route not available on this stack (HTTP 404); skip until api-service includes POST /api/ai/tool-query."
+  elif [[ "$TL_CODE" == "200" ]]; then
+    python3 -c "import json,sys; json.loads(sys.argv[1])" "$TL_BODY_OUT" >/dev/null 2>&1 || die "POST ${API_BASE}/api/ai/tool-query returned non-JSON (truncated): ${TL_BODY_OUT:0:400}"
+    log "Tool-model lane smoke OK (HTTP 200, JSON body)."
+  else
+    die "POST ${API_BASE}/api/ai/tool-query expected HTTP 200 or 404, got ${TL_CODE}. Body (truncated): ${TL_BODY_OUT:0:400}"
+  fi
 fi
 
 # --- Pytest subset (host) ---

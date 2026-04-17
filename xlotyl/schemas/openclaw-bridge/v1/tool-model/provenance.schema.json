@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.dev/schemas/openclaw-bridge/v1/tool-model/provenance.schema.json",
+  "title": "ToolModelProvenance",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "origin",
+    "tool_name",
+    "tool_call_id",
+    "model_used",
+    "lane",
+    "confidence_mode",
+    "mutation_rights",
+    "authoritative",
+    "requires_validation"
+  ],
+  "properties": {
+    "origin": { "const": "openclaw_tool" },
+    "tool_name": { "type": "string", "minLength": 1 },
+    "tool_call_id": { "type": "string", "minLength": 1 },
+    "model_used": { "type": "string", "minLength": 1 },
+    "lane": { "const": "tool_model" },
+    "confidence_mode": { "const": "preliminary" },
+    "mutation_rights": { "const": "none" },
+    "authoritative": { "const": false },
+    "requires_validation": { "const": true }
+  }
+}

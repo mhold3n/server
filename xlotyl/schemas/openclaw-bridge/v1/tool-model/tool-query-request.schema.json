@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://birtha.dev/schemas/openclaw-bridge/v1/tool-model/tool-query-request.schema.json",
+  "title": "ToolQueryRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tool_name",
+    "tool_version",
+    "tool_goal",
+    "input_payload",
+    "openclaw_bridge"
+  ],
+  "properties": {
+    "tool_name": { "type": "string", "minLength": 1 },
+    "tool_version": { "type": "string", "minLength": 1 },
+    "tool_goal": { "type": "string", "minLength": 1 },
+    "tool_schema_expected": { "type": "object" },
+    "input_payload": { "type": "object" },
+    "allowed_capabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "max_tokens": { "type": "integer", "minimum": 1, "maximum": 32768 },
+    "timeout_budget_ms": { "type": "integer", "minimum": 1, "maximum": 600000 },
+    "needs_citations": { "type": "boolean", "default": false },
+    "needs_structured_output": { "type": "boolean", "default": true },
+    "session_ref": { "type": "string" },
+    "openclaw_bridge": {
+      "type": "object",
+      "description": "Subset of openclaw-bridge/v1 context: continuity, idempotency, correlation — not full chat transcript.",
+      "additionalProperties": true
+    }
+  }
+}

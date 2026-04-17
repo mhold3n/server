@@ -23,12 +23,14 @@
 - **Events today:** `run.started` → `run.completed` or `run.failed` → optional `pending_mode_change` tail from the final JSON snapshot.
 - **Mid-run** clarification / tool / graph events require **agent-platform** to expose incremental lifecycle or a workflow stream; until then, consumers must not assume fine-grained progress.
 
-### Tool-model lane (planned — ADR-0002)
+### Tool-model lane (class B AI-assisted tools)
 
-- **Route:** TBD in xlotyl `api-service` (e.g. `POST /api/ai/tool-query` — see brief).
-- **OpenClaw tool (planned):** `birtha_tool_query` — **class B** AI-assisted shell tools only; responses are **non-authoritative** and must carry `lane: tool_model`, `authoritative: false`, `requires_validation: true`.
-- **Do not** route ordinary user chat turns here; use `birtha_query` / stream for shell→governed ingress.
-- **Docs:** [`docs/adr/0002-openclaw-tool-model-lane.md`](../adr/0002-openclaw-tool-model-lane.md), [`docs/drafts/openclaw-tool-model-lane-implementation-brief.md`](../drafts/openclaw-tool-model-lane-implementation-brief.md).
+- **Route:** `POST /api/ai/tool-query`
+- **OpenClaw tool:** `birtha_tool_query`
+- **Purpose:** Scoped, non-authoritative model calls for OpenClaw tools (taxonomy class **B**). Not for final user answers or governed mutations.
+- **Idempotency:** Recommended: same pattern as JSON query (`openclaw_bridge.idempotency_key` + Redis) with a **dedicated key namespace**; stricter max body size than `/api/ai/query`.
+- **Schemas:** `xlotyl/schemas/openclaw-bridge/v1/tool-model/` (request, response union, provenance).
+- **Registry:** `xlotyl/schemas/openclaw-bridge/v1/birtha_bridge_tools.v1.json` — only class **B** tools may hit this route; class **C** must use governed ingress.
 
 ## Agent-platform discovery (Phase 3)
 
@@ -63,8 +65,7 @@ On success the body is the agent-platform JSON. Typed `cancel.ack` SSE events ar
 ## Related docs
 
 - `schemas/openclaw-bridge/v1/events/README.md` — envelope, ordering rules, “no raw logs”.
+- `docs/adr/0002-openclaw-tool-model-lane.md` — tool-model lane authority and contracts.
 - `docs/runbooks/openclaw-birtha-bridge-agent-platform-streaming.md` — agent-platform streaming discovery + MVP decision.
 - `openclaw/extensions/birtha-bridge/CONTINUITY.md` — mirror vs authority.
 - `docs/external-orchestration-interfaces.md` — repo topology + Phase 4 MCP decision gate.
-- `docs/adr/0002-openclaw-tool-model-lane.md` — tool-model lane vs governed `birtha_query`.
-- `docs/drafts/openclaw-tool-model-lane-implementation-brief.md` — endpoint options, schemas, phases.
