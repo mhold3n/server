@@ -1,5 +1,7 @@
 # Apply thin CI callers to standalone repos
 
+This matches the **pointer-first** server repo model: **mhold3n/server** hosts the **reusable workflow**; each **standalone package repo** keeps a thin caller. See [repository-content-model.md](../repository-content-model.md) and [packages/README.md](../../packages/README.md).
+
 Use this after [`reusable-python-package-ci.yml`](../../.github/workflows/reusable-python-package-ci.yml) is on **`mhold3n/server`** `main` (or a release tag).
 
 ## 1. Choose `SERVER_REF`

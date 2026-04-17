@@ -2,9 +2,9 @@
 
 ## Single clone (recommended)
 
-Work from the **[github.com/mhold3n/server](https://github.com/mhold3n/server)** checkout. **Infra**, compose, host **MCP** servers, and deployment glue live here. The **Birtha / WrkHrs AI stack** runs from **published OCI images**; registry prefix and tag are pinned in [`config/xlotyl-images.env`](../config/xlotyl-images.env) (`XLOTYL_IMAGE_PREFIX`, `XLOTYL_VERSION`). This repo **does not** ship a `./xlotyl` product tree.
+Work from the **[github.com/mhold3n/server](https://github.com/mhold3n/server)** checkout. If you maintain a **second full clone** (e.g. for experiments), consolidate into one tree—see [runbooks/canonical-server-clone.md](runbooks/canonical-server-clone.md). **Infra**, compose, host **MCP** servers, and deployment glue live here. The **Birtha / WrkHrs AI stack** runs from **published OCI images**; registry prefix and tag are pinned in [`config/xlotyl-images.env`](../config/xlotyl-images.env) (`XLOTYL_IMAGE_PREFIX`, `XLOTYL_VERSION`). This repo **does not** ship a `./xlotyl` product tree.
 
-For **product source** (Python services, wiki, agent-platform, OpenClaw submodules inside xlotyl), clone **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)** beside this repo (default sibling **`../xlotyl`**, overridable with **`XLOTYL_ROOT`** in scripts). Legacy MBMH materials: `../server-local-archive/2026-04-08/server/`.
+For **product source** (Python services, wiki, agent-platform, OpenClaw submodules inside xlotyl), clone **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)** beside this repo (default sibling **`../xlotyl`**, overridable with **`XLOTYL_ROOT`** in scripts). **Legacy MBMH / harness snapshot** stays **out of this clone** by default—see [legacy-archive.md](legacy-archive.md) (`LEGACY_ARCHIVE_ROOT`, default sibling `../server-local-archive/2026-04-08/server/`).
 
 Cloning additional “legacy” projects **inside** this repository root increases confusion (two trees, two sets of commands, easy to edit the wrong copy). Prefer:
 
@@ -19,8 +19,8 @@ How **on-premises backups** relate to **GitHub**: [`infrastructure-and-git.md`](
 
 ## Workspace bootstrap
 
-- **Standalone package tags:** the root [`pyproject.toml`](../pyproject.toml) pins `response-control-framework`, `ai-shared-service`, and each `domain-*` package with **`git` + `tag`**. For CI and local scripts, override the tag with **`DOMAIN_PACKAGES_TAG`** if needed; otherwise tooling reads the tag from TOML. After bumping a tag, run **`uv lock`** (and **`make vendor-rcf-schemas`** when `response-control-framework` schemas changed).
-- Main Python workspace: `uv sync --python 3.11`
+- **This repo's root** [`pyproject.toml`](../pyproject.toml) workspaces **host MCP servers** only. **Domain / RCF / ai-shared** libraries are pinned and developed from **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)** and/or the **standalone package repos** (see [xlotyl-and-standalone-packages.md](xlotyl-and-standalone-packages.md), [packages/README.md](../packages/README.md)). After changing pins in xlotyl or a library repo, run **`uv lock`** in that project (and **`make vendor-rcf-schemas`** in xlotyl when `response-control-framework` schemas change).
+- Main Python workspace (MCP): `uv sync --python 3.11`
 - Agent-platform / topology Node workspaces: run **`npm ci`** from your **xlotyl** clone (e.g. `cd "${XLOTYL_ROOT:-../xlotyl}" && npm ci`). Root [`package.json`](../package.json) here is infra-only.
 - Focused tool envs: `scripts/bootstrap_tool_env.sh marker-pdf|whisper-asr|qwen-runtime|larrak-audio`
 - Full AI Docker dev stack: `make up`
@@ -29,7 +29,7 @@ How **on-premises backups** relate to **GitHub**: [`infrastructure-and-git.md`](
 
 ## Standalone package repos (shared CI)
 
-The five libraries pinned in [`pyproject.toml`](../pyproject.toml) (`response-control-framework`, `ai-shared-service`, `domain-engineering`, `domain-research`, `domain-content`) each live in their own GitHub repo. **CI is centralized** in this repo:
+The libraries **`response-control-framework`**, **`ai-shared-service`**, **`domain-engineering`**, **`domain-research`**, and **`domain-content`** each have their **own GitHub repo**; **CI is centralized** in this repo:
 
 - **Reusable workflow:** [`.github/workflows/reusable-python-package-ci.yml`](../.github/workflows/reusable-python-package-ci.yml) (`workflow_call`) runs `pip install -e ".[<extras>]"`, `ruff`, `mypy --strict`, and `pytest` with caller-supplied paths.
 

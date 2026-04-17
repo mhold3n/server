@@ -17,7 +17,10 @@ GitHub is **not** a backup replacement for RAID or secondary backups. Treat it a
 
 The **server** repository primarily exists to **track** infrastructure layout, compose, CI, and **pinned AI image versions** (`config/xlotyl-images.env`) so that changes are reviewable and reproducible. It complements — but does not replace — local operational practices.
 
+For what belongs in Git versus **pointers** to backups and upstreams, see [repository-content-model.md](repository-content-model.md).
+
 ## Related
 
 - MCP ownership vs tracking: [`mcp-servers/README.md`](../mcp-servers/README.md); canonical catalog in the **xlotyl** repo (`mcp-servers/mcp/config/` there).
 - Dev bootstrap: [`dev-environment.md`](dev-environment.md).
+- Pointer-first content model: [repository-content-model.md](repository-content-model.md).

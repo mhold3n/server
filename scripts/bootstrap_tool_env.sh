@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 XLOTYL_ROOT="${XLOTYL_ROOT:-$ROOT/../xlotyl}"
+# Off-repo backup snapshot (MBMH, etc.); documented in docs/legacy-archive.md — override with LEGACY_ARCHIVE_ROOT.
 LEGACY_ARCHIVE_ROOT="${LEGACY_ARCHIVE_ROOT:-$ROOT/../server-local-archive/2026-04-08/server}"
 # shellcheck source=/dev/null
 source "$ROOT/scripts/workspace_env.sh"

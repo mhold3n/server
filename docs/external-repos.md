@@ -11,6 +11,8 @@ Hugging Face and Ollama are not tracked as source submodules in this repo. See [
 
 Clone the xlotyl product repo beside this repository (sibling `../xlotyl`) when you need Python/Node sources, OpenClaw, or orchestration wiki tooling. Compose and Makefile targets that delegate to xlotyl use `XLOTYL_ROOT` (default `../xlotyl`).
 
+How this repo stays **pointer-first** (glue vs vendored code): [repository-content-model.md](repository-content-model.md).
+
 ## Interaction model
 
 See [`external-orchestration-interfaces.md`](external-orchestration-interfaces.md) for the control-plane and DevPlane interaction model (URLs and contracts only; no AI source paths in this repo).

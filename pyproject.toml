@@ -2,6 +2,8 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+# Workspace members are host-side MCP servers only. Domain / RCF / ai-shared libraries live in
+# standalone repos and xlotyl — see docs/repository-content-model.md and docs/xlotyl-and-standalone-packages.md.
 [project]
 name = "server-workspace"
 version = "0.1.0"

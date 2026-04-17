@@ -11,7 +11,11 @@
 ### Active vs archived code
 
 - **This repo** — **Infrastructure and deployment**: compose profiles, CI, MCP host packages, observability base, networking/media infra, and glue that **runs** the AI product from **published images** (not submodules).
-- **Legacy archive** — The historical MBMH training/runtime tree and the retired `engineering_physics_v1` harness were moved out of this repo into the sibling legacy archive at `../server-local-archive/2026-04-08/server/`.
+- **Legacy archive** — Historical MBMH / harness material stays **off the default tracked tree** as a **backup-style snapshot** (sibling path or team storage). See [`docs/legacy-archive.md`](docs/legacy-archive.md) and [`docs/repository-content-model.md`](docs/repository-content-model.md).
+
+### Pointer-first layout (what we track on GitHub)
+
+Most of this repository is **executable glue** (compose, scripts, CI) plus **documentation and links** to upstreams so others can **clone and reproduce** how the stack is wired. We **do not** bulk-import large backups or runtime artifacts. **Third-party** components (e.g. Pi-hole) are referenced by **official project links** and **pinned images** in compose—see [`docs/runbooks/third-party-components.md`](docs/runbooks/third-party-components.md). **Custom packages** we author live in **separate repos** (and/or under **xlotyl**) with CI calling this repo’s reusable workflows—see [`packages/README.md`](packages/README.md) and [`docs/xlotyl-and-standalone-packages.md`](docs/xlotyl-and-standalone-packages.md).
 
 ### Role of this repo and GitHub
 
@@ -360,6 +364,7 @@ make ci              # Run full CI pipeline
 
 ### DNS Blocker Choice (Pi‑hole vs AdGuard)
 
+- **Upstream:** Pi-hole Docker image and docs are **not** vendored here—see [`docs/runbooks/third-party-components.md`](docs/runbooks/third-party-components.md) and [`docker/config/dns/pihole/README.md`](docker/config/dns/pihole/README.md).
 - Pi-hole is available in the host/homelab server profile. AdGuard Home is scaffolded in its own add-on profile and is not started by default dev.
 - Use only one DNS blocker at a time. To test AdGuard:
   1) Stop Pi-hole: `docker compose --project-directory "$(pwd)" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml -f docker/compose-profiles/docker-compose.ai.yml -f docker/compose-profiles/docker-compose.server.yml stop pihole`
@@ -368,7 +373,7 @@ make ci              # Run full CI pipeline
 
 ## Project Structure
 
-Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. Use a **single clone** for day-to-day work; optional legacy repos belong **outside** this tree; see [`docs/dev-environment.md`](docs/dev-environment.md). AI application sources live in **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)**; this repo pins **registry + semver** for those images via [`config/xlotyl-images.env`](config/xlotyl-images.env) (`XLOTYL_IMAGE_PREFIX`, `XLOTYL_VERSION`).
+Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. Use a **single clone** for day-to-day work ([`docs/runbooks/canonical-server-clone.md`](docs/runbooks/canonical-server-clone.md)); optional legacy snapshots belong **outside** this tree ([`docs/legacy-archive.md`](docs/legacy-archive.md)). AI application sources live in **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)**; this repo pins **registry + semver** for those images via [`config/xlotyl-images.env`](config/xlotyl-images.env) (`XLOTYL_IMAGE_PREFIX`, `XLOTYL_VERSION`). Content model: [`docs/repository-content-model.md`](docs/repository-content-model.md).
 
 ```
 server/   # repository root (suggested clone folder name)
@@ -393,9 +398,10 @@ server/   # repository root (suggested clone folder name)
 ├── scripts/                    # Helper scripts
 │   ├── health_check.sh         # Unified health check
 │   └── ingest/                 # Corpus ingestion scripts
-├── docs/                       # Documentation
+├── docs/                       # Documentation (index: README.md; pointer-first: repository-content-model.md)
 │   ├── runbooks/               # Operational runbooks
 │   └── adr/                    # Architecture Decision Records
+├── packages/                   # README: links to standalone domain package repos
 └── dev/                        # Development tools
     ├── containers/             # Dev container configuration
     └── scripts/                # Helper scripts
