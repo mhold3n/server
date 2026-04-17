@@ -2,7 +2,7 @@
 
 OpenClaw and Claw Code are developed inside the **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)** product repository (as submodules there), not as checkouts in this repo.
 
-This **server** repository integrates the AI stack at runtime via **HTTP** and **published OCI images** (`ghcr.io/xlotyl/*`, see [`config/xlotyl-images.env`](../config/xlotyl-images.env)), not by vendoring sources.
+This **server** repository integrates the AI stack at runtime via **HTTP** and **published OCI images** (registry + tag in [`config/xlotyl-images.env`](../config/xlotyl-images.env): `XLOTYL_IMAGE_PREFIX`, `XLOTYL_VERSION`), not by vendoring sources.
 
 ## What is active (xlotyl)
 
@@ -129,9 +129,8 @@ For code implementation specifically:
 
 The clean mental model is:
 
-- `openclaw/`: external operator/client surface
-- `claw-code-main/`: external coding-agent/reference surface
-- **`xlotyl/services/api-service`** + **`xlotyl/services/agent-platform-service/server`**: authoritative orchestration and DevPlane runtime
-- **`xlotyl/schemas/`** + API/domain **Pydantic** models: authoritative contract surfaces for bridge and runtime payloads (under the `xlotyl` submodule)
+- **OpenClaw / claw-code / void:** live in the **xlotyl** product repository (as its own submodules), not as checkouts in server.
+- **`services/api-service`** + **`services/agent-platform-service/server`** (in **xlotyl**): authoritative orchestration and DevPlane runtime.
+- **`schemas/`** + API/domain **Pydantic** models (in **xlotyl**): authoritative contract surfaces for bridge and runtime payloads.
 
 So if OpenClaw or Claw Code are used, they should consume the same governed worktree and `.birtha/task-packet.json` artifacts and report back through DevPlane. They are adjacent to the engineering pipeline, not replacements for it.

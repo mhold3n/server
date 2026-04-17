@@ -1,6 +1,6 @@
 # Birtha infrastructure + Xlotyl AI deployment
 
-**Goal:** Run the **Birtha / WrkHrs AI product** (published as **`ghcr.io/xlotyl/*`** images; sources in **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)**) on hardened **infrastructure**: Proxmox VMs/LXCs, Docker Compose, reverse proxy (Caddy), queues (Redis), observability (MLflow, Prometheus, Grafana, Loki, Tempo), optional security (Fail2ban/CrowdSec), and DNS/homelab add-ons. A **workstation** with an RTX 4070 Ti hosts GPU inference workers, reachable from the server over LAN/mTLS.
+**Goal:** Run the **Birtha / WrkHrs AI product** (published OCI images from the xlotyl GitHub repo owner, e.g. `${XLOTYL_IMAGE_PREFIX}` in [`config/xlotyl-images.env`](config/xlotyl-images.env); after an org transfer to **XLOTYL**, that prefix is typically `ghcr.io/xlotyl`; sources in **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)**) on hardened **infrastructure**: Proxmox VMs/LXCs, Docker Compose, reverse proxy (Caddy), queues (Redis), observability (MLflow, Prometheus, Grafana, Loki, Tempo), optional security (Fail2ban/CrowdSec), and DNS/homelab add-ons. A **workstation** with an RTX 4070 Ti hosts GPU inference workers, reachable from the server over LAN/mTLS.
 
 ## High-level Architecture
 
@@ -21,7 +21,7 @@ This repository is the **primary web-based tracker** for **infrastructure layout
 
 ### External GitHub repos
 
-- **AI product** — **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)** (OpenClaw and related tooling are **submodules inside that repo**, not here). This server repo consumes **`ghcr.io/xlotyl/*`** only.
+- **AI product** — **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)** (OpenClaw and related tooling are **submodules inside that repo**, not here). This server repo **pulls pinned images** only (`XLOTYL_IMAGE_PREFIX` + `XLOTYL_VERSION` in [`config/xlotyl-images.env`](config/xlotyl-images.env)); it does not vendor the product tree.
 - See [`docs/external-repos.md`](docs/external-repos.md) and [`docs/external-orchestration-interfaces.md`](docs/external-orchestration-interfaces.md).
 
 ## Project Management
@@ -130,13 +130,13 @@ open http://localhost:5000
 ### 6) Dev UX
 
 * All devs SSH or VS Code Remote into the **server** (or work standalone in the **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)** clone for product code).
-* **API and Router** run from **`ghcr.io/xlotyl/*`** images; the server repo wires compose, ports, env, and [`config/xlotyl-images.env`](config/xlotyl-images.env).
-* **WrkHrs / gateway** stacks use the same published image set (built from the xlotyl repo).
+* **API and Router** (and the WrkHrs stack) run from **published GHCR images**; image host and tag are set in [`config/xlotyl-images.env`](config/xlotyl-images.env) (`XLOTYL_IMAGE_PREFIX`, `XLOTYL_VERSION`). Compose wires ports and env.
+* **WrkHrs / gateway** stacks use the same published image set (built and released from the xlotyl repo).
 * Internal services call the **worker** via OpenAI-compatible endpoints for LLM inference.
 * **MCP catalog** (xlotyl-owned, baked into the **mcp-registry** image). **Implementations** under `mcp-servers/` here are **tracked** for build/CI on primary hardware — see [`mcp-servers/README.md`](mcp-servers/README.md).
 * MLflow provides experiment tracking and model registry for all AI operations.
 
-## WrkHrs AI Stack Integration (images from `ghcr.io/xlotyl/*`)
+## WrkHrs AI Stack Integration (images from GHCR, pinned in `config/xlotyl-images.env`)
 
 ### AI Services Architecture
 - **WrkHrs Gateway**: Main API gateway for AI requests with domain classification and request conditioning
@@ -368,12 +368,12 @@ make ci              # Run full CI pipeline
 
 ## Project Structure
 
-Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. Use a **single clone** for day-to-day work; optional legacy repos belong **outside** this tree; see [`docs/dev-environment.md`](docs/dev-environment.md). AI application sources live in **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)**; this repo pins **`ghcr.io/xlotyl/*`** via [`config/xlotyl-images.env`](config/xlotyl-images.env).
+Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. Use a **single clone** for day-to-day work; optional legacy repos belong **outside** this tree; see [`docs/dev-environment.md`](docs/dev-environment.md). AI application sources live in **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)**; this repo pins **registry + semver** for those images via [`config/xlotyl-images.env`](config/xlotyl-images.env) (`XLOTYL_IMAGE_PREFIX`, `XLOTYL_VERSION`).
 
 ```
 server/   # repository root (suggested clone folder name)
 ├── config/
-│   └── xlotyl-images.env       # Pin XLOTYL_VERSION / ghcr.io/xlotyl/* tags
+│   └── xlotyl-images.env       # Pin XLOTYL_IMAGE_PREFIX + XLOTYL_VERSION for AI stack pulls
 ├── services/                    # Infra / platform services (mock-openai, queue, …)
 ├── mcp-servers/mcp/            # MCP servers
 │   ├── servers/                # Global and per-repo MCP servers

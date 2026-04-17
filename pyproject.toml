@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "server-workspace"
 version = "0.1.0"
-description = "Infrastructure platform: networking, deployment, observability; AI stack is consumed as OCI images (ghcr.io/xlotyl/*)"
+description = "Infrastructure platform: networking, deployment, observability; AI stack is consumed as OCI images (pins in config/xlotyl-images.env)"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [

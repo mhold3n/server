@@ -42,7 +42,7 @@ fi
 echo "Development environment setup completed!"
 echo ""
 echo "AI control-plane (api-service, router, WrkHrs, OpenClaw): clone https://github.com/XLOTYL/xlotyl"
-echo "beside this repo and run uv sync / npm ci there. Compose uses ghcr.io/xlotyl/* images via config/xlotyl-images.env."
+echo "beside this repo and run uv sync / npm ci there. Compose pulls pinned OCI images (XLOTYL_IMAGE_PREFIX + XLOTYL_VERSION in config/xlotyl-images.env)."
 echo ""
 echo "Next steps:"
 echo "1. Configure your .env file with your settings"

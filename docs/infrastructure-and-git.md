@@ -1,6 +1,6 @@
 # Infrastructure state vs GitHub
 
-This document explains how **on-premises infrastructure**, **backups**, and **Git** fit together for the **mhold3n/server** mothership and its **xlotyl** submodule.
+This document explains how **on-premises infrastructure**, **backups**, and **Git** fit together for the **mhold3n/server** mothership and the **xlotyl** AI product (consumed as **pinned OCI images**, with sources in a separate **xlotyl** Git repository).
 
 ## Layers of truth
 
@@ -15,9 +15,9 @@ GitHub is **not** a backup replacement for RAID or secondary backups. Treat it a
 
 ## Server repo role
 
-The **server** repository primarily exists to **track** infrastructure layout, compose, CI, and **pinned** submodule state (**xlotyl**, etc.) so that changes are reviewable and reproducible. It complements — but does not replace — local operational practices.
+The **server** repository primarily exists to **track** infrastructure layout, compose, CI, and **pinned AI image versions** (`config/xlotyl-images.env`) so that changes are reviewable and reproducible. It complements — but does not replace — local operational practices.
 
 ## Related
 
-- MCP ownership vs tracking: [`mcp-servers/README.md`](../mcp-servers/README.md), [`xlotyl/mcp-servers/README.md`](../xlotyl/mcp-servers/README.md) (submodule).
+- MCP ownership vs tracking: [`mcp-servers/README.md`](../mcp-servers/README.md); canonical catalog in the **xlotyl** repo (`mcp-servers/mcp/config/` there).
 - Dev bootstrap: [`dev-environment.md`](dev-environment.md).

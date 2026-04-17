@@ -32,7 +32,7 @@ case $TARGET in
             cd ~/agent-orchestrator
             cp .env.example .env || true
             
-            # Pull AI stack images (ghcr.io/xlotyl/*) + platform; pin versions in config/xlotyl-images.env
+            # Pull AI stack images (XLOTYL_IMAGE_PREFIX in config/xlotyl-images.env) + platform
             docker compose --project-directory "$HOME/agent-orchestrator" --env-file "$HOME/agent-orchestrator/config/xlotyl-images.env" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml -f docker/compose-profiles/docker-compose.ai.yml -f docker/compose-profiles/docker-compose.server.yml pull
 
             docker compose --project-directory "$HOME/agent-orchestrator" --env-file "$HOME/agent-orchestrator/config/xlotyl-images.env" -f docker-compose.yml -f docker/compose-profiles/docker-compose.platform.yml -f docker/compose-profiles/docker-compose.ai.yml -f docker/compose-profiles/docker-compose.server.yml up -d

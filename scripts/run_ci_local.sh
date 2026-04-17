@@ -28,7 +28,7 @@ echo "==> Mypy (MCP servers)"
 (cd mcp-servers/mcp/servers/secrets-mcp && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/mcp-secrets" uv run --package secrets-mcp-server mypy --strict src)
 (cd mcp-servers/mcp/servers/vector-db-mcp && MYPY_CACHE_DIR="$MYPY_CACHE_ROOT/mcp-vector-db" uv run --package vector-db-mcp-server mypy --strict src)
 
-echo "==> Pytest (per package; live stack required — pulls ghcr.io/xlotyl/* from ${XLOTYL_ENV})"
+echo "==> Pytest (per package; live stack required — pulls AI images per ${XLOTYL_ENV})"
 if ! command -v docker >/dev/null 2>&1; then
   echo "ERROR: docker is required for this CI suite (live-stack tests are required)." >&2
   exit 1
