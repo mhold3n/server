@@ -1,9 +1,9 @@
-# WrkHrs AI Stack — images from ghcr.io/xlotyl/* (version in config/xlotyl-images.env).
+# WrkHrs AI Stack — images from ${XLOTYL_IMAGE_PREFIX}/* (version in config/xlotyl-images.env).
 # Source compose and Dockerfiles: https://github.com/XLOTYL/xlotyl
 
 services:
   structure-gateway:
-    image: ghcr.io/xlotyl/structure-service:${XLOTYL_VERSION}
+    image: ${XLOTYL_IMAGE_PREFIX}/structure-service:${XLOTYL_VERSION}
     ports:
       - "${STRUCTURE_GATEWAY_PORT:-8090}:8000"
     environment:
@@ -25,7 +25,7 @@ services:
       start_period: 30s
 
   wrkhrs-gateway:
-    image: ghcr.io/xlotyl/wrkhrs-gateway:${XLOTYL_VERSION}
+    image: ${XLOTYL_IMAGE_PREFIX}/wrkhrs-gateway:${XLOTYL_VERSION}
     ports:
       - "${WRKHRS_GATEWAY_PORT:-8091}:8000"
     environment:
@@ -52,7 +52,7 @@ services:
       start_period: 30s
 
   wrkhrs-agent-platform:
-    image: ghcr.io/xlotyl/agent-platform:${XLOTYL_VERSION}
+    image: ${XLOTYL_IMAGE_PREFIX}/agent-platform:${XLOTYL_VERSION}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -104,7 +104,7 @@ services:
   wrkhrs-orchestrator:
     profiles:
       - legacy-python-orchestrator
-    image: ghcr.io/xlotyl/wrkhrs-orchestrator:${XLOTYL_VERSION}
+    image: ${XLOTYL_IMAGE_PREFIX}/wrkhrs-orchestrator:${XLOTYL_VERSION}
     ports:
       - "${WRKHRS_ORCH_PORT:-8081}:8000"
     environment:
@@ -137,7 +137,7 @@ services:
       start_period: 30s
 
   wrkhrs-rag:
-    image: ghcr.io/xlotyl/wrkhrs-rag:${XLOTYL_VERSION}
+    image: ${XLOTYL_IMAGE_PREFIX}/wrkhrs-rag:${XLOTYL_VERSION}
     ports:
       - "${WRKHRS_RAG_PORT:-8082}:8000"
     environment:
@@ -166,7 +166,7 @@ services:
       start_period: 300s
 
   wrkhrs-asr:
-    image: ghcr.io/xlotyl/wrkhrs-asr:${XLOTYL_VERSION}
+    image: ${XLOTYL_IMAGE_PREFIX}/wrkhrs-asr:${XLOTYL_VERSION}
     ports:
       - "${WRKHRS_ASR_PORT:-8084}:8000"
     environment:
@@ -187,7 +187,7 @@ services:
       start_period: 60s
 
   model-runtime:
-    image: ghcr.io/xlotyl/model-runtime:${XLOTYL_VERSION}
+    image: ${XLOTYL_IMAGE_PREFIX}/model-runtime:${XLOTYL_VERSION}
     ports:
       - "${MODEL_RUNTIME_PORT:-8765}:8000"
     environment:
@@ -215,7 +215,7 @@ services:
       start_period: 30s
 
   wrkhrs-tool-registry:
-    image: ghcr.io/xlotyl/wrkhrs-tool-registry:${XLOTYL_VERSION}
+    image: ${XLOTYL_IMAGE_PREFIX}/wrkhrs-tool-registry:${XLOTYL_VERSION}
     ports:
       - "${WRKHRS_TOOLS_PORT:-8086}:8000"
     environment:
@@ -235,7 +235,7 @@ services:
       start_period: 20s
 
   wrkhrs-mcp:
-    image: ghcr.io/xlotyl/wrkhrs-mcp:${XLOTYL_VERSION}
+    image: ${XLOTYL_IMAGE_PREFIX}/wrkhrs-mcp:${XLOTYL_VERSION}
     ports:
       - "${WRKHRS_MCP_PORT:-8085}:8000"
     environment:
@@ -256,7 +256,7 @@ services:
       start_period: 20s
 
   mcp-registry:
-    image: ghcr.io/xlotyl/mcp-registry:${XLOTYL_VERSION}
+    image: ${XLOTYL_IMAGE_PREFIX}/mcp-registry:${XLOTYL_VERSION}
     ports:
       - "${MCP_REGISTRY_PORT:-8001}:8000"
     environment:

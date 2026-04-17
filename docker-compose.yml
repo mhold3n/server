@@ -1,5 +1,5 @@
 # Persistent Compose data lives under COMPOSE_DATA_ROOT (default .docker-data/); see docs/dev-environment.md.
-# AI service images: config/xlotyl-images.env (ghcr.io/xlotyl/*).
+# AI service images: config/xlotyl-images.env (XLOTYL_IMAGE_PREFIX + XLOTYL_VERSION).
 name: agent-orchestrator
 
 services:
@@ -18,7 +18,7 @@ services:
       start_period: 5s
 
   api:
-    image: ghcr.io/xlotyl/api-service:${XLOTYL_VERSION}
+    image: ${XLOTYL_IMAGE_PREFIX}/api-service:${XLOTYL_VERSION}
     environment:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-http://mock-openai:8000/v1}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-local-dev-token}
@@ -45,7 +45,7 @@ services:
       retries: 3
 
   router:
-    image: ghcr.io/xlotyl/router-service:${XLOTYL_VERSION}
+    image: ${XLOTYL_IMAGE_PREFIX}/router-service:${XLOTYL_VERSION}
     environment:
       API_URL: http://api:8080
       REDIS_URL: redis://queue:6379
