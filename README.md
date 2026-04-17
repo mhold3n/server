@@ -1,31 +1,28 @@
 # Birtha infrastructure + Xlotyl AI deployment
 
-**Goal:** Run the **Birtha / WrkHrs AI product** (see submodule **`xlotyl/`**) on hardened **infrastructure**: Proxmox VMs/LXCs, Docker Compose, reverse proxy (Caddy), queues (Redis), observability (MLflow, Prometheus, Grafana, Loki, Tempo), optional security (Fail2ban/CrowdSec), and DNS/homelab add-ons. A **workstation** with an RTX 4070 Ti hosts GPU inference workers, reachable from the server over LAN/mTLS.
+**Goal:** Run the **Birtha / WrkHrs AI product** (published as **`ghcr.io/xlotyl/*`** images; sources in **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)**) on hardened **infrastructure**: Proxmox VMs/LXCs, Docker Compose, reverse proxy (Caddy), queues (Redis), observability (MLflow, Prometheus, Grafana, Loki, Tempo), optional security (Fail2ban/CrowdSec), and DNS/homelab add-ons. A **workstation** with an RTX 4070 Ti hosts GPU inference workers, reachable from the server over LAN/mTLS.
 
 ## High-level Architecture
 
-- **Server stack (Proxmox VM/LXC):** Compose-driven **platform** services (observability, registry, Redis, reverse proxy), **host MCP** servers, and **lifecycle for the `xlotyl` AI stack** (images/build contexts point at `./xlotyl/...`). AI ingress API, router, worker, gateway, and agent platform **code live in `xlotyl`**, not as first-class members of the server root Python/Node workspaces.
+- **Server stack (Proxmox VM/LXC):** Compose-driven **platform** services (observability, registry, Redis, reverse proxy), **host MCP** servers, and **pull/run** of the **xlotyl** AI stack via **OCI images** pinned in [`config/xlotyl-images.env`](config/xlotyl-images.env). AI application **source** lives only in the xlotyl product repo.
 - **Workstation (RTX 4070 Ti):** vLLM/Ollama LLM runners in Docker with `nvidia-container-toolkit`, exposed only to the server via LAN/mTLS.
-- **Dev flow:** Remote dev via VS Code Dev Containers → CI builds in **server** (including checks executed **inside `xlotyl/`**) → Deploy to server → Running containers use **xlotyl**-built images for AI control plane.
+- **Dev flow:** Remote dev via VS Code Dev Containers → CI in **server** (MCP + infra) and **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)** (full AI matrix) → Deploy pulls pinned images → Running containers use the published AI stack.
 
 ### Active vs archived code
 
-- **This repo** — **Infrastructure and deployment**: compose profiles, CI, MCP host packages, observability base, networking/media infra, scripts that pin or update submodules, and glue that **starts** the AI product from `./xlotyl`.
+- **This repo** — **Infrastructure and deployment**: compose profiles, CI, MCP host packages, observability base, networking/media infra, and glue that **runs** the AI product from **published images** (not submodules).
 - **Legacy archive** — The historical MBMH training/runtime tree and the retired `engineering_physics_v1` harness were moved out of this repo into the sibling legacy archive at `../server-local-archive/2026-04-08/server/`.
 
 ### Role of this repo and GitHub
 
-This repository is the **primary web-based tracker** for **infrastructure layout**, **compose**, **CI**, and **submodule pins** so changes are reviewable and reproducible. It does **not** replace on-machine operational truth.
+This repository is the **primary web-based tracker** for **infrastructure layout**, **compose**, **CI**, and **image version pins** (`config/xlotyl-images.env`) so changes are reviewable and reproducible. It does **not** replace on-machine operational truth.
 
 **GitHub** is **tertiary** relative to **local RAID** (primary server) and **backups on secondary machines**: use **git** for history, **diffs**, and collaboration; use **RAID and secondary copies** for durability and recovery. See [`docs/infrastructure-and-git.md`](docs/infrastructure-and-git.md).
 
 ### External GitHub repos
 
-- **`claw-code-main/`** — Git submodule tracking our fork [`mhold3n/claw-code`](https://github.com/mhold3n/claw-code) on `main` (upstream: [`ultraworkers/claw-code`](https://github.com/ultraworkers/claw-code)).
-- **`openclaw/`** — Git submodule tracking our fork [`mhold3n/openclaw`](https://github.com/mhold3n/openclaw) on `main` (upstream: [`openclaw/openclaw`](https://github.com/openclaw/openclaw)).
-- **`void/`** — Git submodule tracking [`mhold3n/void`](https://github.com/mhold3n/void) on `main`.
-- **`xlotyl/`** — Git submodule tracking [`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl) on `main` (**full AI product**: API, router, worker, gateway, agent-platform, domains, `model-runtime`, orchestration wiki, response-control). The super-project pins an exact submodule commit for CI and releases; compose **build contexts and bind mounts** read from `./xlotyl/...` without treating xlotyl as a nested Node/Python workspace at the server root.
-- Refresh all with `npm run deps:external`. See [`docs/external-repos.md`](docs/external-repos.md) for the rationale and workflow, and [`docs/external-orchestration-interfaces.md`](docs/external-orchestration-interfaces.md) for how they relate to the active control plane.
+- **AI product** — **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)** (OpenClaw and related tooling are **submodules inside that repo**, not here). This server repo consumes **`ghcr.io/xlotyl/*`** only.
+- See [`docs/external-repos.md`](docs/external-repos.md) and [`docs/external-orchestration-interfaces.md`](docs/external-orchestration-interfaces.md).
 
 ## Project Management
 
@@ -55,16 +52,15 @@ Use the appropriate issue template:
 - Proxmox host ready; create a VM/LXC for `agent-server`.
 - Docker + Compose on server and workstation.
 - (Workstation) NVIDIA driver + `nvidia-container-toolkit`.
-- `uv` for the server-root Python workspace (host MCP tooling) and for work inside `xlotyl/`.
-- `npm` for optional root scripts (`deps:external`) and for **xlotyl** Node workspaces under `xlotyl/`.
+- `uv` for the server-root Python workspace (host MCP tooling); clone **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)** beside this repo for AI Python/Node work.
+- `npm` for optional root scripts; use **`npm ci` inside the xlotyl clone** for agent-platform builds.
 
 ### 1) Bootstrap the workspace
 
 ```bash
-npm run deps:external
 uv sync --python 3.11
-# Root package.json is infra-only; install inside xlotyl for agent-platform Node builds:
-(cd xlotyl && npm ci)
+# AI product (optional sibling clone):
+#   git clone https://github.com/XLOTYL/xlotyl ../xlotyl && cd ../xlotyl && git submodule update --init --recursive && uv sync && npm ci
 ```
 
 Focused tool envs are bootstrapped explicitly and live under `.cache/envs/`:
@@ -133,14 +129,14 @@ open http://localhost:5000
 
 ### 6) Dev UX
 
-* All devs SSH or VS Code Remote into the **server** (or work standalone in the **`xlotyl`** clone for product code).
-* **API and Router** run from **`xlotyl`** service images; the server repo wires compose, ports, and env — it does not own that application source at the repo root.
-* **WrkHrs / gateway** stacks run from **`xlotyl/services/ai-gateway-service`** build contexts.
+* All devs SSH or VS Code Remote into the **server** (or work standalone in the **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)** clone for product code).
+* **API and Router** run from **`ghcr.io/xlotyl/*`** images; the server repo wires compose, ports, env, and [`config/xlotyl-images.env`](config/xlotyl-images.env).
+* **WrkHrs / gateway** stacks use the same published image set (built from the xlotyl repo).
 * Internal services call the **worker** via OpenAI-compatible endpoints for LLM inference.
-* **MCP catalog** (xlotyl-owned): `xlotyl/mcp-servers/mcp/config/mcp_servers.yaml` (with submodule initialized). **Implementations** under `mcp-servers/` here are **tracked** for build/CI on primary hardware — see [`mcp-servers/README.md`](mcp-servers/README.md).
+* **MCP catalog** (xlotyl-owned, baked into the **mcp-registry** image). **Implementations** under `mcp-servers/` here are **tracked** for build/CI on primary hardware — see [`mcp-servers/README.md`](mcp-servers/README.md).
 * MLflow provides experiment tracking and model registry for all AI operations.
 
-## WrkHrs AI Stack Integration (sources in `xlotyl/`)
+## WrkHrs AI Stack Integration (images from `ghcr.io/xlotyl/*`)
 
 ### AI Services Architecture
 - **WrkHrs Gateway**: Main API gateway for AI requests with domain classification and request conditioning
@@ -372,16 +368,13 @@ make ci              # Run full CI pipeline
 
 ## Project Structure
 
-Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. Use a **single clone** for day-to-day work; optional legacy repos belong **outside** this tree; see [`docs/dev-environment.md`](docs/dev-environment.md). WrkHrs-derived gateway and Birtha API/router/worker sources live under **`xlotyl/services/...`** ([`docs/migration-wrkhrs-path.md`](docs/migration-wrkhrs-path.md) is being updated for the new paths).
+Canonical Git remote: **[github.com/mhold3n/server](https://github.com/mhold3n/server)**. Use a **single clone** for day-to-day work; optional legacy repos belong **outside** this tree; see [`docs/dev-environment.md`](docs/dev-environment.md). AI application sources live in **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)**; this repo pins **`ghcr.io/xlotyl/*`** via [`config/xlotyl-images.env`](config/xlotyl-images.env).
 
 ```
 server/   # repository root (suggested clone folder name)
-├── claw-code-main/             # Git submodule: fork mhold3n/claw-code (Birtha-local patches)
-├── openclaw/                   # Git submodule: fork mhold3n/openclaw (Birtha-local patches)
-├── void/                       # Git submodule: mhold3n/void
-├── xlotyl/                     # Git submodule: mhold3n/xlotyl (AI product sources)
-│   └── services/               # API, router, worker, gateway, domains, model-runtime, …
-├── services/                    # Infra / platform services remaining on server (no AI control-plane copies)
+├── config/
+│   └── xlotyl-images.env       # Pin XLOTYL_VERSION / ghcr.io/xlotyl/* tags
+├── services/                    # Infra / platform services (mock-openai, queue, …)
 ├── mcp-servers/mcp/            # MCP servers
 │   ├── servers/                # Global and per-repo MCP servers
 │   │   ├── github-mcp/         # GitHub MCP with Projects integration
