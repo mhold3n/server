@@ -4,7 +4,7 @@ This directory holds **implementation checkouts** for MCP server processes that 
 
 ## Ownership (canonical vs tracking)
 
-- **xlotyl** **owns** MCP servers as a product: the authoritative catalog, registry, and semantics live in the **[xlotyl](https://github.com/mhold3n/xlotyl)** repo under **`mcp-servers/mcp/config/mcp_servers.yaml`** (see [mcp-servers/README in xlotyl](https://github.com/mhold3n/xlotyl/blob/main/mcp-servers/README.md)).
+- **xlotyl** **owns** MCP servers as a product: the authoritative catalog, registry, and semantics live in the **[xlotyl](https://github.com/XLOTYL/xlotyl)** repo under **`mcp-servers/mcp/config/mcp_servers.yaml`** (see [mcp-servers/README in xlotyl](https://github.com/XLOTYL/xlotyl/blob/main/mcp-servers/README.md)).
 - **This repo does not own MCP product definitions.** It **tracks**:
   - that these implementations **exist** and are wired in compose where applicable,
   - **validation** via [`scripts/run_ci_local.sh`](../scripts/run_ci_local.sh) and [`.github/workflows/ci.yml`](../.github/workflows/ci.yml),

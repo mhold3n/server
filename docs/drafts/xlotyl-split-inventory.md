@@ -2,7 +2,7 @@
 
 **Status:** Superseded by the executed migration. Canonical inventory: [`docs/migration/server-xlotyl-boundary-manifest.md`](../migration/server-xlotyl-boundary-manifest.md) and [`xlotyl/docs/migration/server-xlotyl-boundary-manifest.md`](../../xlotyl/docs/migration/server-xlotyl-boundary-manifest.md). This draft is kept for historical context only.
 
-This document recorded the **Move / Stay / Split** decision for splitting the AI stack into **`mhold3n/xlotyl`** vs the platform **`mhold3n/server`**.
+This document recorded the **Move / Stay / Split** decision for splitting the AI stack into **`XLOTYL/xlotyl`** (canonical product org) vs the platform **`mhold3n/server`**.
 
 | Path | Decision (historical) | Actual outcome |
 |------|----------------------|----------------|

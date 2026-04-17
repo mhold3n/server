@@ -1,6 +1,6 @@
 # MCP Servers Architecture
 
-**Ownership:** Canonical MCP **definitions** and the agent-facing **catalog** are owned by **[xlotyl](https://github.com/mhold3n/xlotyl)** (`mcp-servers/mcp/config/mcp_servers.yaml`). This directory contains **implementation sources** that the **server** superproject **tracks** for build, CI, and deployment on primary hardware — a **mirrored layout** until implementations optionally move entirely into xlotyl.
+**Ownership:** Canonical MCP **definitions** and the agent-facing **catalog** are owned by **[xlotyl](https://github.com/XLOTYL/xlotyl)** (`mcp-servers/mcp/config/mcp_servers.yaml`). This directory contains **implementation sources** that the **server** superproject **tracks** for build, CI, and deployment on primary hardware — a **mirrored layout** until implementations optionally move entirely into xlotyl.
 
 This directory contains the Model Context Protocol (MCP) servers for the agent-orchestrator system. The architecture follows a hybrid approach with both global infrastructure-level servers and per-repository servers.
 

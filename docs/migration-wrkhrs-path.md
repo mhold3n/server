@@ -3,7 +3,7 @@
 The duplicate tree at repository root **`WrkHrs/`** has been removed. The active WrkHrs-derived AI gateway assets, tests, Docker contexts, and Python package live under the **`xlotyl`** product repo:
 
 - **When you keep a sibling xlotyl clone:** `../xlotyl/services/ai-gateway-service/` (or set `XLOTYL_ROOT`).
-- **Standalone xlotyl clone:** `services/ai-gateway-service/` at the root of [`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl)
+- **Standalone xlotyl clone:** `services/ai-gateway-service/` at the root of **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)**
 
 **Update your bookmarks and scripts:**
 

@@ -45,7 +45,7 @@ scripts/run_ci_local.sh
 ### Xlotyl (standalone AI product)
 
 ```bash
-cd xlotyl   # or clone github.com/mhold3n/xlotyl
+cd xlotyl   # or clone https://github.com/XLOTYL/xlotyl
 uv sync --python 3.11
 npm ci
 npm run build

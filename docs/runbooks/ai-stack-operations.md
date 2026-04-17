@@ -7,7 +7,7 @@ For **cross-service environment variables** (API ↔ agent-platform ↔ control 
 
 ### Repository split (`xlotyl`)
 
-- **Sources:** AI services, domains, orchestration wiki, and compiled routing JSON live in [`mhold3n/xlotyl`](https://github.com/mhold3n/xlotyl) (or **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)** after transfer). This **server** repo does **not** submodule-vendor that tree; clone it beside this repo when you need sources (`XLOTYL_ROOT`, default `../xlotyl`).
+- **Sources:** AI services, domains, orchestration wiki, and compiled routing JSON live in **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)**. This **server** repo does **not** submodule-vendor that tree; clone it beside this repo when you need sources (`XLOTYL_ROOT`, default `../xlotyl`).
 - **Runtime on Birtha:** Compose pulls **OCI images**; pins live in [`config/xlotyl-images.env`](../../config/xlotyl-images.env) (`XLOTYL_IMAGE_PREFIX`, `XLOTYL_VERSION`). See `deploy/ci/scripts/remote_deploy.sh` for production `docker compose pull` / `up` patterns.
 - **CI:** `.github/workflows/ci.yml` starts the live stack from the same pinned images (env file as above). To roll forward AI behavior, **bump the image tag** (and optionally prefix) in `config/xlotyl-images.env` after a new xlotyl release is published to GHCR.
 - **Staging / rollback:** Deploy a known-good **server** commit whose `config/xlotyl-images.env` points at the desired image tags; roll back by restoring the previous env pin (or previous server commit) and re-running `docker compose ... pull && ... up -d` on the host.

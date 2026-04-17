@@ -1,6 +1,6 @@
 # Birtha infrastructure + Xlotyl AI deployment
 
-**Goal:** Run the **Birtha / WrkHrs AI product** (published OCI images from the xlotyl GitHub repo owner, e.g. `${XLOTYL_IMAGE_PREFIX}` in [`config/xlotyl-images.env`](config/xlotyl-images.env); after an org transfer to **XLOTYL**, that prefix is typically `ghcr.io/xlotyl`; sources in **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)**) on hardened **infrastructure**: Proxmox VMs/LXCs, Docker Compose, reverse proxy (Caddy), queues (Redis), observability (MLflow, Prometheus, Grafana, Loki, Tempo), optional security (Fail2ban/CrowdSec), and DNS/homelab add-ons. A **workstation** with an RTX 4070 Ti hosts GPU inference workers, reachable from the server over LAN/mTLS.
+**Goal:** Run the **Birtha / WrkHrs AI product** (published OCI images; pin `${XLOTYL_IMAGE_PREFIX}` + `${XLOTYL_VERSION}` in [`config/xlotyl-images.env`](config/xlotyl-images.env), typically **`ghcr.io/xlotyl`**; sources in **[XLOTYL/xlotyl](https://github.com/XLOTYL/xlotyl)**) on hardened **infrastructure**: Proxmox VMs/LXCs, Docker Compose, reverse proxy (Caddy), queues (Redis), observability (MLflow, Prometheus, Grafana, Loki, Tempo), optional security (Fail2ban/CrowdSec), and DNS/homelab add-ons. A **workstation** with an RTX 4070 Ti hosts GPU inference workers, reachable from the server over LAN/mTLS.
 
 ## High-level Architecture
 
